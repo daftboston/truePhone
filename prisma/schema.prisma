@@ -20,10 +20,13 @@ enum UserRole {
 
 enum ListingStatus {
   DRAFT
+  SUBMITTED
   PENDING_REVIEW
   APPROVED
-  REJECTED
+  PUBLISHED
+  RESERVED
   SOLD
+  REJECTED
   ARCHIVED
 }
 
@@ -68,7 +71,7 @@ model Profile {
   @@map("profiles")
 }
 
-model IphoneModel { /* same as before */ 
+model IphoneModel {
   id          String    @id @default(cuid())
   name        String    @unique
   slug        String    @unique
@@ -79,7 +82,7 @@ model IphoneModel { /* same as before */
   @@map("iphone_models")
 }
 
-model IphoneColor { /* same */ 
+model IphoneColor {
   id        String    @id @default(cuid())
   name      String    @unique
   hex       String?
@@ -88,7 +91,7 @@ model IphoneColor { /* same */
   @@map("iphone_colors")
 }
 
-model IphoneStorage { /* same */ 
+model IphoneStorage {
   id        String    @id @default(cuid())
   valueGb   Int       @unique
   createdAt DateTime  @default(now())

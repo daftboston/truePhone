@@ -1,14 +1,3 @@
-Product Requirements Document
-Part 1 (Foundation)
-Vision
-Mission
-Product Overview
-Value Proposition
-Business Model
-Target Audience
-Core Principles
-Success Metrics
-
 # PRD.md
 
 **Project:** TruePhone  
@@ -16,6 +5,8 @@ Success Metrics
 **Status:** Draft  
 **Author:** Founding Team  
 **Last Updated:** July 2026
+
+> Former working name **iPhoneSeguro** is retired. The product brand is **TruePhone**.
 
 ---
 

@@ -2,7 +2,10 @@
 
 # TruePhone Development Plan
 
-Version 1.0
+Version 1.1
+
+**Design source:** [Figma mobile screens](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1)  
+**Brand:** TruePhone (former working name iPhoneSeguro is retired)
 
 ---
 
@@ -28,9 +31,9 @@ Always build:
 
 1. Foundations
 2. Authentication
-3. Marketplace
-4. Transactions
-5. Trust
+3. Trust pipelines (listing → review)
+4. Marketplace discovery
+5. Transactions
 6. Growth
 7. Scale
 
@@ -38,13 +41,66 @@ Each phase builds on the previous one.
 
 Do not skip phases.
 
+Trust is the product. Marketplace browse ships only after listings can be created and manually reviewed.
+
+---
+
+# Design Source of Truth
+
+Visual UI follows the Figma file linked above.
+
+- Product name in UI and docs: **TruePhone**
+- Ignore “iPhoneSeguro” labels in Figma (legacy title only)
+- When Figma and older prose conflict on visuals, Figma wins
+- Tokens live in `docs/DESIGN_SYSTEM.md` and `src/app/globals.css`
+
+### Figma MVP screens
+
+1. Home
+2. Listing detail
+3. Seller identity verification
+4. Device possession verification
+5. Reviewer queue
+
+---
+
+# MVP Definition
+
+MVP is complete when Phases **0–11** are done and PRD §28 acceptance criteria are met:
+
+- Users can register
+- Sellers can create listings (including device possession proof)
+- Listings require manual review
+- Reviewers can approve or reject
+- Approved listings become public
+- Buyers can search and browse listings (Home + detail per Figma)
+- Buyers can purchase devices
+- Sellers receive payment after successful completion
+- Both parties can review each other
+- Important actions are logged
+- Workflows prioritize trust over speed
+
+Seller identity verification (cédula + facial) is part of MVP (Phase 4).
+
+---
+
+# Phase Exit Criteria
+
+| Phases | Exit bar                                                                |
+| ------ | ----------------------------------------------------------------------- |
+| 0–1    | Lint, typecheck, format, CI green; tokens match Figma; deployable shell |
+| 2–4    | Auth + profiles + identity verification work end-to-end on staging      |
+| 5–7    | Create → review → publish → browse/search works with real data          |
+| 8–11   | Order + payment + reviews complete a full purchase loop                 |
+| 12+    | Phase-specific quality gates (tests, SEO, monitoring as listed)         |
+
+Early phases do not require the full Phase 19 test suite. Add smoke tests as features land.
+
 ---
 
 # Phase 0 — Project Foundation
 
-Goal:
-
-Create a professional development environment.
+Goal: Create a professional development environment.
 
 Deliverables
 
@@ -55,127 +111,72 @@ Deliverables
 - ESLint
 - Prettier
 - Husky
-- Git repository
-- GitHub repository
+- Git / GitHub
 - Folder structure
-- Documentation
+- Documentation (including DATABASE + API stubs)
 - Environment variables
-- Design tokens
-- Theme setup
-- Dark mode
+- Design tokens (Figma-aligned)
+- Theme + dark mode
 - Component library foundation
-- CI setup (GitHub Actions)
-- Vercel deployment
+- CI (GitHub Actions)
+- Vercel project linked
 
-Result
+Result: A clean, deployable project.
 
-A clean, deployable project.
+Status: ~80% complete (close Vercel + keep docs in sync).
 
 ---
 
 # Phase 1 — Design System
 
-Goal
-
-Build reusable UI before building features.
+Goal: Build reusable UI before features, matching Figma.
 
 Deliverables
 
-Typography
+- Typography scale (Geist)
+- Buttons (black primary CTA)
+- Inputs
+- Cards
+- Badges (including Trust / VERIFICADO)
+- Avatars
+- Dialogs / Drawers
+- Tables
+- Top app header (logo + cart)
+- Bottom navigation (Home, Search, Sell, Purchases, Profile)
+- Filter chips
+- Listing card shell
+- Price display + fee breakdown
+- Guarantee / Compra Garantizada banner
+- Review queue row
+- Step progress header
+- Pagination
+- Skeletons / empty / error / loading states
+- Toasts / forms / icons
+- Responsive + accessible layout
+- Dark mode derived from light-first Figma
 
-Buttons
-
-Inputs
-
-Cards
-
-Badges
-
-Avatars
-
-Dialogs
-
-Drawers
-
-Tables
-
-Navbar
-
-Footer
-
-Pagination
-
-Skeletons
-
-Empty States
-
-Error States
-
-Loading States
-
-Toasts
-
-Forms
-
-Icons
-
-Responsive layout
-
-Accessibility
-
-Dark mode
-
-Result
-
-A complete UI foundation.
+Result: UI foundation ready for auth and marketplace screens.
 
 ---
 
 # Phase 2 — Authentication
 
-Goal
-
-Users can create accounts securely.
+Goal: Users can create accounts securely.
 
 Features
 
-Sign Up
+- Sign up / login / logout
+- Forgot / reset password
+- Email verification
+- Google Sign In
+- Protected routes
+- Session management
+- Profile creation
+- User settings
+- Avatar upload
+- Roles: Buyer, Seller, Reviewer, Admin
 
-Login
-
-Logout
-
-Forgot Password
-
-Reset Password
-
-Email Verification
-
-Google Sign In
-
-Protected Routes
-
-Session Management
-
-Profile Creation
-
-User Settings
-
-Avatar Upload
-
-Role Management
-
-Buyer
-
-Seller
-
-Reviewer
-
-Admin
-
-Result
-
-Complete authentication system.
+Result: Complete authentication system.
 
 ---
 
@@ -183,67 +184,32 @@ Complete authentication system.
 
 Features
 
-Public profiles
+- Public profiles
+- Profile editing (bio, city, photo)
+- Seller statistics
+- Join date / completed sales / ratings
+- Verification badges (UI)
+- Trusted Seller badge
+- Profile sharing
 
-Profile editing
-
-Bio
-
-City
-
-Profile photo
-
-Seller statistics
-
-Join date
-
-Completed sales
-
-Ratings
-
-Verification badges
-
-Trusted Seller badge
-
-Favorite sellers (future)
-
-Profile sharing
-
-Result
-
-Professional user identities.
+Result: Professional user identities.
 
 ---
 
-# Phase 4 — Marketplace
+# Phase 4 — Seller Identity Verification
+
+Goal: Sellers prove who they are before high-trust selling (Figma flow).
 
 Features
 
-Browse listings
+- Multi-step progress UI
+- Cédula de ciudadanía capture
+- Facial recognition / liveness
+- Privacy messaging
+- Verification status on profile
+- Gate listing publish until verified (MVP policy)
 
-Listing details
-
-Image gallery
-
-Search
-
-Sorting
-
-Filtering
-
-Pagination
-
-Favorite listings
-
-Share listing
-
-Recently viewed
-
-SEO pages
-
-Result
-
-Users can discover devices.
+Result: Identity-verified sellers.
 
 ---
 
@@ -251,603 +217,322 @@ Users can discover devices.
 
 Features
 
-Create listing
-
-Draft saving
-
-Image upload
-
-Device information
-
-Condition
-
-Battery health
-
-Accessories
-
-Description
-
-IMEI validation
-
-Activation Lock confirmation
-
-Preview listing
-
-Submit for review
-
-Edit draft
-
-Delete draft
+- Create listing / drafts
+- Image upload
+- Device information, condition, battery health, accessories
+- Description
+- IMEI validation / last-4 handling
+- Activation Lock confirmation
+- **Device possession verification** (one-time code + photo of device with code)
+- Preview / submit for review
+- Edit / delete draft
 
 Listing lifecycle
 
-Draft
+1. Draft
+2. Submitted
+3. Pending Review
+4. Approved
+5. Published
+6. Reserved
+7. Sold
+8. Archived
+9. Rejected (terminal from review)
 
-Pending Review
-
-Approved
-
-Rejected
-
-Published
-
-Reserved
-
-Sold
-
-Archived
-
-Result
-
-Complete seller workflow.
+Result: Complete seller workflow with possession proof.
 
 ---
 
 # Phase 6 — Review Portal
 
-Features
-
-Reviewer dashboard
-
-Pending queue
-
-Approve listing
-
-Reject listing
-
-Internal reviewer notes
-
-Audit logs
-
-Image review
-
-Duplicate detection
-
-Manual quality checklist
-
-Listing history
-
-Result
-
-Human review workflow.
-
----
-
-# Phase 7 — Messaging
+Goal: Human review matching Figma reviewer queue.
 
 Features
 
-Buyer ↔ Seller chat
+- Reviewer dashboard / cola de revisión
+- Tabs: Todos / Pendiente / En Revisión
+- Approve / reject listing
+- Internal notes / audit logs
+- Image review
+- Duplicate detection
+- Quality checklist
+- Listing history
+- Trust-standard messaging
 
-Conversation list
-
-Unread count
-
-Notifications
-
-Image sharing (future)
-
-Typing indicator (future)
-
-Read receipts (future)
-
-Block user
-
-Report conversation
-
-Result
-
-Communication inside platform.
+Result: Human review workflow.
 
 ---
 
-# Phase 8 — Orders
+# Phase 7 — Marketplace
+
+Goal: Buyers discover verified devices (Figma Home + Detail).
 
 Features
 
-Create order
+- Home hero + featured listings
+- Browse listings
+- Listing details (gallery, badges, specs, seller card, Compra Garantizada)
+- Search + sorting + filtering (Postgres / Prisma; filter chips)
+- Pagination
+- Favorite listings
+- Share listing
+- Recently viewed
+- Basic SEO metadata on public pages
 
-Reserve listing
-
-Order timeline
-
-Buyer dashboard
-
-Seller dashboard
-
-Order history
-
-Order status
-
-Cancel order
-
-Complete order
-
-Receipt
-
-Invoices (future)
-
-Result
-
-Marketplace transactions.
+Result: Users can discover and inspect devices.
 
 ---
 
-# Phase 9 — Payments
+# Phase 8 — Messaging
 
 Features
 
-Buyer Protection Fee
+- Buyer ↔ Seller chat
+- Conversation list
+- Unread count
+- Notifications
+- Block user / report conversation
+- Image sharing, typing indicator, read receipts (future)
 
-Payment processing
-
-Payment confirmation
-
-Refund flow
-
-Payment history
-
-Webhook processing
-
-Payment failures
-
-Admin payment dashboard
-
-Future escrow support
-
-Result
-
-Monetization.
+Result: Communication inside the platform.
 
 ---
 
-# Phase 10 — Reviews
+# Phase 9 — Orders
 
 Features
 
-Buyer reviews seller
+- Create order / reserve listing
+- Order timeline
+- Buyer / seller dashboards
+- Order history / status
+- Cancel / complete order
+- Receipt
+- Invoices (future)
 
-Seller reviews buyer
-
-Ratings
-
-Review moderation
-
-Review reporting
-
-Trust score
-
-Result
-
-Marketplace reputation.
+Result: Marketplace transactions.
 
 ---
 
-# Phase 11 — Notifications
+# Phase 10 — Payments
 
 Features
 
-Email notifications
+- Buyer Protection Fee
+- Payment processing / confirmation
+- Refund flow
+- Payment history
+- Webhooks / failures
+- Admin payment dashboard
+- Future escrow support
 
-In-app notifications
-
-Push notifications (future)
-
-Notification preferences
-
-Unread indicators
-
-Activity center
-
-Result
-
-Users stay informed.
+Result: Monetization.
 
 ---
 
-# Phase 12 — Admin Panel
+# Phase 11 — Reviews
 
 Features
 
-Dashboard
+- Buyer reviews seller / seller reviews buyer
+- Ratings
+- Review moderation / reporting
+- Trust score
 
-User management
-
-Listing management
-
-Orders
-
-Payments
-
-Reports
-
-Analytics
-
-Reviewer management
-
-Roles
-
-Permissions
-
-System settings
-
-Audit logs
-
-Result
-
-Business operations.
+Result: Marketplace reputation.
 
 ---
 
-# Phase 13 — Search
+# Phase 12 — Notifications
 
 Features
 
-Meilisearch
+- Email + in-app notifications
+- Preferences / unread indicators
+- Activity center
+- Push (future)
 
-Autocomplete
-
-Typo tolerance
-
-Synonyms
-
-Filters
-
-Instant search
-
-Popular searches
-
-Recent searches
-
-Saved searches (future)
-
-Result
-
-Fast marketplace discovery.
+Result: Users stay informed.
 
 ---
 
-# Phase 14 — Analytics
+# Phase 13 — Admin Panel
 
 Features
 
-Dashboard metrics
+- Dashboard
+- User / listing / order / payment management
+- Reports / analytics
+- Reviewer management
+- Roles / permissions
+- System settings / audit logs
 
-Revenue
-
-GMV
-
-Conversion
-
-Listings
-
-Approval rate
-
-Rejected listings
-
-Average review time
-
-Popular devices
-
-User growth
-
-Seller growth
-
-Search analytics
-
-Result
-
-Business intelligence.
+Result: Business operations.
 
 ---
 
-# Phase 15 — Trust Features
+# Phase 14 — Search Enhancement
 
 Features
 
-Verified Seller
+- Meilisearch
+- Autocomplete / typo tolerance / synonyms
+- Instant search
+- Popular / recent / saved searches (future)
 
-Identity verification (future)
-
-Device verification
-
-IMEI checks
-
-Activation Lock verification
-
-Fraud detection
-
-Duplicate detection
-
-Flag suspicious listings
-
-Reporting
-
-Manual review improvements
-
-Result
-
-Marketplace differentiation.
+Result: Faster marketplace discovery (beyond V1 Postgres search).
 
 ---
 
-# Phase 16 — Performance
+# Phase 15 — Analytics
+
+Features
+
+- Revenue / GMV / conversion
+- Listings / approval rate / review time
+- Popular devices
+- User / seller growth
+- Search analytics
+
+Result: Business intelligence.
+
+---
+
+# Phase 16 — Advanced Trust
+
+Features (beyond MVP verification already in Phases 4–6)
+
+- Enhanced fraud detection
+- Deeper IMEI / Activation Lock tooling
+- Flag suspicious listings
+- Reporting improvements
+- Manual review upgrades
+
+Result: Marketplace differentiation.
+
+---
+
+# Phase 17 — Performance
 
 Tasks
 
-Image optimization
+- Image optimization / caching / streaming
+- Lazy loading / bundle / code splitting
+- Database indexing
+- Performance monitoring
 
-Caching
-
-Streaming
-
-Lazy loading
-
-Bundle optimization
-
-Database indexing
-
-Code splitting
-
-Performance monitoring
-
-Result
-
-Fast marketplace.
+Result: Fast marketplace.
 
 ---
 
-# Phase 17 — SEO
+# Phase 18 — SEO
 
 Tasks
 
-Metadata
+- Metadata / Open Graph / Twitter Cards
+- Sitemap / robots / structured data
+- Canonical URLs / dynamic metadata
+- Listing indexing
+- Blog foundation (future)
 
-Open Graph
-
-Twitter Cards
-
-Sitemap
-
-Robots
-
-Structured Data
-
-Canonical URLs
-
-Dynamic metadata
-
-Listing indexing
-
-Blog foundation (future)
-
-Result
-
-Organic growth.
+Result: Organic growth.
 
 ---
 
-# Phase 18 — Mobile Optimization
+# Phase 19 — Mobile Optimization
 
 Tasks
 
-Responsive improvements
+- Responsive improvements
+- Touch interactions / bottom sheets
+- Mobile navigation polish
+- Image optimization
+- Offline / PWA (future)
 
-Touch interactions
-
-Bottom sheets
-
-Mobile navigation
-
-Image optimization
-
-Offline support (future)
-
-PWA (future)
-
-Result
-
-Excellent mobile UX.
+Result: Excellent mobile UX (Figma is mobile-first).
 
 ---
 
-# Phase 19 — Testing
+# Phase 20 — Testing
 
 Tasks
 
-Unit tests
+- Unit / integration / e2e
+- Accessibility / performance / security
+- Visual regression
 
-Integration tests
-
-End-to-end tests
-
-Accessibility tests
-
-Performance testing
-
-Security testing
-
-Visual regression testing
-
-Result
-
-Reliable software.
+Result: Reliable software.
 
 ---
 
-# Phase 20 — Security
+# Phase 21 — Security
 
 Tasks
 
-Rate limiting
+- Rate limiting / CSRF / XSS / injection defenses
+- Audit logging / security headers
+- Secrets management
+- Permission testing / session hardening
+- Fraud detection improvements
 
-CSRF
-
-XSS
-
-SQL Injection
-
-Audit logging
-
-Security headers
-
-Secrets management
-
-Permission testing
-
-Session hardening
-
-Fraud detection improvements
-
-Result
-
-Production-ready security.
+Result: Production-ready security.
 
 ---
 
-# Phase 21 — Monitoring
+# Phase 22 — Monitoring
 
 Tasks
 
-Logging
+- Logging / error tracking
+- Performance / database / uptime monitoring
+- Alerts / analytics integration
 
-Error tracking
-
-Performance monitoring
-
-Database monitoring
-
-Uptime monitoring
-
-Alerts
-
-Analytics integration
-
-Result
-
-Operational visibility.
+Result: Operational visibility.
 
 ---
 
-# Phase 22 — Launch Preparation
+# Phase 23 — Launch Preparation
 
 Tasks
 
-Privacy Policy
+- Privacy / Terms / Cookie policies
+- Support center / FAQ
+- Email templates / legal pages
+- Production database / storage / domains
+- Final QA / load testing
 
-Terms of Service
-
-Cookie Policy
-
-Support Center
-
-FAQ
-
-Email templates
-
-Legal pages
-
-Production database
-
-Production storage
-
-Production domains
-
-Final QA
-
-Load testing
-
-Result
-
-Launch-ready platform.
+Result: Launch-ready platform.
 
 ---
 
-# Phase 23 — Post-Launch
+# Phase 24 — Post-Launch
 
-Future Features
+Future features
 
-Wishlist
-
-Price alerts
-
-Offer system
-
-Trade-in program
-
-Escrow
-
-Shipping integrations
-
-Apple Watch support
-
-iPad support
-
-MacBook support
-
-AirPods support
-
-Premium seller tools
-
-Native iOS app
-
-Native Android app
-
-AI fraud detection
-
-AI listing assistant
-
-AI pricing recommendations
-
-Referral system
-
-Affiliate program
-
-Business sellers
-
-API
-
-International expansion
-
-Multiple currencies
-
-Multiple languages
+- Wishlist / price alerts / offers
+- Trade-in / escrow / shipping
+- More Apple devices
+- Premium seller tools
+- Native apps
+- AI assistants
+- Referral / affiliate
+- Business sellers / API
+- International expansion
 
 ---
 
 # Success Criteria
 
-Every completed phase should satisfy the following:
+Every completed phase should satisfy:
 
-- Production-quality code
+- Production-quality code for that phase’s scope
 - Documentation updated
-- Responsive
-- Accessible
-- Fully tested
-- Secure
-- Performance reviewed
+- Responsive and accessible where UI ships
+- Phase-appropriate tests
+- Secure defaults for new surfaces
 - Deployable
-- Reviewed before moving to the next phase
+
+Review before moving to the next phase.
 
 ---
 

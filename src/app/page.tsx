@@ -26,6 +26,10 @@ export default function HomePage() {
           <Button>Explorar iPhones</Button>
           <Button variant="outline">Vender mi iPhone</Button>
         </div>
+
+        <p className="text-trust text-sm">
+          Cada iPhone es revisado manualmente antes de publicarse.
+        </p>
       </main>
     </div>
   );

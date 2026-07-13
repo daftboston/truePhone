@@ -1,6 +1,14 @@
 # TruePhone Design System
 
-Version 1.0
+Version 2.0
+
+**Brand:** TruePhone  
+**Visual source of truth:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1)  
+**Implementation:** `src/app/globals.css`
+
+Former working name **iPhoneSeguro** in Figma is retired. Always use **TruePhone** in product UI and docs.
+
+When Figma and this document disagree, update this document and CSS together. Figma wins on visuals.
 
 ---
 
@@ -8,185 +16,61 @@ Version 1.0
 
 TruePhone should feel trustworthy before users read a single word.
 
-The visual design should communicate:
+The interface should feel clean, mobile-first, and closer to a premium verified marketplace than a classifieds board.
+
+Goals:
 
 - Trust
-- Professionalism
-- Transparency
-- Simplicity
-- Premium quality
+- Clarity
+- Calm confidence
+- Fast comprehension on mobile
 
-The interface should feel closer to Apple than a traditional marketplace.
-
-The goal is not to impress users.
-
-The goal is to make users feel safe.
+Never flashy. Never cluttered.
 
 ---
 
-# Design Inspiration
+# Color System
 
-Primary Inspirations
+Colors communicate meaning. Never decoration.
 
-- Apple
-- Swappa
-- Stripe
-- Linear
-- Airbnb
-- Vercel
-- Notion
+## Primary (CTA / emphasis)
 
-Avoid Looking Like
+Near-black. Used for primary buttons (`Comprar Ahora`, `Iniciar Verificación`), high-emphasis text, and dark hero surfaces.
 
-- Facebook Marketplace
-- Mercado Libre
-- OLX
-- Craigslist
-- Generic Bootstrap dashboards
+| Token              | Approx hex | CSS variable           |
+| ------------------ | ---------- | ---------------------- |
+| Primary            | `#0A0A0A`  | `--primary`            |
+| Primary foreground | `#FFFFFF`  | `--primary-foreground` |
 
----
+Confirm exact hex in Figma Dev Mode when available.
 
-# Visual Identity
+## Trust accent
 
-Style
+Bright blue. Used for VERIFICADO badges, Compra Garantizada banners, trust links, and selected accents — **not** for primary CTAs.
 
-Minimal
+| Token            | Approx hex | CSS variable         |
+| ---------------- | ---------- | -------------------- |
+| Trust            | `#2F6BFF`  | `--trust`            |
+| Trust foreground | `#FFFFFF`  | `--trust-foreground` |
 
-Modern
+## Surfaces and neutrals
 
-Premium
+| Role                 | Approx hex | CSS variable           |
+| -------------------- | ---------- | ---------------------- |
+| Background           | `#FFFFFF`  | `--background`         |
+| Foreground (text)    | `#111111`  | `--foreground`         |
+| Card / muted surface | `#F4F4F5`  | `--card` / `--muted`   |
+| Secondary text       | `#71717A`  | `--muted-foreground`   |
+| Border / input       | `#E4E4E7`  | `--border` / `--input` |
 
-Calm
+## Semantic
 
-Elegant
-
-Professional
-
-Friendly
-
-Never flashy.
-
-Never noisy.
-
-Never cluttered.
-
----
-
-# Color Philosophy
-
-Color should communicate meaning.
-
-Never decoration.
-
-Every color has a purpose.
-
----
-
-# Primary Color
-
-Deep Blue
-
-Used for:
-
-Primary buttons
-
-Links
-
-Important actions
-
-Focused elements
-
-Selected states
-
-Brand identity
-
----
-
-# Secondary Colors
-
-White
-
-Primary backgrounds
-
-Light Gray
-
-Cards
-
-Inputs
-
-Sections
-
-Dark Gray
-
-Primary text
-
-Medium Gray
-
-Secondary text
-
-Soft Gray
-
-Borders
-
-Dividers
-
-Disabled elements
-
----
-
-# Semantic Colors
-
-Green
-
-Success
-
-Completed payment
-
-Approved listing
-
-Verified seller
-
-Positive confirmation
-
----
-
-Yellow
-
-Warnings
-
-Pending review
-
-Draft
-
-Needs attention
-
----
-
-Red
-
-Errors
-
-Rejected listing
-
-Failed payment
-
-Dangerous actions
-
-Validation errors
-
----
-
-Blue
-
-Information
-
-Tips
-
-Documentation
-
-Neutral notifications
-
----
+| Meaning     | Use                                                | Token           |
+| ----------- | -------------------------------------------------- | --------------- |
+| Success     | Approved, verified success                         | `--success`     |
+| Warning     | Pending, draft, attention                          | `--warning`     |
+| Destructive | Errors, reject, delete                             | `--destructive` |
+| Info        | Neutral tips (prefer `--trust` for brand trust UI) | `--info`        |
 
 Never use semantic colors as decorative accents.
 
@@ -194,662 +78,136 @@ Never use semantic colors as decorative accents.
 
 # Dark Mode
 
-Dark mode should be fully supported.
+Supported via `.dark` class (`next-themes`).
 
-It should feel elegant.
+Figma is light-first. Dark mode must:
 
-Never invert colors blindly.
-
-Prioritize readability.
-
-Maintain contrast.
+- Keep primary CTAs high-contrast (light text on near-black or inverted carefully)
+- Preserve trust blue readability
+- Avoid blind inversion of gray surfaces
 
 ---
 
 # Typography
 
-Primary Font
+Primary font: **Geist** (loaded in `layout.tsx`)  
+Fallback: system UI / Inter
 
-Geist
+| Role                 | Guidance                              |
+| -------------------- | ------------------------------------- |
+| Display / page title | Large semibold (e.g. ~32–40px mobile) |
+| Section title        | Semibold                              |
+| Body                 | Regular, readable                     |
+| Caption / meta       | Smaller muted text                    |
+| Micro                | Badges, chips                         |
 
-Fallback
-
-Inter
-
-System Fonts
-
----
-
-Typography should feel clean and highly readable.
-
-Avoid decorative fonts.
+Weights: Regular, Medium, Semibold, Bold. Prefer hierarchy over excessive bold.
 
 ---
 
-# Font Scale
+# Spacing
 
-Display
+8-point grid. Prefer Tailwind spacing scale (4, 8, 12, 16, 24, 32, 40, 48, 64…).
 
-Hero headlines
-
-Page titles
-
-Section titles
-
-Card titles
-
-Body
-
-Small
-
-Caption
-
-Micro
-
-Use a consistent modular scale.
-
-Never invent random sizes.
+Avoid arbitrary values unless matching Figma exactly.
 
 ---
 
-# Font Weights
+# Radius
 
-Regular
-
-Medium
-
-Semibold
-
-Bold
-
-Avoid excessive bold text.
-
-Use typography hierarchy instead.
-
----
-
-# Spacing System
-
-Use an 8-point grid.
-
-Spacing values should be multiples of 4.
-
-Examples
-
-4
-
-8
-
-12
-
-16
-
-24
-
-32
-
-40
-
-48
-
-64
-
-80
-
-96
-
-Avoid arbitrary spacing.
-
----
-
-# Border Radius
-
-Small
-
-Inputs
-
-Medium
-
-Cards
-
-Large
-
-Dialogs
-
-Extra Large
-
-Hero cards
-
-Fully Rounded
-
-Badges
-
-Avatars
-
-Buttons where appropriate
+| Use              | Token                                      |
+| ---------------- | ------------------------------------------ |
+| Default controls | `--radius` (~10–12px / `0.625rem–0.75rem`) |
+| Buttons / inputs | `rounded-md` / `rounded-lg`                |
+| Cards / banners  | Medium–large                               |
+| Badges / chips   | Pill or highly rounded                     |
+| Avatars          | Full round                                 |
 
 ---
 
 # Shadows
 
-Use shadows sparingly.
-
-Cards
-
-Very soft shadow
-
-Hover
-
-Slight elevation
-
-Dialogs
-
-Medium shadow
-
-Dropdowns
-
-Light shadow
-
-Never use heavy shadows.
-
----
-
-# Borders
-
-Use borders only when necessary.
-
-Prefer contrast and spacing over borders.
-
-Borders should be subtle.
+Use sparingly. Prefer borders and surface contrast. Soft elevation on cards/dialogs only.
 
 ---
 
 # Icons
 
-Use Lucide Icons.
-
-Icons should support text.
-
-Never replace text.
-
-Icons should always have a clear purpose.
+Lucide Icons. Icons support text; never replace essential labels.
 
 ---
 
 # Buttons
 
-Button Hierarchy
+Hierarchy:
 
-Primary
+1. **Primary** — black background, white text (one per section)
+2. **Secondary / outline** — bordered, neutral
+3. **Ghost** — low emphasis
+4. **Destructive** — red for dangerous actions only
+5. **Link** — trust blue or primary text underline
 
-Secondary
-
-Outline
-
-Ghost
-
-Destructive
-
-Link
+Full-width primary CTAs are common on mobile Figma screens.
 
 ---
 
-Primary Button
+# Navigation (mobile-first)
 
-Reserved for the most important action.
+## Top header
 
-Examples
+- TruePhone logo / wordmark
+- Cart or secondary action
 
-Buy Now
+## Bottom navigation
 
-Publish Listing
+Five destinations:
 
-Continue
+1. Home
+2. Search
+3. Sell
+4. Purchases (Mis compras)
+5. Profile
 
-Save
-
----
-
-Only one primary action per section whenever possible.
-
----
-
-Secondary Button
-
-Alternative action.
-
-Less visual emphasis.
+Public marketing pages may use a simpler top nav; authenticated marketplace shell uses bottom nav per Figma.
 
 ---
 
-Ghost Button
+# Marketplace patterns
 
-Low priority actions.
-
----
-
-Destructive Button
-
-Delete
-
-Remove
-
-Cancel Order
-
-Never use red for non-destructive actions.
+- **Filter chips** — horizontal scroll (TODOS, model filters)
+- **Listing cards** — image, model, battery, price, VERIFICADO
+- **Price + fee breakdown** — equipment price vs protection fee
+- **Guarantee banner** — trust blue band (Compra Garantizada)
+- **Seller card** — avatar, name, verification badge
+- **Step progress** — PASO X DE Y for verification flows
+- **Review queue rows** — thumbnail, model, seller, timestamp, status tabs
 
 ---
 
-# Inputs
+# Components
 
-Inputs should feel lightweight.
+Implement via shadcn/ui + project wrappers. See `docs/COMPONENT_LIBRARY.md` for the inventory and Phase 1 priority list.
 
-Features
+Rules:
 
-Rounded corners
-
-Clear labels
-
-Helper text
-
-Inline validation
-
-Meaningful placeholders
-
-Error messages
-
----
-
-Never rely on placeholders as labels.
-
----
-
-# Cards
-
-Cards are the primary layout component.
-
-Each card should have:
-
-Padding
-
-Rounded corners
-
-Soft shadow
-
-Hover elevation
-
-Consistent spacing
-
----
-
-Card Types
-
-Listing Card
-
-Seller Card
-
-Statistics Card
-
-Feature Card
-
-Review Card
-
-Notification Card
-
----
-
-# Images
-
-Images should have consistent aspect ratios.
-
-Lazy load when appropriate.
-
-Optimize automatically.
-
-Never stretch images.
-
-Always preserve quality.
-
----
-
-# Badges
-
-Used sparingly.
-
-Examples
-
-Verified Seller
-
-Manual Review
-
-Sold
-
-Reserved
-
-New
-
-Featured
-
-Battery Health
-
----
-
-Badge colors should match semantic meaning.
-
----
-
-# Tables
-
-Simple
-
-Minimal
-
-Readable
-
-Hover states
-
-Sortable
-
-Responsive
-
-Avoid excessive borders.
-
----
-
-# Navigation
-
-Top Navigation
-
-Clean
-
-Minimal
-
-Persistent
-
-Search always accessible.
-
----
-
-Sidebar
-
-Only for dashboards.
-
-Never for public pages.
-
----
-
-Breadcrumbs
-
-Used only when navigation depth requires them.
-
----
-
-# Forms
-
-One purpose per screen.
-
-Break large forms into steps.
-
-Always show progress.
-
-Auto-save drafts whenever appropriate.
-
-Inline validation.
-
----
-
-# Modals
-
-Use only when context should remain.
-
-Avoid putting large forms inside modals.
-
----
-
-# Drawers
-
-Preferred on mobile.
-
-Useful for filters.
-
-Notifications.
-
-Quick actions.
-
----
-
-# Animations
-
-Animations should support usability.
-
-Never decoration.
-
----
-
-Duration
-
-Fast
-
-Medium
-
-Slow
-
-Use easing that feels natural.
-
----
-
-Allowed Animations
-
-Fade
-
-Scale
-
-Slide
-
-Expand
-
-Collapse
-
-Hover elevation
-
-Skeleton loading
-
----
-
-Avoid
-
-Bounce
-
-Flash
-
-Spin
-
-Elastic
-
-Attention-grabbing effects
-
----
-
-# Loading States
-
-Every page should have:
-
-Skeletons
-
-Progress indicators
-
-Image placeholders
-
-Optimistic updates where appropriate
-
-Avoid full-page spinners.
-
----
-
-# Empty States
-
-Every empty state should include:
-
-Illustration
-
-Title
-
-Explanation
-
-Primary action
-
-Optional secondary action
-
----
-
-# Error States
-
-Every error should answer:
-
-What happened?
-
-Why?
-
-How do I fix it?
-
-Provide a recovery action whenever possible.
-
----
-
-# Success States
-
-Success should feel satisfying.
-
-Examples
-
-Profile updated
-
-Listing submitted
-
-Listing approved
-
-Purchase completed
-
-Use subtle animations.
-
-Never celebrate excessively.
-
----
-
-# Responsive Design
-
-Mobile First.
-
-Tablet
-
-Laptop
-
-Desktop
-
-Large Desktop
-
-Layouts should adapt naturally.
-
-Never hide important functionality.
+- No duplicate components
+- Server Components by default
+- Use design tokens — never hardcode one-off brand colors in features
 
 ---
 
 # Accessibility
 
-Support:
-
-Keyboard navigation
-
-Visible focus
-
-Screen readers
-
-Reduced motion
-
-High contrast
-
-Semantic HTML
-
-Accessible forms
-
-WCAG AA compliance wherever practical.
-
----
-
-# Component Naming
-
-Examples
-
-Button
-
-Input
-
-Card
-
-Dialog
-
-Modal
-
-Drawer
-
-Avatar
-
-Badge
-
-SearchBar
-
-ListingCard
-
-SellerCard
-
-PriceDisplay
-
-TrustBadge
-
-BatteryHealthBadge
-
-SectionHeader
-
-PageHeader
-
-EmptyState
-
-LoadingSkeleton
-
-ErrorState
-
-SuccessBanner
-
-Keep names descriptive.
-
-Avoid abbreviations.
-
----
-
-# Design Principles
-
-Every screen should answer:
-
-What is happening?
-
-Why does it matter?
-
-What should I do next?
-
-The interface should disappear.
-
-The user's confidence should remain.
+- Visible focus rings (`--ring`)
+- Sufficient contrast on black CTAs and blue badges
+- Keyboard navigation
+- Reduced motion respected where animations exist
+- Spanish (`lang="es"`) for Colombia
 
 ---
 
 # Final Rule
 
-If a design decision makes the interface look more impressive but less trustworthy...
+If a design decision looks more impressive but less trustworthy, choose trust.
 
-Choose trust.
-
-Always.
-
-TruePhone is not trying to be the most beautiful marketplace.
-
-It is trying to be the marketplace people trust the most.
+TruePhone is not trying to be the loudest marketplace. It is trying to be the one people trust most.

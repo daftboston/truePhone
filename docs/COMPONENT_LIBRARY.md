@@ -122,6 +122,33 @@ Names should describe purpose, not appearance.
 
 ---
 
+# Phase 1 Priority (Figma)
+
+Build these before feature screens. Visual source: [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1). Brand: **TruePhone**.
+
+| Priority | Component                                 | Notes                                        |
+| -------- | ----------------------------------------- | -------------------------------------------- |
+| P0       | Button                                    | Black primary CTA; full-width mobile support |
+| P0       | Badge / TrustBadge                        | VERIFICADO and condition chips               |
+| P0       | BottomNav                                 | Home, Search, Sell, Purchases, Profile       |
+| P0       | AppHeader                                 | Logo + cart                                  |
+| P0       | FilterChip / FilterChipGroup              | Horizontal model filters                     |
+| P1       | ListingCard                               | Featured grid card                           |
+| P1       | PriceDisplay                              | Price + protection fee breakdown             |
+| P1       | GuaranteeBanner                           | Compra Garantizada (trust blue)              |
+| P1       | SellerCard                                | Avatar + verification                        |
+| P1       | StepProgressHeader                        | PASO X DE Y                                  |
+| P1       | ReviewQueueRow                            | Reviewer cola list item                      |
+| P1       | SearchBar                                 | Home search                                  |
+| P1       | EmptyState / ErrorState / LoadingSkeleton | Required page states                         |
+| P2       | Input / Textarea / Select                 | Forms                                        |
+| P2       | Dialog / Drawer                           | Mobile sheets                                |
+| P2       | Avatar / Card / Pagination / Toast        | Supporting primitives                        |
+
+Do not invent one-off UI in feature folders when a component above can be extended.
+
+---
+
 # Layout Components
 
 ---
@@ -192,11 +219,11 @@ Prefer whitespace whenever possible.
 
 ## Navbar
 
-Public navigation.
+Public / desktop navigation.
 
 Includes:
 
-Logo
+TruePhone logo
 
 Search
 
@@ -207,6 +234,46 @@ Sell
 Authentication
 
 Profile
+
+---
+
+## AppHeader
+
+Mobile marketplace header per Figma.
+
+Includes:
+
+TruePhone wordmark / logo
+
+Cart or secondary action
+
+---
+
+## BottomNav
+
+Primary mobile shell navigation.
+
+Destinations:
+
+Home
+
+Search
+
+Sell
+
+Purchases
+
+Profile
+
+Active state must be obvious. Labels required (icons alone are not enough).
+
+---
+
+## FilterChip
+
+Horizontal filter control (e.g. TODOS, iPhone 15).
+
+Used on Home and search results.
 
 ---
 
@@ -506,9 +573,55 @@ Manual Review
 
 Verified Seller
 
+VERIFICADO
+
 Protected Purchase
 
 Featured
+
+Use trust blue (`--trust`). Never use primary black for verification badges.
+
+---
+
+## GuaranteeBanner
+
+Compra Garantizada / trust band.
+
+Uses trust blue surface, short copy, and optional shield icon.
+
+One job: reinforce buyer protection.
+
+---
+
+## StepProgressHeader
+
+Multi-step verification header.
+
+Shows:
+
+Step index (PASO X DE Y)
+
+Progress percentage or bar
+
+Section title (e.g. seller security flow)
+
+---
+
+## ReviewQueueRow
+
+Reviewer dashboard list item.
+
+Shows:
+
+Device / listing title
+
+Seller name
+
+Timestamp
+
+Thumbnail
+
+Status context from parent tabs (Todos / Pendiente / En Revisión)
 
 ---
 

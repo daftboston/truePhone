@@ -1,7 +1,8 @@
 **Project:** TruePhone  
-**Version:** 1.0  
+**Version:** 1.1  
 **Status:** Draft  
-**Last Updated:** July 2026
+**Last Updated:** July 2026  
+**Design source:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1)
 
 ---
 
@@ -459,3 +460,130 @@ When evaluating new technologies or patterns, ask:
 - Does this improve the user experience?
 
 If the answer is "no," the change should be reconsidered.
+
+---
+
+# 10. Folder Structure
+
+```
+src/
+  app/                 # Next.js App Router (routes, layouts)
+  components/
+    ui/                # shadcn / shared primitives
+    providers/         # Theme and other client providers
+  features/            # Domain modules (auth, listings, reviews, …)
+    <domain>/
+      actions/         # Server Actions
+      components/      # Feature-specific UI
+      schemas/         # Zod schemas
+  hooks/               # Shared React hooks
+  lib/                 # Shared utilities (cn, db client, supabase)
+  services/            # Domain services / integrations
+  types/               # Shared TypeScript types
+```
+
+Rules:
+
+- Prefer `src/lib/` for shared helpers. Do not grow a parallel `src/utils/` tree.
+- Feature code lives under `src/features/<domain>/`.
+- Do not put business logic in `src/components/ui`.
+- Server Components by default; Client Components only for interactivity.
+
+---
+
+# 11. Supabase Role
+
+Supabase provides:
+
+| Concern    | Use                                                         |
+| ---------- | ----------------------------------------------------------- |
+| PostgreSQL | Primary database (Prisma)                                   |
+| Auth       | Email/password + Google (Phase 2)                           |
+| Storage    | Listing images, verification photos (ID, device possession) |
+
+Prisma talks to Postgres via:
+
+- `DATABASE_URL` — pooled connection (runtime / app)
+- `DIRECT_URL` — direct connection (migrations / `db push`)
+
+Do not bypass Prisma for routine app queries. Use the Supabase client for Auth and Storage.
+
+---
+
+# 12. Authentication (Phase 2)
+
+- Provider: **Supabase Auth**
+- Sessions: server-readable cookies via Supabase SSR helpers
+- Profile row in `profiles` linked by `authUserId`
+- Roles: `BUYER`, `SELLER`, `REVIEWER`, `ADMIN` (enforced in Server Actions + RLS later)
+- Protected routes check session on the server before rendering sensitive pages
+
+---
+
+# 13. Data Access Patterns
+
+## Server Actions
+
+Preferred for UI mutations:
+
+- Create / update listings
+- Submit for review
+- Approve / reject
+- Favorites, messages, orders, reviews
+
+## Route Handlers
+
+Use only when HTTP endpoints are required:
+
+- Payment webhooks
+- External integrations
+- Public machine APIs
+
+## Validation
+
+- **Zod** as the single validation source
+- Share schemas between client forms and Server Actions
+- **React Hook Form** for multi-step and complex forms (listing creation, verification)
+
+---
+
+# 14. Search Strategy
+
+| Stage            | Approach                                           |
+| ---------------- | -------------------------------------------------- |
+| V1 (Phase 7)     | Postgres filters + `searchVector` / Prisma queries |
+| Later (Phase 14) | Meilisearch for typo tolerance and instant search  |
+
+Do not introduce Meilisearch before V1 browse/search works.
+
+---
+
+# 15. Environment Variables
+
+See `.env.example`:
+
+| Variable                        | Purpose                           |
+| ------------------------------- | --------------------------------- |
+| `DATABASE_URL`                  | Prisma runtime (PgBouncer pooler) |
+| `DIRECT_URL`                    | Prisma migrate / db push          |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Supabase project URL              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key (browser-safe)    |
+
+Server-only secrets (service role, payment keys) must never use the `NEXT_PUBLIC_` prefix.
+
+---
+
+# 16. Deployment
+
+- Hosting: **Vercel**
+- CI: GitHub Actions (format, lint, typecheck, build)
+- Preview deployments per PR once Vercel is linked
+
+---
+
+# 17. Related Documents
+
+- `docs/plan.md` — phase order and MVP
+- `docs/DATABASE.md` — schema and listing lifecycle
+- `docs/API.md` — Server Actions / Route Handler conventions
+- `docs/DESIGN_SYSTEM.md` — visual tokens (Figma-aligned)
