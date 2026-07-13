@@ -2,7 +2,7 @@
 **Version:** 1.1  
 **Status:** Draft  
 **Last Updated:** July 2026  
-**Design source:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1)
+**Visual tokens:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (look only; business logic is plan.md + PRD)
 
 ---
 
@@ -586,4 +586,4 @@ Server-only secrets (service role, payment keys) must never use the `NEXT_PUBLIC
 - `docs/plan.md` — phase order and MVP
 - `docs/DATABASE.md` — schema and listing lifecycle
 - `docs/API.md` — Server Actions / Route Handler conventions
-- `docs/DESIGN_SYSTEM.md` — visual tokens (Figma-aligned)
+- `docs/DESIGN_SYSTEM.md` — visual tokens

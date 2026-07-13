@@ -122,9 +122,11 @@ Names should describe purpose, not appearance.
 
 ---
 
-# Phase 1 Priority (Figma)
+# Phase 1 Priority (Design System)
 
-Build these before feature screens. Visual source: [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1). Brand: **TruePhone**.
+Build these before feature screens. Look and feel follow `docs/DESIGN_SYSTEM.md` (Figma visual reference). Feature scope and order follow `docs/plan.md`.
+
+Brand: **TruePhone**.
 
 | Priority | Component                                 | Notes                                        |
 | -------- | ----------------------------------------- | -------------------------------------------- |
@@ -239,7 +241,7 @@ Profile
 
 ## AppHeader
 
-Mobile marketplace header per Figma.
+Mobile marketplace header.
 
 Includes:
 

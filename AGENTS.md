@@ -19,13 +19,16 @@ Never violate their principles.
 
 If implementation conflicts with the documentation, ask for clarification instead of making assumptions.
 
-## Design source
+## Business logic vs visual design
 
-Visual UI follows the Figma file referenced in `docs/DESIGN_SYSTEM.md` and `docs/plan.md`.
+| Concern                               | Source of truth                                         |
+| ------------------------------------- | ------------------------------------------------------- |
+| What to build, when, workflows, MVP   | `docs/plan.md` + `docs/PRD.md`                          |
+| Colors, type, spacing, component look | `docs/DESIGN_SYSTEM.md` + Figma + `src/app/globals.css` |
 
 - Product brand is **TruePhone** (legacy “iPhoneSeguro” labels in Figma are ignored)
-- On visual conflicts, Figma + DESIGN_SYSTEM win over older prose
-- Tokens are implemented in `src/app/globals.css`
+- Absorb **design system** from Figma only — not business logic or feature priority
+- On visual conflicts, DESIGN_SYSTEM + Figma win; on product conflicts, plan.md + PRD win
 
 ---
 

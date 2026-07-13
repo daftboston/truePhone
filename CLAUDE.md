@@ -18,4 +18,6 @@ Prefer Server Components.
 
 Use Server Actions.
 
-Follow the Design System (Figma + docs/DESIGN_SYSTEM.md).
+Follow the Design System for visuals.
+
+Follow docs/plan.md + docs/PRD.md for business logic and phase order.

@@ -4,8 +4,9 @@
 
 Version 1.1
 
-**Design source:** [Figma mobile screens](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1)  
-**Brand:** TruePhone (former working name iPhoneSeguro is retired)
+**Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
+**Brand:** TruePhone (former working name iPhoneSeguro is retired)  
+**Business logic source:** this file + `docs/PRD.md` — not Figma
 
 ---
 
@@ -45,22 +46,16 @@ Trust is the product. Marketplace browse ships only after listings can be create
 
 ---
 
-# Design Source of Truth
+# Visual Design vs Business Logic
 
-Visual UI follows the Figma file linked above.
+| Concern                               | Source of truth                                         |
+| ------------------------------------- | ------------------------------------------------------- |
+| What to build, when, and why          | **This plan** + `docs/PRD.md`                           |
+| Colors, type, spacing, component look | `docs/DESIGN_SYSTEM.md` + Figma + `src/app/globals.css` |
 
-- Product name in UI and docs: **TruePhone**
-- Ignore “iPhoneSeguro” labels in Figma (legacy title only)
-- When Figma and older prose conflict on visuals, Figma wins
-- Tokens live in `docs/DESIGN_SYSTEM.md` and `src/app/globals.css`
+Figma is used only to absorb the **design system** (visual language).
 
-### Figma MVP screens
-
-1. Home
-2. Listing detail
-3. Seller identity verification
-4. Device possession verification
-5. Reviewer queue
+Do **not** infer product rules, workflows, or feature priority from Figma frames. Ignore legacy “iPhoneSeguro” labels in Figma.
 
 ---
 
@@ -73,7 +68,7 @@ MVP is complete when Phases **0–11** are done and PRD §28 acceptance criteria
 - Listings require manual review
 - Reviewers can approve or reject
 - Approved listings become public
-- Buyers can search and browse listings (Home + detail per Figma)
+- Buyers can search and browse listings
 - Buyers can purchase devices
 - Sellers receive payment after successful completion
 - Both parties can review each other
@@ -86,13 +81,13 @@ Seller identity verification (cédula + facial) is part of MVP (Phase 4).
 
 # Phase Exit Criteria
 
-| Phases | Exit bar                                                                |
-| ------ | ----------------------------------------------------------------------- |
-| 0–1    | Lint, typecheck, format, CI green; tokens match Figma; deployable shell |
-| 2–4    | Auth + profiles + identity verification work end-to-end on staging      |
-| 5–7    | Create → review → publish → browse/search works with real data          |
-| 8–11   | Order + payment + reviews complete a full purchase loop                 |
-| 12+    | Phase-specific quality gates (tests, SEO, monitoring as listed)         |
+| Phases | Exit bar                                                                    |
+| ------ | --------------------------------------------------------------------------- |
+| 0–1    | Lint, typecheck, format, CI green; design tokens in place; deployable shell |
+| 2–4    | Auth + profiles + identity verification work end-to-end on staging          |
+| 5–7    | Create → review → publish → browse/search works with real data              |
+| 8–11   | Order + payment + reviews complete a full purchase loop                     |
+| 12+    | Phase-specific quality gates (tests, SEO, monitoring as listed)             |
 
 Early phases do not require the full Phase 19 test suite. Add smoke tests as features land.
 
@@ -115,7 +110,7 @@ Deliverables
 - Folder structure
 - Documentation (including DATABASE + API stubs)
 - Environment variables
-- Design tokens (Figma-aligned)
+- Design tokens (aligned with DESIGN_SYSTEM / Figma look)
 - Theme + dark mode
 - Component library foundation
 - CI (GitHub Actions)
@@ -129,7 +124,7 @@ Status: ~80% complete (close Vercel + keep docs in sync).
 
 # Phase 1 — Design System
 
-Goal: Build reusable UI before features, matching Figma.
+Goal: Build reusable UI before features, using the design system.
 
 Deliverables
 
@@ -153,7 +148,7 @@ Deliverables
 - Skeletons / empty / error / loading states
 - Toasts / forms / icons
 - Responsive + accessible layout
-- Dark mode derived from light-first Figma
+- Dark mode derived carefully from the light-first visual system
 
 Result: UI foundation ready for auth and marketplace screens.
 
@@ -198,7 +193,7 @@ Result: Professional user identities.
 
 # Phase 4 — Seller Identity Verification
 
-Goal: Sellers prove who they are before high-trust selling (Figma flow).
+Goal: Sellers prove who they are before high-trust selling.
 
 Features
 
@@ -245,7 +240,7 @@ Result: Complete seller workflow with possession proof.
 
 # Phase 6 — Review Portal
 
-Goal: Human review matching Figma reviewer queue.
+Goal: Human review workflow for pending listings.
 
 Features
 
@@ -265,7 +260,7 @@ Result: Human review workflow.
 
 # Phase 7 — Marketplace
 
-Goal: Buyers discover verified devices (Figma Home + Detail).
+Goal: Buyers discover verified devices.
 
 Features
 
@@ -449,7 +444,7 @@ Tasks
 - Image optimization
 - Offline / PWA (future)
 
-Result: Excellent mobile UX (Figma is mobile-first).
+Result: Excellent mobile UX.
 
 ---
 

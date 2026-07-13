@@ -4,11 +4,14 @@ Version 2.0
 
 **Brand:** TruePhone  
 **Visual source of truth:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1)  
-**Implementation:** `src/app/globals.css`
+**Implementation:** `src/app/globals.css`  
+**Business logic:** `docs/plan.md` + `docs/PRD.md` (not Figma)
 
 Former working name **iPhoneSeguro** in Figma is retired. Always use **TruePhone** in product UI and docs.
 
-When Figma and this document disagree, update this document and CSS together. Figma wins on visuals.
+Figma is used only for the **visual design system** (color, type, spacing, component appearance). Do not infer product rules or workflows from Figma frames.
+
+When Figma and this document disagree on visuals, update this document and CSS together.
 
 ---
 
@@ -147,7 +150,7 @@ Hierarchy:
 4. **Destructive** — red for dangerous actions only
 5. **Link** — trust blue or primary text underline
 
-Full-width primary CTAs are common on mobile Figma screens.
+Full-width primary CTAs are common on mobile screens.
 
 ---
 
@@ -168,7 +171,7 @@ Five destinations:
 4. Purchases (Mis compras)
 5. Profile
 
-Public marketing pages may use a simpler top nav; authenticated marketplace shell uses bottom nav per Figma.
+Public marketing pages may use a simpler top nav; authenticated marketplace shell uses bottom nav when that shell ships per plan.md.
 
 ---
 
