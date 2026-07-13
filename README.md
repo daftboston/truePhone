@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TruePhone
 
-## Getting Started
+Trusted marketplace for buying and selling used iPhones in Colombia.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS + shadcn/ui
+- Prisma + Supabase Postgres
+- Vercel (deployment target)
+
+## Getting started
 
 ```bash
+cp .env.example .env
+npm install
+npx prisma generate
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command                | Description              |
+| ---------------------- | ------------------------ |
+| `npm run dev`          | Start development server |
+| `npm run build`        | Production build         |
+| `npm run lint`         | ESLint                   |
+| `npm run typecheck`    | TypeScript check         |
+| `npm run format`       | Prettier write           |
+| `npm run format:check` | Prettier check           |
 
-## Learn More
+## Documentation
 
-To learn more about Next.js, take a look at the following resources:
+Read in this order before implementing features:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. `docs/PRD.md`
+2. `docs/ARCHITECTURE.md`
+3. `docs/UX_PRINCIPLES.md`
+4. `docs/DESIGN_SYSTEM.md`
+5. `docs/COPY_GUIDELINES.md`
+6. `docs/COMPONENT_LIBRARY.md`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Development phases: `docs/plan.md`
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Connect the GitHub repo at [vercel.com/new](https://vercel.com/new) and set the environment variables from `.env.example`.
