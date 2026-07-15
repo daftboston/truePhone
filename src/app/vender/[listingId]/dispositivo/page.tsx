@@ -1,0 +1,61 @@
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
+
+import { AppShell } from "@/components/app-shell";
+import { DeviceDetailsForm } from "@/features/listings/components/device-details-form";
+import { ListingWizardShell } from "@/features/listings/components/listing-wizard-shell";
+import { isSellerIdentityVerified } from "@/features/verification/types";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { getCatalog, getOwnedListing } from "@/lib/listings";
+
+type PageProps = {
+  params: Promise<{ listingId: string }>;
+};
+
+export const metadata: Metadata = {
+  title: "Editar dispositivo",
+};
+
+export default async function EditDevicePage({ params }: PageProps) {
+  const { listingId } = await params;
+  const current = await getCurrentProfile();
+  if (!current) redirect(`/login?next=/vender/${listingId}/dispositivo`);
+  if (!isSellerIdentityVerified(current.profile.verifikStatus)) {
+    redirect("/vender");
+  }
+
+  const listing = await getOwnedListing(listingId, current.profile.id);
+  if (!listing) notFound();
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+
+  const catalog = await getCatalog();
+
+  return (
+    <AppShell mainClassName="max-w-lg">
+      <ListingWizardShell
+        step={1}
+        title="Datos del dispositivo"
+        listingId={listing.id}
+      >
+        <DeviceDetailsForm
+          models={catalog.models}
+          colors={catalog.colors}
+          storages={catalog.storages}
+          listingId={listing.id}
+          defaults={{
+            iphoneModelId: listing.iphoneModelId,
+            iphoneColorId: listing.iphoneColorId,
+            iphoneStorageId: listing.iphoneStorageId,
+            condition: listing.condition,
+            batteryHealth: listing.batteryHealth,
+            price: listing.price,
+            description: listing.description,
+            hasBox: listing.hasBox,
+            hasCharger: listing.hasCharger,
+            hasReceipt: listing.hasReceipt,
+          }}
+        />
+      </ListingWizardShell>
+    </AppShell>
+  );
+}

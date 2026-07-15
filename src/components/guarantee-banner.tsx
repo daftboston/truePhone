@@ -1,0 +1,30 @@
+import { ShieldCheck } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+type GuaranteeBannerProps = {
+  title?: string;
+  description?: string;
+  className?: string;
+};
+
+export function GuaranteeBanner({
+  title = "Compra garantizada",
+  description = "Cada iPhone es revisado manualmente antes de publicarse.",
+  className,
+}: GuaranteeBannerProps) {
+  return (
+    <aside
+      className={cn(
+        "bg-trust text-trust-foreground flex gap-3 rounded-xl p-4",
+        className,
+      )}
+    >
+      <ShieldCheck className="mt-0.5 size-5 shrink-0" aria-hidden />
+      <div className="space-y-1">
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="text-sm opacity-90">{description}</p>
+      </div>
+    </aside>
+  );
+}
