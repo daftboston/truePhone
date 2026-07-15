@@ -118,7 +118,7 @@ Deliverables
 
 Result: A clean, deployable project.
 
-Status: ~80% complete (close Vercel + keep docs in sync).
+Status: Complete (Vercel connected; keep docs in sync as features land).
 
 ---
 
@@ -151,6 +151,8 @@ Deliverables
 - Dark mode derived carefully from the light-first visual system
 
 Result: UI foundation ready for auth and marketplace screens.
+
+Status: Core Phase 1 complete (P0–P2 primitives + homepage showcase). Dialog, Drawer, Toast, and DataTable ship with Phase 2+ form/dashboard needs.
 
 ---
 
