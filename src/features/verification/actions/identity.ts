@@ -1,0 +1,381 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import {
+  approveIdentitySchema,
+  cedulaNumberSchema,
+  documentLast4,
+  hashDocumentNumber,
+  rejectIdentitySchema,
+} from "@/features/verification/schemas/identity";
+import {
+  fieldErrorsFromZod,
+  type VerificationActionState,
+} from "@/features/verification/types";
+import {
+  getLatestIdentityVerification,
+  getOrCreateDraftVerification,
+} from "@/lib/auth/identity";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
+import { createClient } from "@/lib/supabase/server";
+
+const IDENTITY_BUCKET = "identity-docs";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+async function requireSellerDraft() {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return { ok: false as const, error: "Debes iniciar sesión." };
+  }
+
+  const draft = await getOrCreateDraftVerification(current.profile.id);
+
+  if (draft.status === "PENDING" || draft.status === "IN_REVIEW") {
+    return {
+      ok: false as const,
+      error: "Tu verificación ya está en revisión.",
+    };
+  }
+  if (draft.status === "VERIFIED") {
+    return { ok: false as const, error: "Tu identidad ya está verificada." };
+  }
+
+  return { ok: true as const, current, draft };
+}
+
+async function uploadIdentityImage(
+  authUserId: string,
+  kind: "front" | "back" | "selfie",
+  file: File,
+): Promise<{ path: string } | { error: string }> {
+  if (!ALLOWED_TYPES.has(file.type)) {
+    return { error: "Usa una imagen JPG, PNG o WebP." };
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return { error: "La imagen debe pesar máximo 5 MB." };
+  }
+
+  const extension = file.type.split("/")[1] ?? "jpg";
+  const objectPath = `${authUserId}/${kind}-${Date.now()}.${extension}`;
+  const supabase = await createClient();
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const { error } = await supabase.storage
+    .from(IDENTITY_BUCKET)
+    .upload(objectPath, bytes, {
+      contentType: file.type,
+      upsert: true,
+    });
+
+  if (error) {
+    return {
+      error:
+        "No pudimos subir el archivo. Confirma que el bucket «identity-docs» existe en Supabase.",
+    };
+  }
+
+  // Private bucket: store the object path; owners can create signed URLs later.
+  return { path: `${IDENTITY_BUCKET}/${objectPath}` };
+}
+
+export async function acceptPrivacyAction(): Promise<VerificationActionState> {
+  const result = await requireSellerDraft();
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+
+  const { current, draft } = result;
+
+  await prisma.identityVerification.update({
+    where: { id: draft.id },
+    data: { privacyAcceptedAt: new Date() },
+  });
+
+  await prisma.profile.update({
+    where: { id: current.profile.id },
+    data: { verifikStatus: "draft" },
+  });
+
+  revalidatePath("/verificacion");
+  redirect("/verificacion/cedula-frente");
+}
+
+export async function saveCedulaFrontAction(
+  _prev: VerificationActionState,
+  formData: FormData,
+): Promise<VerificationActionState> {
+  const result = await requireSellerDraft();
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+  const { current, draft } = result;
+
+  if (!draft.privacyAcceptedAt) {
+    return { ok: false, error: "Primero acepta el aviso de privacidad." };
+  }
+
+  const parsed = cedulaNumberSchema.safeParse(formData.get("documentNumber"));
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Revisa el número de cédula.",
+      fieldErrors: fieldErrorsFromZod(parsed.error),
+    };
+  }
+
+  const file = formData.get("frontImage");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Sube la foto del frente de tu cédula." };
+  }
+
+  const upload = await uploadIdentityImage(current.user.id, "front", file);
+  if ("error" in upload) {
+    return { ok: false, error: upload.error };
+  }
+
+  await prisma.identityVerification.update({
+    where: { id: draft.id },
+    data: {
+      documentNumberHash: hashDocumentNumber(parsed.data),
+      documentNumberLast4: documentLast4(parsed.data),
+      frontImageUrl: upload.path,
+    },
+  });
+
+  revalidatePath("/verificacion");
+  redirect("/verificacion/cedula-reverso");
+}
+
+export async function saveCedulaBackAction(
+  _prev: VerificationActionState,
+  formData: FormData,
+): Promise<VerificationActionState> {
+  const result = await requireSellerDraft();
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+  const { current, draft } = result;
+
+  if (!draft.frontImageUrl) {
+    return { ok: false, error: "Completa primero el frente de la cédula." };
+  }
+
+  const file = formData.get("backImage");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Sube la foto del reverso de tu cédula." };
+  }
+
+  const upload = await uploadIdentityImage(current.user.id, "back", file);
+  if ("error" in upload) {
+    return { ok: false, error: upload.error };
+  }
+
+  await prisma.identityVerification.update({
+    where: { id: draft.id },
+    data: { backImageUrl: upload.path },
+  });
+
+  revalidatePath("/verificacion");
+  redirect("/verificacion/selfie");
+}
+
+export async function saveSelfieAction(
+  _prev: VerificationActionState,
+  formData: FormData,
+): Promise<VerificationActionState> {
+  const result = await requireSellerDraft();
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+  const { current, draft } = result;
+
+  if (!draft.backImageUrl) {
+    return { ok: false, error: "Completa primero el reverso de la cédula." };
+  }
+
+  const file = formData.get("selfieImage");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Sube una selfie clara de tu rostro." };
+  }
+
+  const upload = await uploadIdentityImage(current.user.id, "selfie", file);
+  if ("error" in upload) {
+    return { ok: false, error: upload.error };
+  }
+
+  await prisma.identityVerification.update({
+    where: { id: draft.id },
+    data: { selfieImageUrl: upload.path },
+  });
+
+  revalidatePath("/verificacion");
+  redirect("/verificacion/revisar");
+}
+
+export async function submitIdentityVerificationAction(): Promise<VerificationActionState> {
+  const result = await requireSellerDraft();
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+  const { current, draft } = result;
+
+  if (
+    !draft.privacyAcceptedAt ||
+    !draft.documentNumberHash ||
+    !draft.frontImageUrl ||
+    !draft.backImageUrl ||
+    !draft.selfieImageUrl
+  ) {
+    return {
+      ok: false,
+      error: "Completa todos los pasos antes de enviar.",
+    };
+  }
+
+  await prisma.identityVerification.update({
+    where: { id: draft.id },
+    data: {
+      status: "PENDING",
+      submittedAt: new Date(),
+    },
+  });
+
+  await prisma.profile.update({
+    where: { id: current.profile.id },
+    data: { verifikStatus: "pending" },
+  });
+
+  revalidatePath("/verificacion");
+  revalidatePath("/vender");
+  revalidatePath("/perfil");
+  revalidatePath("/revision/identidad");
+  redirect("/verificacion/enviada");
+}
+
+export async function approveIdentityVerificationAction(
+  _prev: VerificationActionState,
+  formData: FormData,
+): Promise<VerificationActionState> {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return { ok: false, error: "Debes iniciar sesión." };
+  }
+  if (current.profile.role !== "REVIEWER" && current.profile.role !== "ADMIN") {
+    return {
+      ok: false,
+      error: "No tienes permiso para aprobar verificaciones.",
+    };
+  }
+
+  const parsed = approveIdentitySchema.safeParse({
+    verificationId: formData.get("verificationId"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "Solicitud inválida." };
+  }
+
+  const verification = await prisma.identityVerification.findUnique({
+    where: { id: parsed.data.verificationId },
+  });
+  if (
+    !verification ||
+    (verification.status !== "PENDING" && verification.status !== "IN_REVIEW")
+  ) {
+    return { ok: false, error: "Esta verificación no está pendiente." };
+  }
+
+  await prisma.$transaction([
+    prisma.identityVerification.update({
+      where: { id: verification.id },
+      data: {
+        status: "VERIFIED",
+        reviewedAt: new Date(),
+        reviewerId: current.profile.id,
+        rejectionReason: null,
+      },
+    }),
+    prisma.profile.update({
+      where: { id: verification.profileId },
+      data: {
+        verifikStatus: "verified",
+        verifikVerifiedAt: new Date(),
+        role: "SELLER",
+      },
+    }),
+  ]);
+
+  revalidatePath("/revision/identidad");
+  revalidatePath("/vender");
+  revalidatePath("/perfil");
+  return { ok: true, message: "Identidad aprobada." };
+}
+
+export async function rejectIdentityVerificationAction(
+  _prev: VerificationActionState,
+  formData: FormData,
+): Promise<VerificationActionState> {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return { ok: false, error: "Debes iniciar sesión." };
+  }
+  if (current.profile.role !== "REVIEWER" && current.profile.role !== "ADMIN") {
+    return {
+      ok: false,
+      error: "No tienes permiso para rechazar verificaciones.",
+    };
+  }
+
+  const parsed = rejectIdentitySchema.safeParse({
+    verificationId: formData.get("verificationId"),
+    rejectionReason: formData.get("rejectionReason"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Revisa el motivo del rechazo.",
+      fieldErrors: fieldErrorsFromZod(parsed.error),
+    };
+  }
+
+  const verification = await prisma.identityVerification.findUnique({
+    where: { id: parsed.data.verificationId },
+  });
+  if (
+    !verification ||
+    (verification.status !== "PENDING" && verification.status !== "IN_REVIEW")
+  ) {
+    return { ok: false, error: "Esta verificación no está pendiente." };
+  }
+
+  await prisma.$transaction([
+    prisma.identityVerification.update({
+      where: { id: verification.id },
+      data: {
+        status: "REJECTED",
+        reviewedAt: new Date(),
+        reviewerId: current.profile.id,
+        rejectionReason: parsed.data.rejectionReason,
+      },
+    }),
+    prisma.profile.update({
+      where: { id: verification.profileId },
+      data: {
+        verifikStatus: "rejected",
+        verifikVerifiedAt: null,
+      },
+    }),
+  ]);
+
+  revalidatePath("/revision/identidad");
+  revalidatePath("/vender");
+  revalidatePath("/perfil");
+  return { ok: true, message: "Verificación rechazada." };
+}
+
+export async function getSellerVerificationSummary(profileId: string) {
+  return getLatestIdentityVerification(profileId);
+}

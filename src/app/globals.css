@@ -4,27 +4,26 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  TruePhone design tokens (Figma-aligned)
-  Primary CTA: near-black
-  Trust accent: bright blue (VERIFICADO, Compra Garantizada)
-  Brand: TruePhone (ignore legacy iPhoneSeguro labels in Figma)
-  Hex approximations — confirm in Figma Dev Mode when available
+  TruePhone — Stitch design language (light + dark)
+  Single source for mobile and desktop. Figma visual refs retired.
+  Primary CTA: royal blue
 */
 
 :root {
   --radius: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.06);
 
   --background: #ffffff;
   --foreground: #111111;
 
-  --card: #f4f4f5;
+  --card: #ffffff;
   --card-foreground: #111111;
 
   --popover: #ffffff;
   --popover-foreground: #111111;
 
-  /* Near-black primary CTA */
-  --primary: #0a0a0a;
+  /* Stitch primary action — blue */
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
 
   --secondary: #f4f4f5;
@@ -33,11 +32,10 @@
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
 
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
+  --accent: #eff6ff;
+  --accent-foreground: #1e3a8a;
 
-  /* Trust blue — badges / guarantee (not primary CTA) */
-  --trust: #2f6bff;
+  --trust: #2563eb;
   --trust-foreground: #ffffff;
 
   --destructive: #dc2626;
@@ -49,53 +47,55 @@
   --warning: #ca8a04;
   --warning-foreground: #422006;
 
-  --info: #2f6bff;
+  --info: #2563eb;
   --info-foreground: #ffffff;
 
   --border: #e4e4e7;
   --input: #e4e4e7;
-  --ring: #2f6bff;
+  --ring: #2563eb;
 
-  --chart-1: #0a0a0a;
-  --chart-2: #2f6bff;
+  --chart-1: #2563eb;
+  --chart-2: #0b0d12;
   --chart-3: #16a34a;
   --chart-4: #ca8a04;
   --chart-5: #dc2626;
 
   --sidebar: #ffffff;
   --sidebar-foreground: #111111;
-  --sidebar-primary: #0a0a0a;
+  --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f4f5;
-  --sidebar-accent-foreground: #18181b;
+  --sidebar-accent: #eff6ff;
+  --sidebar-accent-foreground: #1e3a8a;
   --sidebar-border: #e4e4e7;
-  --sidebar-ring: #2f6bff;
+  --sidebar-ring: #2563eb;
 }
 
 .dark {
-  --background: #09090b;
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.06);
+
+  --background: #0b0d12;
   --foreground: #fafafa;
 
-  --card: #18181b;
+  --card: #151922;
   --card-foreground: #fafafa;
 
-  --popover: #18181b;
+  --popover: #151922;
   --popover-foreground: #fafafa;
 
-  --primary: #fafafa;
-  --primary-foreground: #0a0a0a;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
 
-  --secondary: #27272a;
+  --secondary: #1c212b;
   --secondary-foreground: #fafafa;
 
-  --muted: #27272a;
+  --muted: #1c212b;
   --muted-foreground: #a1a1aa;
 
-  --accent: #27272a;
+  --accent: #1c212b;
   --accent-foreground: #fafafa;
 
-  --trust: #5b8cff;
-  --trust-foreground: #0a0a0a;
+  --trust: #3b82f6;
+  --trust-foreground: #ffffff;
 
   --destructive: #ef4444;
   --destructive-foreground: #fafafa;
@@ -106,27 +106,27 @@
   --warning: #eab308;
   --warning-foreground: #422006;
 
-  --info: #5b8cff;
-  --info-foreground: #0a0a0a;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
 
-  --border: #27272a;
-  --input: #27272a;
-  --ring: #5b8cff;
+  --border: #272a33;
+  --input: #272a33;
+  --ring: #3b82f6;
 
-  --chart-1: #fafafa;
-  --chart-2: #5b8cff;
+  --chart-1: #3b82f6;
+  --chart-2: #fafafa;
   --chart-3: #22c55e;
   --chart-4: #eab308;
   --chart-5: #ef4444;
 
-  --sidebar: #09090b;
+  --sidebar: #0b0d12;
   --sidebar-foreground: #fafafa;
-  --sidebar-primary: #fafafa;
-  --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: #27272a;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1c212b;
   --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #27272a;
-  --sidebar-ring: #5b8cff;
+  --sidebar-border: #272a33;
+  --sidebar-ring: #3b82f6;
 }
 
 @theme inline {
@@ -188,4 +188,8 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+}
+
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
 }

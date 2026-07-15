@@ -71,6 +71,17 @@ Seller/buyer identity linked to Supabase Auth via `authUserId`.
 
 Notable fields: role, city, ratings, `isTrustedSeller`, `verifikStatus` (identity verification).
 
+`verifikStatus` values: `not_submitted` | `draft` | `pending` | `verified` | `rejected`.
+
+## IdentityVerification
+
+Cédula + selfie submission for seller identity (Phase 4).
+
+- Stores image URLs in Supabase Storage (`identity-docs`)
+- Stores only `documentNumberLast4` + SHA-256 hash (never full cédula in plain text)
+- Status: `DRAFT` → `PENDING` → `VERIFIED` | `REJECTED` (optional `IN_REVIEW`)
+- Provider default: `manual` (human review); future Verifik/API can set `provider`
+
 ## IphoneModel / IphoneColor / IphoneStorage
 
 Catalog lookup tables for listing attributes.
@@ -81,7 +92,15 @@ Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flag
 
 ## ListingImage
 
-Ordered images per listing (`imageType` for gallery vs verification shots).
+Ordered images per listing (`imageType`: `gallery` | `possession`).
+
+## DevicePossessionChallenge
+
+One-time possession code + photo proving the seller has the physical device (Phase 5).
+
+- Linked 1:1 to a listing
+- `code` shown to seller; `photoUrl` after upload
+- Required before submit for review
 
 ## Message
 
@@ -99,10 +118,8 @@ Unique `(userId, listingId)` favorites.
 
 # Planned schema (not yet in Prisma)
 
-Documented for Phases 4–5 / 9; implement when those phases start:
+Documented for Phase 9+; implement when those phases start:
 
-- **IdentityVerification** — cédula + facial attempt status
-- **DevicePossessionChallenge** — one-time code, photo URL, listing link
 - **Order** — purchase lifecycle; wire `Review.orderId`
 - **Payment** / webhook event tables
 - **AuditLog** — reviewer and admin actions

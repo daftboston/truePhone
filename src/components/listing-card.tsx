@@ -32,7 +32,7 @@ export function ListingCard({
     <Link
       href={href}
       className={cn(
-        "bg-card text-card-foreground border-border block overflow-hidden rounded-xl border transition-opacity hover:opacity-95",
+        "bg-card text-card-foreground border-border shadow-card block overflow-hidden rounded-xl border transition-opacity hover:opacity-95",
         className,
       )}
     >

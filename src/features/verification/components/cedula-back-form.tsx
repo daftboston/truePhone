@@ -1,0 +1,45 @@
+"use client";
+
+import { useActionState } from "react";
+
+import { saveCedulaBackAction } from "@/features/verification/actions/identity";
+import type { VerificationActionState } from "@/features/verification/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+export function CedulaBackForm() {
+  const [state, formAction, pending] = useActionState<
+    VerificationActionState,
+    FormData
+  >(saveCedulaBackAction, null);
+
+  return (
+    <form action={formAction} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="backImage">Foto del reverso</Label>
+        <Input
+          id="backImage"
+          name="backImage"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          required
+          className="cursor-pointer pt-2"
+        />
+        <p className="text-muted-foreground text-xs">
+          Asegúrate de que el código de barras o QR se vea completo.
+        </p>
+      </div>
+
+      {state?.ok === false ? (
+        <p className="text-destructive text-sm" role="alert">
+          {state.error}
+        </p>
+      ) : null}
+
+      <Button type="submit" fullWidth loading={pending}>
+        Continuar
+      </Button>
+    </form>
+  );
+}

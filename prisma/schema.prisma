@@ -3,12 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-
+  provider = "postgresql"
 }
-
-
-
 
 // Enums
 enum UserRole {
@@ -38,6 +34,14 @@ enum Condition {
   POOR
 }
 
+enum IdentityVerificationStatus {
+  DRAFT
+  PENDING
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+}
+
 // Models
 model Profile {
   id                  String      @id @default(cuid())
@@ -48,7 +52,7 @@ model Profile {
   avatarUrl           String?
   phone               String?
   city                String?
-  department         String?
+  department          String?
   bio                 String?
   sellerRating        Float       @default(0)
   totalSales          Int         @default(0)
@@ -60,15 +64,43 @@ model Profile {
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 
-  listings            Listing[]
-  reviewsWritten      Review[]    @relation("ReviewWritten")
-  reviewsReceived     Review[]    @relation("ReviewReceived")
-  favorites           Favorite[]
-  sentMessages        Message[]   @relation("SentMessages")
-  receivedMessages    Message[]   @relation("ReceivedMessages")
-  reviewedListings    Listing[]   @relation("ReviewerListings")
+  listings               Listing[]
+  reviewsWritten         Review[]                 @relation("ReviewWritten")
+  reviewsReceived        Review[]                 @relation("ReviewReceived")
+  favorites              Favorite[]
+  sentMessages           Message[]                @relation("SentMessages")
+  receivedMessages       Message[]                @relation("ReceivedMessages")
+  reviewedListings       Listing[]                @relation("ReviewerListings")
+  identityVerifications  IdentityVerification[]   @relation("SellerIdentity")
+  identityReviews        IdentityVerification[]   @relation("IdentityReviewer")
 
   @@map("profiles")
+}
+
+model IdentityVerification {
+  id                   String                      @id @default(cuid())
+  profileId            String
+  profile              Profile                     @relation("SellerIdentity", fields: [profileId], references: [id])
+  status               IdentityVerificationStatus  @default(DRAFT)
+  documentType         String                      @default("cedula")
+  documentNumberLast4  String?
+  documentNumberHash   String?
+  frontImageUrl        String?
+  backImageUrl         String?
+  selfieImageUrl       String?
+  privacyAcceptedAt    DateTime?
+  submittedAt          DateTime?
+  reviewedAt           DateTime?
+  reviewerId           String?
+  reviewer             Profile?                    @relation("IdentityReviewer", fields: [reviewerId], references: [id])
+  rejectionReason      String?
+  provider             String                      @default("manual")
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+
+  @@index([profileId])
+  @@index([status])
+  @@map("identity_verifications")
 }
 
 model IphoneModel {
@@ -149,8 +181,25 @@ model Listing {
   images              ListingImage[]
   favorites           Favorite[]
   messages            Message[]
+  possessionChallenge DevicePossessionChallenge?
 
+  @@index([status])
+  @@index([sellerId])
   @@map("listings")
+}
+
+model DevicePossessionChallenge {
+  id         String    @id @default(cuid())
+  listingId  String    @unique
+  listing    Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  code       String
+  photoUrl   String?
+  verifiedAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@map("device_possession_challenges")
 }
 
 model ListingImage {

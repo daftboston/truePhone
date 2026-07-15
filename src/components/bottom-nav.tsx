@@ -24,7 +24,7 @@ export function BottomNav({ className }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        "bg-background border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)]",
+        "bg-background border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden",
         className,
       )}
       aria-label="Navegación principal"
@@ -45,7 +45,7 @@ export function BottomNav({ className }: BottomNavProps) {
                 aria-current={active ? "page" : undefined}
               >
                 <Icon
-                  className={cn("size-5", active && "text-trust")}
+                  className={cn("size-5", active && "text-primary")}
                   aria-hidden
                 />
                 <span>{label}</span>
