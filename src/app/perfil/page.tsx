@@ -15,7 +15,11 @@ import {
   verificationStatusLabel,
 } from "@/features/verification/types";
 import { getLatestIdentityVerification } from "@/lib/auth/identity";
-import { requireCurrentProfile, roleLabel } from "@/lib/auth/session";
+import {
+  requireCurrentProfile,
+  roleLabel,
+  canAccessReviewPortal,
+} from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Perfil",
@@ -74,6 +78,27 @@ export default async function ProfilePage() {
           </Button>
         </div>
       </section>
+
+      {canAccessReviewPortal(profile.role) ? (
+        <section className="border-border space-y-3 rounded-xl border p-4">
+          <div>
+            <h2 className="text-foreground text-sm font-semibold">
+              Centro de revisión
+            </h2>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Acceso de {roleLabel(profile.role)} a las colas de confianza.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild>
+              <Link href="/revision/anuncios">Cola de anuncios</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/revision/identidad">Cola de identidad</Link>
+            </Button>
+          </div>
+        </section>
+      ) : null}
 
       <section className="border-border space-y-4 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">

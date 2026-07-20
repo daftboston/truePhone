@@ -17,6 +17,7 @@ type AppHeaderProps = {
   className?: string;
   cartHref?: string;
   isAuthenticated?: boolean;
+  canReview?: boolean;
   user?: {
     fullName: string | null;
     avatarUrl: string | null;
@@ -37,8 +38,17 @@ export function AppHeader({
   className,
   cartHref = "/compras",
   isAuthenticated = false,
+  canReview = false,
   user = null,
 }: AppHeaderProps) {
+  const links = canReview
+    ? [
+        ...desktopLinks.slice(0, 2),
+        { href: "/revision", label: "Revisión" } as const,
+        ...desktopLinks.slice(2),
+      ]
+    : desktopLinks;
+
   return (
     <header
       className={cn(
@@ -75,7 +85,7 @@ export function AppHeader({
         </Link>
 
         <nav className="flex items-center gap-6" aria-label="Principal">
-          {desktopLinks.map((link) => (
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}

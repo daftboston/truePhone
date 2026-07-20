@@ -25,7 +25,7 @@ export default function ReviewHubPage() {
           <Link href="/revision/identidad">Cola de identidad</Link>
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/revision/anuncios">Cola de anuncios (Fase 6)</Link>
+          <Link href="/revision/anuncios">Cola de anuncios</Link>
         </Button>
       </div>
     </AppShell>

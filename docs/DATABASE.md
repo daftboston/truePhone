@@ -86,6 +86,8 @@ Cédula + selfie submission for seller identity (Phase 4).
 
 Catalog lookup tables for listing attributes.
 
+**Pending (before Phase 7):** colors are global today. Add a model↔color join (e.g. `IphoneModelColor`) so the listing wizard only offers colors that belong to the selected model. See `docs/plan.md` Phase 5 follow-up.
+
 ## Listing
 
 Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flags, review metadata, and `searchVector` (Postgres `tsvector`) for V1 search.

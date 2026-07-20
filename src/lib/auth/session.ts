@@ -85,3 +85,8 @@ export function roleLabel(role: string) {
       return role;
   }
 }
+
+/** Reviewer portal access (identity + listing queues). */
+export function canAccessReviewPortal(role: string) {
+  return role === "REVIEWER" || role === "ADMIN";
+}

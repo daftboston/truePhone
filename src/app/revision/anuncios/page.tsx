@@ -4,14 +4,29 @@ import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
+import { ReviewQueueRow } from "@/components/review-queue-row";
 import { Button } from "@/components/ui/button";
+import { ListingReviewTabs } from "@/features/listings/components/listing-review-tabs";
 import { getCurrentProfile } from "@/lib/auth/session";
+import {
+  countListingsForReview,
+  listListingsForReview,
+  parseListingReviewTab,
+  reviewStatusLabel,
+  sellerDisplayName,
+} from "@/lib/listings-review";
 
 export const metadata: Metadata = {
   title: "Cola de anuncios",
 };
 
-export default async function ListingReviewPlaceholderPage() {
+type PageProps = {
+  searchParams: Promise<{ tab?: string }>;
+};
+
+export default async function ListingReviewQueuePage({
+  searchParams,
+}: PageProps) {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/anuncios");
 
@@ -31,17 +46,64 @@ export default async function ListingReviewPlaceholderPage() {
     );
   }
 
+  const params = await searchParams;
+  const tab = parseListingReviewTab(params.tab);
+  const [listings, counts] = await Promise.all([
+    listListingsForReview(tab),
+    countListingsForReview(),
+  ]);
+
   return (
-    <AppShell mainClassName="max-w-lg justify-center">
-      <EmptyState
-        title="Cola de anuncios — próxima fase"
-        description="Los anuncios en PENDING_REVIEW ya se guardan. La UI de aprobación/rechazo es la Fase 6."
-        action={
-          <Button asChild>
-            <Link href="/revision/identidad">Ir a cola de identidad</Link>
-          </Button>
-        }
-      />
+    <AppShell mainClassName="max-w-lg gap-6">
+      <div className="space-y-2">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
+          Cola de anuncios
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Revisa pendientes y consulta el historial de aprobados y rechazados.
+        </p>
+      </div>
+
+      <ListingReviewTabs active={tab} counts={counts} />
+
+      {listings.length === 0 ? (
+        <EmptyState
+          title="No hay anuncios en esta cola"
+          description={
+            tab === "aprobados" || tab === "rechazados" || tab === "todos"
+              ? "Aún no hay anuncios en este filtro."
+              : "Cuando un vendedor envíe un anuncio a revisión, aparecerá aquí."
+          }
+          action={
+            <Button asChild variant="outline">
+              <Link href="/revision">Volver al centro</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="border-border overflow-hidden rounded-xl border">
+          {listings.map((listing) => {
+            const thumb = listing.images[0]?.imageUrl;
+            const stamp = (
+              listing.reviewedAt ?? listing.updatedAt
+            ).toLocaleString("es-CO", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            });
+            return (
+              <ReviewQueueRow
+                key={listing.id}
+                href={`/revision/anuncios/${listing.id}`}
+                title={listing.title}
+                sellerName={sellerDisplayName(listing.seller)}
+                submittedAt={stamp}
+                imageUrl={thumb}
+                statusLabel={reviewStatusLabel(listing)}
+              />
+            );
+          })}
+        </div>
+      )}
     </AppShell>
   );
 }

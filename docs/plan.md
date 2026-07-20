@@ -238,6 +238,12 @@ Listing lifecycle
 
 Result: Complete seller workflow with possession proof.
 
+### Pending follow-up (not blocking Phase 6)
+
+| Item                                               | Status  | When to do it                                              | Notes                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------- | ------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Filter listing colors by selected iPhone model** | Pending | **Phase 5 polish — complete before Phase 7 (Marketplace)** | Today `IphoneColor` is a global catalog; `/vender` shows every color for every model. Needs a model↔color relation (e.g. `IphoneModelColor`), seed data per model, and `device-details-form` filtering. Do this before public browse so seller listings pick accurate colors. |
+
 ---
 
 # Phase 6 — Review Portal
@@ -247,13 +253,18 @@ Goal: Human review workflow for pending listings.
 Features
 
 - Reviewer dashboard / cola de revisión
-- Tabs: Todos / Pendiente / En Revisión
-- Approve / reject listing
-- Internal notes / audit logs
-- Image review
-- Duplicate detection
-- Quality checklist
-- Listing history
+- Tabs: Pendiente / En revisión / Aprobados / Rechazados / Todos
+  - **Pendiente:** `PENDING_REVIEW` without assigned `reviewerId`
+  - **En revisión:** `PENDING_REVIEW` with `reviewerId` (claimed on open)
+  - **Aprobados / Rechazados:** history for tracking and corrections
+  - **Todos:** active queue + history
+- Approve / reject listing (approve → `PUBLISHED`; reject → `REJECTED` + seller-facing reason)
+- Re-open decisions: update notes or change approve ↔ reject after the fact
+- Internal notes (`reviewerNotes`)
+- Image review (gallery + possession)
+- Duplicate detection (same IMEI hash or same seller + model in active statuses)
+- Quality checklist (guidance UI; not persisted)
+- Listing detail history fields (`reviewedAt`, `approvedAt`, rejection reason)
 - Trust-standard messaging
 
 Result: Human review workflow.

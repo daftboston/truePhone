@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, PlusCircle, ShoppingBag, UserRound } from "lucide-react";
+import {
+  ClipboardCheck,
+  Home,
+  Search,
+  PlusCircle,
+  ShoppingBag,
+  UserRound,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const items = [
+const baseItems = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/buscar", label: "Buscar", icon: Search },
   { href: "/vender", label: "Vender", icon: PlusCircle },
@@ -16,10 +23,24 @@ const items = [
 
 type BottomNavProps = {
   className?: string;
+  showReview?: boolean;
 };
 
-export function BottomNav({ className }: BottomNavProps) {
+export function BottomNav({ className, showReview = false }: BottomNavProps) {
   const pathname = usePathname();
+  const items = showReview
+    ? [
+        baseItems[0],
+        baseItems[1],
+        baseItems[2],
+        {
+          href: "/revision",
+          label: "Revisión",
+          icon: ClipboardCheck,
+        } as const,
+        baseItems[4],
+      ]
+    : baseItems;
 
   return (
     <nav
@@ -32,7 +53,11 @@ export function BottomNav({ className }: BottomNavProps) {
       <ul className="mx-auto grid max-w-lg grid-cols-5">
         {items.map(({ href, label, icon: Icon }) => {
           const active =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+            href === "/"
+              ? pathname === "/"
+              : href === "/revision"
+                ? pathname.startsWith("/revision")
+                : pathname.startsWith(href);
 
           return (
             <li key={href}>

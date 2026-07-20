@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import type {
   Condition,
   IphoneColor,
@@ -12,15 +12,17 @@ import {
   createListingAction,
   updateListingDetailsAction,
 } from "@/features/listings/actions/listings";
-import { conditionLabels } from "@/features/listings/schemas/listing";
+import {
+  BUYER_PROTECTION_FEE_RATE,
+  computeFees,
+  conditionLabels,
+} from "@/features/listings/schemas/listing";
 import type { ListingActionState } from "@/features/listings/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { computeFees } from "@/features/listings/schemas/listing";
-import { useMemo, useState } from "react";
 
 type DeviceFormProps = {
   models: IphoneModel[];
@@ -41,6 +43,22 @@ type DeviceFormProps = {
   };
 };
 
+function formatCop(value: number) {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function parsePriceInput(raw: string) {
+  const digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return { display: "", amount: 0 };
+  // Strip leading zeros while typing (keeps a single 0 only if empty→0 mid-edit)
+  const normalized = digits.replace(/^0+(?=\d)/, "");
+  return { display: normalized, amount: Number(normalized) };
+}
+
 export function DeviceDetailsForm({
   models,
   colors,
@@ -57,8 +75,15 @@ export function DeviceDetailsForm({
     FormData
   >(action, null);
 
-  const [price, setPrice] = useState(defaults?.price ?? 2_500_000);
-  const fees = useMemo(() => computeFees(price || 0), [price]);
+  const [priceInput, setPriceInput] = useState(
+    defaults?.price != null && defaults.price > 0 ? String(defaults.price) : "",
+  );
+  const priceAmount = useMemo(
+    () => parsePriceInput(priceInput).amount,
+    [priceInput],
+  );
+  const fees = useMemo(() => computeFees(priceAmount), [priceAmount]);
+  const feePercent = Math.round(BUYER_PROTECTION_FEE_RATE * 100);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -150,23 +175,65 @@ export function DeviceDetailsForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="price">Precio del equipo (COP)</Label>
-        <Input
-          id="price"
-          name="price"
-          type="number"
-          min={100000}
-          step={1000}
-          required
-          value={price}
-          onChange={(event) => setPrice(Number(event.target.value))}
-        />
-        <p className="text-muted-foreground text-xs">
-          Protección al comprador (6%): $
-          {fees.platformFee.toLocaleString("es-CO")} · Total comprador: $
-          {fees.finalPrice.toLocaleString("es-CO")}
-        </p>
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="price">Precio del equipo (COP)</Label>
+          <Input
+            id="price"
+            name="price"
+            inputMode="numeric"
+            autoComplete="off"
+            required
+            placeholder="Ej. 2500000"
+            value={priceInput}
+            onChange={(event) => {
+              const next = parsePriceInput(event.target.value);
+              setPriceInput(next.display);
+            }}
+          />
+          <p className="text-muted-foreground text-xs">
+            Tú recibes el precio completo del equipo. El comprador paga la
+            protección TruePhone ({feePercent}%).
+          </p>
+        </div>
+
+        <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4">
+          <p className="text-foreground text-sm font-semibold">
+            Calculadora de precio
+          </p>
+          <dl className="space-y-2 text-sm">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">Precio del equipo</dt>
+              <dd className="text-foreground font-medium tabular-nums">
+                {priceAmount > 0 ? formatCop(priceAmount) : "—"}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">
+                Protección TruePhone ({feePercent}%)
+                <span className="block text-xs">Pagada por el comprador</span>
+              </dt>
+              <dd className="text-foreground font-medium tabular-nums">
+                {priceAmount > 0 ? formatCop(fees.platformFee) : "—"}
+              </dd>
+            </div>
+            <div className="border-border flex items-baseline justify-between gap-4 border-t pt-2">
+              <dt className="text-foreground font-medium">Total comprador</dt>
+              <dd className="text-foreground text-base font-semibold tabular-nums">
+                {priceAmount > 0 ? formatCop(fees.finalPrice) : "—"}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">
+                Tú recibes
+                <span className="block text-xs">Sin comisión de vendedor</span>
+              </dt>
+              <dd className="text-foreground font-medium tabular-nums">
+                {priceAmount > 0 ? formatCop(priceAmount) : "—"}
+              </dd>
+            </div>
+          </dl>
+        </div>
       </div>
 
       <div className="space-y-2">

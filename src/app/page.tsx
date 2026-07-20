@@ -19,7 +19,7 @@ export default function HomePage() {
             Compra con total tranquilidad
           </h1>
           <p className="text-muted-foreground max-w-xl text-base md:text-lg">
-            Marketplace confiable para comprar y vender iPhones usados en
+            El Marketplace confiable para comprar y vender iPhones usados en
             Colombia.
           </p>
         </div>

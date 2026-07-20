@@ -1,7 +1,7 @@
 import { AppHeader } from "@/components/app-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { getProfileByAuthUserId } from "@/lib/auth/profile";
-import { getAuthUser } from "@/lib/auth/session";
+import { canAccessReviewPortal, getAuthUser } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -17,6 +17,7 @@ export async function AppShell({
 }: AppShellProps) {
   const user = await getAuthUser();
   const profile = user ? await getProfileByAuthUserId(user.id) : null;
+  const canReview = profile ? canAccessReviewPortal(profile.role) : false;
 
   return (
     <div
@@ -27,6 +28,7 @@ export async function AppShell({
     >
       <AppHeader
         isAuthenticated={Boolean(user)}
+        canReview={canReview}
         user={
           profile
             ? {
@@ -44,7 +46,7 @@ export async function AppShell({
       >
         {children}
       </main>
-      <BottomNav />
+      <BottomNav showReview={canReview} />
     </div>
   );
 }

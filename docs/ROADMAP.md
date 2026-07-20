@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phase 1 complete → ready for Phase 2 (Authentication)  
+**Status:** Phases 0–5 complete → **Phase 6 (Review Portal)** in progress  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Visual tokens:** [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) (Figma look reference only)
 
@@ -11,9 +11,9 @@ Former working name **iPhoneSeguro** is retired. Brand in product and docs is **
 
 ## Current focus
 
-1. **Phase 2 — Authentication** (Supabase Auth)
-2. Ensure Vercel deploys this branch (or merge to `main`) so production shows the design system
-3. Then Phases 3–4 (profiles + seller identity verification)
+1. **Phase 6 — Review Portal** (listing approve / reject queue)
+2. Then Phase 7 — Marketplace browse / search
+3. **Pending before Phase 7:** filter listing colors by selected iPhone model (see [plan.md](./plan.md) Phase 5 follow-up)
 
 Full phase detail: [plan.md](./plan.md)
 
@@ -21,11 +21,16 @@ Full phase detail: [plan.md](./plan.md)
 
 ## Phase checklist
 
-| Phase            | Status                                                                     |
-| ---------------- | -------------------------------------------------------------------------- |
-| 0 Foundation     | Complete                                                                   |
-| 1 Design System  | Complete (core primitives; Dialog/Drawer/Toast/DataTable with later forms) |
-| 2 Authentication | Next                                                                       |
+| Phase              | Status                                                                     |
+| ------------------ | -------------------------------------------------------------------------- |
+| 0 Foundation       | Complete                                                                   |
+| 1 Design System    | Complete (core primitives; Dialog/Drawer/Toast/DataTable with later forms) |
+| 2 Authentication   | Complete                                                                   |
+| 3 Profiles         | Complete                                                                   |
+| 4 Seller identity  | Complete (manual review pipeline)                                          |
+| 5 Listing creation | Complete (possession proof + submit)                                       |
+| 6 Review Portal    | In progress                                                                |
+| 7 Marketplace      | Next after Phase 6                                                         |
 
 ---
 
@@ -39,11 +44,11 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-| Step       | Outcome                                      |
-| ---------- | -------------------------------------------- |
-| Phase 2–4  | Auth, profiles, seller identity verification |
-| Phase 5–7  | Listing → review → marketplace browse/search |
-| Phase 8–11 | Messaging, orders, payments, reviews         |
+| Step       | Outcome                                  |
+| ---------- | ---------------------------------------- |
+| Phase 6    | Listing review portal (approve / reject) |
+| Phase 7    | Marketplace browse / search              |
+| Phase 8–11 | Messaging, orders, payments, reviews     |
 
 ---
 
