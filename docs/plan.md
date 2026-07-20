@@ -240,9 +240,9 @@ Result: Complete seller workflow with possession proof.
 
 ### Pending follow-up (not blocking Phase 6)
 
-| Item                                               | Status  | When to do it                                              | Notes                                                                                                                                                                                                                                                                         |
-| -------------------------------------------------- | ------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Filter listing colors by selected iPhone model** | Pending | **Phase 5 polish — complete before Phase 7 (Marketplace)** | Today `IphoneColor` is a global catalog; `/vender` shows every color for every model. Needs a model↔color relation (e.g. `IphoneModelColor`), seed data per model, and `device-details-form` filtering. Do this before public browse so seller listings pick accurate colors. |
+| Item                                               | Status   | When to do it            | Notes                                                                        |
+| -------------------------------------------------- | -------- | ------------------------ | ---------------------------------------------------------------------------- |
+| **Filter listing colors by selected iPhone model** | **Done** | Completed before Phase 7 | `IphoneModelColor` join + seed mappings + wizard filter + server validation. |
 
 ---
 

@@ -11,9 +11,9 @@ Former working name **iPhoneSeguro** is retired. Brand in product and docs is **
 
 ## Current focus
 
-1. **Phase 6 — Review Portal** (listing approve / reject queue)
+1. **Phase 6 — Review Portal** (listing approve / reject queue) — complete on main
 2. Then Phase 7 — Marketplace browse / search
-3. **Pending before Phase 7:** filter listing colors by selected iPhone model (see [plan.md](./plan.md) Phase 5 follow-up)
+3. **Done before Phase 7:** filter listing colors by selected iPhone model
 
 Full phase detail: [plan.md](./plan.md)
 

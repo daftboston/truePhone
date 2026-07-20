@@ -45,6 +45,7 @@ export default async function NewListingPage() {
           models={catalog.models}
           colors={catalog.colors}
           storages={catalog.storages}
+          colorIdsByModelId={catalog.colorIdsByModelId}
         />
       </ListingWizardShell>
     </AppShell>

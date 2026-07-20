@@ -21,6 +21,7 @@ import {
 import {
   getCatalog,
   getOwnedListing,
+  isColorAllowedForModel,
   requireVerifiedSeller,
 } from "@/lib/listings";
 import { prisma } from "@/lib/db";
@@ -115,6 +116,14 @@ export async function createListingAction(
     return { ok: false, error: "Modelo, color o almacenamiento no válido." };
   }
 
+  const colorAllowed = await isColorAllowedForModel(model.id, color.id);
+  if (!colorAllowed) {
+    return {
+      ok: false,
+      error: "Ese color no está disponible para el modelo seleccionado.",
+    };
+  }
+
   const fees = computeFees(parsed.data.price);
   const idSuffix = crypto.randomUUID().slice(0, 8);
   const title = buildListingTitle({
@@ -206,6 +215,14 @@ export async function updateListingDetailsAction(
 
   if (!model || !color || !storage) {
     return { ok: false, error: "Modelo, color o almacenamiento no válido." };
+  }
+
+  const colorAllowed = await isColorAllowedForModel(model.id, color.id);
+  if (!colorAllowed) {
+    return {
+      ok: false,
+      error: "Ese color no está disponible para el modelo seleccionado.",
+    };
   }
 
   const fees = computeFees(parsed.data.price);

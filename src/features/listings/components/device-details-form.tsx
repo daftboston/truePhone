@@ -28,6 +28,7 @@ type DeviceFormProps = {
   models: IphoneModel[];
   colors: IphoneColor[];
   storages: IphoneStorage[];
+  colorIdsByModelId: Record<string, string[]>;
   listingId?: string;
   defaults?: {
     iphoneModelId: string;
@@ -63,6 +64,7 @@ export function DeviceDetailsForm({
   models,
   colors,
   storages,
+  colorIdsByModelId,
   listingId,
   defaults,
 }: DeviceFormProps) {
@@ -74,6 +76,19 @@ export function DeviceDetailsForm({
     ListingActionState,
     FormData
   >(action, null);
+
+  const [selectedModelId, setSelectedModelId] = useState(
+    defaults?.iphoneModelId ?? "",
+  );
+  const [selectedColorId, setSelectedColorId] = useState(
+    defaults?.iphoneColorId ?? "",
+  );
+
+  const availableColors = useMemo(() => {
+    if (!selectedModelId) return [];
+    const allowed = new Set(colorIdsByModelId[selectedModelId] ?? []);
+    return colors.filter((color) => allowed.has(color.id));
+  }, [selectedModelId, colorIdsByModelId, colors]);
 
   const [priceInput, setPriceInput] = useState(
     defaults?.price != null && defaults.price > 0 ? String(defaults.price) : "",
@@ -93,7 +108,15 @@ export function DeviceDetailsForm({
           id="iphoneModelId"
           name="iphoneModelId"
           required
-          defaultValue={defaults?.iphoneModelId ?? ""}
+          value={selectedModelId}
+          onChange={(event) => {
+            const nextModelId = event.target.value;
+            setSelectedModelId(nextModelId);
+            const allowed = new Set(colorIdsByModelId[nextModelId] ?? []);
+            setSelectedColorId((current) =>
+              allowed.has(current) ? current : "",
+            );
+          }}
         >
           <option value="" disabled>
             Selecciona
@@ -131,12 +154,18 @@ export function DeviceDetailsForm({
             id="iphoneColorId"
             name="iphoneColorId"
             required
-            defaultValue={defaults?.iphoneColorId ?? ""}
+            disabled={!selectedModelId || availableColors.length === 0}
+            value={selectedColorId}
+            onChange={(event) => setSelectedColorId(event.target.value)}
           >
             <option value="" disabled>
-              Selecciona
+              {!selectedModelId
+                ? "Elige un modelo primero"
+                : availableColors.length === 0
+                  ? "Sin colores para este modelo"
+                  : "Selecciona"}
             </option>
-            {colors.map((color) => (
+            {availableColors.map((color) => (
               <option key={color.id} value={color.id}>
                 {color.name}
               </option>

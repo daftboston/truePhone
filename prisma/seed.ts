@@ -38,6 +38,43 @@ const colors = [
   { name: "Grafito", hex: "#52525B" },
 ];
 
+/** Official-ish color sets mapped to our catalog names. */
+const modelColorNames: Record<string, string[]> = {
+  "iphone-16-pro-max": [
+    "Titanio natural",
+    "Titanio negro",
+    "Titanio blanco",
+    "Titanio azul",
+  ],
+  "iphone-16-pro": [
+    "Titanio natural",
+    "Titanio negro",
+    "Titanio blanco",
+    "Titanio azul",
+  ],
+  "iphone-16": ["Negro", "Blanco", "Rosa", "Verde", "Azul"],
+  "iphone-15-pro-max": [
+    "Titanio natural",
+    "Titanio negro",
+    "Titanio blanco",
+    "Titanio azul",
+  ],
+  "iphone-15-pro": [
+    "Titanio natural",
+    "Titanio negro",
+    "Titanio blanco",
+    "Titanio azul",
+  ],
+  "iphone-15": ["Negro", "Azul", "Verde", "Dorado", "Rosa"],
+  "iphone-14-pro-max": ["Morado", "Dorado", "Blanco", "Negro"],
+  "iphone-14-pro": ["Morado", "Dorado", "Blanco", "Negro"],
+  "iphone-14": ["Azul", "Morado", "Negro", "Blanco", "Rosa", "Dorado"],
+  "iphone-13-pro": ["Grafito", "Dorado", "Blanco", "Azul", "Verde"],
+  "iphone-13": ["Rosa", "Azul", "Negro", "Blanco", "Verde"],
+  "iphone-12": ["Negro", "Blanco", "Rosa", "Verde", "Azul", "Morado"],
+  "iphone-se-3": ["Negro", "Blanco", "Rosa"],
+};
+
 const storages = [64, 128, 256, 512, 1024];
 
 async function main() {
@@ -65,8 +102,35 @@ async function main() {
     });
   }
 
+  const allModels = await prisma.iphoneModel.findMany();
+  const allColors = await prisma.iphoneColor.findMany();
+  const colorByName = new Map(allColors.map((color) => [color.name, color]));
+
+  let links = 0;
+  for (const model of allModels) {
+    const allowed = modelColorNames[model.slug] ?? [];
+    for (const colorName of allowed) {
+      const color = colorByName.get(colorName);
+      if (!color) continue;
+      await prisma.iphoneModelColor.upsert({
+        where: {
+          iphoneModelId_iphoneColorId: {
+            iphoneModelId: model.id,
+            iphoneColorId: color.id,
+          },
+        },
+        update: {},
+        create: {
+          iphoneModelId: model.id,
+          iphoneColorId: color.id,
+        },
+      });
+      links += 1;
+    }
+  }
+
   console.log(
-    `Seeded ${models.length} models, ${colors.length} colors, ${storages.length} storages.`,
+    `Seeded ${models.length} models, ${colors.length} colors, ${storages.length} storages, ${links} model↔color links.`,
   );
 }
 

@@ -41,6 +41,7 @@ export default async function EditDevicePage({ params }: PageProps) {
           models={catalog.models}
           colors={catalog.colors}
           storages={catalog.storages}
+          colorIdsByModelId={catalog.colorIdsByModelId}
           listingId={listing.id}
           defaults={{
             iphoneModelId: listing.iphoneModelId,

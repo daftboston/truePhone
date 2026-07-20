@@ -50,12 +50,35 @@ export async function listSellerListings(sellerId: string) {
 }
 
 export async function getCatalog() {
-  const [models, colors, storages] = await Promise.all([
+  const [models, colors, storages, modelColors] = await Promise.all([
     prisma.iphoneModel.findMany({ orderBy: { releaseYear: "desc" } }),
     prisma.iphoneColor.findMany({ orderBy: { name: "asc" } }),
     prisma.iphoneStorage.findMany({ orderBy: { valueGb: "asc" } }),
+    prisma.iphoneModelColor.findMany({
+      select: { iphoneModelId: true, iphoneColorId: true },
+    }),
   ]);
-  return { models, colors, storages };
+
+  const colorIdsByModelId: Record<string, string[]> = {};
+  for (const link of modelColors) {
+    colorIdsByModelId[link.iphoneModelId] ??= [];
+    colorIdsByModelId[link.iphoneModelId].push(link.iphoneColorId);
+  }
+
+  return { models, colors, storages, colorIdsByModelId };
+}
+
+export async function isColorAllowedForModel(
+  iphoneModelId: string,
+  iphoneColorId: string,
+) {
+  const link = await prisma.iphoneModelColor.findUnique({
+    where: {
+      iphoneModelId_iphoneColorId: { iphoneModelId, iphoneColorId },
+    },
+    select: { id: true },
+  });
+  return Boolean(link);
 }
 
 export async function ensurePossessionChallenge(listingId: string) {
