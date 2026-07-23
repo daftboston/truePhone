@@ -8,6 +8,9 @@ const PROTECTED_PREFIXES = [
   "/perfil",
   "/vender",
   "/compras",
+  "/ventas",
+  "/favoritos",
+  "/mensajes",
   "/verificacion",
   "/revision",
 ];
@@ -19,13 +22,20 @@ function matchesPrefix(pathname: string, prefixes: string[]) {
   );
 }
 
+function withPathnameHeaders(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+  requestHeaders.set("x-search", request.nextUrl.search);
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+}
+
 /**
  * Refreshes the Supabase Auth session and enforces auth for protected routes.
  */
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  let supabaseResponse = withPathnameHeaders(request);
 
   const { url, anonKey } = getSupabaseEnv();
 
@@ -38,9 +48,7 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) => {
           request.cookies.set(name, value);
         });
-        supabaseResponse = NextResponse.next({
-          request,
-        });
+        supabaseResponse = withPathnameHeaders(request);
         cookiesToSet.forEach(({ name, value, options }) => {
           supabaseResponse.cookies.set(name, value, options);
         });
@@ -54,12 +62,14 @@ export async function updateSession(request: NextRequest) {
   // Keeps the session fresh for Server Components. Do not remove.
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
+  const nextAfterLogin = safeNextPath(`${pathname}${search}`);
 
   if (!user && matchesPrefix(pathname, PROTECTED_PREFIXES)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
-    loginUrl.searchParams.set("next", safeNextPath(pathname));
+    loginUrl.search = "";
+    loginUrl.searchParams.set("next", nextAfterLogin);
     return NextResponse.redirect(loginUrl);
   }
 

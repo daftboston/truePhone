@@ -9,6 +9,8 @@ type ListingWizardShellProps = {
   step: number;
   title: string;
   listingId?: string;
+  /** Prior rejection reason kept on DRAFT until the next successful submit. */
+  rejectionReason?: string | null;
   children: React.ReactNode;
   className?: string;
 };
@@ -17,9 +19,12 @@ export function ListingWizardShell({
   step,
   title,
   listingId,
+  rejectionReason,
   children,
   className,
 }: ListingWizardShellProps) {
+  const reason = rejectionReason?.trim();
+
   return (
     <div className={cn("mx-auto w-full max-w-lg space-y-6", className)}>
       <StepProgressHeader
@@ -28,6 +33,19 @@ export function ListingWizardShell({
         eyebrow="Publicar iPhone"
         title={title}
       />
+      {reason ? (
+        <aside className="border-destructive/40 bg-destructive/5 space-y-1 rounded-xl border p-3">
+          <p className="text-foreground text-sm font-semibold">
+            Motivo del rechazo anterior
+          </p>
+          <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+            {reason}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            Corrige lo indicado y vuelve a enviar el anuncio a revisión.
+          </p>
+        </aside>
+      ) : null}
       {children}
       <div className="flex flex-col gap-2 sm:flex-row">
         {listingId && step > 1 ? (

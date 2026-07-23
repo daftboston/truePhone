@@ -26,7 +26,7 @@ export default async function ListingPhotosPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   const gallery = listing.images.filter(
     (image) => image.imageType === "gallery",
@@ -38,6 +38,7 @@ export default async function ListingPhotosPage({ params }: PageProps) {
         step={2}
         title="Fotos del iPhone"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <GalleryUploadForm listingId={listing.id} images={gallery} />
       </ListingWizardShell>

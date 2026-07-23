@@ -229,12 +229,11 @@ Listing lifecycle
 1. Draft
 2. Submitted
 3. Pending Review
-4. Approved
-5. Published
-6. Reserved
-7. Sold
-8. Archived
-9. Rejected (terminal from review)
+4. Published (approve writes `PUBLISHED` directly; `APPROVED` enum is legacy/compat only — see DATABASE.md)
+5. Reserved (Phase 9)
+6. Sold (Phase 9+)
+7. Archived
+8. Rejected (terminal from review; may reopen to draft)
 
 Result: Complete seller workflow with possession proof.
 
@@ -269,6 +268,8 @@ Features
 
 Result: Human review workflow.
 
+Status: Complete (listing review queue, claim-on-open, approve/reject + re-open, seller-facing rejection reason, seller listing hub). `/revision` hub shows live queue counts (anuncios + identidad); staff entry via Mi TruePhone → Operaciones only.
+
 ---
 
 # Phase 7 — Marketplace
@@ -287,22 +288,53 @@ Features
 - Recently viewed
 - Basic SEO metadata on public pages
 
+Also shipped with / after this phase (same discovery surface):
+
+- Explore hub `/explorar` (series + model picker) → filtered `/buscar`
+- Home model typeahead (models by series, not listing search)
+- Account pages under `src/app/(account)/` only (`/perfil`, `/compras`, `/favoritos`, `/mensajes`, `/vender` list, `/ventas`) — do not reintroduce parallel `src/app/compras` / `src/app/perfil` / `src/app/favoritos` trees
+- Recently viewed: **localStorage V1** (`src/lib/recently-viewed.ts`); hydrate cards via Server Action — no server history table yet
+- Seller listing summary `/vender/[listingId]` (status, rejection reason, reopen draft)
+- Home Swappa-inspired hero + trust strip (TruePhone voice); featured / recently viewed below
+
+### Public vs account vs ops chrome
+
+| Surface                                 | Purpose                  | Entry                                                                                                      |
+| --------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| **Public chrome**                       | Discovery only           | Header: logo · Explorar · search · profile/login · Vender. Bottom nav: Inicio · Explorar · Vender · Perfil |
+| **Mi TruePhone** (`(account)` sidebar)  | Transactions + messaging | Compras, Mensajes, Favoritos, Ventas, Verificación — **not** in the public header                          |
+| **Operaciones** (REVIEWER / ADMIN only) | Trust queues             | Sidebar → Revisión → `/revision` hub (queue counts) → anuncios / identidad. Never in public buyer chrome   |
+
 Result: Users can discover and inspect devices.
+
+Status: Complete (hero + slim public nav + account/ops split).
 
 ---
 
 # Phase 8 — Messaging
 
-Features
+Goal: Keep buyer ↔ seller (and seller ↔ reviewer) communication on-platform.
 
-- Buyer ↔ Seller chat
-- Conversation list
-- Unread count
-- Notifications
-- Block user / report conversation
-- Image sharing, typing indicator, read receipts (future)
+Features (V1)
+
+- Buyer ↔ seller chat on `PUBLISHED` listings (listing-scoped threads)
+- Seller ↔ assigned reviewer on `PENDING_REVIEW` / `REJECTED`
+- Conversation list (`/mensajes`) + thread view
+- Unread count / badge
+- Send via Server Actions; refresh / light poll (Realtime later)
+- Block user / report conversation (minimal)
+
+Future (not V1)
+
+- Image sharing, typing indicator, rich read-receipt UI
+- Supabase Realtime
+- Email / push “new message” (see Phase 12 Notifications)
 
 Result: Communication inside the platform.
+
+Status: Complete (listing CTAs, seller↔reviewer chat, inbox + unread badges, block/report UI, light poll).
+
+Pre–Phase 9 hardening: listing lifecycle docs aligned (`approve` → `PUBLISHED`); messaging access smoke tests in `src/lib/messages-access.test.ts` (`npm test`).
 
 ---
 
@@ -320,6 +352,8 @@ Features
 
 Result: Marketplace transactions.
 
+Status: Complete (Order model; Comprar reserves listing; `/compras` + `/ventas`; cancel restores `PUBLISHED`; seller complete → `SOLD`. Payment processing is Phase 10).
+
 ---
 
 # Phase 10 — Payments
@@ -336,6 +370,8 @@ Features
 
 Result: Monetization.
 
+Status: Complete (Payment + PaymentWebhookEvent; Wompi payment links + signed webhooks; mock provider for local; checkout from reserved order charges snapshotted total; `AWAITING_PAYMENT` → `PAID` → `COMPLETED`; `/revision/pagos` admin history).
+
 ---
 
 # Phase 11 — Reviews
@@ -348,6 +384,8 @@ Features
 - Trust score
 
 Result: Marketplace reputation.
+
+Status: Complete (order-tied reviews on `COMPLETED` orders; one review per participant; `sellerRating` / `totalReviews` + Vendedor de confianza thresholds; report + `/revision/resenas` moderation; public profile review list).
 
 ---
 

@@ -8,6 +8,8 @@ type SearchBarProps = {
   defaultValue?: string;
   className?: string;
   action?: string;
+  /** Extra GET fields preserved on submit (e.g. active browse filters). */
+  hiddenFields?: Record<string, string>;
 };
 
 export function SearchBar({
@@ -16,9 +18,17 @@ export function SearchBar({
   defaultValue,
   className,
   action = "/buscar",
+  hiddenFields,
 }: SearchBarProps) {
   return (
     <form action={action} method="get" className={cn("w-full", className)}>
+      {hiddenFields
+        ? Object.entries(hiddenFields).map(([key, value]) =>
+            value ? (
+              <input key={key} type="hidden" name={key} value={value} />
+            ) : null,
+          )
+        : null}
       <label className="bg-background focus-within:ring-ring border-input flex h-11 items-center gap-2 rounded-xl border px-3 focus-within:ring-2">
         <Search className="text-muted-foreground size-4 shrink-0" aria-hidden />
         <span className="sr-only">Buscar</span>

@@ -31,6 +31,7 @@ function revalidateListingReview(listingId: string) {
   revalidatePath("/revision/anuncios");
   revalidatePath(`/revision/anuncios/${listingId}`);
   revalidatePath("/vender");
+  revalidatePath(`/vender/${listingId}`);
   revalidatePath(`/vender/${listingId}/enviado`);
 }
 

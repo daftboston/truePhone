@@ -1,26 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { AvatarUploadForm } from "@/features/profile/components/avatar-upload-form";
 import { ProfileEditForm } from "@/features/profile/components/profile-edit-form";
-import { getCurrentProfile } from "@/lib/auth/session";
+import { requireCurrentProfile } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
   title: "Editar perfil",
 };
 
 export default async function EditProfilePage() {
-  const current = await getCurrentProfile();
-  if (!current) {
-    return null;
-  }
-
+  const current = await requireCurrentProfile("/perfil/editar");
   const { profile } = current;
 
   return (
-    <AppShell mainClassName="max-w-lg gap-6">
+    <>
       <div className="space-y-2">
         <h1 className="text-foreground text-xl font-semibold tracking-tight">
           Editar perfil
@@ -53,6 +48,6 @@ export default async function EditProfilePage() {
       <Button variant="ghost" asChild>
         <Link href="/perfil">Cancelar</Link>
       </Button>
-    </AppShell>
+    </>
   );
 }

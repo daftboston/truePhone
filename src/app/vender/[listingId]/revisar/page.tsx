@@ -26,7 +26,7 @@ export default async function ListingReviewPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   const galleryCount = listing.images.filter(
     (image) => image.imageType === "gallery",
@@ -38,6 +38,7 @@ export default async function ListingReviewPage({ params }: PageProps) {
         step={5}
         title="Revisa y envía"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <ReviewListingForm
           listingId={listing.id}

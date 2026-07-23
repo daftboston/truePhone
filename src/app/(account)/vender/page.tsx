@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { ListingCard } from "@/components/listing-card";
 import { Badge } from "@/components/ui/badge";
@@ -17,16 +15,15 @@ import {
   verificationStatusLabel,
 } from "@/features/verification/types";
 import { getLatestIdentityVerification } from "@/lib/auth/identity";
-import { getCurrentProfile } from "@/lib/auth/session";
-import { listSellerListings } from "@/lib/listings";
+import { requireCurrentProfile } from "@/lib/auth/session";
+import { getSellerDraftResumePath, listSellerListings } from "@/lib/listings";
 
 export const metadata: Metadata = {
   title: "Vender",
 };
 
 export default async function SellPage() {
-  const current = await getCurrentProfile();
-  if (!current) redirect("/login?next=/vender");
+  const current = await requireCurrentProfile("/vender");
 
   const verification = await getLatestIdentityVerification(current.profile.id);
   const status = current.profile.verifikStatus;
@@ -41,7 +38,7 @@ export default async function SellPage() {
           : "/verificacion";
 
     return (
-      <AppShell mainClassName="max-w-lg justify-center gap-4">
+      <>
         <EmptyState
           title="Verifica tu identidad para vender"
           description="En TruePhone solo publican vendedores con cédula y selfie revisadas."
@@ -64,14 +61,14 @@ export default async function SellPage() {
             Estado: {verificationStatusLabel(status)}
           </Badge>
         </div>
-      </AppShell>
+      </>
     );
   }
 
   const listings = await listSellerListings(current.profile.id);
 
   return (
-    <AppShell mainClassName="max-w-lg gap-6">
+    <>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-foreground text-xl font-semibold tracking-tight">
@@ -102,8 +99,8 @@ export default async function SellPage() {
           {listings.map((listing) => {
             const href =
               listing.status === "DRAFT"
-                ? `/vender/${listing.id}/dispositivo`
-                : `/vender/${listing.id}/enviado`;
+                ? getSellerDraftResumePath(listing)
+                : `/vender/${listing.id}`;
             return (
               <div key={listing.id} className="space-y-2">
                 <ListingCard
@@ -114,14 +111,24 @@ export default async function SellPage() {
                   batteryHealth={listing.batteryHealth ?? undefined}
                   conditionLabel={conditionLabels[listing.condition]}
                 />
-                <Badge variant="outline">
-                  {listingStatusLabel(listing.status)}
-                </Badge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">
+                    {listingStatusLabel(listing.status)}
+                  </Badge>
+                  {listing.status === "REJECTED" ? (
+                    <Link
+                      href={`/vender/${listing.id}`}
+                      className="text-destructive text-xs font-medium underline-offset-2 hover:underline"
+                    >
+                      Ver motivo
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             );
           })}
         </div>
       )}
-    </AppShell>
+    </>
   );
 }

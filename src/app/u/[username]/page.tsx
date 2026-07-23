@@ -3,11 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { ReviewCard } from "@/components/review-card";
 import { Button } from "@/components/ui/button";
 import { ProfileHeader } from "@/features/profile/components/profile-header";
 import { ShareProfileButton } from "@/features/profile/components/share-profile-button";
 import { getAuthUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { listVisibleReviewsForUser, reviewAuthorName } from "@/lib/reviews";
 
 type PublicProfilePageProps = {
   params: Promise<{ username: string }>;
@@ -47,7 +49,10 @@ export default async function PublicProfilePage({
     notFound();
   }
 
-  const user = await getAuthUser();
+  const [user, reviews] = await Promise.all([
+    getAuthUser(),
+    listVisibleReviewsForUser(profile.id, 12),
+  ]);
   const isOwner = user?.id === profile.authUserId;
   const sharePath = `/u/${profile.username}`;
 
@@ -79,6 +84,36 @@ export default async function PublicProfilePage({
           </Button>
         ) : null}
       </div>
+
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="text-foreground text-sm font-semibold">
+            Reseñas recientes
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Calificaciones de compras completadas en TruePhone.
+          </p>
+        </div>
+        {reviews.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            Aún no hay reseñas públicas.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {reviews.map((review) => (
+              <li key={review.id}>
+                <ReviewCard
+                  reviewerName={reviewAuthorName(review.reviewer)}
+                  reviewerAvatarUrl={review.reviewer.avatarUrl}
+                  rating={review.rating}
+                  comment={review.comment}
+                  transactionDate={review.order.completedAt ?? review.createdAt}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </AppShell>
   );
 }

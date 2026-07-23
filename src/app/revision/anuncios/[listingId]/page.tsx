@@ -82,7 +82,6 @@ export default async function ListingReviewDetailPage({ params }: PageProps) {
         }
       : null);
 
-  const isPending = listing.status === "PENDING_REVIEW";
   const canEditDecision = isEditableReviewStatus(listing.status);
 
   return (

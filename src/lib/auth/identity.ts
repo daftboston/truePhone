@@ -60,3 +60,11 @@ export async function listPendingIdentityVerifications() {
     orderBy: { submittedAt: "asc" },
   });
 }
+
+export async function countPendingIdentityVerifications() {
+  return prisma.identityVerification.count({
+    where: {
+      status: { in: ["PENDING", "IN_REVIEW"] },
+    },
+  });
+}

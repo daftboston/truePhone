@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
-import { LogoutButton } from "@/features/auth/components/logout-button";
 import { AvatarUploadForm } from "@/features/profile/components/avatar-upload-form";
 import { ChangePasswordForm } from "@/features/profile/components/change-password-form";
 import { ProfileHeader } from "@/features/profile/components/profile-header";
@@ -16,9 +14,9 @@ import {
 } from "@/features/verification/types";
 import { getLatestIdentityVerification } from "@/lib/auth/identity";
 import {
+  canAccessReviewPortal,
   requireCurrentProfile,
   roleLabel,
-  canAccessReviewPortal,
 } from "@/lib/auth/session";
 
 export const metadata: Metadata = {
@@ -41,7 +39,16 @@ export default async function ProfilePage() {
         : "/verificacion";
 
   return (
-    <AppShell mainClassName="max-w-lg gap-8">
+    <>
+      <div className="space-y-2">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
+          Resumen
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Tu cuenta y estado en TruePhone.
+        </p>
+      </div>
+
       <ProfileHeader
         fullName={profile.fullName}
         username={profile.username}
@@ -111,9 +118,6 @@ export default async function ProfilePage() {
       </section>
 
       <section className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <Button asChild>
-          <Link href="/perfil/editar">Editar perfil</Link>
-        </Button>
         {sharePath ? (
           <ShareProfileButton
             path={sharePath}
@@ -156,8 +160,6 @@ export default async function ProfilePage() {
         </div>
         <ChangePasswordForm />
       </section>
-
-      <LogoutButton />
-    </AppShell>
+    </>
   );
 }

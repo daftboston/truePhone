@@ -26,7 +26,7 @@ export default async function EditDevicePage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   const catalog = await getCatalog();
 
@@ -36,6 +36,7 @@ export default async function EditDevicePage({ params }: PageProps) {
         step={1}
         title="Datos del dispositivo"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <DeviceDetailsForm
           models={catalog.models}

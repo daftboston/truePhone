@@ -496,13 +496,58 @@ export async function submitListingForReviewAction(
     }),
     prisma.listing.update({
       where: { id: listing.id },
-      data: { status: "PENDING_REVIEW" },
+      data: {
+        status: "PENDING_REVIEW",
+        rejectionReason: null,
+        reviewerNotes: null,
+        reviewedAt: null,
+        approvedAt: null,
+        reviewerId: null,
+      },
     }),
   ]);
 
   revalidatePath("/vender");
   revalidatePath(`/vender/${listing.id}`);
   redirect(`/vender/${listing.id}/enviado`);
+}
+
+export async function reopenRejectedListingAction(
+  listingId: string,
+): Promise<ListingActionState> {
+  const seller = await requireVerifiedSeller();
+  if (!seller.ok) {
+    return { ok: false, error: seller.error };
+  }
+
+  const listing = await getOwnedListing(listingId, seller.current.profile.id);
+  if (!listing) {
+    return { ok: false, error: "Anuncio no encontrado." };
+  }
+  if (listing.status !== "REJECTED") {
+    return {
+      ok: false,
+      error: "Solo puedes editar anuncios rechazados.",
+    };
+  }
+
+  await prisma.listing.update({
+    where: { id: listing.id },
+    data: {
+      status: "DRAFT",
+      // Keep rejectionReason visible until the next successful submit.
+    },
+  });
+
+  revalidatePath("/vender");
+  revalidatePath(`/vender/${listing.id}`);
+  revalidatePath(`/vender/${listing.id}/dispositivo`);
+
+  return {
+    ok: true,
+    listingId: listing.id,
+    message: "Puedes editar el anuncio.",
+  };
 }
 
 export async function deleteListingGalleryImageAction(

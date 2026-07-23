@@ -26,7 +26,7 @@ export default async function ListingPossessionPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   const challenge =
     listing.possessionChallenge ??
@@ -38,6 +38,7 @@ export default async function ListingPossessionPage({ params }: PageProps) {
         step={4}
         title="Prueba de posesión"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <PossessionForm
           listingId={listing.id}

@@ -26,7 +26,7 @@ export default async function ListingSecurityPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   return (
     <AppShell mainClassName="max-w-lg">
@@ -34,6 +34,7 @@ export default async function ListingSecurityPage({ params }: PageProps) {
         step={3}
         title="IMEI y Activation Lock"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <SecurityForm
           listingId={listing.id}

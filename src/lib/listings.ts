@@ -44,8 +44,42 @@ export async function listSellerListings(sellerId: string) {
         orderBy: { displayOrder: "asc" },
         take: 1,
       },
+      possessionChallenge: {
+        select: { photoUrl: true },
+      },
     },
     orderBy: { updatedAt: "desc" },
+  });
+}
+
+/**
+ * Resume a DRAFT at the first incomplete wizard step.
+ * Assumes device details already exist from listing creation.
+ */
+export function getSellerDraftResumePath(listing: {
+  id: string;
+  imeiHash: string | null;
+  images: { imageType: string }[];
+  possessionChallenge: { photoUrl: string | null } | null;
+}) {
+  const hasGallery = listing.images.some(
+    (image) => image.imageType === "gallery",
+  );
+  if (!hasGallery) {
+    return `/vender/${listing.id}/fotos`;
+  }
+  if (!listing.imeiHash) {
+    return `/vender/${listing.id}/seguridad`;
+  }
+  if (!listing.possessionChallenge?.photoUrl) {
+    return `/vender/${listing.id}/posesion`;
+  }
+  return `/vender/${listing.id}/revisar`;
+}
+
+export async function listIphoneModels() {
+  return prisma.iphoneModel.findMany({
+    orderBy: [{ releaseYear: "desc" }, { name: "asc" }],
   });
 }
 
