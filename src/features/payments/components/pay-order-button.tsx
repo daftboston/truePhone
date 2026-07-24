@@ -5,7 +5,7 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 import { Button } from "@/components/ui/button";
 import { startCheckoutAction } from "@/features/payments/actions/payments";
-import { formatOrderMoney } from "@/lib/orders";
+import { formatOrderMoney } from "@/lib/format-money";
 
 type PayOrderButtonProps = {
   orderId: string;

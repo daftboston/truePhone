@@ -2,12 +2,15 @@ import { Prisma, type OrderStatus } from "@prisma/client";
 
 import { computeFees } from "@/features/listings/schemas/listing";
 import { prisma } from "@/lib/db";
+import { formatOrderMoney } from "@/lib/format-money";
 import {
   ACTIVE_ORDER_STATUSES,
   cancelOpenPaymentsForOrder,
   getLatestPaymentForOrder,
   refundPaymentForOrder,
 } from "@/lib/payments";
+
+export { formatOrderMoney };
 
 const orderListInclude = {
   listing: {
@@ -75,14 +78,6 @@ export function orderStatusLabel(status: OrderStatus) {
     default:
       return status;
   }
-}
-
-export function formatOrderMoney(value: number, currency = "COP") {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
 }
 
 export async function listOrdersForBuyer(buyerId: string) {

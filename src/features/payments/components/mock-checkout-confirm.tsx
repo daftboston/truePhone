@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { confirmMockPaymentAction } from "@/features/payments/actions/payments";
 import type { PaymentActionState } from "@/features/payments/schemas/payment";
-import { formatOrderMoney } from "@/lib/orders";
+import { formatOrderMoney } from "@/lib/format-money";
 
 type MockCheckoutConfirmProps = {
   reference: string;
