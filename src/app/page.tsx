@@ -20,6 +20,9 @@ import {
   publicListingPath,
 } from "@/lib/listings-marketplace";
 
+/** Featured listings are live DB data; skip build-time prerender (CI has no Postgres). */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "TruePhone",
   description:

@@ -7,6 +7,9 @@ import { ModelSearch } from "@/features/listings/components/model-search";
 import { groupModelsBySeries } from "@/lib/iphone-catalog";
 import { getCatalog } from "@/lib/listings";
 
+/** Catalog is live DB data; skip build-time prerender (CI has no Postgres). */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Explorar iPhones",
   description:
