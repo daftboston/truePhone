@@ -1,3 +1,7 @@
+-- @file 20260721220000_reviews_phase_11.sql
+-- @description Phase 11 reviews: requires orderId, moderation hide fields, unique order/reviewer, review_reports.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- Phase 11: Order-tied reviews + moderation reports
 
 -- Drop any orphan draft reviews without an order (none expected in V1).

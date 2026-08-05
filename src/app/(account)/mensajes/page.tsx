@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Messaging inbox of listing conversation threads.
+ * @dependencies Messages feature helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -12,6 +18,13 @@ export const metadata: Metadata = {
   description: "Tus conversaciones en TruePhone.",
 };
 
+/**
+ * MessagesInboxPage
+ *
+ * Lists conversation threads for the signed-in user.
+ *
+ * @returns Inbox list UI.
+ */
 export default async function MessagesInboxPage() {
   const current = await requireCurrentProfile("/mensajes");
   const conversations = await listConversationsForUser(current.profile.id);

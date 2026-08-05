@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file messages.ts
+ * @description Server actions for messages (messages.ts).
+ * @dependencies next/cache, @/features/messages/schemas/message, @/lib/auth/session, @/lib/db, @/lib/messages
+ */
+
 import { revalidatePath } from "next/cache";
 
 import {
@@ -23,6 +29,15 @@ import {
   markThreadRead,
 } from "@/lib/messages";
 
+/**
+ * revalidateMessagingPaths
+ *
+ * Revalidates Next.js paths after messages mutations.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy messages UI and related modules
+ */
 function revalidateMessagingPaths(listingId: string) {
   revalidatePath("/mensajes");
   revalidatePath(`/mensajes/${listingId}`);
@@ -30,6 +45,16 @@ function revalidateMessagingPaths(listingId: string) {
   revalidatePath("/", "layout");
 }
 
+/**
+ * sendMessageAction
+ *
+ * Server action: send message for authenticated messages flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy messages components
+ */
 export async function sendMessageAction(
   _prev: MessageActionState,
   formData: FormData,
@@ -116,6 +141,16 @@ export async function sendMessageAction(
   };
 }
 
+/**
+ * markThreadReadAction
+ *
+ * Server action: mark thread read for authenticated messages flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy messages components
+ */
 export async function markThreadReadAction(
   listingId: string,
   otherUserId: string,
@@ -158,6 +193,16 @@ export async function markThreadReadAction(
   return { ok: true };
 }
 
+/**
+ * blockUserAction
+ *
+ * Server action: block user for authenticated messages flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy messages components
+ */
 export async function blockUserAction(
   blockedId: string,
   listingId?: string,
@@ -210,6 +255,16 @@ export async function blockUserAction(
   return { ok: true, message: "Usuario bloqueado." };
 }
 
+/**
+ * unblockUserAction
+ *
+ * Server action: unblock user for authenticated messages flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy messages components
+ */
 export async function unblockUserAction(
   blockedId: string,
   listingId?: string,
@@ -238,6 +293,16 @@ export async function unblockUserAction(
   return { ok: true, message: "Usuario desbloqueado." };
 }
 
+/**
+ * reportConversationAction
+ *
+ * Server action: report conversation for authenticated messages flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy messages components
+ */
 export async function reportConversationAction(
   _prev: MessageActionState,
   formData: FormData,

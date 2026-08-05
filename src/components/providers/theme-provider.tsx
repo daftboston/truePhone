@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file theme-provider.tsx
+ * @description Client theme context syncing light/dark/system preference to the document.
+ * @dependencies react
+ */
+
 import * as React from "react";
 
 type Theme = "light" | "dark" | "system";
@@ -97,6 +103,18 @@ function subscribeStoredTheme(onStoreChange: () => void) {
   };
 }
 
+/**
+ * ThemeProvider
+ *
+ * Provides theme/setTheme/resolvedTheme and applies the dark class on <html>.
+ *
+ * @param props.children - App tree under the provider.
+ * @param props.defaultTheme - Initial theme when storage is empty.
+ * @param props.enableSystem - Whether "system" follows prefers-color-scheme.
+ * @param props.disableTransitionOnChange - Temporarily disables CSS transitions on switch.
+ * @returns Theme context provider.
+ * @calledBy RootLayout
+ */
 export function ThemeProvider({
   children,
   defaultTheme = "system",
@@ -144,6 +162,14 @@ export function ThemeProvider({
   );
 }
 
+/**
+ * useTheme
+ *
+ * Reads ThemeProvider context; throws if used outside the provider.
+ *
+ * @returns theme, setTheme, and resolvedTheme.
+ * @calledBy ThemeToggle and other theme-aware client components
+ */
 export function useTheme() {
   const context = React.useContext(ThemeContext);
   if (!context) {

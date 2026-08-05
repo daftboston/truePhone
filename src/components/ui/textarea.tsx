@@ -1,7 +1,21 @@
+/**
+ * @file textarea.tsx
+ * @description Multi-line text control matching design-system form styles.
+ * @dependencies react, @/lib/utils
+ */
+
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Textarea
+ *
+ * Forwarded native textarea with min-height and focus ring styles.
+ *
+ * @returns Styled HTML textarea.
+ * @calledBy Listing descriptions, messages, and review forms
+ */
 const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.ComponentProps<"textarea">

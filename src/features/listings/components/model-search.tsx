@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file model-search.tsx
+ * @description ModelSearch component for the listings feature.tsx.
+ * @dependencies lucide-react, next/link, next/navigation, react, @/lib/iphone-catalog
+ */
+
 import { Search, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,6 +33,15 @@ type ModelSearchProps = {
   autoFocus?: boolean;
 };
 
+/**
+ * ModelSearch
+ *
+ * Renders the Model Search UI for listings.
+ *
+ * @param props - ModelSearch props.
+ * @returns ModelSearch React element.
+ * @calledBy listings pages and parent components
+ */
 export function ModelSearch({
   models,
   placeholder = "Buscar iPhone…",

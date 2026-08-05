@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file device-details-form.tsx
+ * @description DeviceDetailsForm component for the listings feature.tsx.
+ * @dependencies react, @prisma/client, @/features/listings/actions/listings, @/features/listings/schemas/listing, @/features/listings/types
+ */
+
 import { useActionState, useMemo, useState } from "react";
 import type {
   Condition,
@@ -44,6 +50,15 @@ type DeviceFormProps = {
   };
 };
 
+/**
+ * formatCop
+ *
+ * Formats a display value for listings UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function formatCop(value: number) {
   return new Intl.NumberFormat("es-CO", {
     style: "currency",
@@ -52,6 +67,15 @@ function formatCop(value: number) {
   }).format(value);
 }
 
+/**
+ * parsePriceInput
+ *
+ * Supports listings by implementing parsePriceInput.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function parsePriceInput(raw: string) {
   const digits = raw.replace(/[^\d]/g, "");
   if (!digits) return { display: "", amount: 0 };
@@ -60,6 +84,15 @@ function parsePriceInput(raw: string) {
   return { display: normalized, amount: Number(normalized) };
 }
 
+/**
+ * DeviceDetailsForm
+ *
+ * Renders the Device Details Form UI for listings.
+ *
+ * @param props - DeviceDetailsForm props.
+ * @returns DeviceDetailsForm React element.
+ * @calledBy listings pages and parent components
+ */
 export function DeviceDetailsForm({
   models,
   colors,

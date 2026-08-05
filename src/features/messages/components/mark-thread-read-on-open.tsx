@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file mark-thread-read-on-open.tsx
+ * @description MarkThreadReadOnOpen component for the messages feature.tsx.
+ * @dependencies react, next/navigation, @/features/messages/actions/messages
+ */
+
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 

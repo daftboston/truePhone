@@ -1,3 +1,9 @@
+/**
+ * @file messages.ts
+ * @description Marketplace messaging: access rules, threads, unread, and sends.
+ * @dependencies @prisma/client, @/lib/db
+ */
+
 import { Prisma, type ListingStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
@@ -52,7 +58,16 @@ export type ThreadMessage = {
   isRead: boolean;
 };
 
-/** True if either user has blocked the other (blocks messaging both ways). */
+/**
+ * areMessagingBlocked
+ *
+ * Returns true when either user has blocked the other for messaging.
+ *
+ * @param userA - Profile UUID.
+ * @param userB - Profile UUID.
+ * @returns True when a block exists in either direction.
+ * @calledBy Thread access checks
+ */
 export async function areMessagingBlocked(userA: string, userB: string) {
   if (userA === userB) return false;
   const block = await prisma.userBlock.findFirst({
@@ -67,6 +82,16 @@ export async function areMessagingBlocked(userA: string, userB: string) {
   return Boolean(block);
 }
 
+/**
+ * isUserBlockedBy
+ *
+ * Checks a one-way block relationship.
+ *
+ * @param blockerId - Profile that may have blocked.
+ * @param blockedId - Profile that may be blocked.
+ * @returns True when blocker blocked blockedId.
+ * @calledBy areMessagingBlocked
+ */
 export async function isUserBlockedBy(blockerId: string, blockedId: string) {
   const block = await prisma.userBlock.findUnique({
     where: {
@@ -77,7 +102,17 @@ export async function isUserBlockedBy(blockerId: string, blockedId: string) {
   return Boolean(block);
 }
 
-/** True if these two users already exchanged ≥1 message on this listing. */
+/**
+ * hasExistingThread
+ *
+ * Whether two users already have messages on a listing thread.
+ *
+ * @param listingId - Listing UUID.
+ * @param userA - Profile UUID.
+ * @param userB - Profile UUID.
+ * @returns True when a prior message exists between them on the listing.
+ * @calledBy evaluateListingMessageSendAccess
+ */
 export async function hasExistingThread(
   listingId: string,
   userA: string,
@@ -97,8 +132,13 @@ export async function hasExistingThread(
 }
 
 /**
- * Pure send-access rules (no DB). Pass `hasExistingThread` when the sender
- * is the listing seller on a PUBLISHED listing (cold outreach blocked).
+ * evaluateListingMessageSendAccess
+ *
+ * Pure access decision for sending a listing-thread message.
+ *
+ * @param input - Actor, listing, counterpart, and block/thread flags.
+ * @returns Allowed flag with Spanish error when denied.
+ * @calledBy canSendInListingThread, messages-access.test
  */
 export function evaluateListingMessageSendAccess(input: {
   listing: ThreadListing;
@@ -158,10 +198,13 @@ export function evaluateListingMessageSendAccess(input: {
 }
 
 /**
- * Who may send new messages in a listing thread.
- * - PUBLISHED: buyer may start/continue with seller; seller may only reply
- *   to buyers who already messaged on this listing
- * - PENDING_REVIEW / REJECTED: seller ↔ assigned reviewer
+ * canSendInListingThread
+ *
+ * Async wrapper that loads block/thread state then evaluates send access.
+ *
+ * @param input - Actor, listing, and counterpart ids.
+ * @returns Access decision.
+ * @calledBy createMessage / message actions
  */
 export async function canSendInListingThread(
   listing: ThreadListing,
@@ -185,7 +228,15 @@ export async function canSendInListingThread(
   });
 }
 
-/** @deprecated Prefer canSendInListingThread */
+/**
+ * canParticipateInListingThread
+ *
+ * Whether the actor may participate (send or continue) in a listing thread.
+ *
+ * @param input - Actor and listing context.
+ * @returns True when participation is allowed.
+ * @calledBy Thread page guards
+ */
 export async function canParticipateInListingThread(
   listing: ThreadListing,
   userId: string,
@@ -195,8 +246,13 @@ export async function canParticipateInListingThread(
 }
 
 /**
- * Who may open / read a thread. Allows send participants, or anyone with
- * existing history (e.g. after the listing is SOLD / RESERVED / ARCHIVED).
+ * canViewListingThread
+ *
+ * Whether the actor may view an existing listing thread.
+ *
+ * @param input - Actor, listing, and optional counterpart.
+ * @returns True when view is allowed.
+ * @calledBy Thread page
  */
 export async function canViewListingThread(
   listing: ThreadListing,
@@ -217,6 +273,15 @@ export async function canViewListingThread(
   return { ok: false, error: send.error };
 }
 
+/**
+ * getListingForThread
+ *
+ * Loads listing fields needed for thread access and headers.
+ *
+ * @param listingId - Listing UUID.
+ * @returns Listing summary or null.
+ * @calledBy Message thread routes
+ */
 export async function getListingForThread(listingId: string) {
   return prisma.listing.findFirst({
     where: { id: listingId },
@@ -224,7 +289,15 @@ export async function getListingForThread(listingId: string) {
   });
 }
 
-/** Resolve the other party when opening /mensajes/[listingId]. */
+/**
+ * resolveThreadCounterpart
+ *
+ * Resolves the other party id for a listing thread URL.
+ *
+ * @param input - Listing, viewer, and optional otherUserId query.
+ * @returns Counterpart profile id or error.
+ * @calledBy Thread page routing
+ */
 export function resolveThreadCounterpart(
   listing: ThreadListing,
   currentUserId: string,
@@ -271,6 +344,15 @@ export function resolveThreadCounterpart(
   return { ok: true, otherUserId: listing.sellerId };
 }
 
+/**
+ * listConversationsForUser
+ *
+ * Lists conversation summaries for the inbox.
+ *
+ * @param profileId - Current user profile UUID.
+ * @returns ConversationSummary array newest activity first.
+ * @calledBy Messages inbox page
+ */
 export async function listConversationsForUser(
   profileId: string,
 ): Promise<ConversationSummary[]> {
@@ -374,6 +456,17 @@ export async function listConversationsForUser(
     );
 }
 
+/**
+ * getThreadMessages
+ *
+ * Loads messages for a listing thread between two participants.
+ *
+ * @param listingId - Listing UUID.
+ * @param userA - Participant profile UUID.
+ * @param userB - Participant profile UUID.
+ * @returns Thread messages oldest first.
+ * @calledBy Thread page
+ */
 export async function getThreadMessages(
   listingId: string,
   userId: string,
@@ -400,6 +493,15 @@ export async function getThreadMessages(
   return messages;
 }
 
+/**
+ * countUnreadForUser
+ *
+ * Counts unread inbound messages for a profile.
+ *
+ * @param profileId - Profile UUID.
+ * @returns Unread count.
+ * @calledBy Nav badge
+ */
 export async function countUnreadForUser(profileId: string) {
   return prisma.message.count({
     where: {
@@ -409,6 +511,17 @@ export async function countUnreadForUser(profileId: string) {
   });
 }
 
+/**
+ * markThreadRead
+ *
+ * Marks inbound messages in a thread as read for the viewer.
+ *
+ * @param listingId - Listing UUID.
+ * @param viewerId - Viewer profile UUID.
+ * @param otherUserId - Counterpart profile UUID.
+ * @returns Update result.
+ * @calledBy Thread page on open
+ */
 export async function markThreadRead(
   listingId: string,
   readerId: string,
@@ -425,6 +538,15 @@ export async function markThreadRead(
   });
 }
 
+/**
+ * createMessage
+ *
+ * Persists a new thread message after access checks.
+ *
+ * @param input - listingId, senderId, recipientId, body.
+ * @returns Created message or throws/returns error per caller contract.
+ * @calledBy Message send actions
+ */
 export async function createMessage(input: {
   listingId: string;
   senderId: string;
@@ -449,6 +571,15 @@ export async function createMessage(input: {
   });
 }
 
+/**
+ * getProfileCard
+ *
+ * Loads a compact profile card for thread headers.
+ *
+ * @param profileId - Profile UUID.
+ * @returns MessageProfileCard or null.
+ * @calledBy Thread UI
+ */
 export async function getProfileCard(profileId: string) {
   return prisma.profile.findUnique({
     where: { id: profileId },
@@ -456,12 +587,31 @@ export async function getProfileCard(profileId: string) {
   });
 }
 
+/**
+ * publicThreadPath
+ *
+ * Builds the messages thread path for a listing and optional counterpart.
+ *
+ * @param listingId - Listing UUID.
+ * @param otherUserId - Optional counterpart profile UUID.
+ * @returns `/mensajes/...` path.
+ * @calledBy Listing CTAs and inbox links
+ */
 export function publicThreadPath(listingId: string, otherUserId?: string) {
   const base = `/mensajes/${listingId}`;
   if (!otherUserId) return base;
   return `${base}?con=${encodeURIComponent(otherUserId)}`;
 }
 
+/**
+ * marketplaceSellerDisplayName
+ *
+ * Display name helper for message profile cards.
+ *
+ * @param profile - Profile name fields.
+ * @returns Display string.
+ * @calledBy Messages UI
+ */
 export function marketplaceSellerDisplayName(profile: {
   fullName: string | null;
   username: string | null;

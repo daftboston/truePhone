@@ -1,10 +1,21 @@
+/**
+ * @file listing.ts
+ * @description Zod schemas and related types for listings (listing.ts).
+ * @dependencies node:crypto, @prisma/client, zod, @/lib/financial-core/fees
+ */
+
 import { createHash, randomBytes } from "node:crypto";
 
 import { Condition } from "@prisma/client";
 import { z } from "zod";
 
-/** Buyer Protection Fee — 6% of listing price (COPY_GUIDELINES). */
-export const BUYER_PROTECTION_FEE_RATE = 0.06;
+import {
+  MARKETPLACE_FEE_RATE,
+  computeFees as computeMarketplaceFees,
+} from "@/lib/financial-core/fees";
+
+/** @deprecated Prefer MARKETPLACE_FEE_RATE from Financial Core. */
+export const BUYER_PROTECTION_FEE_RATE = MARKETPLACE_FEE_RATE;
 
 export const conditionLabels: Record<Condition, string> = {
   FLAWLESS: "Como nuevo",
@@ -14,6 +25,7 @@ export const conditionLabels: Record<Condition, string> = {
   POOR: "Con detalles",
 };
 
+/** createListingSchema — validates input for related createListing flows. */
 export const createListingSchema = z.object({
   iphoneModelId: z.string().min(1, "Selecciona el modelo."),
   iphoneColorId: z.string().min(1, "Selecciona el color."),
@@ -40,8 +52,10 @@ export const createListingSchema = z.object({
   hasReceipt: z.coerce.boolean().optional(),
 });
 
+/** updateListingDetailsSchema — validates input for related updateListingDetails flows. */
 export const updateListingDetailsSchema = createListingSchema;
 
+/** updateListingSecuritySchema — validates input for related updateListingSecurity flows. */
 export const updateListingSecuritySchema = z.object({
   imei: z
     .string()
@@ -52,26 +66,63 @@ export const updateListingSecuritySchema = z.object({
   carrier: z.string().trim().max(40).optional().or(z.literal("")),
 });
 
+/** Listing preview: equipment + default 10% marketplace fee. */
 export function computeFees(price: number) {
-  const platformFee = Math.round(price * BUYER_PROTECTION_FEE_RATE);
+  const fees = computeMarketplaceFees(price, "default");
   return {
-    platformFee,
-    finalPrice: price + platformFee,
+    platformFee: fees.platformFee,
+    finalPrice: fees.finalPrice,
   };
 }
 
+/**
+ * hashImei
+ *
+ * Supports listings by implementing hashImei.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function hashImei(imei: string) {
   return createHash("sha256").update(imei.trim()).digest("hex");
 }
 
+/**
+ * imeiLast4
+ *
+ * Supports listings by implementing imeiLast4.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function imeiLast4(imei: string) {
   return imei.trim().slice(-4);
 }
 
+/**
+ * generatePossessionCode
+ *
+ * Supports listings by implementing generatePossessionCode.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function generatePossessionCode() {
   return `TP-${randomBytes(2).toString("hex").toUpperCase()}`;
 }
 
+/**
+ * slugifyPart
+ *
+ * Supports listings by implementing slugifyPart.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function slugifyPart(value: string) {
   return value
     .toLowerCase()
@@ -81,6 +132,15 @@ export function slugifyPart(value: string) {
     .replace(/^-|-$/g, "");
 }
 
+/**
+ * buildListingSlug
+ *
+ * Supports listings by implementing buildListingSlug.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function buildListingSlug(parts: {
   modelSlug: string;
   storageGb: number;
@@ -91,6 +151,15 @@ export function buildListingSlug(parts: {
   return `${parts.modelSlug}-${parts.storageGb}gb-${color}-${parts.idSuffix}`;
 }
 
+/**
+ * buildListingTitle
+ *
+ * Supports listings by implementing buildListingTitle.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function buildListingTitle(parts: {
   modelName: string;
   storageGb: number;
@@ -99,6 +168,15 @@ export function buildListingTitle(parts: {
   return `${parts.modelName} ${parts.storageGb} GB · ${parts.colorName}`;
 }
 
+/**
+ * listingStatusLabel
+ *
+ * Supports listings by implementing listingStatusLabel.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function listingStatusLabel(status: string) {
   switch (status) {
     case "DRAFT":

@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Message thread for a specific listing conversation.
+ * @dependencies Messages thread components and loaders
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,6 +40,13 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * MessageThreadPage
+ *
+ * Loads and renders the chat thread between buyer and seller for a listing.
+ *
+ * @returns Message thread UI.
+ */
 export default async function MessageThreadPage({
   params,
   searchParams,

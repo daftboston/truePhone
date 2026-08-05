@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Browse/explore marketplace listings by model filters.
+ * @dependencies AppShell, listing browse components and loaders
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
     "Elige un modelo de iPhone y ve anuncios revisados en TruePhone.",
 };
 
+/**
+ * ExplorePage
+ *
+ * Renders the catalog browse experience for published iPhone listings.
+ *
+ * @returns Explore page with filters and listing grid.
+ */
 export default async function ExplorePage() {
   const catalog = await getCatalog();
   const seriesList = groupModelsBySeries(catalog.models);

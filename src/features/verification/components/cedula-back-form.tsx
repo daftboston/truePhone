@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file cedula-back-form.tsx
+ * @description CedulaBackForm component for the verification feature.tsx.
+ * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/input
+ */
+
 import { useActionState } from "react";
 
 import { saveCedulaBackAction } from "@/features/verification/actions/identity";
@@ -8,6 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * CedulaBackForm
+ *
+ * Renders the Cedula Back Form UI for verification.
+ *
+ * @param props - CedulaBackForm props.
+ * @returns CedulaBackForm React element.
+ * @calledBy verification pages and parent components
+ */
 export function CedulaBackForm() {
   const [state, formAction, pending] = useActionState<
     VerificationActionState,

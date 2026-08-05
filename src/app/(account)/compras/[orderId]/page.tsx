@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Buyer order detail for a single purchase.
+ * @dependencies Order detail components and order loaders
+ */
+
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -32,6 +38,13 @@ function paymentNoticeFromQuery(pago: string | undefined, orderStatus: string) {
   return null;
 }
 
+/**
+ * BuyerOrderPage
+ *
+ * Shows purchase order status, payment, and shipping actions for the buyer.
+ *
+ * @returns Order detail view scoped to the buyer.
+ */
 export default async function BuyerOrderPage({
   params,
   searchParams,
@@ -50,6 +63,7 @@ export default async function BuyerOrderPage({
       order={order}
       perspective="buyer"
       currentUserId={current.profile.id}
+      currentUserRole={current.profile.role}
       backHref="/compras"
       backLabel="← Mis compras"
       paymentNotice={paymentNoticeFromQuery(pago, order.status)}

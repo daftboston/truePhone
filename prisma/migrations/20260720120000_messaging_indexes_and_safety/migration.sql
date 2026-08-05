@@ -1,3 +1,7 @@
+-- @file 20260720120000_messaging_indexes_and_safety.sql
+-- @description Phase 8 messaging: message indexes plus user_blocks and conversation_reports safety tables.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- Phase 8 messaging: indexes + block/report safety tables
 
 CREATE TABLE "user_blocks" (

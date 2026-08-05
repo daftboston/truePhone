@@ -1,3 +1,9 @@
+/**
+ * @file seller-card.tsx
+ * @description Compact seller summary with avatar, name, and optional trust badge.
+ * @dependencies trust-badge, ui/avatar, @/lib/utils
+ */
+
 import { TrustBadge } from "@/components/trust-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -10,6 +16,15 @@ type SellerCardProps = {
   className?: string;
 };
 
+/**
+ * initials
+ *
+ * Builds up to two-letter initials from a display name.
+ *
+ * @param name - Seller full name.
+ * @returns Uppercase initials for AvatarFallback.
+ * @calledBy SellerCard
+ */
 function initials(name: string) {
   return name
     .split(" ")
@@ -19,6 +34,19 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+/**
+ * SellerCard
+ *
+ * Displays seller identity for listing and order contexts.
+ *
+ * @param props.name - Seller display name.
+ * @param props.avatarUrl - Optional avatar image URL.
+ * @param props.verified - When true, shows TrustBadge.
+ * @param props.subtitle - Optional secondary line (e.g. city).
+ * @param props.className - Wrapper className.
+ * @returns Bordered seller row.
+ * @calledBy Listing detail, featured rotator, order views
+ */
 export function SellerCard({
   name,
   avatarUrl,

@@ -1,3 +1,9 @@
+/**
+ * @file price-display.tsx
+ * @description Formats COP prices with optional equipment and protection fee breakdown.
+ * @dependencies @/lib/utils
+ */
+
 import { cn } from "@/lib/utils";
 
 type PriceDisplayProps = {
@@ -8,6 +14,16 @@ type PriceDisplayProps = {
   className?: string;
 };
 
+/**
+ * formatCop
+ *
+ * Formats a numeric amount as Colombian peso currency.
+ *
+ * @param value - Amount in COP units.
+ * @param currency - ISO currency code; defaults to COP.
+ * @returns Localized currency string (es-CO).
+ * @calledBy PriceDisplay
+ */
 function formatCop(value: number, currency = "COP") {
   return new Intl.NumberFormat("es-CO", {
     style: "currency",
@@ -16,6 +32,19 @@ function formatCop(value: number, currency = "COP") {
   }).format(value);
 }
 
+/**
+ * PriceDisplay
+ *
+ * Shows the buyer-facing total with optional Equipo / Protección line items.
+ *
+ * @param props.price - Total amount to emphasize.
+ * @param props.equipmentPrice - Optional equipment portion.
+ * @param props.protectionFee - Optional TruePhone protection fee.
+ * @param props.currency - Currency code; defaults to COP.
+ * @param props.className - Wrapper className.
+ * @returns Price block with optional breakdown list.
+ * @calledBy ListingCard, HomeFeaturedRotator, listing detail pages
+ */
 export function PriceDisplay({
   price,
   equipmentPrice,

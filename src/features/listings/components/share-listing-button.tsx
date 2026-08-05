@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file share-listing-button.tsx
+ * @description ShareListingButton component for the listings feature.tsx.
+ * @dependencies lucide-react, react, @/components/ui/button
+ */
+
 import { Check, Share2 } from "lucide-react";
 import { useState } from "react";
 
@@ -11,6 +17,15 @@ type ShareListingButtonProps = {
   fullWidth?: boolean;
 };
 
+/**
+ * ShareListingButton
+ *
+ * Renders the Share Listing Button UI for listings.
+ *
+ * @param props - ShareListingButton props.
+ * @returns ShareListingButton React element.
+ * @calledBy listings pages and parent components
+ */
 export function ShareListingButton({
   path,
   title,

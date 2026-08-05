@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Wompi payment webhook endpoint validating checksum and updating payments.
+ * @dependencies @/lib/payments handleWompiWebhook
+ */
+
 import { NextResponse } from "next/server";
 
 import { handleWompiWebhook } from "@/lib/payments";

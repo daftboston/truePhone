@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file reopen-rejected-listing-button.tsx
+ * @description ReopenRejectedListingButton component for the listings feature.tsx.
+ * @dependencies next/navigation, react, @/components/ui/button, @/features/listings/actions/listings
+ */
+
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -10,6 +16,15 @@ type ReopenRejectedListingButtonProps = {
   listingId: string;
 };
 
+/**
+ * ReopenRejectedListingButton
+ *
+ * Renders the Reopen Rejected Listing Button UI for listings.
+ *
+ * @param props - ReopenRejectedListingButton props.
+ * @returns ReopenRejectedListingButton React element.
+ * @calledBy listings pages and parent components
+ */
 export function ReopenRejectedListingButton({
   listingId,
 }: ReopenRejectedListingButtonProps) {

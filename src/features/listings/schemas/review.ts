@@ -1,5 +1,12 @@
+/**
+ * @file review.ts
+ * @description Zod schemas and related types for listings (review.ts).
+ * @dependencies zod
+ */
+
 import { z } from "zod";
 
+/** listingReviewTabSchema — validates input for related listingReviewTab flows. */
 export const listingReviewTabSchema = z.enum([
   "todos",
   "pendiente",
@@ -10,6 +17,7 @@ export const listingReviewTabSchema = z.enum([
 
 export type ListingReviewTab = z.infer<typeof listingReviewTabSchema>;
 
+/** approveListingSchema — validates input for related approveListing flows. */
 export const approveListingSchema = z.object({
   listingId: z.string().min(1),
   reviewerNotes: z
@@ -20,6 +28,7 @@ export const approveListingSchema = z.object({
     .or(z.literal("")),
 });
 
+/** rejectListingSchema — validates input for related rejectListing flows. */
 export const rejectListingSchema = z.object({
   listingId: z.string().min(1),
   rejectionReason: z
@@ -35,6 +44,7 @@ export const rejectListingSchema = z.object({
     .or(z.literal("")),
 });
 
+/** saveListingReviewNotesSchema — validates input for related saveListingReviewNotes flows. */
 export const saveListingReviewNotesSchema = z.object({
   listingId: z.string().min(1),
   reviewerNotes: z
@@ -55,6 +65,7 @@ export const LISTING_QUALITY_CHECKLIST = [
   "Sin indicios claros de fraude o duplicado",
 ] as const;
 
+/** EDITABLE_REVIEW_STATUSES — validates input for related EDITABLE_REVIEW_STATUSES flows. */
 export const EDITABLE_REVIEW_STATUSES = [
   "PENDING_REVIEW",
   "PUBLISHED",

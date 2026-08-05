@@ -1,3 +1,9 @@
+/**
+ * @file recently-viewed.ts
+ * @description Browser localStorage helpers for recently viewed listings.
+ * @dependencies browser localStorage
+ */
+
 const STORAGE_KEY = "truephone:recently-viewed";
 const MAX_ITEMS = 8;
 
@@ -12,6 +18,14 @@ export type RecentlyViewedItem = {
   viewedAt: number;
 };
 
+/**
+ * readRecentlyViewed
+ *
+ * Reads and validates recently viewed items from localStorage.
+ *
+ * @returns Array of RecentlyViewedItem; empty when unavailable or invalid.
+ * @calledBy Recently viewed UI widgets
+ */
 export function readRecentlyViewed(): RecentlyViewedItem[] {
   if (typeof window === "undefined") return [];
   try {
@@ -31,6 +45,16 @@ export function readRecentlyViewed(): RecentlyViewedItem[] {
   }
 }
 
+/**
+ * recordRecentlyViewed
+ *
+ * Prepends a listing view and trims to MAX_ITEMS in localStorage.
+ *
+ * @param slug - Listing public slug.
+ * @param title - Display title at view time.
+ * @returns void; no-op on server or quota failures.
+ * @calledBy Listing detail client effects
+ */
 export function recordRecentlyViewed(slug: string, title: string) {
   if (typeof window === "undefined") return;
   const next: RecentlyViewedItem[] = [

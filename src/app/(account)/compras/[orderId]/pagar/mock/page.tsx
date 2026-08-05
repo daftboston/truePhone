@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description In-app mock PSP confirmation page for development payments.
+ * @dependencies Mock payment helpers and order context
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -18,6 +24,13 @@ type PageProps = {
   searchParams: Promise<{ reference?: string }>;
 };
 
+/**
+ * MockCheckoutPage
+ *
+ * Confirms a MOCK payment reference without calling a real PSP.
+ *
+ * @returns Mock checkout confirmation UI.
+ */
 export default async function MockCheckoutPage({
   params,
   searchParams,

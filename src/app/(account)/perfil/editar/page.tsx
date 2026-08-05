@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Edit-profile form page for the signed-in user.
+ * @dependencies ProfileEditForm and profile loaders
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -10,6 +16,13 @@ export const metadata: Metadata = {
   title: "Editar perfil",
 };
 
+/**
+ * EditProfilePage
+ *
+ * Renders the profile edit form prefilled with the current profile.
+ *
+ * @returns Edit profile page.
+ */
 export default async function EditProfilePage() {
   const current = await requireCurrentProfile("/perfil/editar");
   const { profile } = current;

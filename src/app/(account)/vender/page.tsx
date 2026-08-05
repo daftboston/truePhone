@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Seller hub listing the user's drafts and published listings.
+ * @dependencies Listings seller helpers and account shell
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -22,6 +28,13 @@ export const metadata: Metadata = {
   title: "Vender",
 };
 
+/**
+ * SellPage
+ *
+ * Entry hub for creating and managing the seller's own listings.
+ *
+ * @returns Seller listings hub.
+ */
 export default async function SellPage() {
   const current = await requireCurrentProfile("/vender");
 

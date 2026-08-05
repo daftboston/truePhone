@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: security / Find My / account checks.
+ * @dependencies Security form and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Seguridad del equipo",
 };
 
+/**
+ * ListingSecurityPage
+ *
+ * Captures security-related disclosures before listing submission.
+ *
+ * @returns Security wizard step.
+ */
 export default async function ListingSecurityPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

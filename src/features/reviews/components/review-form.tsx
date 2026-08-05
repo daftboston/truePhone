@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file review-form.tsx
+ * @description ReviewForm component for the reviews feature.tsx.
+ * @dependencies react, next/navigation, @/components/ui/button, @/components/ui/label, @/components/ui/textarea
+ */
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -21,6 +27,15 @@ const initial: ReviewActionState = null;
 
 const RATINGS = [5, 4, 3, 2, 1] as const;
 
+/**
+ * ReviewForm
+ *
+ * Renders the Review Form UI for reviews.
+ *
+ * @param props - ReviewForm props.
+ * @returns ReviewForm React element.
+ * @calledBy reviews pages and parent components
+ */
 export function ReviewForm({ orderId, counterpartLabel }: ReviewFormProps) {
   const router = useRouter();
   const [state, action, pending] = useActionState(createReviewAction, initial);

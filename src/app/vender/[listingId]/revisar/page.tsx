@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: review listing before submit to TruePhone review.
+ * @dependencies Review/submit components and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Revisar anuncio",
 };
 
+/**
+ * ListingReviewPage
+ *
+ * Shows a seller preview and submit action for manual review.
+ *
+ * @returns Pre-submit review wizard step.
+ */
 export default async function ListingReviewPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

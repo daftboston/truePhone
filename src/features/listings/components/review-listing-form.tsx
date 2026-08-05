@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file review-listing-form.tsx
+ * @description ReviewListingForm component for the listings feature.tsx.
+ * @dependencies react, @/features/listings/actions/listings, @/features/listings/schemas/listing, @prisma/client, @/components/ui/button
+ */
+
 import { useState, useTransition } from "react";
 
 import {
@@ -25,6 +31,15 @@ type ReviewListingFormProps = {
   description: string | null;
 };
 
+/**
+ * ReviewListingForm
+ *
+ * Renders the Review Listing Form UI for listings.
+ *
+ * @param props - ReviewListingForm props.
+ * @returns ReviewListingForm React element.
+ * @calledBy listings pages and parent components
+ */
 export function ReviewListingForm({
   listingId,
   title,

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file create-order-button.tsx
+ * @description CreateOrderButton component for the orders feature.tsx.
+ * @dependencies next/navigation, react, next/dist/client/components/redirect-error, @/components/ui/button, @/features/orders/actions/orders
+ */
+
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -14,6 +20,15 @@ type CreateOrderButtonProps = {
   label?: string;
 };
 
+/**
+ * CreateOrderButton
+ *
+ * Renders the Create Order Button UI for orders.
+ *
+ * @param props - CreateOrderButton props.
+ * @returns CreateOrderButton React element.
+ * @calledBy orders pages and parent components
+ */
 export function CreateOrderButton({
   listingId,
   loginHref,

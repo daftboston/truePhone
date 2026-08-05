@@ -1,22 +1,32 @@
 "use server";
 
+/**
+ * @file orders.ts
+ * @description Server actions for orders (orders.ts).
+ * @dependencies next/cache, next/navigation, @/features/orders/schemas/order, @/lib/auth/session, @/lib/orders
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
   cancelOrderSchema,
-  completeOrderSchema,
   createOrderSchema,
   fieldErrorsFromZod,
   type OrderActionState,
 } from "@/features/orders/schemas/order";
 import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
-import {
-  cancelOrder,
-  completeOrder,
-  createOrderAndReserveListing,
-} from "@/lib/orders";
+import { cancelOrder, createOrderAndReserveListing } from "@/lib/orders";
 
+/**
+ * revalidateOrderPaths
+ *
+ * Revalidates Next.js paths after orders mutations.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy orders UI and related modules
+ */
 function revalidateOrderPaths(input: {
   orderId?: string;
   listingId?: string;
@@ -38,6 +48,16 @@ function revalidateOrderPaths(input: {
   revalidatePath("/", "layout");
 }
 
+/**
+ * createOrderAction
+ *
+ * Server action: create order for authenticated orders flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy orders components
+ */
 export async function createOrderAction(
   listingId: string,
 ): Promise<OrderActionState> {
@@ -75,6 +95,16 @@ export async function createOrderAction(
   redirect(`/compras/${result.orderId}`);
 }
 
+/**
+ * cancelOrderAction
+ *
+ * Server action: cancel order for authenticated orders flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy orders components
+ */
 export async function cancelOrderAction(
   _prev: OrderActionState,
   formData: FormData,
@@ -114,42 +144,7 @@ export async function cancelOrderAction(
   revalidateOrderPaths({ orderId: parsed.data.orderId });
   return {
     ok: true,
-    message: "Pedido cancelado. El anuncio volvió a publicarse.",
-  };
-}
-
-export async function completeOrderAction(
-  _prev: OrderActionState,
-  formData: FormData,
-): Promise<OrderActionState> {
-  const current = await getCurrentProfile();
-  if (!current) {
-    return {
-      ok: false,
-      error: "Debes iniciar sesión.",
-      loginRequired: true,
-    };
-  }
-
-  const parsed = completeOrderSchema.safeParse({
-    orderId: formData.get("orderId"),
-  });
-  if (!parsed.success) {
-    return { ok: false, error: "Pedido inválido." };
-  }
-
-  const result = await completeOrder({
-    orderId: parsed.data.orderId,
-    sellerId: current.profile.id,
-  });
-
-  if (!result.ok) {
-    return { ok: false, error: result.error };
-  }
-
-  revalidateOrderPaths({ orderId: parsed.data.orderId });
-  return {
-    ok: true,
-    message: "Venta marcada como completada. Ambos pueden dejar una reseña.",
+    message:
+      result.message ?? "Pedido cancelado. El anuncio volvió a publicarse.",
   };
 }

@@ -1,3 +1,9 @@
+/**
+ * @file order-card.tsx
+ * @description OrderCard component for the orders feature.tsx.
+ * @dependencies next/link, next/image, @/components/ui/badge, @/lib/orders, @/lib/utils
+ */
+
 import Link from "next/link";
 import Image from "next/image";
 
@@ -16,10 +22,28 @@ type OrderCardProps = {
   className?: string;
 };
 
+/**
+ * partyName
+ *
+ * Supports orders by implementing partyName.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy orders UI and related modules
+ */
 function partyName(party: OrderListItem["buyer"] | OrderListItem["seller"]) {
   return party.fullName?.trim() || party.username || "Usuario TruePhone";
 }
 
+/**
+ * OrderCard
+ *
+ * Renders the Order Card UI for orders.
+ *
+ * @param props - OrderCard props.
+ * @returns OrderCard React element.
+ * @calledBy orders pages and parent components
+ */
 export function OrderCard({
   order,
   href,

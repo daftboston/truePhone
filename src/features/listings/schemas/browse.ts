@@ -1,11 +1,20 @@
+/**
+ * @file browse.ts
+ * @description Zod schemas and related types for listings (browse.ts).
+ * @dependencies @prisma/client, zod
+ */
+
 import { Condition } from "@prisma/client";
 import { z } from "zod";
 
+/** BROWSE_PAGE_SIZE — validates input for related BROWSE_PAGE_SIZE flows. */
 export const BROWSE_PAGE_SIZE = 12;
 
+/** browseSortSchema — validates input for related browseSort flows. */
 export const browseSortSchema = z.enum(["newest", "price_asc", "price_desc"]);
 export type BrowseSort = z.infer<typeof browseSortSchema>;
 
+/** browsePriceBandSchema — validates input for related browsePriceBand flows. */
 export const browsePriceBandSchema = z.enum([
   "under_1500",
   "1500_2500",
@@ -56,6 +65,15 @@ export type BrowseQuery = {
   page: number;
 };
 
+/**
+ * parseBrowseSearchParams
+ *
+ * Supports listings by implementing parseBrowseSearchParams.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function parseBrowseSearchParams(
   params: Record<string, string | string[] | undefined>,
 ): BrowseQuery {
@@ -81,6 +99,15 @@ export function parseBrowseSearchParams(
   };
 }
 
+/**
+ * buildBrowseHref
+ *
+ * Supports listings by implementing buildBrowseHref.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function buildBrowseHref(
   query: BrowseQuery,
   patch: Partial<BrowseQuery> = {},
@@ -106,6 +133,15 @@ export function hasBrowseScope(query: BrowseQuery) {
   return Boolean(query.modelId || query.seriesKey);
 }
 
+/**
+ * priceBandBounds
+ *
+ * Supports listings by implementing priceBandBounds.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function priceBandBounds(band: BrowsePriceBand | "") {
   if (!band) return { minPrice: undefined, maxPrice: undefined };
   const found = BROWSE_PRICE_BANDS.find((item) => item.id === band);

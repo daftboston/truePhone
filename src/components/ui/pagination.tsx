@@ -1,3 +1,9 @@
+/**
+ * @file pagination.tsx
+ * @description Prev/next pagination nav for search and browse result pages.
+ * @dependencies next/link, @/lib/utils
+ */
+
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -10,6 +16,19 @@ type PaginationProps = {
   className?: string;
 };
 
+/**
+ * Pagination
+ *
+ * Renders page indicator and Anterior/Siguiente links; hidden when totalPages <= 1.
+ *
+ * @param props.page - Current 1-based page.
+ * @param props.totalPages - Total pages available.
+ * @param props.prevHref - Previous page href, or null when disabled.
+ * @param props.nextHref - Next page href, or null when disabled.
+ * @param props.className - Optional className.
+ * @returns Pagination nav or null.
+ * @calledBy Search and explore result lists
+ */
 export function Pagination({
   page,
   totalPages,

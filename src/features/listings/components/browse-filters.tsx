@@ -1,3 +1,9 @@
+/**
+ * @file browse-filters.tsx
+ * @description BrowseFilters component for the listings feature.tsx.
+ * @dependencies next/link, @prisma/client, @/features/listings/schemas/browse, @/features/listings/schemas/listing, @/lib/utils
+ */
+
 import Link from "next/link";
 import type { Condition, IphoneModel, IphoneStorage } from "@prisma/client";
 
@@ -17,6 +23,15 @@ type BrowseFiltersProps = {
   className?: string;
 };
 
+/**
+ * FilterLink
+ *
+ * Renders the Filter Link UI for listings.
+ *
+ * @param props - FilterLink props.
+ * @returns FilterLink React element.
+ * @calledBy listings pages and parent components
+ */
 function FilterLink({
   href,
   label,
@@ -45,6 +60,15 @@ function FilterLink({
   );
 }
 
+/**
+ * FilterGroup
+ *
+ * Renders the Filter Group UI for listings.
+ *
+ * @param props - FilterGroup props.
+ * @returns FilterGroup React element.
+ * @calledBy listings pages and parent components
+ */
 function FilterGroup({
   title,
   children,
@@ -66,10 +90,28 @@ function FilterGroup({
   );
 }
 
+/**
+ * shortModelName
+ *
+ * Supports listings by implementing shortModelName.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function shortModelName(name: string) {
   return name.replace(/^iPhone\s+/i, "");
 }
 
+/**
+ * BrowseFilters
+ *
+ * Renders the Browse Filters UI for listings.
+ *
+ * @param props - BrowseFilters props.
+ * @returns BrowseFilters React element.
+ * @calledBy listings pages and parent components
+ */
 export function BrowseFilters({
   query,
   models,

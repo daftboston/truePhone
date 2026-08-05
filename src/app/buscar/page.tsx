@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Full-text/filter search results for marketplace listings.
+ * @dependencies SearchBar, ListingCard, Pagination, listings search helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -35,6 +41,13 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+/**
+ * SearchPage
+ *
+ * Runs listing search from query params and renders paginated results.
+ *
+ * @returns Search results page.
+ */
 export default async function SearchPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const query = parseBrowseSearchParams(params);

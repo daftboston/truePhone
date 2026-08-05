@@ -1,3 +1,9 @@
+/**
+ * @file iphone-catalog.ts
+ * @description Client-safe iPhone model series grouping and typeahead matching.
+ * @dependencies none
+ */
+
 export type CatalogModel = {
   id: string;
   name: string;
@@ -12,6 +18,14 @@ export type ModelSeries = {
   models: CatalogModel[];
 };
 
+/**
+ * normalizeSearch
+ *
+ * Normalizes text for accent-insensitive catalog search.
+ *
+ * @param value - Raw search string.
+ * @returns Lowercased alphanumeric search text.
+ */
 function normalizeSearch(value: string) {
   return value
     .toLowerCase()
@@ -22,6 +36,15 @@ function normalizeSearch(value: string) {
 }
 
 /** Group catalog models into generation series (16, 15, SE, …). */
+/**
+ * getModelSeriesKey
+ *
+ * Group catalog models into generation series (16, 15, SE, …).
+ *
+ * @param name - iPhone model display name.
+ * @returns Series key, Spanish label, and sort weight.
+ * @calledBy groupModelsBySeries, matchModelsForSearch
+ */
 export function getModelSeriesKey(name: string): {
   key: string;
   label: string;
@@ -44,6 +67,15 @@ export function getModelSeriesKey(name: string): {
   return { key: "other", label: "Otros modelos", sort: -1 };
 }
 
+/**
+ * groupModelsBySeries
+ *
+ * Groups catalog models into sorted generation series.
+ *
+ * @param models - Catalog model rows.
+ * @returns ModelSeries array newest generation first.
+ * @calledBy Listing create/browse model pickers
+ */
 export function groupModelsBySeries(models: CatalogModel[]): ModelSeries[] {
   const byKey = new Map<string, ModelSeries>();
 
@@ -77,6 +109,16 @@ export function groupModelsBySeries(models: CatalogModel[]): ModelSeries[] {
 /**
  * Typeahead matching: typing a series (e.g. "iphone 14") returns that
  * series' models; typing a specific model narrows within the series.
+ */
+/**
+ * matchModelsForSearch
+ *
+ * Typeahead matching: series queries return that series' models; model queries narrow within series.
+ *
+ * @param models - Catalog models to search.
+ * @param query - User typeahead input.
+ * @returns Matching CatalogModel list.
+ * @calledBy Model search UI
  */
 export function matchModelsForSearch(
   models: CatalogModel[],
@@ -114,10 +156,28 @@ export function matchModelsForSearch(
   return models.filter((model) => normalizeSearch(model.name).includes(q));
 }
 
+/**
+ * browseModelHref
+ *
+ * Builds marketplace browse URL filtered to one model.
+ *
+ * @param modelId - iPhoneModel UUID.
+ * @returns Path with query string.
+ * @calledBy Catalog browse links
+ */
 export function browseModelHref(modelId: string) {
   return `/buscar?model=${encodeURIComponent(modelId)}`;
 }
 
+/**
+ * browseSeriesHref
+ *
+ * Builds marketplace browse URL filtered to a generation series key.
+ *
+ * @param seriesKey - Series key from getModelSeriesKey.
+ * @returns Path with query string.
+ * @calledBy Catalog series chips
+ */
 export function browseSeriesHref(seriesKey: string) {
   return `/buscar?series=${encodeURIComponent(seriesKey)}`;
 }

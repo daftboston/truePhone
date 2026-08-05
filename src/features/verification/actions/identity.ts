@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file identity.ts
+ * @description Server actions for verification (identity.ts).
+ * @dependencies next/cache, next/navigation, @/features/verification/schemas/identity, @/features/verification/types, @/lib/auth/identity
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -26,6 +32,15 @@ const IDENTITY_BUCKET = "identity-docs";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+/**
+ * requireSellerDraft
+ *
+ * Supports verification by implementing requireSellerDraft.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 async function requireSellerDraft() {
   const current = await getCurrentProfile();
   if (!current) {
@@ -47,6 +62,15 @@ async function requireSellerDraft() {
   return { ok: true as const, current, draft };
 }
 
+/**
+ * uploadIdentityImage
+ *
+ * Supports verification by implementing uploadIdentityImage.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 async function uploadIdentityImage(
   authUserId: string,
   kind: "front" | "back" | "selfie",
@@ -82,6 +106,16 @@ async function uploadIdentityImage(
   return { path: `${IDENTITY_BUCKET}/${objectPath}` };
 }
 
+/**
+ * acceptPrivacyAction
+ *
+ * Server action: accept privacy for authenticated verification flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy verification components
+ */
 export async function acceptPrivacyAction(): Promise<VerificationActionState> {
   const result = await requireSellerDraft();
   if (!result.ok) {
@@ -104,6 +138,16 @@ export async function acceptPrivacyAction(): Promise<VerificationActionState> {
   redirect("/verificacion/cedula-frente");
 }
 
+/**
+ * saveCedulaFrontAction
+ *
+ * Server action: save cedula front for authenticated verification flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy verification components
+ */
 export async function saveCedulaFrontAction(
   _prev: VerificationActionState,
   formData: FormData,
@@ -150,6 +194,16 @@ export async function saveCedulaFrontAction(
   redirect("/verificacion/cedula-reverso");
 }
 
+/**
+ * saveCedulaBackAction
+ *
+ * Server action: save cedula back for authenticated verification flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy verification components
+ */
 export async function saveCedulaBackAction(
   _prev: VerificationActionState,
   formData: FormData,
@@ -183,6 +237,16 @@ export async function saveCedulaBackAction(
   redirect("/verificacion/selfie");
 }
 
+/**
+ * saveSelfieAction
+ *
+ * Server action: save selfie for authenticated verification flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy verification components
+ */
 export async function saveSelfieAction(
   _prev: VerificationActionState,
   formData: FormData,
@@ -216,6 +280,16 @@ export async function saveSelfieAction(
   redirect("/verificacion/revisar");
 }
 
+/**
+ * submitIdentityVerificationAction
+ *
+ * Server action: submit identity verification for authenticated verification flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy verification components
+ */
 export async function submitIdentityVerificationAction(): Promise<VerificationActionState> {
   const result = await requireSellerDraft();
   if (!result.ok) {
@@ -256,6 +330,16 @@ export async function submitIdentityVerificationAction(): Promise<VerificationAc
   redirect("/verificacion/enviada");
 }
 
+/**
+ * approveIdentityVerificationAction
+ *
+ * Server action: approve identity verification for authenticated verification flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy verification components
+ */
 export async function approveIdentityVerificationAction(
   _prev: VerificationActionState,
   formData: FormData,
@@ -314,6 +398,16 @@ export async function approveIdentityVerificationAction(
   return { ok: true, message: "Identidad aprobada." };
 }
 
+/**
+ * rejectIdentityVerificationAction
+ *
+ * Server action: reject identity verification for authenticated verification flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy verification components
+ */
 export async function rejectIdentityVerificationAction(
   _prev: VerificationActionState,
   formData: FormData,
@@ -376,6 +470,15 @@ export async function rejectIdentityVerificationAction(
   return { ok: true, message: "Verificación rechazada." };
 }
 
+/**
+ * getSellerVerificationSummary
+ *
+ * Supports verification by implementing getSellerVerificationSummary.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export async function getSellerVerificationSummary(profileId: string) {
   return getLatestIdentityVerification(profileId);
 }

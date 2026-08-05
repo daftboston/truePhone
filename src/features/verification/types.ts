@@ -1,3 +1,9 @@
+/**
+ * @file types.ts
+ * @description Shared types and helpers for the verification feature.
+ * @dependencies @prisma/client
+ */
+
 import type {
   IdentityVerification,
   IdentityVerificationStatus,
@@ -31,6 +37,15 @@ export const VERIFICATION_STEPS = [
   { id: "revisar", title: "Revisar", path: "/verificacion/revisar" },
 ] as const;
 
+/**
+ * fieldErrorsFromZod
+ *
+ * Flattens Zod issues into a field-name → messages map for form UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function fieldErrorsFromZod(
   error: import("zod").ZodError,
 ): Record<string, string[]> {
@@ -44,14 +59,41 @@ export function fieldErrorsFromZod(
   return fieldErrors;
 }
 
+/**
+ * isSellerIdentityVerified
+ *
+ * Predicate helper used by verification UI and actions.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function isSellerIdentityVerified(verifikStatus: string) {
   return verifikStatus === "verified";
 }
 
+/**
+ * canContinueVerification
+ *
+ * Predicate helper used by verification UI and actions.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function canContinueVerification(status: IdentityVerificationStatus) {
   return status === "DRAFT" || status === "REJECTED";
 }
 
+/**
+ * verificationStatusLabel
+ *
+ * Supports verification by implementing verificationStatusLabel.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function verificationStatusLabel(status: string) {
   switch (status) {
     case "verified":
@@ -72,6 +114,15 @@ export function verificationStatusLabel(status: string) {
   }
 }
 
+/**
+ * nextVerificationPath
+ *
+ * Supports verification by implementing nextVerificationPath.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function nextVerificationPath(draft: IdentityVerification | null) {
   if (!draft || !draft.privacyAcceptedAt) return "/verificacion";
   if (!draft.documentNumberHash || !draft.frontImageUrl) {

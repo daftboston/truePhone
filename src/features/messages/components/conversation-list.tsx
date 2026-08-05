@@ -1,3 +1,9 @@
+/**
+ * @file conversation-list.tsx
+ * @description ConversationList component for the messages feature.tsx.
+ * @dependencies next/link, @/components/ui/avatar, @/lib/messages, @/lib/utils
+ */
+
 import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +16,15 @@ type ConversationListProps = {
   className?: string;
 };
 
+/**
+ * initials
+ *
+ * Derives up to two uppercase initials from a display name.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy messages UI and related modules
+ */
 function initials(name: string) {
   return name
     .split(" ")
@@ -19,6 +34,15 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+/**
+ * formatTime
+ *
+ * Formats a display value for messages UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy messages UI and related modules
+ */
 function formatTime(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "short",
@@ -26,6 +50,15 @@ function formatTime(date: Date) {
   }).format(date);
 }
 
+/**
+ * ConversationList
+ *
+ * Renders the Conversation List UI for messages.
+ *
+ * @param props - ConversationList props.
+ * @returns ConversationList React element.
+ * @calledBy messages pages and parent components
+ */
 export function ConversationList({
   conversations,
   className,

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file home-featured-rotator.tsx
+ * @description Client carousel of featured marketplace listings with price and seller.
+ * @dependencies next/image, next/link, PriceDisplay, SellerCard, TrustBadge, ui/*
+ */
+
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useState } from "react";
@@ -34,6 +40,16 @@ type HomeFeaturedRotatorProps = {
   className?: string;
 };
 
+/**
+ * HomeFeaturedRotator
+ *
+ * Rotates featured listing slides with pause-on-hover and prev/next controls.
+ *
+ * @param props.listings - FeaturedListingSlide data from the home page.
+ * @param props.className - Optional wrapper className.
+ * @returns Featured listings carousel; null-safe when listings is empty.
+ * @calledBy HomePage
+ */
 export function HomeFeaturedRotator({
   listings,
   className,

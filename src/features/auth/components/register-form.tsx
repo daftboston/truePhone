@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file register-form.tsx
+ * @description Client form for email/password registration with Google OAuth option.
+ * @dependencies react, registerAction, GoogleSignInButton, design-system inputs
+ */
+
 import { useActionState } from "react";
 
 import { registerAction } from "@/features/auth/actions/auth";
@@ -9,6 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * RegisterForm
+ *
+ * Collects signup fields and submits to registerAction.
+ *
+ * @returns Registration UI, or a check-email success message after signup.
+ * @calledBy src/app/(auth)/register/page.tsx
+ */
 export function RegisterForm() {
   const [state, formAction, pending] = useActionState<
     AuthActionState,

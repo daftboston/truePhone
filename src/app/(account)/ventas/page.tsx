@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Seller sales list for the signed-in account.
+ * @dependencies Account shell, orders feature helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -12,6 +18,13 @@ export const metadata: Metadata = {
   description: "Pedidos de tus anuncios en TruePhone.",
 };
 
+/**
+ * SalesPage
+ *
+ * Lists the current user's sales orders.
+ *
+ * @returns Sales list UI for the seller.
+ */
 export default async function SalesPage() {
   const current = await requireCurrentProfile("/ventas");
   const orders = await listOrdersForSeller(current.profile.id);

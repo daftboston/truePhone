@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file recently-viewed-section.tsx
+ * @description RecentlyViewedSection component for the listings feature.tsx.
+ * @dependencies next/link, react, @/components/listing-card, @/features/listings/actions/recently-viewed, @/features/listings/schemas/listing
+ */
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -20,6 +26,15 @@ type RecentCard = {
   verified: boolean;
 };
 
+/**
+ * RecentlyViewedSection
+ *
+ * Renders the Recently Viewed Section UI for listings.
+ *
+ * @param props - RecentlyViewedSection props.
+ * @returns RecentlyViewedSection React element.
+ * @calledBy listings pages and parent components
+ */
 export function RecentlyViewedSection() {
   const [listings, setListings] = useState<RecentCard[]>([]);
 

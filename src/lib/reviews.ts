@@ -1,3 +1,9 @@
+/**
+ * @file reviews.ts
+ * @description Order reviews, reputation refresh, reports, and trusted-seller rules.
+ * @dependencies @prisma/client, @/lib/db
+ */
+
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
@@ -29,12 +35,31 @@ export type MarketplaceReview = Prisma.ReviewGetPayload<{
   include: typeof reviewListInclude;
 }>;
 
+/**
+ * computeAverageRating
+ *
+ * Averages ratings rounded to one decimal; 0 when empty.
+ *
+ * @param ratings - Rating numbers.
+ * @returns Average to one decimal place.
+ * @calledBy refreshUserReputation, reviews.test
+ */
 export function computeAverageRating(ratings: number[]): number {
   if (ratings.length === 0) return 0;
   const sum = ratings.reduce((acc, value) => acc + value, 0);
   return Math.round((sum / ratings.length) * 10) / 10;
 }
 
+/**
+ * shouldBeTrustedSeller
+ *
+ * Whether review count and average meet Vendedor de confianza thresholds.
+ *
+ * @param input.totalReviews - Visible review count.
+ * @param input.sellerRating - Average rating.
+ * @returns True when thresholds are met.
+ * @calledBy refreshUserReputation
+ */
 export function shouldBeTrustedSeller(input: {
   totalReviews: number;
   sellerRating: number;
@@ -45,6 +70,16 @@ export function shouldBeTrustedSeller(input: {
   );
 }
 
+/**
+ * otherPartyId
+ *
+ * Maps an order participant to the counterpart profile id.
+ *
+ * @param order - buyerId and sellerId.
+ * @param actorId - Current profile UUID.
+ * @returns Counterpart id or null when actor is not a party.
+ * @calledBy createOrderReview
+ */
 export function otherPartyId(
   order: {
     buyerId: string;
@@ -62,7 +97,16 @@ export type CreateReviewResult =
   | { ok: false; error: string };
 
 /**
+ * createOrderReview
+ *
  * Create an order-tied review after COMPLETED, then refresh reputation.
+ *
+ * @param input.orderId - Completed order UUID.
+ * @param input.reviewerId - Reviewer profile UUID.
+ * @param input.rating - 1–5 rating.
+ * @param input.comment - Optional comment.
+ * @returns CreateReviewResult.
+ * @calledBy Review form actions
  */
 export async function createOrderReview(input: {
   orderId: string;
@@ -143,6 +187,15 @@ export async function createOrderReview(input: {
   }
 }
 
+/**
+ * reportReview
+ *
+ * Opens a moderation report against a review.
+ *
+ * @param input - reviewId, reporterId, reason.
+ * @returns Ok or Spanish error.
+ * @calledBy Report review action
+ */
 export async function reportReview(input: {
   reviewId: string;
   reporterId: string;
@@ -201,6 +254,15 @@ export async function reportReview(input: {
   return { ok: true };
 }
 
+/**
+ * hideReviewForModeration
+ *
+ * Hides a review and refreshes the reviewed user's reputation.
+ *
+ * @param input - reviewId and moderator id.
+ * @returns Ok or error.
+ * @calledBy Reviewer moderation actions
+ */
 export async function hideReviewForModeration(input: {
   reviewId: string;
   moderatorId: string;
@@ -247,6 +309,15 @@ export async function hideReviewForModeration(input: {
   }
 }
 
+/**
+ * dismissReviewReports
+ *
+ * Dismisses open reports on a review without hiding it.
+ *
+ * @param input - reviewId and moderator id.
+ * @returns Ok or error.
+ * @calledBy Reviewer moderation actions
+ */
 export async function dismissReviewReports(input: {
   reviewId: string;
   moderatorId: string;
@@ -270,6 +341,16 @@ export async function dismissReviewReports(input: {
   return { ok: true };
 }
 
+/**
+ * refreshUserReputation
+ *
+ * Recomputes sellerRating, totalReviews, and trusted-seller flag for a profile.
+ *
+ * @param tx - Prisma transaction client.
+ * @param userId - Reviewed profile UUID.
+ * @returns void after profile update.
+ * @calledBy createOrderReview, hideReviewForModeration
+ */
 async function refreshUserReputation(
   tx: Prisma.TransactionClient,
   userId: string,
@@ -301,6 +382,16 @@ async function refreshUserReputation(
   });
 }
 
+/**
+ * listVisibleReviewsForUser
+ *
+ * Lists visible reviews received by a user.
+ *
+ * @param userId - Reviewed profile UUID.
+ * @param take - Max rows; defaults to 20.
+ * @returns MarketplaceReview rows.
+ * @calledBy Public profile reviews
+ */
 export async function listVisibleReviewsForUser(userId: string, take = 20) {
   return prisma.review.findMany({
     where: { reviewedUserId: userId, hiddenAt: null },
@@ -310,6 +401,15 @@ export async function listVisibleReviewsForUser(userId: string, take = 20) {
   });
 }
 
+/**
+ * listReviewsForOrder
+ *
+ * Lists reviews attached to an order.
+ *
+ * @param orderId - Order UUID.
+ * @returns Review rows for both parties if present.
+ * @calledBy Order detail
+ */
 export async function listReviewsForOrder(orderId: string) {
   return prisma.review.findMany({
     where: { orderId, hiddenAt: null },
@@ -321,12 +421,29 @@ export async function listReviewsForOrder(orderId: string) {
   });
 }
 
+/**
+ * countOpenReviewReports
+ *
+ * Counts open review reports for moderation badges.
+ *
+ * @returns Open report count.
+ * @calledBy Reviewer nav
+ */
 export async function countOpenReviewReports() {
   return prisma.reviewReport.count({
     where: { resolvedAt: null },
   });
 }
 
+/**
+ * listOpenReviewReports
+ *
+ * Lists open review reports for the moderation queue.
+ *
+ * @param take - Max rows; defaults to 50.
+ * @returns Report rows with review includes.
+ * @calledBy Reviewer reports page
+ */
 export async function listOpenReviewReports(take = 50) {
   return prisma.reviewReport.findMany({
     where: { resolvedAt: null },
@@ -350,6 +467,15 @@ export async function listOpenReviewReports(take = 50) {
   });
 }
 
+/**
+ * reviewAuthorName
+ *
+ * Display name for a review party profile.
+ *
+ * @param party - Profile name fields.
+ * @returns Display string.
+ * @calledBy Review UI
+ */
 export function reviewAuthorName(party: {
   fullName: string | null;
   username: string | null;

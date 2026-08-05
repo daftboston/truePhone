@@ -1,3 +1,9 @@
+/**
+ * @file layout.tsx
+ * @description Authenticated account shell with side nav, verification, and unread counts.
+ * @dependencies AppShell, AccountNav, auth/session, identity and messages helpers
+ */
+
 import { headers } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
@@ -13,6 +19,14 @@ import {
 } from "@/lib/auth/session";
 import { countUnreadForUser } from "@/lib/messages";
 
+/**
+ * AccountLayout
+ *
+ * Requires a signed-in profile and renders account navigation beside children.
+ *
+ * @param props.children - Account route pages.
+ * @returns AppShell with AccountNav and main content column.
+ */
 export default async function AccountLayout({
   children,
 }: {

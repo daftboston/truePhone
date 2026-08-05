@@ -1,3 +1,9 @@
+/**
+ * @file db.ts
+ * @description Prisma client singleton with HMR-safe proxy for Next.js dev.
+ * @dependencies @prisma/adapter-pg, @prisma/client, @/lib/env
+ */
+
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 
@@ -7,11 +13,26 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+/**
+ * createPrismaClient
+ *
+ * Builds a PrismaClient using the Postgres driver adapter.
+ *
+ * @returns A new PrismaClient instance.
+ */
 function createPrismaClient() {
   const adapter = new PrismaPg({ connectionString: getDatabaseUrl() });
   return new PrismaClient({ adapter });
 }
 
+/**
+ * isStaleClient
+ *
+ * Detects HMR singletons missing newly generated Prisma models.
+ *
+ * @param client - Existing PrismaClient from globalThis.
+ * @returns True when expected model delegates are missing.
+ */
 function isStaleClient(client: PrismaClient) {
   const delegate = client as {
     iphoneModel?: unknown;
@@ -25,6 +46,13 @@ function isStaleClient(client: PrismaClient) {
   );
 }
 
+/**
+ * getClient
+ *
+ * Returns a cached Prisma client or creates a fresh one when stale/missing.
+ *
+ * @returns Live PrismaClient.
+ */
 function getClient() {
   const existing = globalForPrisma.prisma;
   if (existing && !isStaleClient(existing)) {
@@ -38,6 +66,14 @@ function getClient() {
   return client;
 }
 
+/**
+ * prisma
+ *
+ * Lazy Proxy that resolves the Prisma client on each property access.
+ * Avoids importing a stale singleton across Next.js HMR boundaries.
+ *
+ * @consumers Server actions, lib data helpers, financial-core
+ */
 export const prisma = new Proxy({} as PrismaClient, {
   get(_target, property, receiver) {
     const client = getClient();

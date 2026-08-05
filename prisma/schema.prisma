@@ -1,3 +1,9 @@
+/**
+ * @file schema.prisma
+ * @description TruePhone Prisma data model: marketplace profiles, listings, orders, payments, financial core, shipping, and reviews.
+ * @dependencies PostgreSQL 15+, Prisma Client, Supabase
+ */
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -63,6 +69,72 @@ enum PaymentProvider {
   MOCK
 }
 
+enum LedgerEntryType {
+  PAYMENT_APPROVED
+  HOLD_CREATED
+  FEE_SNAPSHOT
+  PAYOUT_AUTHORIZED
+  PAYOUT_SUBMITTED
+  PAYOUT_COMPLETED
+  PAYOUT_FAILED
+  REFUND_APPROVED
+  REFUND_COMPLETED
+  CHARGEBACK_RECEIVED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  BUYER_CONFIRMED
+  BUYER_CONFIRM_EXPIRED
+  SELLER_FULFILLMENT_ABANDONED
+  PREMIUM_SHIPPING_FEE
+}
+
+enum PayoutStatus {
+  PENDING
+  AUTHORIZED
+  SUBMITTED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PayoutProvider {
+  WOMPI
+  MOCK
+}
+
+enum FeeEntitlementStatus {
+  ACTIVE
+  USED
+  REFUNDED
+  EXPIRED
+}
+
+enum BankAccountType {
+  AHORROS
+  CORRIENTE
+}
+
+enum ShippingMethod {
+  PREMIUM_BOGOTA
+  CARRIER
+}
+
+enum ShipmentStatus {
+  METHOD_SELECTED
+  AWAITING_PICKUP
+  INSPECTION
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum InspectionResult {
+  PENDING
+  PASSED
+  FAILED
+}
+
 // Models
 model Profile {
   id                  String      @id @default(cuid())
@@ -101,6 +173,9 @@ model Profile {
   ordersAsBuyer          Order[]                  @relation("OrderBuyer")
   ordersAsSeller         Order[]                  @relation("OrderSeller")
   payments               Payment[]
+  sellerBankAccounts     SellerBankAccount[]
+  feeEntitlements        FeeEntitlement[]         @relation("FeeEntitlementBuyer")
+  payouts                Payout[]
 
   @@map("profiles")
 }
@@ -367,6 +442,31 @@ model Order {
   totalPrice     Int
   currency       String      @default("COP")
 
+  /// Marketplace fee rate in basis points (1000 = 10%, 800 = 8% loyalty).
+  feeRateBps              Int      @default(1000)
+  /// Projected Wompi collection cost (2.75% + IVA) on buyer total.
+  wompiCollectionPesos    Int      @default(0)
+  /// Projected Wompi payout cost (0.45% + IVA) on seller amount.
+  wompiPayoutPesos        Int      @default(0)
+  /// Remainder of fee pool after Wompi costs.
+  truephoneRevenuePesos   Int      @default(0)
+  /// Amount obligated to seller on hold / dispersed at payout.
+  sellerAmountPesos       Int      @default(0)
+  /// Premium Bogotá logistics fee deducted from seller (0 for Carrier).
+  premiumShippingFeePesos Int      @default(0)
+  /// Reserved for post-MVP seller marketplace fee (always 0 in MVP).
+  sellerFeePesos          Int      @default(0)
+
+  /// Financial Core settlement timestamps (PAID = hold active).
+  fundsHeldAt                DateTime?
+  payoutAuthorizedAt         DateTime?
+  payoutCompletedAt          DateTime?
+  buyerConfirmedAt           DateTime?
+  /// Set when Shipping marks delivered; silence until then → auto-release.
+  buyerConfirmDeadlineAt     DateTime?
+  payoutFrozen               Boolean   @default(false)
+  sellerFulfillmentAbandonedAt DateTime?
+
   cancelReason   String?
   cancelledAt    DateTime?
   cancelledById  String?
@@ -378,15 +478,177 @@ model Order {
 
   reviews        Review[]
   payments       Payment[]
+  ledgerEntries  LedgerEntry[]
+  payouts        Payout[]
+  shipment       Shipment?
+  feeEntitlementSource FeeEntitlement? @relation("FeeEntitlementSourceOrder")
+  feeEntitlementUsed   FeeEntitlement? @relation("FeeEntitlementUsedOrder")
 
   @@index([buyerId, createdAt])
   @@index([sellerId, createdAt])
   @@index([listingId])
   @@index([status])
+  @@index([buyerConfirmDeadlineAt])
   @@map("orders")
 }
 
-/// Buyer checkout for Compra Garantizada (equipment + 6% protection fee).
+/// Device fulfillment (Phase 10c). One shipment per order. Does not authorize money.
+model Shipment {
+  id        String         @id @default(cuid())
+  orderId   String         @unique
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  method    ShippingMethod
+  status    ShipmentStatus @default(METHOD_SELECTED)
+
+  /// Carrier path (Servientrega / Envía / other).
+  carrierName   String?
+  trackingCode  String?
+  evidenceUrl   String?
+
+  /// Premium Bogotá: fee snapshot at method selection (always 20000 when Premium).
+  premiumFeeCop Int @default(0)
+
+  methodSelectedAt DateTime  @default(now())
+  trackingUploadedAt DateTime?
+  pickupScheduledAt  DateTime?
+  inspectionAt       DateTime?
+  inTransitAt        DateTime?
+  deliveredAt        DateTime?
+  failedAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inspection ShipmentInspection?
+
+  @@index([status])
+  @@index([method])
+  @@map("shipments")
+}
+
+/// Premium Bogotá inspection checklist (Phase 10c).
+model ShipmentInspection {
+  id         String           @id @default(cuid())
+  shipmentId String           @unique
+  shipment   Shipment         @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  result     InspectionResult @default(PENDING)
+
+  imeiMatch       Boolean?
+  serialMatch     Boolean?
+  storageMatch    Boolean?
+  colorMatch      Boolean?
+  cosmeticNotes   String?
+  accessoriesOk   Boolean?
+  batteryHealthPct Int?
+  notes           String?
+
+  inspectedById String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("shipment_inspections")
+}
+
+/// Append-only money facts. Financial Core is the only writer.
+model LedgerEntry {
+  id        String          @id @default(cuid())
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentId String?
+  payoutId  String?
+  payout    Payout?         @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  type      LedgerEntryType
+  /// Signed COP pesos: positive = inflow to TruePhone/Cuenta obligation; see metadata for semantics.
+  amountPesos Int
+  currency  String          @default("COP")
+  memo      String?
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([type, createdAt])
+  @@index([payoutId])
+  @@map("ledger_entries")
+}
+
+/// Seller bank destination for Pagos a Terceros (MVP bank only).
+model SellerBankAccount {
+  id            String          @id @default(cuid())
+  profileId     String
+  profile       Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  legalIdType   String
+  legalId       String
+  bankCode      String
+  bankName      String?
+  accountType   BankAccountType
+  accountNumber String
+  holderName    String
+  email         String
+  isDefault     Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  payouts       Payout[]
+
+  @@index([profileId])
+  @@map("seller_bank_accounts")
+}
+
+/// Dispersion from Wompi Cuenta → seller bank (Financial Core only).
+model Payout {
+  id                   String         @id @default(cuid())
+  orderId              String
+  order                Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  sellerId             String
+  seller               Profile        @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  sellerBankAccountId  String?
+  sellerBankAccount    SellerBankAccount? @relation(fields: [sellerBankAccountId], references: [id], onDelete: SetNull)
+  provider             PayoutProvider
+  status               PayoutStatus   @default(PENDING)
+  amountPesos          Int
+  currency             String         @default("COP")
+  idempotencyKey       String         @unique
+  providerPayoutId     String?
+  providerLoteId       String?
+  failureCode          String?
+  failureMessage       String?
+  authorizedAt         DateTime?
+  submittedAt          DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  ledgerEntries        LedgerEntry[]
+
+  @@index([orderId, createdAt])
+  @@index([sellerId, createdAt])
+  @@index([status])
+  @@map("payouts")
+}
+
+/// One-time 8% marketplace fee after seller cancel / no-ship.
+model FeeEntitlement {
+  id             String               @id @default(cuid())
+  buyerId        String
+  buyer          Profile              @relation("FeeEntitlementBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  sourceOrderId  String               @unique
+  sourceOrder    Order                @relation("FeeEntitlementSourceOrder", fields: [sourceOrderId], references: [id], onDelete: Restrict)
+  status         FeeEntitlementStatus @default(ACTIVE)
+  /// Always 800 (8%) for MVP loyalty path.
+  feeRateBps     Int                  @default(800)
+  usedAt         DateTime?
+  usedOnOrderId  String?              @unique
+  usedOnOrder    Order?               @relation("FeeEntitlementUsedOrder", fields: [usedOnOrderId], references: [id], onDelete: SetNull)
+  refundChosenAt DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([buyerId, status])
+  @@map("fee_entitlements")
+}
+
+/// Buyer checkout for Compra Garantizada (equipment + marketplace fee).
 model Payment {
   id                 String          @id @default(cuid())
   orderId            String

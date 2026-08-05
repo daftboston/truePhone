@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file favorites.ts
+ * @description Server actions for listings (favorites.ts).
+ * @dependencies next/cache, @/lib/auth/session, @/lib/db, @/lib/listings-marketplace
+ */
+
 import { revalidatePath } from "next/cache";
 
 import { getCurrentProfile } from "@/lib/auth/session";
@@ -10,6 +16,16 @@ export type FavoriteActionResult =
   | { ok: true; favorited: boolean }
   | { ok: false; error: string; loginRequired?: boolean };
 
+/**
+ * toggleFavoriteAction
+ *
+ * Server action: toggle favorite for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function toggleFavoriteAction(
   listingId: string,
 ): Promise<FavoriteActionResult> {
@@ -57,6 +73,15 @@ export async function toggleFavoriteAction(
   return { ok: true, favorited: true };
 }
 
+/**
+ * revalidateFavoritePaths
+ *
+ * Revalidates Next.js paths after listings mutations.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function revalidateFavoritePaths(slug: string) {
   revalidatePath("/favoritos");
   revalidatePath(`/anuncios/${slug}`);

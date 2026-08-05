@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Confirmation page after a listing is submitted for review.
+ * @dependencies Listing status helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -19,6 +25,13 @@ export const metadata: Metadata = {
   title: "Anuncio enviado",
 };
 
+/**
+ * ListingSubmittedPage
+ *
+ * Confirms the listing was sent to TruePhone reviewers.
+ *
+ * @returns Submission success page.
+ */
 export default async function ListingSubmittedPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

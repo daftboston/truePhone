@@ -1,3 +1,9 @@
+/**
+ * @file listings-marketplace.ts
+ * @description Public marketplace listing queries, filters, and display helpers.
+ * @dependencies @prisma/client, @/lib/db
+ */
+
 import type { Condition, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
@@ -67,6 +73,14 @@ export type ListPublishedOptions = {
   maxPrice?: number;
 };
 
+/**
+ * orderByClause
+ *
+ * Maps marketplace sort options to Prisma orderBy arrays.
+ *
+ * @param orderBy - newest | price_asc | price_desc.
+ * @returns Prisma orderBy list.
+ */
 function orderByClause(
   orderBy: ListPublishedOptions["orderBy"] = "newest",
 ): Prisma.ListingOrderByWithRelationInput[] {
@@ -81,6 +95,14 @@ function orderByClause(
   }
 }
 
+/**
+ * buildPublishedWhere
+ *
+ * Builds the published-listing filter including search and facet options.
+ *
+ * @param options - ListPublishedOptions filters.
+ * @returns Prisma.ListingWhereInput.
+ */
 function buildPublishedWhere(
   options: ListPublishedOptions = {},
 ): Prisma.ListingWhereInput {
@@ -126,7 +148,15 @@ function buildPublishedWhere(
   return where;
 }
 
-/** Featured strip for home — newest published listings. */
+/**
+ * listFeaturedListings
+ *
+ * Returns a small set of newest published listings for home/feature slots.
+ *
+ * @param limit - Max rows; defaults to 8.
+ * @returns Published listing cards.
+ * @calledBy Home page featured section
+ */
 export async function listFeaturedListings(limit = 8) {
   return prisma.listing.findMany({
     where: publishedListingWhere,
@@ -136,7 +166,15 @@ export async function listFeaturedListings(limit = 8) {
   });
 }
 
-/** Paginated browse list with optional search/filters. */
+/**
+ * listPublishedListings
+ *
+ * Lists published listings with pagination and marketplace filters.
+ *
+ * @param options - take, skip, orderBy, q, model/storage/condition/price filters.
+ * @returns Published listing cards.
+ * @calledBy Browse/search pages
+ */
 export async function listPublishedListings(
   options: ListPublishedOptions = {},
 ) {
@@ -153,6 +191,15 @@ export async function listPublishedListings(
   });
 }
 
+/**
+ * countPublishedListings
+ *
+ * Counts published listings matching marketplace filters.
+ *
+ * @param options - Same filters as listPublishedListings (without take/skip).
+ * @returns Matching listing count.
+ * @calledBy Browse pagination
+ */
 export async function countPublishedListings(
   options: ListPublishedOptions = {},
 ) {
@@ -160,8 +207,13 @@ export async function countPublishedListings(
 }
 
 /**
- * Public listing detail by slug.
- * When `incrementViews` is true, bumps view count after a successful load.
+ * getPublishedListingBySlug
+ *
+ * Loads a published listing detail by public slug.
+ *
+ * @param slug - Listing slug.
+ * @returns Published listing detail or null.
+ * @calledBy Public listing detail page
  */
 export async function getPublishedListingBySlug(
   slug: string,
@@ -188,7 +240,16 @@ export async function getPublishedListingBySlug(
   return listing;
 }
 
-/** Same-model published listings for the detail “related” strip. */
+/**
+ * listRelatedPublishedListings
+ *
+ * Lists related published listings (same model, excluding current).
+ *
+ * @param listing - Current listing id/modelId.
+ * @param take - Max related rows.
+ * @returns Related listing cards.
+ * @calledBy Listing detail related section
+ */
 export async function listRelatedPublishedListings(
   listing: { id: string; iphoneModelId: string },
   limit = 4,
@@ -205,14 +266,41 @@ export async function listRelatedPublishedListings(
   });
 }
 
+/**
+ * publicListingPath
+ *
+ * Builds the public listing URL path from a slug.
+ *
+ * @param slug - Listing slug.
+ * @returns `/anuncios/{slug}` path.
+ * @calledBy Marketplace links
+ */
 export function publicListingPath(slug: string) {
   return `/anuncios/${slug}`;
 }
 
+/**
+ * primaryGalleryUrl
+ *
+ * Picks the first gallery image URL from a listing card payload.
+ *
+ * @param listing - Listing with images array.
+ * @returns Image URL or null.
+ * @calledBy Listing cards
+ */
 export function primaryGalleryUrl(listing: { images: { imageUrl: string }[] }) {
   return listing.images[0]?.imageUrl;
 }
 
+/**
+ * marketplaceSellerName
+ *
+ * Resolves seller display name for marketplace cards.
+ *
+ * @param seller - Profile name fields.
+ * @returns Display string.
+ * @calledBy Listing cards and detail
+ */
 export function marketplaceSellerName(seller: {
   fullName: string | null;
   username: string | null;

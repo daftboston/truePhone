@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file report-review-button.tsx
+ * @description ReportReviewButton component for the reviews feature.tsx.
+ * @dependencies react, @/components/ui/button, @/components/ui/textarea, @/features/reviews/actions/reviews, @/features/reviews/schemas/review
+ */
+
 import { useActionState, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +19,15 @@ type ReportReviewButtonProps = {
 
 const initial: ReviewActionState = null;
 
+/**
+ * ReportReviewButton
+ *
+ * Renders the Report Review Button UI for reviews.
+ *
+ * @param props - ReportReviewButton props.
+ * @returns ReportReviewButton React element.
+ * @calledBy reviews pages and parent components
+ */
 export function ReportReviewButton({ reviewId }: ReportReviewButtonProps) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(reportReviewAction, initial);

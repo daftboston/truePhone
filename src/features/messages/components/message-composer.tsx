@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file message-composer.tsx
+ * @description MessageComposer component for the messages feature.tsx.
+ * @dependencies react, next/navigation, @/components/ui/button, @/components/ui/textarea, @/features/messages/actions/messages
+ */
+
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +22,15 @@ type MessageComposerProps = {
 
 const initialState: MessageActionState = null;
 
+/**
+ * MessageComposer
+ *
+ * Renders the Message Composer UI for messages.
+ *
+ * @param props - MessageComposer props.
+ * @returns MessageComposer React element.
+ * @calledBy messages pages and parent components
+ */
 export function MessageComposer({
   listingId,
   receiverId,

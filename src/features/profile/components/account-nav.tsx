@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file account-nav.tsx
+ * @description Sidebar navigation for the authenticated account area (Mi TruePhone).
+ * @dependencies next/link, lucide-react, LogoutButton, @/lib/utils
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -41,6 +47,17 @@ type AccountNavProps = {
   className?: string;
 };
 
+/**
+ * buildGroups
+ *
+ * Assembles nav groups for buying, selling, optional ops review, and account.
+ *
+ * @param verificationHref - Link into the identity verification flow.
+ * @param canReview - When true, includes the operations review section.
+ * @param unreadMessages - Unread count badge for Mensajes.
+ * @returns Ordered nav groups for AccountNav.
+ * @calledBy AccountNav
+ */
 function buildGroups(
   verificationHref: string,
   canReview: boolean,
@@ -100,6 +117,16 @@ function buildGroups(
   return groups;
 }
 
+/**
+ * isActive
+ *
+ * Determines whether a nav item matches the current pathname.
+ *
+ * @param pathname - Current Next.js pathname.
+ * @param item - Nav item to test.
+ * @returns True when the item should show as the current page.
+ * @calledBy AccountNav
+ */
 function isActive(pathname: string, item: NavItem) {
   if (!item.href || item.soon) return false;
   if (item.exact) return pathname === item.href;
@@ -110,10 +137,31 @@ function isActive(pathname: string, item: NavItem) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
+/**
+ * formatBadge
+ *
+ * Caps unread badge display at "9+".
+ *
+ * @param count - Unread message count.
+ * @returns Display string for the badge.
+ * @calledBy AccountNav
+ */
 function formatBadge(count: number) {
   return count > 9 ? "9+" : String(count);
 }
 
+/**
+ * AccountNav
+ *
+ * Renders grouped account navigation with active states and logout.
+ *
+ * @param props.verificationHref - Destination for the Verificación item.
+ * @param props.canReview - Shows ops review nav when the user can moderate.
+ * @param props.unreadMessages - Badge count on Mensajes.
+ * @param props.className - Optional classes on the nav root.
+ * @returns Account sidebar navigation.
+ * @calledBy account layout
+ */
 export function AccountNav({
   verificationHref,
   canReview = false,

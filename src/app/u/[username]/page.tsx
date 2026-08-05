@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Public seller profile page by username.
+ * @dependencies Profile and listings public helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -37,6 +43,13 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * PublicProfilePage
+ *
+ * Shows a seller's public profile and their published listings.
+ *
+ * @returns Public profile page or notFound.
+ */
 export default async function PublicProfilePage({
   params,
 }: PublicProfilePageProps) {

@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Queue of identity verifications awaiting manual review.
+ * @dependencies Identity review loaders and actions
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -15,6 +21,13 @@ export const metadata: Metadata = {
   title: "Revisión de identidad",
 };
 
+/**
+ * IdentityReviewQueuePage
+ *
+ * Lists pending identity verification submissions for staff.
+ *
+ * @returns Identity review queue.
+ */
 export default async function IdentityReviewQueuePage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/identidad");

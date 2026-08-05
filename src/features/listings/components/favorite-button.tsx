@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file favorite-button.tsx
+ * @description FavoriteButton component for the listings feature.tsx.
+ * @dependencies lucide-react, next/navigation, react, @/components/ui/button, @/features/listings/actions/favorites
+ */
+
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -16,6 +22,15 @@ type FavoriteButtonProps = {
   fullWidth?: boolean;
 };
 
+/**
+ * FavoriteButton
+ *
+ * Renders the Favorite Button UI for listings.
+ *
+ * @param props - FavoriteButton props.
+ * @returns FavoriteButton React element.
+ * @calledBy listings pages and parent components
+ */
 export function FavoriteButton({
   listingId,
   initialFavorited,

@@ -1,8 +1,22 @@
+/**
+ * @file avatar.tsx
+ * @description Avatar root, image, and fallback primitives for profile photos.
+ * @dependencies react, @radix-ui/react-slot, @/lib/utils
+ */
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Avatar
+ *
+ * Circular avatar container; supports asChild Slot composition.
+ *
+ * @returns Span (or slotted) avatar root.
+ * @calledBy AppHeader, SellerCard, ReviewCard, profile UI
+ */
 const Avatar = React.forwardRef<
   HTMLSpanElement,
   React.HTMLAttributes<HTMLSpanElement> & { asChild?: boolean }

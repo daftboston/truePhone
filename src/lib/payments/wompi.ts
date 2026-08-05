@@ -1,3 +1,9 @@
+/**
+ * @file wompi.ts
+ * @description Wompi Checkout provider env and HTTP adapter.
+ * @dependencies @/lib/payments/provider
+ */
+
 import {
   pesosToWompiCents,
   type CreateCheckoutInput,
@@ -15,6 +21,14 @@ type WompiEnv = {
   checkoutBaseUrl: string;
 };
 
+/**
+ * getWompiEnv
+ *
+ * Reads Wompi Checkout credentials from process.env.
+ *
+ * @returns WompiEnv or null when required keys are missing.
+ * @calledBy resolvePaymentProvider, createWompiProvider
+ */
 export function getWompiEnv(): WompiEnv | null {
   const publicKey = process.env.WOMPI_PUBLIC_KEY?.trim();
   const privateKey = process.env.WOMPI_PRIVATE_KEY?.trim();
@@ -39,6 +53,15 @@ export function getWompiEnv(): WompiEnv | null {
   };
 }
 
+/**
+ * createWompiProvider
+ *
+ * Builds a PaymentProviderClient that creates Wompi payment links and refunds.
+ *
+ * @param env - Validated Wompi Checkout env.
+ * @returns PaymentProviderClient with id WOMPI.
+ * @calledBy resolvePaymentProvider
+ */
 export function createWompiProvider(env: WompiEnv): PaymentProviderClient {
   return {
     id: "WOMPI",
@@ -50,7 +73,7 @@ export function createWompiProvider(env: WompiEnv): PaymentProviderClient {
       const body = {
         name: truncate(input.description, 80) || "TruePhone Compra Garantizada",
         description: truncate(
-          `TruePhone · ${input.reference} · incluye protección 6%`,
+          `TruePhone · ${input.reference} · incluye protección marketplace`,
           200,
         ),
         single_use: true,
@@ -122,6 +145,15 @@ export function createWompiProvider(env: WompiEnv): PaymentProviderClient {
   };
 }
 
+/**
+ * truncate
+ *
+ * Truncates a string to max length for Wompi description fields.
+ *
+ * @param value - Input string.
+ * @param max - Maximum length.
+ * @returns Truncated string.
+ */
 function truncate(value: string, max: number) {
   const trimmed = value.trim();
   if (trimmed.length <= max) return trimmed;

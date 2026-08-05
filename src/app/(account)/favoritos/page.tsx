@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Authenticated favorites/wishlist of marketplace listings.
+ * @dependencies Favorites loaders and ListingCard
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -18,6 +24,13 @@ export const metadata: Metadata = {
   description: "Tus iPhones guardados en TruePhone.",
 };
 
+/**
+ * FavoritesPage
+ *
+ * Lists listings the current user has favorited.
+ *
+ * @returns Favorites grid or empty state.
+ */
 export default async function FavoritesPage() {
   const current = await requireCurrentProfile("/favoritos");
   const listings = await listFavoritesForUser(current.profile.id);

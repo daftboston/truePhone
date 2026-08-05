@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file gallery-upload-form.tsx
+ * @description GalleryUploadForm component for the listings feature.tsx.
+ * @dependencies react, next/image, @/features/listings/actions/listings, @/features/listings/types, @/components/ui/button
+ */
+
 import { useActionState, useState, useTransition } from "react";
 import Image from "next/image";
 
@@ -18,6 +24,15 @@ type GalleryFormProps = {
   images: { id: string; imageUrl: string }[];
 };
 
+/**
+ * GalleryUploadForm
+ *
+ * Renders the Gallery Upload Form UI for listings.
+ *
+ * @param props - GalleryUploadForm props.
+ * @returns GalleryUploadForm React element.
+ * @calledBy listings pages and parent components
+ */
 export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
   const upload = uploadListingGalleryAction.bind(null, listingId);
   const [state, formAction, pending] = useActionState<

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file review-submit-form.tsx
+ * @description ReviewSubmitForm component for the verification feature.tsx.
+ * @dependencies react, @/features/verification/actions/identity, @/components/ui/button
+ */
+
 import { useState, useTransition } from "react";
 
 import { submitIdentityVerificationAction } from "@/features/verification/actions/identity";
@@ -12,6 +18,15 @@ type ReviewSubmitFormProps = {
   hasSelfie: boolean;
 };
 
+/**
+ * ReviewSubmitForm
+ *
+ * Renders the Review Submit Form UI for verification.
+ *
+ * @param props - ReviewSubmitForm props.
+ * @returns ReviewSubmitForm React element.
+ * @calledBy verification pages and parent components
+ */
 export function ReviewSubmitForm({
   documentLast4,
   hasFront,

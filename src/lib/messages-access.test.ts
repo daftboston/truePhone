@@ -1,3 +1,9 @@
+/**
+ * @file messages-access.test.ts
+ * @description Unit tests for listing thread message send access rules.
+ * @dependencies node:test, @/lib/messages
+ */
+
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ListingStatus } from "@prisma/client";
@@ -14,6 +20,14 @@ import {
   type ThreadListing,
 } from "@/lib/messages";
 
+/**
+ * listing
+ *
+ * Test fixture builder for listing access scenarios.
+ *
+ * @param overrides - Partial listing fields.
+ * @returns Listing-like object for evaluateListingMessageSendAccess.
+ */
 function listing(
   overrides: Partial<ThreadListing> &
     Pick<ThreadListing, "status" | "sellerId">,

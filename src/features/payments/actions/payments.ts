@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file payments.ts
+ * @description Server actions to start checkout and confirm mock payments.
+ * @dependencies next/cache, next/navigation, payment schemas, @/lib/payments
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -14,6 +20,14 @@ import { prisma } from "@/lib/db";
 import { confirmMockPayment, startCheckoutForOrder } from "@/lib/payments";
 import { isMockPaymentsEnabled } from "@/lib/payments/resolve-provider";
 
+/**
+ * revalidatePaymentPaths
+ *
+ * Refreshes buyer/seller order lists and payment review after payment changes.
+ *
+ * @param orderId - Order whose detail pages should revalidate.
+ * @calledBy startCheckoutAction, confirmMockPaymentAction
+ */
 function revalidatePaymentPaths(orderId: string) {
   revalidatePath("/compras");
   revalidatePath("/ventas");
@@ -22,6 +36,15 @@ function revalidatePaymentPaths(orderId: string) {
   revalidatePath("/revision/pagos");
 }
 
+/**
+ * startCheckoutAction
+ *
+ * Starts provider checkout for the authenticated buyer and redirects to checkout URL.
+ *
+ * @param orderId - Order to pay.
+ * @returns PaymentActionState on auth/validation/provider errors; redirects on success.
+ * @calledBy PayOrderButton
+ */
 export async function startCheckoutAction(
   orderId: string,
 ): Promise<PaymentActionState> {
@@ -58,6 +81,16 @@ export async function startCheckoutAction(
   redirect(result.checkoutUrl);
 }
 
+/**
+ * confirmMockPaymentAction
+ *
+ * Approves a MOCK payment for the owning buyer when mock mode is enabled.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - reference field.
+ * @returns PaymentActionState on errors; redirects to compra detail on success.
+ * @calledBy MockCheckoutConfirm
+ */
 export async function confirmMockPaymentAction(
   _prev: PaymentActionState,
   formData: FormData,

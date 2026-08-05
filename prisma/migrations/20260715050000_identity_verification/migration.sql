@@ -1,3 +1,7 @@
+-- @file 20260715050000_identity_verification.sql
+-- @description Adds identity_verifications for cédula/selfie review and repairs missing ListingStatus enum values.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- CreateEnum
 CREATE TYPE "IdentityVerificationStatus" AS ENUM ('DRAFT', 'PENDING', 'IN_REVIEW', 'VERIFIED', 'REJECTED');
 

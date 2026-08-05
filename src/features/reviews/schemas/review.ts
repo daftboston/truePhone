@@ -1,7 +1,15 @@
+/**
+ * @file review.ts
+ * @description Zod schemas and related types for reviews (review.ts).
+ * @dependencies zod
+ */
+
 import { z } from "zod";
 
+/** REVIEW_COMMENT_MAX — validates input for related REVIEW_COMMENT_MAX flows. */
 export const REVIEW_COMMENT_MAX = 1000;
 
+/** createReviewSchema — validates input for related createReview flows. */
 export const createReviewSchema = z.object({
   orderId: z.string().min(1, "Pedido inválido."),
   rating: z.coerce
@@ -17,6 +25,7 @@ export const createReviewSchema = z.object({
     .nullable(),
 });
 
+/** reportReviewSchema — validates input for related reportReview flows. */
 export const reportReviewSchema = z.object({
   reviewId: z.string().min(1, "Reseña inválida."),
   reason: z
@@ -26,6 +35,7 @@ export const reportReviewSchema = z.object({
     .max(1000, "El motivo es demasiado largo."),
 });
 
+/** moderateReviewSchema — validates input for related moderateReview flows. */
 export const moderateReviewSchema = z.object({
   reviewId: z.string().min(1, "Reseña inválida."),
 });
@@ -44,6 +54,15 @@ export type ReviewActionState =
     }
   | null;
 
+/**
+ * fieldErrorsFromZod
+ *
+ * Flattens Zod issues into a field-name → messages map for form UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy reviews UI and related modules
+ */
 export function fieldErrorsFromZod(
   error: z.ZodError,
 ): Record<string, string[]> {

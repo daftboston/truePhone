@@ -1,3 +1,9 @@
+/**
+ * @file listing-wizard-shell.tsx
+ * @description ListingWizardShell component for the listings feature.tsx.
+ * @dependencies next/link, @/components/step-progress-header, @/components/ui/button, @/features/listings/types, @/lib/utils
+ */
+
 import Link from "next/link";
 
 import { StepProgressHeader } from "@/components/step-progress-header";
@@ -15,6 +21,15 @@ type ListingWizardShellProps = {
   className?: string;
 };
 
+/**
+ * ListingWizardShell
+ *
+ * Renders the Listing Wizard Shell UI for listings.
+ *
+ * @param props - ListingWizardShell props.
+ * @returns ListingWizardShell React element.
+ * @calledBy listings pages and parent components
+ */
 export function ListingWizardShell({
   step,
   title,

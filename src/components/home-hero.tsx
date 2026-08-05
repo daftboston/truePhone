@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file home-hero.tsx
+ * @description Client marketing hero carousel with CTAs for buy/explore messaging.
+ * @dependencies next/image, next/link, lucide-react, ui/button, @/lib/utils
+ */
+
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useState } from "react";
@@ -113,6 +119,15 @@ function HeroPhonesImage({
   );
 }
 
+/**
+ * HomeHero
+ *
+ * Auto-advancing hero slides with headline, support copy, CTA, and product imagery.
+ *
+ * @param props.className - Optional section className.
+ * @returns Full-bleed hero carousel for the home page.
+ * @calledBy HomePage
+ */
 export function HomeHero({ className }: HomeHeroProps) {
   const labelId = useId();
   const [index, setIndex] = useState(0);

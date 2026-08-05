@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file pay-order-button.tsx
+ * @description Client button that starts Guaranteed Purchase checkout for an order.
+ * @dependencies react, startCheckoutAction, formatOrderMoney, Button
+ */
+
 import { useState, useTransition } from "react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
@@ -11,18 +17,38 @@ type PayOrderButtonProps = {
   orderId: string;
   totalPrice: number;
   platformFee: number;
+  feePercent?: number;
   currency?: string;
 };
 
+/**
+ * PayOrderButton
+ *
+ * Invokes startCheckoutAction and shows fee breakdown copy under the CTA.
+ *
+ * @param props.orderId - Order to pay.
+ * @param props.totalPrice - Buyer total including platform fee.
+ * @param props.platformFee - TruePhone protection fee amount.
+ * @param props.feePercent - Fee percent shown in helper copy (default 10).
+ * @param props.currency - Currency code for money formatting (default COP).
+ * @returns Pay button with error alert and fee explanation.
+ * @calledBy OrderDetailView, order buyer pages
+ */
 export function PayOrderButton({
   orderId,
   totalPrice,
   platformFee,
+  feePercent = 10,
   currency = "COP",
 }: PayOrderButtonProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * onPay
+   *
+   * Starts checkout in a transition; rethrows Next.js redirect errors.
+   */
   function onPay() {
     setError(null);
     startTransition(async () => {
@@ -50,8 +76,9 @@ export function PayOrderButton({
       ) : null}
       <p className="text-muted-foreground text-center text-xs">
         Pagarás {formatOrderMoney(totalPrice, currency)} (incluye{" "}
-        {formatOrderMoney(platformFee, currency)} de protección TruePhone 6%).
-        El vendedor recibe el precio del equipo.
+        {formatOrderMoney(platformFee, currency)} de protección TruePhone{" "}
+        {feePercent}%). El vendedor recibe el precio del equipo tras entrega y
+        confirmación.
       </p>
     </div>
   );

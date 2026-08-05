@@ -1,7 +1,21 @@
+/**
+ * @file input.tsx
+ * @description Styled text input matching the TruePhone form control height.
+ * @dependencies react, @/lib/utils
+ */
+
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Input
+ *
+ * Forwarded native input with design-system border and focus ring styles.
+ *
+ * @returns Styled HTML input.
+ * @calledBy Auth, profile, listing, and checkout forms
+ */
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     return (

@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Home page: hero, trust strip, and featured listings rotator.
+ * @dependencies AppShell, HomeHero, HomeTrustStrip, HomeFeaturedRotator, listings marketplace helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -29,6 +35,13 @@ export const metadata: Metadata = {
     "El marketplace más confiable para comprar y vender iPhones usados en Colombia. Cada anuncio es revisado manualmente.",
 };
 
+/**
+ * HomePage
+ *
+ * Loads featured listings and composes the public marketing home experience.
+ *
+ * @returns Home shell with hero, trust strip, and featured carousel or empty state.
+ */
 export default async function HomePage() {
   const featured = await listFeaturedListings(4);
 

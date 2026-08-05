@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file cedula-front-form.tsx
+ * @description CedulaFrontForm component for the verification feature.tsx.
+ * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/input
+ */
+
 import { useActionState } from "react";
 
 import { saveCedulaFrontAction } from "@/features/verification/actions/identity";
@@ -8,6 +14,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * CedulaFrontForm
+ *
+ * Renders the Cedula Front Form UI for verification.
+ *
+ * @param props - CedulaFrontForm props.
+ * @returns CedulaFrontForm React element.
+ * @calledBy verification pages and parent components
+ */
 export function CedulaFrontForm() {
   const [state, formAction, pending] = useActionState<
     VerificationActionState,

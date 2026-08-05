@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: device details for the listing.
+ * @dependencies Device form and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Editar dispositivo",
 };
 
+/**
+ * EditDevicePage
+ *
+ * Collects device attributes (model, storage, condition, etc.) for the listing.
+ *
+ * @returns Device details wizard step.
+ */
 export default async function EditDevicePage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

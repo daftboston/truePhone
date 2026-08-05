@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Public listing detail page for a published anuncio slug.
+ * @dependencies Listing gallery, price, seller, order/favorite actions
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -64,6 +70,13 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * PublicListingPage
+ *
+ * Loads a published listing by slug and composes the buyer-facing detail view.
+ *
+ * @returns Public listing detail page or notFound.
+ */
 export default async function PublicListingPage({ params }: PageProps) {
   const { slug } = await params;
   const listing = await getPublishedListingBySlug(slug, {
@@ -235,7 +248,7 @@ export default async function PublicListingPage({ params }: PageProps) {
             {!isOwnListing ? (
               <p className="text-muted-foreground text-center text-xs">
                 Al comprar, el anuncio se reserva y pagas Compra Garantizada
-                (precio del equipo + protección 6%).
+                (precio del equipo + protección 10%).
               </p>
             ) : null}
           </div>

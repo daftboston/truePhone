@@ -1,3 +1,9 @@
+/**
+ * @file order-timeline.tsx
+ * @description OrderTimeline component for the orders feature.tsx.
+ * @dependencies @/lib/orders, @/lib/utils
+ */
+
 import { buildOrderTimeline } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
@@ -8,10 +14,24 @@ type OrderTimelineProps = {
     cancelledAt: Date | null;
     completedAt: Date | null;
     paidAt: Date | null;
+    fundsHeldAt?: Date | null;
+    payoutCompletedAt?: Date | null;
+    buyerConfirmedAt?: Date | null;
+    buyerConfirmDeadlineAt?: Date | null;
+    shipment?: Parameters<typeof buildOrderTimeline>[0]["shipment"];
   };
   className?: string;
 };
 
+/**
+ * formatWhen
+ *
+ * Formats a display value for orders UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy orders UI and related modules
+ */
 function formatWhen(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "medium",
@@ -19,6 +39,15 @@ function formatWhen(date: Date) {
   }).format(date);
 }
 
+/**
+ * OrderTimeline
+ *
+ * Renders the Order Timeline UI for orders.
+ *
+ * @param props - OrderTimeline props.
+ * @returns OrderTimeline React element.
+ * @calledBy orders pages and parent components
+ */
 export function OrderTimeline({ order, className }: OrderTimelineProps) {
   const events = buildOrderTimeline(order);
 

@@ -1,3 +1,9 @@
+/**
+ * @file site-footer.tsx
+ * @description Marketing footer with trust pillars, support links, and brand mark.
+ * @dependencies next/link, lucide-react, @/lib/utils
+ */
+
 import Link from "next/link";
 import {
   BadgeCheck,
@@ -70,6 +76,15 @@ type SiteFooterProps = {
   className?: string;
 };
 
+/**
+ * SiteFooter
+ *
+ * Renders home/marketing footer content: pillars, links, and copyright.
+ *
+ * @param props.className - Optional footer className.
+ * @returns Site footer element.
+ * @calledBy HomePage and other marketing layouts
+ */
 export function SiteFooter({ className }: SiteFooterProps) {
   const year = new Date().getFullYear();
 

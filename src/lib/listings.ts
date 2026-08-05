@@ -1,8 +1,22 @@
+/**
+ * @file listings.ts
+ * @description Seller listing ownership, catalog, and possession challenge helpers.
+ * @dependencies @/lib/auth/session, @/lib/db
+ */
+
 import { prisma } from "@/lib/db";
 import { generatePossessionCode } from "@/features/listings/schemas/listing";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 
+/**
+ * requireVerifiedSeller
+ *
+ * Ensures the current profile is a verified seller; redirects otherwise.
+ *
+ * @returns Current profile for a verified seller session.
+ * @calledBy Seller listing create/edit pages and actions
+ */
 export async function requireVerifiedSeller() {
   const current = await getCurrentProfile();
   if (!current) {
@@ -17,6 +31,16 @@ export async function requireVerifiedSeller() {
   return { ok: true as const, current };
 }
 
+/**
+ * getOwnedListing
+ *
+ * Loads a listing owned by the given seller.
+ *
+ * @param listingId - Listing UUID.
+ * @param sellerId - Expected seller profile UUID.
+ * @returns Listing with images/catalog or null.
+ * @calledBy Seller edit flows
+ */
 export async function getOwnedListing(listingId: string, sellerId: string) {
   return prisma.listing.findFirst({
     where: {
@@ -34,6 +58,15 @@ export async function getOwnedListing(listingId: string, sellerId: string) {
   });
 }
 
+/**
+ * listSellerListings
+ *
+ * Lists non-deleted listings for a seller, newest first.
+ *
+ * @param sellerId - Seller profile UUID.
+ * @returns Seller listing rows with catalog and images.
+ * @calledBy Seller ventas/anuncios dashboard
+ */
 export async function listSellerListings(sellerId: string) {
   return prisma.listing.findMany({
     where: { sellerId, deletedAt: null },
@@ -53,8 +86,13 @@ export async function listSellerListings(sellerId: string) {
 }
 
 /**
- * Resume a DRAFT at the first incomplete wizard step.
- * Assumes device details already exist from listing creation.
+ * getSellerDraftResumePath
+ *
+ * Computes the wizard step path to resume a draft listing.
+ *
+ * @param listing - Listing status and possession challenge fields.
+ * @returns Relative path into the sell wizard.
+ * @calledBy Seller listing list CTAs
  */
 export function getSellerDraftResumePath(listing: {
   id: string;
@@ -77,12 +115,28 @@ export function getSellerDraftResumePath(listing: {
   return `/vender/${listing.id}/revisar`;
 }
 
+/**
+ * listIphoneModels
+ *
+ * Lists active iPhone models for catalog pickers.
+ *
+ * @returns iPhoneModel rows ordered for display.
+ * @calledBy Listing create forms
+ */
 export async function listIphoneModels() {
   return prisma.iphoneModel.findMany({
     orderBy: [{ releaseYear: "desc" }, { name: "asc" }],
   });
 }
 
+/**
+ * getCatalog
+ *
+ * Loads models, colors, and storages for listing forms.
+ *
+ * @returns Catalog maps used by create/edit listing UI.
+ * @calledBy Seller listing wizard pages
+ */
 export async function getCatalog() {
   const [models, colors, storages, modelColors] = await Promise.all([
     prisma.iphoneModel.findMany({ orderBy: { releaseYear: "desc" } }),
@@ -102,6 +156,16 @@ export async function getCatalog() {
   return { models, colors, storages, colorIdsByModelId };
 }
 
+/**
+ * isColorAllowedForModel
+ *
+ * Validates that a color is allowed for a given iPhone model.
+ *
+ * @param modelId - iPhoneModel UUID.
+ * @param colorId - iPhoneModelColor UUID.
+ * @returns True when the join exists.
+ * @calledBy Listing create/update validation
+ */
 export async function isColorAllowedForModel(
   iphoneModelId: string,
   iphoneColorId: string,
@@ -115,6 +179,15 @@ export async function isColorAllowedForModel(
   return Boolean(link);
 }
 
+/**
+ * ensurePossessionChallenge
+ *
+ * Creates a possession challenge for a listing when missing.
+ *
+ * @param listingId - Listing UUID.
+ * @returns Existing or newly created PossessionChallenge.
+ * @calledBy Seller possession verification step
+ */
 export async function ensurePossessionChallenge(listingId: string) {
   const existing = await prisma.devicePossessionChallenge.findUnique({
     where: { listingId },

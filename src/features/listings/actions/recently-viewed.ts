@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file recently-viewed.ts
+ * @description Server actions for listings (recently-viewed.ts).
+ * @dependencies @prisma/client, @/features/verification/types, @/lib/db, @/lib/listings-marketplace
+ */
+
 import type { Condition } from "@prisma/client";
 
 import { isSellerIdentityVerified } from "@/features/verification/types";
@@ -9,6 +15,16 @@ import {
   publishedListingWhere,
 } from "@/lib/listings-marketplace";
 
+/**
+ * getRecentlyViewedListingsAction
+ *
+ * Server action: get recently viewed listings for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function getRecentlyViewedListingsAction(slugs: string[]) {
   const unique = [...new Set(slugs.filter(Boolean))].slice(0, 8);
   if (unique.length === 0) {

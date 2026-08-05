@@ -1,3 +1,9 @@
+/**
+ * @file app-shell.tsx
+ * @description Async layout shell loading auth/profile and composing header, main, bottom nav.
+ * @dependencies AppHeader, BottomNav, auth session/profile helpers, @/lib/listings
+ */
+
 import { AppHeader } from "@/components/app-header";
 import { BottomNav } from "@/components/bottom-nav";
 import { getProfileByAuthUserId } from "@/lib/auth/profile";
@@ -11,6 +17,17 @@ type AppShellProps = {
   className?: string;
 };
 
+/**
+ * AppShell
+ *
+ * Loads the current user, profile, and catalog models, then wraps page content.
+ *
+ * @param props.children - Page content rendered in main.
+ * @param props.mainClassName - Extra classes for the main container.
+ * @param props.className - Extra classes for the outer shell.
+ * @returns Full-height layout with AppHeader and BottomNav.
+ * @calledBy Root marketing pages and AccountLayout
+ */
 export async function AppShell({
   children,
   mainClassName,

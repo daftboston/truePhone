@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Registration page for new TruePhone accounts.
+ * @dependencies Auth register form components
+ */
+
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -8,6 +14,13 @@ export const metadata: Metadata = {
   title: "Crear cuenta",
 };
 
+/**
+ * RegisterPage
+ *
+ * Renders the signup form for email/password registration.
+ *
+ * @returns Register page.
+ */
 export default function RegisterPage() {
   return (
     <AuthShell

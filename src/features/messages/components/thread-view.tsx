@@ -1,3 +1,9 @@
+/**
+ * @file thread-view.tsx
+ * @description ThreadView component for the messages feature.tsx.
+ * @dependencies next/link, @/components/ui/avatar, @/features/messages/components/message-composer, @/features/messages/components/thread-safety-actions, @/lib/messages
+ */
+
 import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +25,15 @@ type ThreadViewProps = {
   initiallyBlockedByMe?: boolean;
 };
 
+/**
+ * initials
+ *
+ * Derives up to two uppercase initials from a display name.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy messages UI and related modules
+ */
 function initials(name: string) {
   return name
     .split(" ")
@@ -28,6 +43,15 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+/**
+ * formatTime
+ *
+ * Formats a display value for messages UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy messages UI and related modules
+ */
 function formatTime(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "short",
@@ -35,6 +59,15 @@ function formatTime(date: Date) {
   }).format(date);
 }
 
+/**
+ * ThreadView
+ *
+ * Renders the Thread View UI for messages.
+ *
+ * @param props - ThreadView props.
+ * @returns ThreadView React element.
+ * @calledBy messages pages and parent components
+ */
 export function ThreadView({
   listingId,
   listingTitle,

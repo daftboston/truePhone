@@ -1,3 +1,9 @@
+/**
+ * @file home-trust-strip.tsx
+ * @description Home-page trust pillars grid (manual review, guarantee, IMEI, support).
+ * @dependencies lucide-react, @/lib/utils
+ */
+
 import { BadgeCheck, Headphones, ScanLine, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -29,6 +35,15 @@ type HomeTrustStripProps = {
   className?: string;
 };
 
+/**
+ * HomeTrustStrip
+ *
+ * Renders four trust messaging tiles under the home hero.
+ *
+ * @param props.className - Optional section className.
+ * @returns Accessible section of trust pillars.
+ * @calledBy HomePage
+ */
 export function HomeTrustStrip({ className }: HomeTrustStripProps) {
   return (
     <section

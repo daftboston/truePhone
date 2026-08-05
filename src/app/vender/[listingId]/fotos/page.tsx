@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: listing photo upload.
+ * @dependencies Photo upload components and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Fotos del anuncio",
 };
 
+/**
+ * ListingPhotosPage
+ *
+ * Lets the seller upload and manage listing gallery images.
+ *
+ * @returns Photos wizard step.
+ */
 export default async function ListingPhotosPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

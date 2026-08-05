@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file reviews.ts
+ * @description Server actions for reviews (reviews.ts).
+ * @dependencies next/cache, @/features/reviews/schemas/review, @/lib/auth/session, @/lib/db, @/lib/reviews
+ */
+
 import { revalidatePath } from "next/cache";
 
 import {
@@ -18,6 +24,15 @@ import {
   reportReview,
 } from "@/lib/reviews";
 
+/**
+ * revalidateReviewPaths
+ *
+ * Revalidates Next.js paths after reviews mutations.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy reviews UI and related modules
+ */
 function revalidateReviewPaths(input: {
   orderId?: string;
   reviewedUsername?: string | null;
@@ -36,6 +51,16 @@ function revalidateReviewPaths(input: {
   revalidatePath("/revision");
 }
 
+/**
+ * createReviewAction
+ *
+ * Server action: create review for authenticated reviews flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy reviews components
+ */
 export async function createReviewAction(
   _prev: ReviewActionState,
   formData: FormData,
@@ -89,6 +114,16 @@ export async function createReviewAction(
   };
 }
 
+/**
+ * reportReviewAction
+ *
+ * Server action: report review for authenticated reviews flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy reviews components
+ */
 export async function reportReviewAction(
   _prev: ReviewActionState,
   formData: FormData,
@@ -129,6 +164,16 @@ export async function reportReviewAction(
   return { ok: true, message: "Reporte enviado. Lo revisaremos pronto." };
 }
 
+/**
+ * hideReviewAction
+ *
+ * Server action: hide review for authenticated reviews flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy reviews components
+ */
 export async function hideReviewAction(
   _prev: ReviewActionState,
   formData: FormData,
@@ -166,6 +211,16 @@ export async function hideReviewAction(
   return { ok: true, message: "Reseña ocultada y reputación actualizada." };
 }
 
+/**
+ * dismissReviewReportsAction
+ *
+ * Server action: dismiss review reports for authenticated reviews flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy reviews components
+ */
 export async function dismissReviewReportsAction(
   _prev: ReviewActionState,
   formData: FormData,

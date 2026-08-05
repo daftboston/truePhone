@@ -1,3 +1,7 @@
+-- @file 20260720000000_iphone_model_colors.sql
+-- @description Adds iphone_model_colors join table mapping allowed colors per iPhone model.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- CreateTable
 CREATE TABLE "iphone_model_colors" (
     "id" TEXT NOT NULL,

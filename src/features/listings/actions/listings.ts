@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file listings.ts
+ * @description Server actions for listings (listings.ts).
+ * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/lib/listings
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -31,10 +37,28 @@ const LISTING_BUCKET = "listing-images";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+/**
+ * checkboxValue
+ *
+ * Supports listings by implementing checkboxValue.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function checkboxValue(formData: FormData, name: string) {
   return formData.get(name) === "on" || formData.get(name) === "true";
 }
 
+/**
+ * uploadListingImage
+ *
+ * Supports listings by implementing uploadListingImage.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 async function uploadListingImage(
   authUserId: string,
   listingId: string,
@@ -74,6 +98,16 @@ async function uploadListingImage(
   return { url: publicUrl };
 }
 
+/**
+ * createListingAction
+ *
+ * Server action: create listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function createListingAction(
   _prev: ListingActionState,
   formData: FormData,
@@ -169,6 +203,16 @@ export async function createListingAction(
   redirect(`/vender/${listing.id}/fotos`);
 }
 
+/**
+ * updateListingDetailsAction
+ *
+ * Server action: update listing details for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function updateListingDetailsAction(
   listingId: string,
   _prev: ListingActionState,
@@ -256,6 +300,16 @@ export async function updateListingDetailsAction(
   redirect(`/vender/${listing.id}/fotos`);
 }
 
+/**
+ * uploadListingGalleryAction
+ *
+ * Server action: upload listing gallery for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function uploadListingGalleryAction(
   listingId: string,
   _prev: ListingActionState,
@@ -303,6 +357,16 @@ export async function uploadListingGalleryAction(
   return { ok: true, message: "Foto agregada." };
 }
 
+/**
+ * continueFromPhotosAction
+ *
+ * Server action: continue from photos for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function continueFromPhotosAction(listingId: string) {
   const seller = await requireVerifiedSeller();
   if (!seller.ok) {
@@ -327,6 +391,16 @@ export async function continueFromPhotosAction(listingId: string) {
   redirect(`/vender/${listingId}/seguridad`);
 }
 
+/**
+ * updateListingSecurityAction
+ *
+ * Server action: update listing security for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function updateListingSecurityAction(
   listingId: string,
   _prev: ListingActionState,
@@ -397,6 +471,16 @@ export async function updateListingSecurityAction(
   redirect(`/vender/${listing.id}/posesion`);
 }
 
+/**
+ * uploadPossessionPhotoAction
+ *
+ * Server action: upload possession photo for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function uploadPossessionPhotoAction(
   listingId: string,
   _prev: ListingActionState,
@@ -459,6 +543,16 @@ export async function uploadPossessionPhotoAction(
   redirect(`/vender/${listing.id}/revisar`);
 }
 
+/**
+ * submitListingForReviewAction
+ *
+ * Server action: submit listing for review for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function submitListingForReviewAction(
   listingId: string,
 ): Promise<ListingActionState> {
@@ -512,6 +606,16 @@ export async function submitListingForReviewAction(
   redirect(`/vender/${listing.id}/enviado`);
 }
 
+/**
+ * reopenRejectedListingAction
+ *
+ * Server action: reopen rejected listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function reopenRejectedListingAction(
   listingId: string,
 ): Promise<ListingActionState> {
@@ -550,6 +654,16 @@ export async function reopenRejectedListingAction(
   };
 }
 
+/**
+ * deleteListingGalleryImageAction
+ *
+ * Server action: delete listing gallery image for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function deleteListingGalleryImageAction(
   listingId: string,
   imageId: string,
@@ -576,6 +690,16 @@ export async function deleteListingGalleryImageAction(
   return { ok: true, message: "Foto eliminada." };
 }
 
+/**
+ * deleteDraftListingAction
+ *
+ * Server action: delete draft listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function deleteDraftListingAction(listingId: string) {
   const seller = await requireVerifiedSeller();
   if (!seller.ok) {
@@ -596,6 +720,16 @@ export async function deleteDraftListingAction(listingId: string) {
   redirect("/vender");
 }
 
+/**
+ * loadCatalogAction
+ *
+ * Server action: load catalog for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function loadCatalogAction() {
   return getCatalog();
 }

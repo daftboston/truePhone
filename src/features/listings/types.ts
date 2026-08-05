@@ -1,3 +1,9 @@
+/**
+ * @file types.ts
+ * @description Shared types and helpers for the listings feature.
+ * @dependencies none
+ */
+
 export type ListingActionState =
   | {
       ok: true;
@@ -19,6 +25,15 @@ export const LISTING_STEPS = [
   { id: "revisar", title: "Revisar", pathSuffix: "revisar" },
 ] as const;
 
+/**
+ * fieldErrorsFromZod
+ *
+ * Flattens Zod issues into a field-name → messages map for form UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function fieldErrorsFromZod(
   error: import("zod").ZodError,
 ): Record<string, string[]> {
@@ -32,6 +47,15 @@ export function fieldErrorsFromZod(
   return fieldErrors;
 }
 
+/**
+ * listingStepPath
+ *
+ * Supports listings by implementing listingStepPath.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 export function listingStepPath(listingId: string, step: number) {
   const suffix = LISTING_STEPS[step - 1]?.pathSuffix ?? "dispositivo";
   return `/vender/${listingId}/${suffix}`;

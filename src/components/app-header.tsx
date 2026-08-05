@@ -1,3 +1,9 @@
+/**
+ * @file app-header.tsx
+ * @description Sticky top header with brand, model search, theme toggle, and auth entry.
+ * @dependencies next/link, ModelSearch, ThemeToggle, ui/avatar, ui/button, @/lib/utils
+ */
+
 import Link from "next/link";
 
 import { ModelSearch } from "@/features/listings/components/model-search";
@@ -17,6 +23,15 @@ type AppHeaderProps = {
   } | null;
 };
 
+/**
+ * initials
+ *
+ * Builds avatar initials from a profile name, or "TP" when missing.
+ *
+ * @param name - Optional display name.
+ * @returns Uppercase initials string.
+ * @calledBy AppHeader
+ */
 function initials(name: string | null | undefined) {
   if (!name) return "TP";
   return name
@@ -27,6 +42,18 @@ function initials(name: string | null | undefined) {
     .toUpperCase();
 }
 
+/**
+ * AppHeader
+ *
+ * Renders site chrome: logo, catalog ModelSearch, theme toggle, and profile/login.
+ *
+ * @param props.isAuthenticated - Whether a session user is present.
+ * @param props.catalogModels - iPhone models for header search.
+ * @param props.user - Optional profile name and avatar for the account link.
+ * @param props.className - Optional header className.
+ * @returns Sticky site header.
+ * @calledBy AppShell
+ */
 export function AppHeader({
   className,
   isAuthenticated = false,

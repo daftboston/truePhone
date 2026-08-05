@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file update-password-form.tsx
+ * @description Client form for setting a new password after recovery.
+ * @dependencies react, updatePasswordAction, design-system inputs
+ */
+
 import { useActionState } from "react";
 
 import { updatePasswordAction } from "@/features/auth/actions/auth";
@@ -8,6 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * UpdatePasswordForm
+ *
+ * Collects new password + confirmation and submits to updatePasswordAction.
+ *
+ * @returns Password update form with field and form-level errors.
+ * @calledBy src/app/(auth)/auth/actualizar-contrasena/page.tsx
+ */
 export function UpdatePasswordForm() {
   const [state, formAction, pending] = useActionState<
     AuthActionState,

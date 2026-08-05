@@ -1,3 +1,9 @@
+/**
+ * @file seller-listing-summary.tsx
+ * @description SellerListingSummary component for the listings feature.tsx.
+ * @dependencies next/image, next/link, @prisma/client, @/components/price-display, @/components/ui/badge
+ */
+
 import Image from "next/image";
 import Link from "next/link";
 import type { ListingStatus } from "@prisma/client";
@@ -20,6 +26,15 @@ type SellerListingSummaryProps = {
   listing: OwnedListing;
 };
 
+/**
+ * statusDescription
+ *
+ * Supports listings by implementing statusDescription.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function statusDescription(status: ListingStatus) {
   switch (status) {
     case "PENDING_REVIEW":
@@ -42,6 +57,15 @@ function statusDescription(status: ListingStatus) {
   }
 }
 
+/**
+ * getLatestOrderIdForListing
+ *
+ * Supports listings by implementing getLatestOrderIdForListing.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 async function getLatestOrderIdForListing(listingId: string) {
   const order = await prisma.order.findFirst({
     where: { listingId },
@@ -51,6 +75,15 @@ async function getLatestOrderIdForListing(listingId: string) {
   return order;
 }
 
+/**
+ * SellerListingSummary
+ *
+ * Renders the Seller Listing Summary UI for listings.
+ *
+ * @param props - SellerListingSummary props.
+ * @returns SellerListingSummary React element.
+ * @calledBy listings pages and parent components
+ */
 export async function SellerListingSummary({
   listing,
 }: SellerListingSummaryProps) {

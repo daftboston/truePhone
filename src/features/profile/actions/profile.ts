@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file profile.ts
+ * @description Server actions for profile edit, avatar upload, and password change.
+ * @dependencies next/cache, next/navigation, profile schemas/types, prisma, Supabase storage
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -20,11 +26,30 @@ const AVATARS_BUCKET = "avatars";
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+/**
+ * emptyToNull
+ *
+ * Converts empty/whitespace strings to null for optional Prisma fields.
+ *
+ * @param value - Optional string from form input.
+ * @returns Trimmed string or null.
+ * @calledBy updateProfileAction
+ */
 function emptyToNull(value: string | undefined) {
   if (!value || value.trim() === "") return null;
   return value.trim();
 }
 
+/**
+ * updateProfileAction
+ *
+ * Updates the authenticated user's profile and redirects to `/perfil`.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - fullName, username, location, bio, phone fields.
+ * @returns ProfileActionState on auth/validation/uniqueness errors; redirects on success.
+ * @calledBy ProfileEditForm
+ */
 export async function updateProfileAction(
   _prev: ProfileActionState,
   formData: FormData,
@@ -37,8 +62,9 @@ export async function updateProfileAction(
   const parsed = updateProfileSchema.safeParse({
     fullName: formData.get("fullName"),
     username: formData.get("username") || "",
-    city: formData.get("city") || "",
     department: formData.get("department") || "",
+    cityOption: formData.get("cityOption") || "",
+    cityDetail: formData.get("cityDetail") || "",
     bio: formData.get("bio") || "",
     phone: formData.get("phone") || "",
   });
@@ -58,6 +84,7 @@ export async function updateProfileAction(
 
   const username = emptyToNull(parsed.data.username)?.toLowerCase() ?? null;
 
+  // Enforce unique username across profiles
   if (username) {
     const taken = await prisma.profile.findFirst({
       where: {
@@ -96,6 +123,16 @@ export async function updateProfileAction(
   redirect("/perfil");
 }
 
+/**
+ * uploadAvatarAction
+ *
+ * Uploads an avatar to Supabase Storage and stores the public URL on the profile.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - `avatar` file field (JPEG/PNG/WebP, max 2 MB).
+ * @returns ProfileActionState with success message or validation/upload error.
+ * @calledBy AvatarUploadForm
+ */
 export async function uploadAvatarAction(
   _prev: ProfileActionState,
   formData: FormData,
@@ -163,6 +200,16 @@ export async function uploadAvatarAction(
   return { ok: true, message: "Foto de perfil actualizada." };
 }
 
+/**
+ * changePasswordAction
+ *
+ * Updates the authenticated user's Supabase Auth password.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - password, confirmPassword.
+ * @returns ProfileActionState with success message or validation/auth error.
+ * @calledBy ChangePasswordForm
+ */
 export async function changePasswordAction(
   _prev: ProfileActionState,
   formData: FormData,

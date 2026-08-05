@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Account profile overview with identity and account links.
+ * @dependencies Profile helpers and account components
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -23,6 +29,13 @@ export const metadata: Metadata = {
   title: "Perfil",
 };
 
+/**
+ * ProfilePage
+ *
+ * Shows the signed-in user's profile summary and account shortcuts.
+ *
+ * @returns Profile overview page.
+ */
 export default async function ProfilePage() {
   const current = await requireCurrentProfile("/perfil");
 

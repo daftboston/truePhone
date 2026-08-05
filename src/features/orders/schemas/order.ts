@@ -1,9 +1,17 @@
+/**
+ * @file order.ts
+ * @description Zod schemas and related types for orders (order.ts).
+ * @dependencies zod
+ */
+
 import { z } from "zod";
 
+/** createOrderSchema — validates input for related createOrder flows. */
 export const createOrderSchema = z.object({
   listingId: z.string().min(1, "Anuncio inválido."),
 });
 
+/** cancelOrderSchema — validates input for related cancelOrder flows. */
 export const cancelOrderSchema = z.object({
   orderId: z.string().min(1, "Pedido inválido."),
   reason: z
@@ -12,10 +20,6 @@ export const cancelOrderSchema = z.object({
     .max(500, "El motivo es demasiado largo.")
     .optional()
     .nullable(),
-});
-
-export const completeOrderSchema = z.object({
-  orderId: z.string().min(1, "Pedido inválido."),
 });
 
 export type OrderActionState =
@@ -32,6 +36,15 @@ export type OrderActionState =
     }
   | null;
 
+/**
+ * fieldErrorsFromZod
+ *
+ * Flattens Zod issues into a field-name → messages map for form UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy orders UI and related modules
+ */
 export function fieldErrorsFromZod(
   error: z.ZodError,
 ): Record<string, string[]> {

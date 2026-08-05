@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file mock-checkout-confirm.tsx
+ * @description Dev-only form that simulates an approved mock payment.
+ * @dependencies react, confirmMockPaymentAction, formatOrderMoney, Button
+ */
+
 import { useActionState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +22,18 @@ type MockCheckoutConfirmProps = {
 
 const initial: PaymentActionState = null;
 
+/**
+ * MockCheckoutConfirm
+ *
+ * Confirms a MOCK payment reference when Wompi is not configured.
+ *
+ * @param props.reference - Mock payment reference stored in FormData.
+ * @param props.amount - Amount shown in the simulation summary.
+ * @param props.currency - Currency code for formatting.
+ * @param props.listingTitle - Listing title shown above the CTA.
+ * @returns Mock checkout confirmation form.
+ * @calledBy mock checkout page
+ */
 export function MockCheckoutConfirm({
   reference,
   amount,

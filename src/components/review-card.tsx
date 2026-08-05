@@ -1,3 +1,9 @@
+/**
+ * @file review-card.tsx
+ * @description Buyer/seller review article with rating, comment, and optional footer.
+ * @dependencies ui/avatar, @/lib/utils
+ */
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +17,15 @@ type ReviewCardProps = {
   footer?: React.ReactNode;
 };
 
+/**
+ * initials
+ *
+ * Builds up to two-letter initials from a reviewer name.
+ *
+ * @param name - Reviewer display name.
+ * @returns Uppercase initials for AvatarFallback.
+ * @calledBy ReviewCard
+ */
 function initials(name: string) {
   return name
     .split(" ")
@@ -20,12 +35,36 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+/**
+ * formatWhen
+ *
+ * Formats a transaction date for es-CO medium date style.
+ *
+ * @param date - Transaction Date.
+ * @returns Localized date string.
+ * @calledBy ReviewCard
+ */
 function formatWhen(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "medium",
   }).format(date);
 }
 
+/**
+ * ReviewCard
+ *
+ * Displays a single marketplace review with avatar, stars, and optional footer slot.
+ *
+ * @param props.reviewerName - Reviewer display name.
+ * @param props.reviewerAvatarUrl - Optional avatar URL.
+ * @param props.rating - Star rating value.
+ * @param props.comment - Optional review body.
+ * @param props.transactionDate - Optional date shown under the review.
+ * @param props.footer - Optional moderation or action slot.
+ * @param props.className - Optional className.
+ * @returns Review article element.
+ * @calledBy Public profiles and review moderation queues
+ */
 export function ReviewCard({
   reviewerName,
   reviewerAvatarUrl,

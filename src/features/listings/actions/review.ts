@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file review.ts
+ * @description Server actions for listings (review.ts).
+ * @dependencies next/cache, @/features/listings/schemas/review, @/features/listings/types, @/lib/auth/session, @/lib/db
+ */
+
 import { revalidatePath } from "next/cache";
 
 import {
@@ -13,6 +19,15 @@ import { fieldErrorsFromZod } from "@/features/listings/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
+/**
+ * requireReviewer
+ *
+ * Supports listings by implementing requireReviewer.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 async function requireReviewer() {
   const current = await getCurrentProfile();
   if (!current) {
@@ -27,6 +42,15 @@ async function requireReviewer() {
   return { ok: true as const, current };
 }
 
+/**
+ * revalidateListingReview
+ *
+ * Revalidates Next.js paths after listings mutations.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function revalidateListingReview(listingId: string) {
   revalidatePath("/revision/anuncios");
   revalidatePath(`/revision/anuncios/${listingId}`);
@@ -35,10 +59,29 @@ function revalidateListingReview(listingId: string) {
   revalidatePath(`/vender/${listingId}/enviado`);
 }
 
+/**
+ * isEditableStatus
+ *
+ * Predicate helper used by listings UI and actions.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function isEditableStatus(status: string) {
   return (EDITABLE_REVIEW_STATUSES as readonly string[]).includes(status);
 }
 
+/**
+ * claimListingForReviewAction
+ *
+ * Server action: claim listing for review for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function claimListingForReviewAction(listingId: string) {
   const gate = await requireReviewer();
   if (!gate.ok) return gate;
@@ -61,6 +104,16 @@ export async function claimListingForReviewAction(listingId: string) {
   return { ok: true as const };
 }
 
+/**
+ * saveListingReviewNotesAction
+ *
+ * Server action: save listing review notes for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function saveListingReviewNotesAction(
   _prev: ListingActionState,
   formData: FormData,
@@ -102,6 +155,16 @@ export async function saveListingReviewNotesAction(
   return { ok: true, message: "Notas guardadas." };
 }
 
+/**
+ * approveListingAction
+ *
+ * Server action: approve listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function approveListingAction(
   _prev: ListingActionState,
   formData: FormData,
@@ -149,6 +212,16 @@ export async function approveListingAction(
   };
 }
 
+/**
+ * rejectListingAction
+ *
+ * Server action: reject listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function rejectListingAction(
   _prev: ListingActionState,
   formData: FormData,

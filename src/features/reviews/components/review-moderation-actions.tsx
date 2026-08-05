@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file review-moderation-actions.tsx
+ * @description ReviewModerationActions component for the reviews feature.tsx.
+ * @dependencies react, next/navigation, @/components/ui/button, @/features/reviews/actions/reviews, @/features/reviews/schemas/review
+ */
+
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -16,6 +22,15 @@ type ReviewModerationActionsProps = {
 
 const initial: ReviewActionState = null;
 
+/**
+ * ReviewModerationActions
+ *
+ * Renders the Review Moderation Actions UI for reviews.
+ *
+ * @param props - ReviewModerationActions props.
+ * @returns ReviewModerationActions React element.
+ * @calledBy reviews pages and parent components
+ */
 export function ReviewModerationActions({
   reviewId,
 }: ReviewModerationActionsProps) {

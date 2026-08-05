@@ -1,3 +1,9 @@
+/**
+ * @file reviews.test.ts
+ * @description Unit tests for review reputation helpers and createReviewSchema.
+ * @dependencies node:test, @/lib/reviews, @/features/reviews/schemas/review
+ */
+
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 

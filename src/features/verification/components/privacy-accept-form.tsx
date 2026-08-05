@@ -1,10 +1,25 @@
 "use client";
 
+/**
+ * @file privacy-accept-form.tsx
+ * @description PrivacyAcceptForm component for the verification feature.tsx.
+ * @dependencies react, @/features/verification/actions/identity, @/components/ui/button
+ */
+
 import { useState, useTransition } from "react";
 
 import { acceptPrivacyAction } from "@/features/verification/actions/identity";
 import { Button } from "@/components/ui/button";
 
+/**
+ * PrivacyAcceptForm
+ *
+ * Renders the Privacy Accept Form UI for verification.
+ *
+ * @param props - PrivacyAcceptForm props.
+ * @returns PrivacyAcceptForm React element.
+ * @calledBy verification pages and parent components
+ */
 export function PrivacyAcceptForm() {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);

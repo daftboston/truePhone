@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Verification step: upload selfie for identity matching.
+ * @dependencies Verification upload components
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -11,6 +17,13 @@ export const metadata: Metadata = {
   title: "Selfie de verificación",
 };
 
+/**
+ * SelfiePage
+ *
+ * Captures the seller selfie used in identity review.
+ *
+ * @returns Selfie upload step.
+ */
 export default async function SelfiePage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/verificacion/selfie");

@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Queue of listings awaiting manual review.
+ * @dependencies ReviewQueueRow and listing review loaders
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -24,6 +30,13 @@ type PageProps = {
   searchParams: Promise<{ tab?: string }>;
 };
 
+/**
+ * ListingReviewQueuePage
+ *
+ * Lists listings pending reviewer decision.
+ *
+ * @returns Listing review queue.
+ */
 export default async function ListingReviewQueuePage({
   searchParams,
 }: PageProps) {

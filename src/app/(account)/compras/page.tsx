@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Buyer purchases list for the signed-in account.
+ * @dependencies Account shell, orders feature helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -12,6 +18,13 @@ export const metadata: Metadata = {
   description: "Tus pedidos en TruePhone.",
 };
 
+/**
+ * PurchasesPage
+ *
+ * Lists the current user's purchase orders.
+ *
+ * @returns Purchases list UI for the buyer.
+ */
 export default async function PurchasesPage() {
   const current = await requireCurrentProfile("/compras");
   const orders = await listOrdersForBuyer(current.profile.id);

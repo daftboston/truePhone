@@ -1,3 +1,9 @@
+/**
+ * @file listing-review-tabs.tsx
+ * @description ListingReviewTabs component for the listings feature.tsx.
+ * @dependencies next/link, @/features/listings/schemas/review, @/lib/utils
+ */
+
 import Link from "next/link";
 
 import type { ListingReviewTab } from "@/features/listings/schemas/review";
@@ -26,6 +32,15 @@ const TABS: {
   { id: "todos", label: "Todos", countKey: "todos" },
 ];
 
+/**
+ * ListingReviewTabs
+ *
+ * Renders the Listing Review Tabs UI for listings.
+ *
+ * @param props - ListingReviewTabs props.
+ * @returns ListingReviewTabs React element.
+ * @calledBy listings pages and parent components
+ */
 export function ListingReviewTabs({ active, counts }: ListingReviewTabsProps) {
   return (
     <div

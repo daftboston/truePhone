@@ -1,3 +1,9 @@
+/**
+ * @file empty-state.tsx
+ * @description Centered empty-list placeholder with optional action slot.
+ * @dependencies @/lib/utils
+ */
+
 import { cn } from "@/lib/utils";
 
 type EmptyStateProps = {
@@ -7,6 +13,18 @@ type EmptyStateProps = {
   className?: string;
 };
 
+/**
+ * EmptyState
+ *
+ * Shows a title, optional description, and optional CTA when a list has no items.
+ *
+ * @param props.title - Primary empty message.
+ * @param props.description - Optional supporting copy.
+ * @param props.action - Optional button or link node.
+ * @param props.className - Wrapper className.
+ * @returns Centered empty-state block.
+ * @calledBy HomePage, FavoritesPage, inbox and queue pages
+ */
 export function EmptyState({
   title,
   description,

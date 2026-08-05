@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Detail view for reviewing a single listing submission.
+ * @dependencies Listing review actions and media viewers
+ */
+
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -36,6 +42,13 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * ListingReviewDetailPage
+ *
+ * Lets a reviewer inspect and approve/reject a listing.
+ *
+ * @returns Listing review detail page.
+ */
 export default async function ListingReviewDetailPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

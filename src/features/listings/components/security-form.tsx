@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file security-form.tsx
+ * @description SecurityForm component for the listings feature.tsx.
+ * @dependencies react, @/features/listings/actions/listings, @/features/listings/types, @/components/ui/button, @/components/ui/input
+ */
+
 import { useActionState } from "react";
 
 import { updateListingSecurityAction } from "@/features/listings/actions/listings";
@@ -18,6 +24,15 @@ type SecurityFormProps = {
   };
 };
 
+/**
+ * SecurityForm
+ *
+ * Renders the Security Form UI for listings.
+ *
+ * @param props - SecurityForm props.
+ * @returns SecurityForm React element.
+ * @calledBy listings pages and parent components
+ */
 export function SecurityForm({ listingId, defaults }: SecurityFormProps) {
   const action = updateListingSecurityAction.bind(null, listingId);
   const [state, formAction, pending] = useActionState<

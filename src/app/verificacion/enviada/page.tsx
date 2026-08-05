@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Confirmation that identity verification was submitted.
+ * @dependencies Verification status helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -12,6 +18,13 @@ export const metadata: Metadata = {
   title: "Verificación enviada",
 };
 
+/**
+ * VerificationSubmittedPage
+ *
+ * Confirms identity documents were sent for TruePhone review.
+ *
+ * @returns Verification submitted confirmation page.
+ */
 export default async function VerificationSubmittedPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/verificacion/enviada");

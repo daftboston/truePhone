@@ -1,3 +1,9 @@
+/**
+ * @file order-reviews-section.tsx
+ * @description OrderReviewsSection component for the reviews feature.tsx.
+ * @dependencies @/components/review-card, @/features/reviews/components/report-review-button, @/features/reviews/components/review-form, @/lib/reviews
+ */
+
 import { ReviewCard } from "@/components/review-card";
 import { ReportReviewButton } from "@/features/reviews/components/report-review-button";
 import { ReviewForm } from "@/features/reviews/components/review-form";
@@ -26,6 +32,15 @@ type OrderReviewsSectionProps = {
   reviews: OrderReview[];
 };
 
+/**
+ * OrderReviewsSection
+ *
+ * Renders the Order Reviews Section UI for reviews.
+ *
+ * @param props - OrderReviewsSection props.
+ * @returns OrderReviewsSection React element.
+ * @calledBy reviews pages and parent components
+ */
 export function OrderReviewsSection({
   orderId,
   orderStatus,

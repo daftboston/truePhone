@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file possession-form.tsx
+ * @description PossessionForm component for the listings feature.tsx.
+ * @dependencies react, next/image, @/features/listings/actions/listings, @/features/listings/types, @/components/ui/button
+ */
+
 import { useActionState } from "react";
 import Image from "next/image";
 
@@ -15,6 +21,15 @@ type PossessionFormProps = {
   photoUrl: string | null;
 };
 
+/**
+ * PossessionForm
+ *
+ * Renders the Possession Form UI for listings.
+ *
+ * @param props - PossessionForm props.
+ * @returns PossessionForm React element.
+ * @calledBy listings pages and parent components
+ */
 export function PossessionForm({
   listingId,
   code,

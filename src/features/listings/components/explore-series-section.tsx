@@ -1,3 +1,9 @@
+/**
+ * @file explore-series-section.tsx
+ * @description ExploreSeriesSection component for the listings feature.tsx.
+ * @dependencies next/link, lucide-react, @/lib/iphone-catalog
+ */
+
 import Link from "next/link";
 import { Smartphone } from "lucide-react";
 
@@ -11,6 +17,15 @@ type ExploreSeriesSectionProps = {
   series: ModelSeries;
 };
 
+/**
+ * ExploreSeriesSection
+ *
+ * Renders the Explore Series Section UI for listings.
+ *
+ * @param props - ExploreSeriesSection props.
+ * @returns ExploreSeriesSection React element.
+ * @calledBy listings pages and parent components
+ */
 export function ExploreSeriesSection({ series }: ExploreSeriesSectionProps) {
   return (
     <section className="space-y-5">

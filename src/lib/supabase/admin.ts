@@ -1,10 +1,21 @@
+/**
+ * @file admin.ts
+ * @description Service-role Supabase client and signed storage URL helpers.
+ * @dependencies @supabase/supabase-js, @/lib/env
+ */
+
 import { createClient } from "@supabase/supabase-js";
 
 import { getSupabaseEnv, getSupabaseServiceRoleKey } from "@/lib/env";
 
 /**
- * Service-role client for privileged server work (signed URLs for reviewers).
+ * createAdminClient
+ *
+ * Builds a service-role client for privileged server work (signed URLs).
  * Returns null when SUPABASE_SERVICE_ROLE_KEY is not configured.
+ *
+ * @returns Supabase admin client or null.
+ * @calledBy createSignedStorageUrl, reviewer identity document access
  */
 export function createAdminClient() {
   const serviceRoleKey = getSupabaseServiceRoleKey();
@@ -22,8 +33,14 @@ export function createAdminClient() {
 }
 
 /**
- * Paths are stored as `bucket/object/path`. Returns a short-lived signed URL
- * when the admin client is available.
+ * createSignedStorageUrl
+ *
+ * Parses `bucket/object/path` storage keys and returns a short-lived signed URL.
+ *
+ * @param storedPath - Stored path as `bucket/object/...`, or nullish.
+ * @param expiresInSeconds - URL lifetime; defaults to 15 minutes.
+ * @returns Signed URL string, or null when path/admin client is unavailable.
+ * @calledBy Reviewer identity queues, private document previews
  */
 export async function createSignedStorageUrl(
   storedPath: string | null | undefined,

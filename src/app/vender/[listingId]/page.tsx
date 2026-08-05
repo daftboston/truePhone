@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Seller landing for an existing listing draft/edit flow.
+ * @dependencies Listing ownership checks and wizard navigation
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -24,6 +30,13 @@ export async function generateMetadata({
   };
 }
 
+/**
+ * SellerListingPage
+ *
+ * Routes the seller into the appropriate edit step for their listing.
+ *
+ * @returns Seller listing hub/redirect for the draft.
+ */
 export default async function SellerListingPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

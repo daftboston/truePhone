@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file bottom-nav.tsx
+ * @description Mobile-only primary navigation bar fixed to the viewport bottom.
+ * @dependencies next/link, next/navigation, lucide-react, @/lib/utils
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Search, PlusCircle, UserRound } from "lucide-react";
@@ -17,6 +23,15 @@ type BottomNavProps = {
   className?: string;
 };
 
+/**
+ * BottomNav
+ *
+ * Highlights the active route among Inicio, Explorar, Vender, and Perfil.
+ *
+ * @param props.className - Optional nav className.
+ * @returns Fixed bottom nav for md:hidden viewports.
+ * @calledBy AppShell
+ */
 export function BottomNav({ className }: BottomNavProps) {
   const pathname = usePathname();
 

@@ -1,3 +1,9 @@
+/**
+ * @file proxy.ts
+ * @description Middleware session refresh and route auth redirects for Supabase.
+ * @dependencies @supabase/ssr, next/server, @/features/auth/types, @/lib/env
+ */
+
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -16,12 +22,29 @@ const PROTECTED_PREFIXES = [
 ];
 const AUTH_PREFIXES = ["/login", "/registro", "/recuperar"];
 
+/**
+ * matchesPrefix
+ *
+ * Checks whether a pathname equals or starts with any of the given prefixes.
+ *
+ * @param pathname - Request pathname.
+ * @param prefixes - Route prefix list.
+ * @returns True when pathname matches a prefix.
+ */
 function matchesPrefix(pathname: string, prefixes: string[]) {
   return prefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
+/**
+ * withPathnameHeaders
+ *
+ * Forwards the current pathname and search into request headers for RSC.
+ *
+ * @param request - Incoming NextRequest.
+ * @returns NextResponse.next with x-pathname and x-search headers.
+ */
 function withPathnameHeaders(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
@@ -32,7 +55,15 @@ function withPathnameHeaders(request: NextRequest) {
 }
 
 /**
+ * updateSession
+ *
  * Refreshes the Supabase Auth session and enforces auth for protected routes.
+ * Redirects anonymous users away from protected prefixes and signed-in users
+ * away from auth pages.
+ *
+ * @param request - Incoming middleware request.
+ * @returns Redirect or next response with refreshed auth cookies.
+ * @calledBy Next.js middleware / proxy entry
  */
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = withPathnameHeaders(request);

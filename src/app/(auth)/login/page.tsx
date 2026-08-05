@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Email/password (and OAuth) login page.
+ * @dependencies Auth login form components
+ */
+
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -13,6 +19,13 @@ type LoginPageProps = {
   searchParams: Promise<{ next?: string; error?: string }>;
 };
 
+/**
+ * LoginPage
+ *
+ * Renders the login form and related auth entry UI.
+ *
+ * @returns Login page.
+ */
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const next = safeNextPath(params.next);

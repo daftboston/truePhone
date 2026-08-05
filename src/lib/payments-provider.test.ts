@@ -1,3 +1,9 @@
+/**
+ * @file payments-provider.test.ts
+ * @description Unit tests for payment provider resolution and Wompi helpers.
+ * @dependencies node:test, @/lib/payments/*
+ */
+
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 

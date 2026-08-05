@@ -1,3 +1,7 @@
+-- @file identity-docs-bucket.sql
+-- @description Creates private identity-docs storage bucket and owner-scoped RLS for cédula/selfie uploads.
+-- @dependencies PostgreSQL 15+, Supabase Storage
+
 -- Private bucket for cédula + selfie uploads (Phase 4)
 -- Run once in the Supabase SQL editor
 

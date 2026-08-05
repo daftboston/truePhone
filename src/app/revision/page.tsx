@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Reviewer/admin hub linking listing, identity, payments, and review queues.
+ * @dependencies Review portal access checks and queue summaries
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -88,6 +94,13 @@ function QueueCard({
   );
 }
 
+/**
+ * ReviewHubPage
+ *
+ * Entry dashboard for staff review portals.
+ *
+ * @returns Review hub with queue links and counts.
+ */
 export default async function ReviewHubPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision");

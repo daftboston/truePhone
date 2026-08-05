@@ -1,3 +1,9 @@
+/**
+ * @file route.ts
+ * @description Mock PSP checkout entry that redirects to the in-app confirm page.
+ * @dependencies prisma, isMockPaymentsEnabled
+ */
+
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";

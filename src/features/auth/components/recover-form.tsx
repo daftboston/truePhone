@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file recover-form.tsx
+ * @description Client form that requests a password-reset email.
+ * @dependencies react, recoverAction, design-system inputs
+ */
+
 import { useActionState } from "react";
 
 import { recoverAction } from "@/features/auth/actions/auth";
@@ -8,6 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * RecoverForm
+ *
+ * Submits an email to recoverAction and shows a success status or field errors.
+ *
+ * @returns Email form, or a success message once the reset email is requested.
+ * @calledBy src/app/(auth)/recuperar/page.tsx
+ */
 export function RecoverForm() {
   const [state, formAction, pending] = useActionState<
     AuthActionState,

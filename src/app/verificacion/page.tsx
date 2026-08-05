@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Identity verification flow entry page.
+ * @dependencies Verification start components
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -12,6 +18,13 @@ export const metadata: Metadata = {
   title: "Verificación de identidad",
 };
 
+/**
+ * VerificationStartPage
+ *
+ * Introduces and starts the seller identity verification flow.
+ *
+ * @returns Verification start page.
+ */
 export default async function VerificationStartPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/verificacion");

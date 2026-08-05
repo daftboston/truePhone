@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Queue of reported or flagged marketplace reviews.
+ * @dependencies Review moderation helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -27,6 +33,13 @@ function formatWhen(date: Date) {
   }).format(date);
 }
 
+/**
+ * ReviewReportsPage
+ *
+ * Lists review reports for staff moderation.
+ *
+ * @returns Review reports queue.
+ */
 export default async function ReviewReportsPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/resenas");

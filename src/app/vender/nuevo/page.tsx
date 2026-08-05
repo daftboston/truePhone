@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Start a new listing draft in the sell wizard.
+ * @dependencies Listing create form / wizard step
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -12,6 +18,13 @@ export const metadata: Metadata = {
   title: "Nuevo anuncio",
 };
 
+/**
+ * NewListingPage
+ *
+ * Entry step to create a new seller listing draft.
+ *
+ * @returns New listing wizard page.
+ */
 export default async function NewListingPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/vender/nuevo");

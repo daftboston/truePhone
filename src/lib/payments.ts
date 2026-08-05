@@ -1,3 +1,9 @@
+/**
+ * @file payments.ts
+ * @description Checkout orchestration, payment status updates, refunds, and Wompi webhooks.
+ * @dependencies @prisma/client, @/lib/db, financial-core, payments providers
+ */
+
 import {
   Prisma,
   type OrderStatus,
@@ -5,6 +11,7 @@ import {
   type PaymentStatus,
 } from "@prisma/client";
 
+import { recordPaymentHold } from "@/lib/financial-core";
 import { prisma } from "@/lib/db";
 import { resolvePaymentProvider } from "@/lib/payments/resolve-provider";
 import {
@@ -18,6 +25,15 @@ export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   "PAID",
 ];
 
+/**
+ * paymentStatusLabel
+ *
+ * Maps PaymentStatus to Spanish UI label.
+ *
+ * @param status - Payment status enum.
+ * @returns Localized label.
+ * @calledBy Payment and order UI
+ */
 export function paymentStatusLabel(status: PaymentStatus) {
   switch (status) {
     case "PENDING":
@@ -37,10 +53,24 @@ export function paymentStatusLabel(status: PaymentStatus) {
   }
 }
 
+/**
+ * isOrderAwaitingPayment
+ *
+ * @param status - Order status.
+ * @returns True when status is AWAITING_PAYMENT.
+ * @calledBy Checkout guards
+ */
 export function isOrderAwaitingPayment(status: OrderStatus) {
   return status === "AWAITING_PAYMENT";
 }
 
+/**
+ * isOrderPaid
+ *
+ * @param status - Order status.
+ * @returns True when status is PAID.
+ * @calledBy Shipping and settlement guards
+ */
 export function isOrderPaid(status: OrderStatus) {
   return status === "PAID" || status === "COMPLETED";
 }
@@ -82,6 +112,15 @@ export type PaymentListItem = Prisma.PaymentGetPayload<{
   include: typeof paymentInclude;
 }>;
 
+/**
+ * listPaymentsForOrder
+ *
+ * Lists payment attempts for an order newest first.
+ *
+ * @param orderId - Order UUID.
+ * @returns Payment list items.
+ * @calledBy Order payment panels
+ */
 export async function listPaymentsForOrder(orderId: string) {
   return prisma.payment.findMany({
     where: { orderId },
@@ -89,6 +128,15 @@ export async function listPaymentsForOrder(orderId: string) {
   });
 }
 
+/**
+ * getLatestPaymentForOrder
+ *
+ * Returns the most recent payment for an order.
+ *
+ * @param orderId - Order UUID.
+ * @returns Payment or null.
+ * @calledBy Checkout resume and status UI
+ */
 export async function getLatestPaymentForOrder(orderId: string) {
   return prisma.payment.findFirst({
     where: { orderId },
@@ -96,6 +144,15 @@ export async function getLatestPaymentForOrder(orderId: string) {
   });
 }
 
+/**
+ * listRecentPayments
+ *
+ * Lists recent payments across orders for reviewer/admin views.
+ *
+ * @param limit - Max rows; defaults to 50.
+ * @returns Payment list items.
+ * @calledBy Reviewer payments page
+ */
 export async function listRecentPayments(limit = 50) {
   return prisma.payment.findMany({
     include: paymentInclude,
@@ -104,6 +161,14 @@ export async function listRecentPayments(limit = 50) {
   });
 }
 
+/**
+ * countPaymentsByStatus
+ *
+ * Aggregates payment counts by status.
+ *
+ * @returns Status-to-count map.
+ * @calledBy Reviewer payments dashboard
+ */
 export async function countPaymentsByStatus() {
   const groups = await prisma.payment.groupBy({
     by: ["status"],
@@ -124,8 +189,13 @@ export async function countPaymentsByStatus() {
 }
 
 /**
- * Start (or resume) checkout for an AWAITING_PAYMENT order.
- * Charges the snapshotted total (equipment + 6% protection fee).
+ * startCheckoutForOrder
+ *
+ * Creates/updates a pending payment and returns a provider checkout URL.
+ *
+ * @param input - orderId, buyerId, siteOrigin, redirectUrl.
+ * @returns Checkout URL result or error.
+ * @calledBy PayOrderButton / checkout actions
  */
 export async function startCheckoutForOrder(input: {
   orderId: string;
@@ -235,7 +305,13 @@ export async function startCheckoutForOrder(input: {
 }
 
 /**
- * Apply a successful charge to payment + order (idempotent).
+ * markPaymentSucceeded
+ *
+ * Marks payment SUCCEEDED, order PAID, and records Financial Core hold.
+ *
+ * @param input - payment reference / provider ids and amounts.
+ * @returns Success or error result.
+ * @calledBy Webhooks and mock confirm
  */
 export async function markPaymentSucceeded(input: {
   paymentId: string;
@@ -283,6 +359,20 @@ export async function markPaymentSucceeded(input: {
             paidAt: now,
           },
         });
+
+        await recordPaymentHold(tx, {
+          orderId: payment.orderId,
+          paymentId: payment.id,
+          buyerTotal: payment.order.totalPrice,
+          sellerAmountPesos:
+            payment.order.sellerAmountPesos || payment.order.equipmentPrice,
+          platformFee: payment.order.platformFee,
+          wompiCollectionPesos: payment.order.wompiCollectionPesos,
+          wompiPayoutPesos: payment.order.wompiPayoutPesos,
+          truephoneRevenuePesos: payment.order.truephoneRevenuePesos,
+          feeRateBps: payment.order.feeRateBps,
+          currency: payment.order.currency,
+        });
       }
     });
 
@@ -295,6 +385,15 @@ export async function markPaymentSucceeded(input: {
   }
 }
 
+/**
+ * markPaymentFailed
+ *
+ * Marks a payment as failed without releasing the order reservation policy.
+ *
+ * @param input - payment id and failure details.
+ * @returns Update result.
+ * @calledBy Webhooks and mock fail paths
+ */
 export async function markPaymentFailed(input: {
   paymentId: string;
   providerPaymentId?: string | null;
@@ -316,7 +415,13 @@ export async function markPaymentFailed(input: {
 }
 
 /**
- * Confirm a mock checkout (local / CI only).
+ * confirmMockPayment
+ *
+ * Completes a mock checkout as succeeded for local/CI.
+ *
+ * @param input - reference and optional redirect context.
+ * @returns Success redirect path or error.
+ * @calledBy Mock checkout API route
  */
 export async function confirmMockPayment(input: {
   reference: string;
@@ -341,12 +446,19 @@ export async function confirmMockPayment(input: {
 }
 
 /**
- * Refund a succeeded payment and release the order when cancelling a paid reserve.
+ * refundPaymentForOrder
+ *
+ * Issues a provider refund and records ledger/payment refund state.
+ *
+ * @param input - orderId, amountPesos, reason, siteOrigin.
+ * @returns Refund result.
+ * @calledBy Financial Core cancel paths
  */
 export async function refundPaymentForOrder(input: {
   orderId: string;
   siteOrigin: string;
   reason?: string | null;
+  amountPesos?: number | null;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const payment = await prisma.payment.findFirst({
     where: { orderId: input.orderId, status: "SUCCEEDED" },
@@ -356,22 +468,21 @@ export async function refundPaymentForOrder(input: {
     return { ok: true };
   }
 
+  const refundAmount = input.amountPesos ?? payment.amount;
   const { provider } = resolvePaymentProvider(input.siteOrigin);
   if (payment.providerPaymentId) {
     const refund = await provider.refund({
       providerPaymentId: payment.providerPaymentId,
-      amountPesos: payment.amount,
+      amountPesos: refundAmount,
       reason: input.reason,
     });
     if (!refund.ok && payment.provider === "WOMPI") {
-      // Still mark locally if void fails after settlement — ops can reconcile.
-      // Prefer failing closed for MOCK; for Wompi record refund with note.
       await prisma.payment.update({
         where: { id: payment.id },
         data: {
           status: "REFUNDED",
           refundedAt: new Date(),
-          refundAmount: payment.amount,
+          refundAmount,
           failureMessage: `Reembolso manual requerido: ${refund.error}`,
         },
       });
@@ -387,13 +498,22 @@ export async function refundPaymentForOrder(input: {
     data: {
       status: "REFUNDED",
       refundedAt: new Date(),
-      refundAmount: payment.amount,
+      refundAmount,
     },
   });
 
   return { ok: true };
 }
 
+/**
+ * cancelOpenPaymentsForOrder
+ *
+ * Cancels pending/open payment attempts for an order.
+ *
+ * @param orderId - Order UUID.
+ * @returns void after updates.
+ * @calledBy Order cancel pre-payment
+ */
 export async function cancelOpenPaymentsForOrder(orderId: string) {
   await prisma.payment.updateMany({
     where: {
@@ -425,7 +545,13 @@ type WompiWebhookBody = {
 };
 
 /**
- * Persist + process a Wompi `transaction.updated` webhook (idempotent).
+ * handleWompiWebhook
+ *
+ * Verifies Wompi event checksum and applies payment status transitions.
+ *
+ * @param input - Raw webhook body and headers/secrets.
+ * @returns Handling result.
+ * @calledBy Wompi webhook API route
  */
 export async function handleWompiWebhook(input: {
   body: WompiWebhookBody;
@@ -578,6 +704,15 @@ export async function handleWompiWebhook(input: {
   }
 }
 
+/**
+ * findPaymentForWompiTransaction
+ *
+ * Locates a Payment row from Wompi transaction/reference fields.
+ *
+ * @param input - reference and provider transaction ids.
+ * @returns Payment or null.
+ * @calledBy handleWompiWebhook
+ */
 async function findPaymentForWompiTransaction(input: {
   providerPaymentId: string;
   paymentLinkId?: string | null;

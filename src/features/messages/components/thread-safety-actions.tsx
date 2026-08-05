@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file thread-safety-actions.tsx
+ * @description ThreadSafetyActions component for the messages feature.tsx.
+ * @dependencies react, next/navigation, @/components/ui/button, @/components/ui/textarea, @/features/messages/actions/messages
+ */
+
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -20,6 +26,15 @@ type ThreadSafetyActionsProps = {
 
 const reportInitial: MessageActionState = null;
 
+/**
+ * ThreadSafetyActions
+ *
+ * Renders the Thread Safety Actions UI for messages.
+ *
+ * @param props - ThreadSafetyActions props.
+ * @returns ThreadSafetyActions React element.
+ * @calledBy messages pages and parent components
+ */
 export function ThreadSafetyActions({
   listingId,
   otherUserId,

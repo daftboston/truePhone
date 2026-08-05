@@ -1,3 +1,7 @@
+-- @file 20260721100000_payments.sql
+-- @description Phase 10 payments: expands OrderStatus, adds payments and payment_webhook_events for Wompi/mock.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- Phase 10: Payments (Wompi / mock) + clearer order payment statuses
 
 -- Drop status-predicate indexes before changing the enum (avoids text = OrderStatus errors)

@@ -1,3 +1,9 @@
+/**
+ * @file search-bar.tsx
+ * @description GET form search input that posts to /buscar with optional hidden filters.
+ * @dependencies lucide-react, @/lib/utils
+ */
+
 import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -12,6 +18,20 @@ type SearchBarProps = {
   hiddenFields?: Record<string, string>;
 };
 
+/**
+ * SearchBar
+ *
+ * Submits a search query (and optional preserved filters) via GET.
+ *
+ * @param props.placeholder - Input placeholder.
+ * @param props.name - Query param name; defaults to q.
+ * @param props.defaultValue - Initial query value.
+ * @param props.action - Form action path; defaults to /buscar.
+ * @param props.hiddenFields - Extra GET fields preserved on submit.
+ * @param props.className - Wrapper className.
+ * @returns Accessible search form.
+ * @calledBy Explore, search, and header search surfaces
+ */
 export function SearchBar({
   placeholder = "Buscar iPhone…",
   name = "q",

@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file record-recently-viewed.tsx
+ * @description RecordRecentlyViewed component for the listings feature.tsx.
+ * @dependencies react, @/lib/recently-viewed
+ */
+
 import { useEffect } from "react";
 
 import { recordRecentlyViewed } from "@/lib/recently-viewed";

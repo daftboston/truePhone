@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: possession / ownership proof.
+ * @dependencies Possession form and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Prueba de posesión",
 };
 
+/**
+ * ListingPossessionPage
+ *
+ * Collects possession evidence required before review submission.
+ *
+ * @returns Possession wizard step.
+ */
 export default async function ListingPossessionPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();

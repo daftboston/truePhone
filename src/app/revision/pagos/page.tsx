@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Admin payments overview for holds, payouts, and payment ops.
+ * @dependencies Payments/admin helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -26,6 +32,13 @@ function formatWhen(date: Date) {
   }).format(date);
 }
 
+/**
+ * AdminPaymentsPage
+ *
+ * Surfaces payment and payout review tools for staff.
+ *
+ * @returns Admin payments page.
+ */
 export default async function AdminPaymentsPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/pagos");
@@ -69,7 +82,7 @@ export default async function AdminPaymentsPage() {
           <Badge variant="outline">{roleLabel(current.profile.role)}</Badge>
         </div>
         <p className="text-muted-foreground text-sm">
-          Compra Garantizada: cobros del total (equipo + protección 6%).
+          Compra Garantizada: cobros del total (equipo + protección 10%).
         </p>
       </div>
 

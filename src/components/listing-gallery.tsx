@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file listing-gallery.tsx
+ * @description Client image gallery with main preview and thumbnail selection.
+ * @dependencies next/image, react, @/lib/utils
+ */
+
 import Image from "next/image";
 import { useState } from "react";
 
@@ -16,6 +22,17 @@ type ListingGalleryProps = {
   className?: string;
 };
 
+/**
+ * ListingGallery
+ *
+ * Lets buyers browse listing photos; shows a placeholder when images are empty.
+ *
+ * @param props.images - Gallery images with id and imageUrl.
+ * @param props.alt - Alt text for the active image.
+ * @param props.className - Optional className.
+ * @returns Interactive gallery or empty-state placeholder.
+ * @calledBy PublicListingPage and seller listing review surfaces
+ */
 export function ListingGallery({
   images,
   alt,

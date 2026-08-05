@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file thread-refresh-poller.tsx
+ * @description ThreadRefreshPoller component for the messages feature.tsx.
+ * @dependencies react, next/navigation
+ */
+
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 

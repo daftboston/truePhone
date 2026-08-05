@@ -1,3 +1,7 @@
+-- @file 20260720210000_orders.sql
+-- @description Phase 9 orders: OrderStatus, orders table with partial unique pending listing, links reviews.orderId.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- Phase 9: Orders (reserve listing; payment in Phase 10)
 
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'CANCELLED', 'COMPLETED');
