@@ -167,32 +167,40 @@ Report an abusive marketplace review (`reviewId`, `reporterId`, `reason`). Staff
 
 ## Order
 
-Purchase / reserve / payment lifecycle (Phases 9–10).
+Purchase / reserve / payment lifecycle (Phases 9–10b).
 
-| Field                                            | Notes                                                      |
-| ------------------------------------------------ | ---------------------------------------------------------- |
-| `listingId`                                      | FK → Listing                                               |
-| `buyerId` / `sellerId`                           | FK → Profile                                               |
-| `status`                                         | `AWAITING_PAYMENT` \| `PAID` \| `CANCELLED` \| `COMPLETED` |
-| `equipmentPrice` / `platformFee` / `totalPrice`  | Snapshots at reserve (COP pesos)                           |
-| `cancelReason` / `cancelledAt` / `cancelledById` | Set on cancel                                              |
-| `paidAt`                                         | Set when Compra Garantizada payment succeeds               |
-| `completedAt`                                    | Set when seller marks complete after `PAID`                |
+| Field                                                                 | Notes                                                                            |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `listingId`                                                           | FK → Listing                                                                     |
+| `buyerId` / `sellerId`                                                | FK → Profile                                                                     |
+| `status`                                                              | `AWAITING_PAYMENT` \| `PAID` (hold) \| `CANCELLED` \| `COMPLETED` (after payout) |
+| `equipmentPrice` / `platformFee` / `totalPrice`                       | Snapshots at reserve (COP pesos)                                                 |
+| `feeRateBps`                                                          | 1000 = 10%, 800 = loyalty 8%                                                     |
+| `wompiCollectionPesos` / `wompiPayoutPesos` / `truephoneRevenuePesos` | Fee-pool cost snapshots                                                          |
+| `sellerAmountPesos` / `premiumShippingFeePesos` / `sellerFeePesos`    | Seller-side snapshots (`sellerFeePesos` = 0 in MVP)                              |
+| `fundsHeldAt` / `payoutAuthorizedAt` / `payoutCompletedAt`            | Financial Core settlement                                                        |
+| `buyerConfirmedAt` / `buyerConfirmDeadlineAt`                         | Confirm or 24h auto-release after buyer marks received                           |
+| `payoutFrozen`                                                        | Dispute / chargeback freeze                                                      |
+| `sellerFulfillmentAbandonedAt`                                        | Seller cancel / no-ship after pay                                                |
+| `cancelReason` / `cancelledAt` / `cancelledById`                      | Set on cancel                                                                    |
+| `paidAt`                                                              | Set when Compra Garantizada payment succeeds                                     |
+| `completedAt`                                                         | Set only after Financial Core `PayoutCompleted`                                  |
 
 **Rules:**
 
 - Create order only from `PUBLISHED` listing → listing becomes `RESERVED`, order `AWAITING_PAYMENT`
-- Buyer pays snapshotted `totalPrice` (equipment + 6% protection) via Payment / Wompi (or mock)
-- Webhook (or mock confirm) → order `PAID`
-- Cancel `AWAITING_PAYMENT` or `PAID` → listing returns to `PUBLISHED` (paid cancels attempt refund)
-- Complete `PAID` (seller) → listing `SOLD`, seller `totalSales++`
+- Buyer pays snapshotted `totalPrice` (equipment + marketplace fee; **10%** default or one-time **8%** loyalty)
+- Webhook (or mock confirm) → payment approved / order `PAID` + Ledger hold (**seller not paid**)
+- **Canonical completion (LOCKED):** buyer marks received → buyer confirm **or** 24h → Financial Core payout → then `COMPLETED` / listing `SOLD`
+- **Forbidden:** seller marks complete on `PAID` alone (legacy `completeOrder` retired)
+- Cancel rules per Financial Model (buyer vs seller after pay)
 - Partial unique index: at most one active (`AWAITING_PAYMENT` \| `PAID`) order per listing
 
 Table: `orders`.
 
 ## Payment
 
-Compra Garantizada checkout (Phase 10). Buyer is charged `amount` = order `totalPrice` (includes snapshotted 6% fee).
+Compra Garantizada checkout (Phase 10). Buyer is charged `amount` = order `totalPrice` (includes snapshotted marketplace fee).
 
 | Field                                                      | Notes                                                                                  |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
@@ -212,6 +220,59 @@ Idempotent store of provider webhook deliveries (`provider` + `externalEventKey`
 
 Table: `payment_webhook_events`.
 
+## LedgerEntry
+
+Append-only money facts (Phase 10b). Financial Core is the only writer.
+
+| Field                    | Notes                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| `orderId`                | FK → Order                                                                               |
+| `paymentId` / `payoutId` | Optional links                                                                           |
+| `type`                   | `PAYMENT_APPROVED`, `HOLD_CREATED`, `FEE_SNAPSHOT`, payout/refund/dispute/confirm events |
+| `amountPesos`            | Integer COP                                                                              |
+| `memo` / `metadata`      | Human + structured context                                                               |
+
+Table: `ledger_entries`.
+
+## Payout
+
+Seller bank dispersion from Wompi Cuenta (Phase 10b). Provider: `MOCK` (local auto-complete), `MANUAL` (ops pays in Wompi dashboard after authorize — **MVP**), or `WOMPI` (API stub until Phase 24).
+
+Table: `payouts`.
+
+## SellerBankAccount
+
+Payout destination PII (MVP bank only: legal id, bank, AHORROS/CORRIENTE, account number).
+
+Table: `seller_bank_accounts`.
+
+## FeeEntitlement
+
+Single-use **8%** marketplace fee after seller cancel / no-ship (`sourceOrderId`). Buyer may choose refund instead (`status = REFUNDED`).
+
+Table: `fee_entitlements`.
+
+## Shipment
+
+Device fulfillment (Phase 10c). One shipment per paid order. Shipping never authorizes payouts/refunds.
+
+| Field                          | Notes                                                                                                           |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `orderId`                      | Unique FK → Order                                                                                               |
+| `method`                       | `PREMIUM_BOGOTA` \| `CARRIER`                                                                                   |
+| `status`                       | `METHOD_SELECTED` \| `AWAITING_PICKUP` \| `INSPECTION` \| `IN_TRANSIT` \| `DELIVERED` \| `FAILED` \| `RETURNED` |
+| `carrierName` / `trackingCode` | Required for Carrier before buyer can mark received; visible to buyer                                           |
+| `premiumFeeCop`                | `20000` when Premium selected; `0` for Carrier                                                                  |
+| `deliveredAt`                  | Buyer receipt ack; Financial Core sets `buyerConfirmDeadlineAt` (+24h)                                          |
+
+Table: `shipments`.
+
+## ShipmentInspection
+
+Premium Bogotá checklist (IMEI, serial, storage, color, accessories, battery %, notes). `PASSED` → may deliver; `FAILED` → device not accepted, payout frozen for refund ops.
+
+Table: `shipment_inspections`.
+
 ## Favorite
 
 Unique `(userId, listingId)` favorites.
@@ -220,9 +281,11 @@ Unique `(userId, listingId)` favorites.
 
 # Planned schema (not yet in Prisma)
 
-Documented for later phases:
+Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`):
 
 - **AuditLog** — reviewer and admin actions
+- **Dispute** — first-class dispute entity (freeze today is `Order.payoutFrozen` + Ledger)
+- **RecommendedPrice** — admin-maintained guide: `iphoneModelId` + storage + `Condition` → reference COP (seller-facing in Phase 5; CRUD in Phase 13)
 
 ---
 

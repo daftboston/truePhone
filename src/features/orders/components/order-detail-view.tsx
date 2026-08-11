@@ -31,6 +31,8 @@ type OrderDetailViewProps = {
   backHref: string;
   backLabel: string;
   paymentNotice?: string | null;
+  /** Seller has no default bank yet — show payout destination reminder. */
+  needsBankAccount?: boolean;
 };
 
 /**
@@ -96,11 +98,19 @@ function paymentStatusCopy(order: OrderDetail) {
 /**
  * OrderDetailView
  *
- * Renders the Order Detail View UI for orders.
+ * Renders buyer or seller order detail: fee summary, pay CTA, timeline,
+ * shipping panel, and settlement reminders.
  *
- * @param props - OrderDetailView props.
- * @returns OrderDetailView React element.
- * @calledBy orders pages and parent components
+ * @param props.order - Loaded order with payments, shipment, reviews.
+ * @param props.perspective - Buyer or seller view.
+ * @param props.currentUserId - Authenticated profile id.
+ * @param props.currentUserRole - Role for ops shipping tools.
+ * @param props.backHref - Hub link (compras / ventas).
+ * @param props.backLabel - Back link label.
+ * @param props.paymentNotice - Optional post-checkout status banner.
+ * @param props.needsBankAccount - Seller missing default bank destination.
+ * @returns Order detail layout.
+ * @calledBy `/compras/[orderId]`, `/ventas/[orderId]`
  */
 export function OrderDetailView({
   order,
@@ -110,6 +120,7 @@ export function OrderDetailView({
   backHref,
   backLabel,
   paymentNotice,
+  needsBankAccount = false,
 }: OrderDetailViewProps) {
   const isBuyer = perspective === "buyer";
   const other = isBuyer ? order.seller : order.buyer;
@@ -125,6 +136,11 @@ export function OrderDetailView({
         ? null
         : `/vender/${order.listingId}`;
   const isOps = canAccessReviewPortal(currentUserRole ?? "");
+  const showBankReminder =
+    !isBuyer &&
+    needsBankAccount &&
+    order.status === "PAID" &&
+    !order.payoutCompletedAt;
 
   return (
     <div className="space-y-6">
@@ -145,6 +161,19 @@ export function OrderDetailView({
             role="status"
           >
             {paymentNotice}
+          </p>
+        ) : null}
+        {showBankReminder ? (
+          <p
+            className="text-foreground bg-muted/60 rounded-lg px-3 py-2 text-sm"
+            role="status"
+          >
+            Agrega tu cuenta bancaria para recibir el pago. Sin una cuenta
+            predeterminada, TruePhone no puede liberar tu liquidación cuando el
+            comprador confirme (o pasen las 24 horas).{" "}
+            <Link href="/pagos" className="underline underline-offset-2">
+              Ir a Pagos
+            </Link>
           </p>
         ) : null}
       </div>
@@ -192,7 +221,8 @@ export function OrderDetailView({
           </h2>
           <p className="text-muted-foreground text-sm">
             Paga el total ya mostrado (equipo + protección {feePercent}%). Sin
-            cargos sorpresa.
+            cargos sorpresa. TruePhone retiene el pago hasta que confirmes el
+            iPhone, o hasta 24 horas después de marcar «Ya recibí».
           </p>
           <PayOrderButton
             orderId={order.id}

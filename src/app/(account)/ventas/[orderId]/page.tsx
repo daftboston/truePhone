@@ -1,7 +1,7 @@
 /**
  * @file page.tsx
  * @description Seller order detail for a single sale.
- * @dependencies Order detail components and order loaders
+ * @dependencies Order detail components, order loaders, prisma bank lookup
  */
 
 import type { Metadata } from "next";
@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 
 import { OrderDetailView } from "@/features/orders/components/order-detail-view";
 import { requireCurrentProfile } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
 import { getOrderForParticipant } from "@/lib/orders";
 
 type PageProps = {
@@ -20,6 +21,23 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { orderId } = await params;
   return { title: `Venta · ${orderId.slice(0, 8)}` };
+}
+
+/**
+ * sellerHasDefaultBankAccount
+ *
+ * Returns true when the seller has a default bank destination for payouts.
+ *
+ * @param profileId - Seller profile UUID.
+ * @returns Whether a default SellerBankAccount row exists.
+ * @calledBy SellerOrderPage
+ */
+async function sellerHasDefaultBankAccount(profileId: string) {
+  const row = await prisma.sellerBankAccount.findFirst({
+    where: { profileId, isDefault: true },
+    select: { id: true },
+  });
+  return Boolean(row);
 }
 
 /**
@@ -38,6 +56,8 @@ export default async function SellerOrderPage({ params }: PageProps) {
     notFound();
   }
 
+  const hasBank = await sellerHasDefaultBankAccount(current.profile.id);
+
   return (
     <OrderDetailView
       order={order}
@@ -46,6 +66,7 @@ export default async function SellerOrderPage({ params }: PageProps) {
       currentUserRole={current.profile.role}
       backHref="/ventas"
       backLabel="← Mis ventas"
+      needsBankAccount={!hasBank}
     />
   );
 }

@@ -4,7 +4,7 @@
  * @dependencies none
  */
 
-export type PayoutProviderId = "WOMPI" | "MOCK";
+export type PayoutProviderId = "WOMPI" | "MOCK" | "MANUAL";
 
 export type CreateSellerPayoutInput = {
   idempotencyKey: string;

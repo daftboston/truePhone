@@ -289,8 +289,17 @@ function isPayoutEligible(
 /**
  * authorizeAndSubmitPayout
  *
- * Authorize + submit seller payout when confirm/24h rules are met.
+ * Authorize seller payout when confirm/24h rules are met.
+ * - MOCK: auto-submit and complete (local/CI).
+ * - MANUAL (MVP): stop at AUTHORIZED — ops pays in Wompi, then
+ *   `confirmManualPayoutCompleted`.
+ * - WOMPI: call Pagos a Terceros adapter (Phase 24; stub until activated).
  * Marketplace/Shipping must not call provider APIs directly.
+ *
+ * @param input.orderId - Order to authorize/submit payout for.
+ * @returns FinancialResult.
+ * @calledBy confirmOrderByBuyer, processExpiredBuyerConfirmations
+ * @consumers resolvePayoutProvider, markOrderCompletedAfterPayout
  */
 export async function authorizeAndSubmitPayout(input: {
   orderId: string;
@@ -318,6 +327,14 @@ export async function authorizeAndSubmitPayout(input: {
       if (!isPayoutEligible(order, now)) {
         throw new FinancialCoreError(
           "Aún no se puede autorizar el pago al vendedor (falta recepción/confirmación o hay un congelamiento).",
+        );
+      }
+
+      const bank = order.seller.sellerBankAccounts[0] ?? null;
+      // Production paths need a real destination; mock may proceed without.
+      if (mode !== "MOCK" && !bank) {
+        throw new FinancialCoreError(
+          "El vendedor debe agregar una cuenta bancaria antes de liberar el pago.",
         );
       }
 
@@ -349,7 +366,8 @@ export async function authorizeAndSubmitPayout(input: {
         return {
           payoutId: existing.id,
           order,
-          bank: order.seller.sellerBankAccounts[0] ?? null,
+          bank,
+          alreadyAuthorized: true as const,
         };
       }
 
@@ -358,7 +376,7 @@ export async function authorizeAndSubmitPayout(input: {
         data: {
           orderId: order.id,
           sellerId: order.sellerId,
-          sellerBankAccountId: order.seller.sellerBankAccounts[0]?.id ?? null,
+          sellerBankAccountId: bank?.id ?? null,
           provider: mode,
           status: "AUTHORIZED",
           amountPesos: order.sellerAmountPesos,
@@ -379,17 +397,26 @@ export async function authorizeAndSubmitPayout(input: {
         type: "PAYOUT_AUTHORIZED",
         amountPesos: order.sellerAmountPesos,
         currency: order.currency,
-        memo: "Financial Core authorized seller payout",
+        memo:
+          mode === "MANUAL"
+            ? "Financial Core authorized · awaiting manual Wompi dispersion"
+            : "Financial Core authorized seller payout",
       });
 
       return {
         payoutId: payout.id,
         order,
-        bank: order.seller.sellerBankAccounts[0] ?? null,
+        bank,
+        alreadyAuthorized: false as const,
       };
     });
 
     if (!prepared) return { ok: true };
+
+    // MVP: leave AUTHORIZED for ops to pay in Wompi dashboard.
+    if (mode === "MANUAL") {
+      return { ok: true };
+    }
 
     const destination = prepared.bank
       ? {
@@ -402,7 +429,6 @@ export async function authorizeAndSubmitPayout(input: {
           email: prepared.bank.email,
         }
       : {
-          // Mock path allows missing bank details; Wompi stub will refuse.
           legalIdType: "CC",
           legalId: "0000000000",
           bankCode: "000",
@@ -492,9 +518,117 @@ export async function authorizeAndSubmitPayout(input: {
 }
 
 /**
+ * confirmManualPayoutCompleted
+ *
+ * Ops confirms that the seller was paid in the Wompi dashboard (MVP path).
+ * Completes the AUTHORIZED payout and marks the order COMPLETED / listing SOLD.
+ *
+ * @param input.payoutId - AUTHORIZED payout row.
+ * @param input.providerReference - Optional Wompi tx / lote reference for audit.
+ * @param input.actorProfileId - Admin who confirmed (ledger metadata).
+ * @returns FinancialResult.
+ * @calledBy markManualPayoutCompletedAction
+ * @consumers markOrderCompletedAfterPayout
+ */
+export async function confirmManualPayoutCompleted(input: {
+  payoutId: string;
+  providerReference?: string | null;
+  actorProfileId: string;
+}): Promise<FinancialResult> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const payout = await tx.payout.findFirst({
+        where: { id: input.payoutId },
+        include: {
+          order: {
+            select: {
+              id: true,
+              sellerId: true,
+              listingId: true,
+              sellerAmountPesos: true,
+              currency: true,
+              payoutFrozen: true,
+              payoutCompletedAt: true,
+            },
+          },
+        },
+      });
+      if (!payout) {
+        throw new FinancialCoreError("Liquidación no encontrada.");
+      }
+      if (payout.status === "COMPLETED" || payout.order.payoutCompletedAt) {
+        return;
+      }
+      if (payout.status !== "AUTHORIZED" && payout.status !== "SUBMITTED") {
+        throw new FinancialCoreError(
+          "Solo se pueden marcar como pagadas liquidaciones autorizadas.",
+        );
+      }
+      if (payout.order.payoutFrozen) {
+        throw new FinancialCoreError(
+          "El pago está congelado (disputa o reclamo). No se puede marcar como pagado.",
+        );
+      }
+
+      const now = new Date();
+      const reference = input.providerReference?.trim() || null;
+
+      await tx.payout.update({
+        where: { id: payout.id },
+        data: {
+          status: "COMPLETED",
+          provider: "MANUAL",
+          providerPayoutId: reference ?? payout.providerPayoutId,
+          submittedAt: payout.submittedAt ?? now,
+          completedAt: now,
+          failureCode: null,
+          failureMessage: null,
+        },
+      });
+
+      await appendLedgerEntry(tx, {
+        orderId: payout.orderId,
+        payoutId: payout.id,
+        type: "PAYOUT_SUBMITTED",
+        amountPesos: payout.amountPesos,
+        currency: payout.currency,
+        memo: "Ops submitted manual Wompi dispersion",
+        metadata: {
+          actorProfileId: input.actorProfileId,
+          providerReference: reference,
+          mode: "MANUAL",
+        } satisfies Prisma.InputJsonValue,
+      });
+
+      await markOrderCompletedAfterPayout(tx, {
+        orderId: payout.order.id,
+        sellerId: payout.order.sellerId,
+        listingId: payout.order.listingId,
+        payoutId: payout.id,
+        sellerAmountPesos: payout.order.sellerAmountPesos,
+        currency: payout.order.currency,
+      });
+    });
+
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof FinancialCoreError) {
+      return { ok: false, error: error.message };
+    }
+    throw error;
+  }
+}
+
+/**
  * processExpiredBuyerConfirmations
  *
  * Process orders whose 24h confirm window expired (cron / ops).
+ * For each due order, authorizes and submits seller payout.
+ *
+ * @param limit - Max orders to process in one run (default 50).
+ * @returns Per-order success/error results.
+ * @calledBy GET /api/cron/buyer-confirm-expiry
+ * @consumers authorizeAndSubmitPayout
  */
 export async function processExpiredBuyerConfirmations(limit = 50) {
   const now = new Date();
@@ -504,6 +638,7 @@ export async function processExpiredBuyerConfirmations(limit = 50) {
       payoutFrozen: false,
       buyerConfirmedAt: null,
       payoutCompletedAt: null,
+      payoutAuthorizedAt: null,
       buyerConfirmDeadlineAt: { lte: now },
       fundsHeldAt: { not: null },
     },

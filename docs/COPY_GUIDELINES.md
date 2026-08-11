@@ -272,7 +272,17 @@ Precise
 
 Example
 
-"You'll pay a 6% Buyer Protection Fee. The seller receives the full listing price."
+"You'll pay a 10% Buyer Protection Fee. The seller receives the full listing price."
+
+"TruePhone holds payment until you confirm the iPhone is correct, or for 24 hours after you mark that you received it. If you don't report a problem in that window, TruePhone pays the seller."
+
+Seller bank (Spanish UI):
+
+"Agrega tu cuenta bancaria para recibir el pago."
+
+Ops manual dispersion (admin):
+
+"Liquidaciones por pagar en Wompi" / "Ya pagué en Wompi"
 
 ---
 

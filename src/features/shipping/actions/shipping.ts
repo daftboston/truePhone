@@ -14,8 +14,9 @@ import {
   markReceivedSchema,
   premiumInspectionSchema,
   reportProblemSchema,
+  resolveCarrierNameFromForm,
   selectShippingMethodSchema,
-  switchToPremiumSchema,
+  switchShippingMethodSchema,
   uploadCarrierTrackingSchema,
   type ShippingActionState,
 } from "@/features/shipping/schemas/shipping";
@@ -111,7 +112,7 @@ export async function switchCarrierToPremiumAction(
     return { ok: false, error: "Debes iniciar sesión." };
   }
 
-  const parsed = switchToPremiumSchema.safeParse({
+  const parsed = switchShippingMethodSchema.safeParse({
     orderId: formData.get("orderId"),
   });
   if (!parsed.success) {
@@ -147,7 +148,7 @@ export async function switchPremiumToCarrierAction(
     return { ok: false, error: "Debes iniciar sesión." };
   }
 
-  const parsed = switchToPremiumSchema.safeParse({
+  const parsed = switchShippingMethodSchema.safeParse({
     orderId: formData.get("orderId"),
   });
   if (!parsed.success) {
@@ -184,9 +185,13 @@ export async function uploadCarrierTrackingAction(
   }
 
   const evidenceRaw = formData.get("evidenceUrl");
+  const carrierName = resolveCarrierNameFromForm(
+    formData.get("carrierName"),
+    formData.get("carrierNameOther"),
+  );
   const parsed = uploadCarrierTrackingSchema.safeParse({
     orderId: formData.get("orderId"),
-    carrierName: formData.get("carrierName"),
+    carrierName,
     trackingCode: formData.get("trackingCode"),
     evidenceUrl:
       typeof evidenceRaw === "string" && evidenceRaw.trim()

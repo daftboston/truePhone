@@ -2,7 +2,8 @@
 
 /**
  * @file pay-order-button.tsx
- * @description Client button that starts Guaranteed Purchase checkout for an order.
+ * @description Client button that starts Guaranteed Purchase checkout and shows
+ * fee + 24h settlement disclosure (FINANCIAL_MODEL §5.1).
  * @dependencies react, startCheckoutAction, formatOrderMoney, Button
  */
 
@@ -77,8 +78,9 @@ export function PayOrderButton({
       <p className="text-muted-foreground text-center text-xs">
         Pagarás {formatOrderMoney(totalPrice, currency)} (incluye{" "}
         {formatOrderMoney(platformFee, currency)} de protección TruePhone{" "}
-        {feePercent}%). El vendedor recibe el precio del equipo tras entrega y
-        confirmación.
+        {feePercent}%). TruePhone retiene el pago hasta que confirmes que el
+        iPhone está correcto, o hasta 24 horas después de marcar «Ya recibí». Si
+        no reportas un problema en ese lapso, TruePhone paga al vendedor.
       </p>
     </div>
   );

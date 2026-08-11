@@ -40,6 +40,22 @@ describe("Financial Core fee engine", () => {
     assert.equal(fees.wompiPayoutPesos, 10_603);
   });
 
+  it("clears Premium fee snapshot when switching back to Carrier", () => {
+    const withPremium = computeOrderFees({
+      salePrice: 2_000_000,
+      premiumShippingFeePesos: 20_000,
+    });
+    const afterSwitch = computeOrderFees({
+      salePrice: 2_000_000,
+      premiumShippingFeePesos: 0,
+    });
+
+    assert.equal(withPremium.sellerAmountPesos, 1_980_000);
+    assert.equal(afterSwitch.premiumShippingFeePesos, 0);
+    assert.equal(afterSwitch.sellerAmountPesos, 2_000_000);
+    assert.equal(afterSwitch.wompiPayoutPesos, 10_710);
+  });
+
   it("supports one-time 8% loyalty rate", () => {
     const fees = computeOrderFees({
       salePrice: 2_000_000,

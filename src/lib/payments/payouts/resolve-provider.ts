@@ -1,6 +1,6 @@
 /**
  * @file resolve-provider.ts
- * @description Selects Wompi vs mock payout (dispersion) provider from env.
+ * @description Selects mock / manual / Wompi payout (dispersion) provider from env.
  * @dependencies @/lib/payments/payouts/mock, provider, wompi
  */
 
@@ -15,12 +15,36 @@ import {
 } from "@/lib/payments/payouts/wompi";
 
 /**
+ * createManualPayoutProvider
+ *
+ * No-op provider for MVP ops supervision: Financial Core authorizes only;
+ * humans pay in the Wompi dashboard, then mark completed in TruePhone.
+ *
+ * @returns PayoutProviderClient that refuses auto-submit (caller skips createPayout).
+ * @calledBy resolvePayoutProvider
+ */
+function createManualPayoutProvider(): PayoutProviderClient {
+  return {
+    id: "MANUAL",
+    async createPayout() {
+      return {
+        ok: false,
+        error:
+          "Dispersión manual: paga en el panel de Wompi y marca el pago como completado en TruePhone.",
+        failureCode: "MANUAL_PAYOUT_REQUIRED",
+      };
+    },
+  };
+}
+
+/**
  * resolvePayoutProvider
  *
  * Resolve payout (dispersion) provider.
- * - `PAYOUTS_PROVIDER=mock` forces mock
- * - `PAYOUTS_PROVIDER=wompi` requires Pagos a Terceros env
- * - unset: mock until payout keys exist (safe default while Checkout may be live)
+ * - `PAYOUTS_PROVIDER=mock` — local/CI auto-complete
+ * - `PAYOUTS_PROVIDER=manual` — authorize only; ops pays in Wompi (MVP production)
+ * - `PAYOUTS_PROVIDER=wompi` — Pagos a Terceros API (Phase 24; stub until activated)
+ * - unset: **manual** (safe default for supervised dispersion)
  *
  * @returns provider client and mode id.
  * @calledBy financial-core settlement authorizeAndSubmitPayout
@@ -35,8 +59,8 @@ export function resolvePayoutProvider(): {
     return { provider: createMockPayoutProvider(), mode: "MOCK" };
   }
 
-  const wompiEnv = getWompiPayoutsEnv();
   if (forced === "wompi") {
+    const wompiEnv = getWompiPayoutsEnv();
     if (!wompiEnv) {
       throw new Error(
         "PAYOUTS_PROVIDER=wompi requiere WOMPI_PAYOUTS_API_KEY y WOMPI_PAYOUTS_USER_PRINCIPAL_ID.",
@@ -45,9 +69,6 @@ export function resolvePayoutProvider(): {
     return { provider: createWompiPayoutProvider(wompiEnv), mode: "WOMPI" };
   }
 
-  if (wompiEnv) {
-    return { provider: createWompiPayoutProvider(wompiEnv), mode: "WOMPI" };
-  }
-
-  return { provider: createMockPayoutProvider(), mode: "MOCK" };
+  // manual (explicit or default) — MVP supervised path
+  return { provider: createManualPayoutProvider(), mode: "MANUAL" };
 }

@@ -19,8 +19,6 @@ import {
   canSwitchPremiumToCarrier,
   type ShippingMethodOption,
 } from "@/lib/shipping/eligibility";
-import { CARRIER_OPTIONS } from "@/lib/shipping/labels";
-
 class ShippingError extends Error {
   constructor(message: string) {
     super(message);
@@ -387,11 +385,8 @@ export async function uploadCarrierTracking(input: {
   if (!trackingCode || trackingCode.length < 4) {
     return { ok: false, error: "El código de seguimiento es obligatorio." };
   }
-  if (
-    !(CARRIER_OPTIONS as readonly string[]).includes(carrierName) &&
-    carrierName.length < 2
-  ) {
-    return { ok: false, error: "Transportadora inválida." };
+  if (carrierName === "Otro") {
+    return { ok: false, error: "Indica el nombre de la transportadora." };
   }
 
   try {

@@ -88,7 +88,7 @@ function buildGroups(
           icon: ShieldCheck,
         },
         { href: "/ventas", label: "Ventas", icon: Package },
-        { label: "Pagos", icon: Wallet, soon: true },
+        { href: "/pagos", label: "Pagos", icon: Wallet },
       ],
     },
   ];

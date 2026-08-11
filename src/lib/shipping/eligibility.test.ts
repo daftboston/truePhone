@@ -131,6 +131,19 @@ describe("shipping Bogotá eligibility", () => {
           method: "PREMIUM_BOGOTA",
           trackingCode: null,
           deliveredAt: null,
+          status: "METHOD_SELECTED",
+          inspection: { result: "PENDING" },
+        },
+      }),
+      true,
+    );
+    assert.equal(
+      canSwitchPremiumToCarrier({
+        sellerCity: CITY_BOGOTA,
+        shipment: {
+          method: "PREMIUM_BOGOTA",
+          trackingCode: null,
+          deliveredAt: null,
           status: "AWAITING_PICKUP",
           inspection: { result: "PASSED" },
         },
@@ -159,6 +172,19 @@ describe("shipping Bogotá eligibility", () => {
           deliveredAt: null,
           status: "FAILED",
           inspection: { result: "FAILED" },
+        },
+      }),
+      false,
+    );
+    assert.equal(
+      canSwitchPremiumToCarrier({
+        sellerCity: "Medellín",
+        shipment: {
+          method: "PREMIUM_BOGOTA",
+          trackingCode: null,
+          deliveredAt: null,
+          status: "AWAITING_PICKUP",
+          inspection: { result: "PENDING" },
         },
       }),
       false,

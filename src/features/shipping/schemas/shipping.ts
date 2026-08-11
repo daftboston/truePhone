@@ -1,12 +1,10 @@
 /**
  * @file shipping.ts
  * @description Zod schemas and action state for order shipping flows.
- * @dependencies zod, @/lib/shipping/labels
+ * @dependencies zod
  */
 
 import { z } from "zod";
-
-import { CARRIER_OPTIONS } from "@/lib/shipping/labels";
 
 /** Seller selects Premium Bogotá or carrier shipping. */
 export const selectShippingMethodSchema = z.object({
@@ -16,10 +14,33 @@ export const selectShippingMethodSchema = z.object({
   }),
 });
 
-/** Seller switches from carrier to Premium before tracking is locked. */
-export const switchToPremiumSchema = z.object({
+/** Seller switches Premium ↔ Carrier before tracking/inspection commitment. */
+export const switchShippingMethodSchema = z.object({
   orderId: z.string().min(1, "Pedido inválido."),
 });
+
+/**
+ * resolveCarrierNameFromForm
+ *
+ * Resolves the final transporter name from the select + optional "Otro" text field.
+ * When the select is "Otro", the custom name is required.
+ *
+ * @param carrierOption - Value from the carrier select (known option or "Otro").
+ * @param carrierNameOther - Free-text name when option is "Otro".
+ * @returns Trimmed carrier name to persist, or empty string when invalid.
+ * @calledBy uploadCarrierTrackingAction, shipping schema tests
+ */
+export function resolveCarrierNameFromForm(
+  carrierOption: unknown,
+  carrierNameOther: unknown,
+): string {
+  const option = typeof carrierOption === "string" ? carrierOption.trim() : "";
+  if (!option) return "";
+  if (option === "Otro") {
+    return typeof carrierNameOther === "string" ? carrierNameOther.trim() : "";
+  }
+  return option;
+}
 
 /** Seller uploads carrier name, tracking code, and optional evidence URL. */
 export const uploadCarrierTrackingSchema = z.object({
@@ -28,12 +49,10 @@ export const uploadCarrierTrackingSchema = z.object({
     .string()
     .trim()
     .min(2, "Indica la transportadora.")
-    .max(80)
-    .refine(
-      (v) =>
-        (CARRIER_OPTIONS as readonly string[]).includes(v) || v.length >= 2,
-      "Transportadora inválida.",
-    ),
+    .max(80, "Nombre demasiado largo.")
+    .refine((v) => v !== "Otro", {
+      message: "Indica el nombre de la transportadora.",
+    }),
   trackingCode: z
     .string()
     .trim()
@@ -54,6 +73,15 @@ export const markReceivedSchema = z.object({
   orderId: z.string().min(1, "Pedido inválido."),
 });
 
+/**
+ * Optional battery % for Premium inspection.
+ * Blank / missing stays null — z.coerce.number() would turn "" into 0.
+ */
+const optionalBatteryHealthPct = z.preprocess((value) => {
+  if (value === "" || value === undefined || value === null) return null;
+  return value;
+}, z.coerce.number().int().min(0).max(100).nullable());
+
 /** Ops records Premium inspection pass/fail checklist. */
 export const premiumInspectionSchema = z.object({
   orderId: z.string().min(1, "Pedido inválido."),
@@ -63,13 +91,7 @@ export const premiumInspectionSchema = z.object({
   storageMatch: z.coerce.boolean().optional(),
   colorMatch: z.coerce.boolean().optional(),
   accessoriesOk: z.coerce.boolean().optional(),
-  batteryHealthPct: z.coerce
-    .number()
-    .int()
-    .min(0)
-    .max(100)
-    .optional()
-    .nullable(),
+  batteryHealthPct: optionalBatteryHealthPct,
   cosmeticNotes: z.string().trim().max(500).optional().nullable(),
   notes: z.string().trim().max(500).optional().nullable(),
 });

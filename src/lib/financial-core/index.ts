@@ -46,5 +46,6 @@ export {
   freezePayout,
   unfreezePayout,
   authorizeAndSubmitPayout,
+  confirmManualPayoutCompleted,
   processExpiredBuyerConfirmations,
 } from "@/lib/financial-core/settlement";

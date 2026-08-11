@@ -29,6 +29,7 @@ import {
 } from "@/lib/auth/session";
 import { countListingsForReview } from "@/lib/listings-review";
 import { countPaymentsByStatus } from "@/lib/payments";
+import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -123,13 +124,19 @@ export default async function ReviewHubPage() {
 
   const isAdmin = current.profile.role === "ADMIN";
 
-  const [listingCounts, identityPending, paymentCounts, reviewReportsOpen] =
-    await Promise.all([
-      countListingsForReview(),
-      countPendingIdentityVerifications(),
-      isAdmin ? countPaymentsByStatus() : Promise.resolve(null),
-      countOpenReviewReports(),
-    ]);
+  const [
+    listingCounts,
+    identityPending,
+    paymentCounts,
+    authorizedPayoutCount,
+    reviewReportsOpen,
+  ] = await Promise.all([
+    countListingsForReview(),
+    countPendingIdentityVerifications(),
+    isAdmin ? countPaymentsByStatus() : Promise.resolve(null),
+    isAdmin ? countAuthorizedPayouts() : Promise.resolve(0),
+    countOpenReviewReports(),
+  ]);
 
   const firstName =
     current.profile.fullName?.trim().split(/\s+/)[0] ?? "equipo";
@@ -233,18 +240,20 @@ export default async function ReviewHubPage() {
           </h2>
           <QueueCard
             href="/revision/pagos"
-            title="Pagos Compra Garantizada"
-            description="Historial, fallos y reembolsos de checkout."
+            title="Liquidaciones y cobros"
+            description="Paga en Wompi las liquidaciones autorizadas; historial de checkout."
             count={
-              paymentCounts
+              (authorizedPayoutCount ?? 0) +
+              (paymentCounts
                 ? paymentCounts.SUCCEEDED +
                   paymentCounts.PENDING +
                   paymentCounts.REQUIRES_ACTION +
                   paymentCounts.FAILED +
                   paymentCounts.REFUNDED
-                : 0
+                : 0)
             }
             icon={CreditCard}
+            emphasized={(authorizedPayoutCount ?? 0) > 0}
           />
           <aside className="border-border bg-muted/50 flex gap-3 rounded-xl border p-4">
             <ShieldAlert
@@ -254,8 +263,8 @@ export default async function ReviewHubPage() {
             <div className="space-y-1 text-sm">
               <p className="text-foreground font-semibold">Más admin</p>
               <p className="text-muted-foreground leading-relaxed">
-                Gestión profunda de usuarios y analytics llega en fases
-                posteriores. Los pagos del MVP ya están aquí.
+                Dispersión al vendedor es manual en Wompi (supervisión). La API
+                automática llega en Phase 24.
               </p>
             </div>
           </aside>

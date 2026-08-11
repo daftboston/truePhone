@@ -212,6 +212,7 @@ export default async function PublicListingPage({ params }: PageProps) {
                     listingId={listing.id}
                     loginHref={loginHref}
                     fullWidth
+                    showSettlementDisclosure
                   />
                 )}
                 <Button fullWidth asChild variant="outline">
@@ -245,10 +246,12 @@ export default async function PublicListingPage({ params }: PageProps) {
                 fullWidth
               />
             </div>
-            {!isOwnListing ? (
+            {!isOwnListing && !user ? (
               <p className="text-muted-foreground text-center text-xs">
                 Al comprar, el anuncio se reserva y pagas Compra Garantizada
-                (precio del equipo + protección 10%).
+                (precio del equipo + protección 10%). Tras marcar «Ya recibí»
+                tienes 24 horas para confirmar o reportar; si no reportas,
+                TruePhone paga al vendedor.
               </p>
             ) : null}
           </div>

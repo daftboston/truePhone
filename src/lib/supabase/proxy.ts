@@ -15,6 +15,7 @@ const PROTECTED_PREFIXES = [
   "/vender",
   "/compras",
   "/ventas",
+  "/pagos",
   "/favoritos",
   "/mensajes",
   "/verificacion",

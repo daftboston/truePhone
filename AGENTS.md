@@ -8,10 +8,12 @@ Before implementing any feature, read the following documents in order:
 2. docs/ARCHITECTURE.md
 3. docs/DATABASE.md
 4. docs/plan.md
-5. docs/UX_PRINCIPLES.md
-6. docs/DESIGN_SYSTEM.md
-7. docs/COPY_GUIDELINES.md
-8. docs/COMPONENT_LIBRARY.md
+5. docs/FINANCIAL_MODEL.md
+6. docs/SHIPPING.md
+7. docs/UX_PRINCIPLES.md
+8. docs/DESIGN_SYSTEM.md
+9. docs/COPY_GUIDELINES.md
+10. docs/COMPONENT_LIBRARY.md
 
 These documents are the source of truth for the project.
 
@@ -23,7 +25,9 @@ If implementation conflicts with the documentation, ask for clarification instea
 
 | Concern                               | Source of truth                                         |
 | ------------------------------------- | ------------------------------------------------------- |
-| What to build, when, workflows, MVP   | `docs/plan.md` + `docs/PRD.md`                          |
+| What to build, when, and why          | `docs/plan.md` + `docs/PRD.md`                          |
+| Money, fees, payouts, refunds         | `docs/FINANCIAL_MODEL.md`                               |
+| Shipping methods & custody            | `docs/SHIPPING.md`                                      |
 | Colors, type, spacing, component look | `docs/DESIGN_SYSTEM.md` + Figma + `src/app/globals.css` |
 
 - Product brand is **TruePhone** (legacy “iPhoneSeguro” labels in Figma are ignored)

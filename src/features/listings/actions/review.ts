@@ -158,12 +158,13 @@ export async function saveListingReviewNotesAction(
 /**
  * approveListingAction
  *
- * Server action: approve listing for authenticated listings flows.
+ * Approves a listing as PUBLISHED. On first publish, promotes the seller
+ * profile from BUYER to SELLER (identity verify alone does not set SELLER).
  *
- * @param _prev - Previous form state from useActionState when applicable.
- * @param formDataOrArgs - FormData or typed action arguments.
- * @returns Action state on errors; may redirect on success.
- * @calledBy listings components
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - listingId and optional reviewerNotes.
+ * @returns Action state on errors or success message.
+ * @calledBy ListingReviewActions
  */
 export async function approveListingAction(
   _prev: ListingActionState,
@@ -191,17 +192,24 @@ export async function approveListingAction(
   const wasAlreadyApproved =
     listing.status === "PUBLISHED" || listing.status === "APPROVED";
 
-  await prisma.listing.update({
-    where: { id: listing.id },
-    data: {
-      status: "PUBLISHED",
-      reviewerId: gate.current.profile.id,
-      reviewerNotes: parsed.data.reviewerNotes || listing.reviewerNotes,
-      rejectionReason: null,
-      reviewedAt: now,
-      approvedAt: listing.approvedAt ?? now,
-    },
-  });
+  // Publish listing; promote BUYER → SELLER only (preserves REVIEWER/ADMIN).
+  await prisma.$transaction([
+    prisma.listing.update({
+      where: { id: listing.id },
+      data: {
+        status: "PUBLISHED",
+        reviewerId: gate.current.profile.id,
+        reviewerNotes: parsed.data.reviewerNotes || listing.reviewerNotes,
+        rejectionReason: null,
+        reviewedAt: now,
+        approvedAt: listing.approvedAt ?? now,
+      },
+    }),
+    prisma.profile.updateMany({
+      where: { id: listing.sellerId, role: "BUYER" },
+      data: { role: "SELLER" },
+    }),
+  ]);
 
   revalidateListingReview(listing.id);
   return {

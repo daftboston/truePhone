@@ -1,6 +1,6 @@
 /**
  * @file wompi.ts
- * @description Wompi Pagos a Terceros env + stub payout provider adapter.
+ * @description Wompi Pagos a Terceros env + stub payout provider (Phase 24 API).
  * @dependencies @/lib/payments/payouts/provider
  */
 
@@ -44,7 +44,8 @@ export function getWompiPayoutsEnv(): WompiPayoutsEnv | null {
 /**
  * createWompiPayoutProvider
  *
- * Stub adapter for Wompi Pagos a Terceros.
+ * Stub adapter for Wompi Pagos a Terceros API (Phase 24).
+ * MVP pays sellers manually in the Wompi dashboard (`PAYOUTS_PROVIDER=manual`).
  * Real lote creation lands when the product is activated; until then this
  * refuses live calls so Checkout keys are never confused with payout keys.
  *

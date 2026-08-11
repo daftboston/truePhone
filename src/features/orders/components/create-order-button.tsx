@@ -2,8 +2,8 @@
 
 /**
  * @file create-order-button.tsx
- * @description CreateOrderButton component for the orders feature.tsx.
- * @dependencies next/navigation, react, next/dist/client/components/redirect-error, @/components/ui/button, @/features/orders/actions/orders
+ * @description Buy CTA that creates a reserved order; optional 24h settlement disclosure.
+ * @dependencies next/navigation, react, Button, createOrderAction
  */
 
 import { useRouter } from "next/navigation";
@@ -18,22 +18,29 @@ type CreateOrderButtonProps = {
   loginHref: string;
   fullWidth?: boolean;
   label?: string;
+  /** When true, shows FINANCIAL_MODEL §5.1 24h disclosure under the CTA. */
+  showSettlementDisclosure?: boolean;
 };
 
 /**
  * CreateOrderButton
  *
- * Renders the Create Order Button UI for orders.
+ * Renders the buy CTA that creates a reserved order for Guaranteed Purchase.
  *
- * @param props - CreateOrderButton props.
+ * @param props.listingId - Listing to reserve and purchase.
+ * @param props.loginHref - Redirect when the buyer must sign in.
+ * @param props.fullWidth - Stretch the button to the container width.
+ * @param props.label - Button label (default «Comprar»).
+ * @param props.showSettlementDisclosure - Show 24h hold/auto-release copy.
  * @returns CreateOrderButton React element.
- * @calledBy orders pages and parent components
+ * @calledBy Listing detail (`/anuncios/[slug]`)
  */
 export function CreateOrderButton({
   listingId,
   loginHref,
   fullWidth = false,
   label = "Comprar",
+  showSettlementDisclosure = false,
 }: CreateOrderButtonProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +78,14 @@ export function CreateOrderButton({
       {error ? (
         <p className="text-destructive text-center text-xs" role="alert">
           {error}
+        </p>
+      ) : null}
+      {showSettlementDisclosure ? (
+        <p className="text-muted-foreground text-center text-xs">
+          Al comprar, el anuncio se reserva y pagas Compra Garantizada (precio +
+          protección 10%). TruePhone retiene el pago: tras marcar «Ya recibí»
+          tienes 24 horas para confirmar o reportar; si no reportas, TruePhone
+          paga al vendedor.
         </p>
       ) : null}
     </div>

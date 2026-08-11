@@ -333,12 +333,13 @@ export async function submitIdentityVerificationAction(): Promise<VerificationAc
 /**
  * approveIdentityVerificationAction
  *
- * Server action: approve identity verification for authenticated verification flows.
+ * Approves identity verification and sets verifikStatus to verified.
+ * Does not change Profile.role — SELLER is set on first PUBLISHED listing.
  *
- * @param _prev - Previous form state from useActionState when applicable.
- * @param formDataOrArgs - FormData or typed action arguments.
- * @returns Action state on errors; may redirect on success.
- * @calledBy verification components
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - verificationId from the review form.
+ * @returns Action state on errors or success message.
+ * @calledBy IdentityReviewActions
  */
 export async function approveIdentityVerificationAction(
   _prev: VerificationActionState,
@@ -382,12 +383,12 @@ export async function approveIdentityVerificationAction(
         rejectionReason: null,
       },
     }),
+    // Identity verify only — role stays BUYER until first listing is PUBLISHED.
     prisma.profile.update({
       where: { id: verification.profileId },
       data: {
         verifikStatus: "verified",
         verifikVerifiedAt: new Date(),
-        role: "SELLER",
       },
     }),
   ]);

@@ -10,6 +10,10 @@ docs/DATABASE.md
 
 docs/plan.md
 
+docs/FINANCIAL_MODEL.md
+
+docs/SHIPPING.md
+
 before implementing features.
 
 Never create duplicate UI components.
@@ -20,4 +24,8 @@ Use Server Actions.
 
 Follow the Design System for visuals.
 
-Follow docs/plan.md + docs/PRD.md for business logic and phase order.
+Follow docs/plan.md + docs/PRD.md for product scope and phase order.
+
+Follow docs/FINANCIAL_MODEL.md for money.
+
+Follow docs/SHIPPING.md for shipping methods.

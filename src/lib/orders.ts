@@ -449,29 +449,39 @@ export type OrderTimelineEvent = {
 /**
  * buildOrderTimeline
  *
- * Builds chronological timeline events for order detail UI.
+ * Builds chronological timeline events matching Financial Model §4:
+ * hold → ship → received → confirm/24h → payout → completed.
  *
  * @param order - Order with payment/shipment/settlement timestamps.
+ * @param now - Optional clock for 24h expiry (defaults to Date.now()).
  * @returns OrderTimelineEvent array.
- * @calledBy Order detail timeline
+ * @calledBy OrderTimeline
  */
-export function buildOrderTimeline(order: {
-  status: OrderStatus;
-  createdAt: Date;
-  cancelledAt: Date | null;
-  completedAt: Date | null;
-  paidAt: Date | null;
-  fundsHeldAt?: Date | null;
-  payoutCompletedAt?: Date | null;
-  buyerConfirmedAt?: Date | null;
-  buyerConfirmDeadlineAt?: Date | null;
-  shipment?: {
-    methodSelectedAt: Date;
-    trackingUploadedAt: Date | null;
-    deliveredAt: Date | null;
-    method: string;
-  } | null;
-}): OrderTimelineEvent[] {
+export function buildOrderTimeline(
+  order: {
+    status: OrderStatus;
+    createdAt: Date;
+    cancelledAt: Date | null;
+    completedAt: Date | null;
+    paidAt: Date | null;
+    fundsHeldAt?: Date | null;
+    payoutCompletedAt?: Date | null;
+    buyerConfirmedAt?: Date | null;
+    buyerConfirmDeadlineAt?: Date | null;
+    shipment?: {
+      methodSelectedAt: Date;
+      trackingUploadedAt: Date | null;
+      deliveredAt: Date | null;
+      method: string;
+    } | null;
+  },
+  now: Date = new Date(),
+): OrderTimelineEvent[] {
+  const paid =
+    order.status === "PAID" ||
+    order.status === "COMPLETED" ||
+    Boolean(order.paidAt);
+
   const events: OrderTimelineEvent[] = [
     {
       id: "created",
@@ -486,10 +496,7 @@ export function buildOrderTimeline(order: {
           ? "Pago de Compra Garantizada pendiente"
           : "Pago confirmado · fondos en custodia",
       at: order.paidAt ?? order.fundsHeldAt ?? order.createdAt,
-      done:
-        order.status === "PAID" ||
-        order.status === "COMPLETED" ||
-        Boolean(order.paidAt),
+      done: paid,
     },
   ];
 
@@ -524,29 +531,59 @@ export function buildOrderTimeline(order: {
     events.push({
       id: "delivered",
       label: order.shipment.deliveredAt
-        ? "Comprador confirmó recepción"
-        : "Recepción del comprador",
+        ? "Comprador marcó «Ya recibí»"
+        : "Recepción del comprador («Ya recibí»)",
       at: order.shipment.deliveredAt ?? order.createdAt,
       done: Boolean(order.shipment.deliveredAt),
     });
+  } else if (paid) {
+    events.push({
+      id: "shipping-pending",
+      label: "Envío pendiente",
+      at: order.paidAt ?? order.fundsHeldAt ?? order.createdAt,
+      done: false,
+    });
+  }
+
+  const confirmDeadlinePassed = Boolean(
+    order.buyerConfirmDeadlineAt &&
+    order.buyerConfirmDeadlineAt.getTime() <= now.getTime(),
+  );
+  const confirmDone =
+    Boolean(order.buyerConfirmedAt) ||
+    confirmDeadlinePassed ||
+    order.status === "COMPLETED";
+
+  let confirmLabel = "Confirmación del comprador (tras recepción)";
+  if (order.buyerConfirmedAt) {
+    confirmLabel = "Comprador confirmó el dispositivo";
+  } else if (confirmDeadlinePassed || order.status === "COMPLETED") {
+    confirmLabel = "24h sin reporte · pago autorizado";
+  } else if (order.buyerConfirmDeadlineAt) {
+    confirmLabel = "Ventana de 24h para confirmar o reportar";
   }
 
   events.push({
     id: "confirm",
-    label: order.buyerConfirmedAt
-      ? "Comprador confirmó el dispositivo"
-      : order.buyerConfirmDeadlineAt
-        ? "Ventana de 24h"
-        : "Confirmación del comprador",
+    label: confirmLabel,
     at:
       order.buyerConfirmedAt ?? order.buyerConfirmDeadlineAt ?? order.createdAt,
-    done: Boolean(order.buyerConfirmedAt) || order.status === "COMPLETED",
+    done: confirmDone,
+  });
+
+  events.push({
+    id: "payout",
+    label: order.payoutCompletedAt
+      ? "Pago enviado al vendedor"
+      : "Pago al vendedor",
+    at: order.payoutCompletedAt ?? order.completedAt ?? order.createdAt,
+    done: Boolean(order.payoutCompletedAt) || order.status === "COMPLETED",
   });
 
   events.push({
     id: "completed",
-    label: "Pago al vendedor · pedido completado",
-    at: order.payoutCompletedAt ?? order.completedAt ?? order.createdAt,
+    label: "Pedido completado",
+    at: order.completedAt ?? order.payoutCompletedAt ?? order.createdAt,
     done: order.status === "COMPLETED",
   });
 

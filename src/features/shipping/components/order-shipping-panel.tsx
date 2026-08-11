@@ -61,6 +61,23 @@ type OrderShippingPanelProps = {
 const initial: ShippingActionState = null;
 
 /**
+ * carrierSelectValue
+ *
+ * Maps a stored carrier name to the select option (known list or "Otro").
+ *
+ * @param carrierName - Persisted transporter name, or null.
+ * @returns Select option value.
+ * @calledBy OrderShippingPanel carrier form
+ */
+function carrierSelectValue(carrierName: string | null | undefined): string {
+  if (!carrierName) return "Servientrega";
+  if ((CARRIER_OPTIONS as readonly string[]).includes(carrierName)) {
+    return carrierName;
+  }
+  return "Otro";
+}
+
+/**
  * formatWhen
  *
  * Formats a timestamp for shipping status copy in es-CO locale.
@@ -74,6 +91,122 @@ function formatWhen(date: Date) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+type CarrierTrackingFormProps = {
+  orderId: string;
+  shipment: ShipmentWithInspection;
+  trackAction: (payload: FormData) => void;
+  trackPending: boolean;
+  trackState: ShippingActionState;
+};
+
+/**
+ * CarrierTrackingForm
+ *
+ * Seller form to upload/update carrier name + tracking. Owns select state so a
+ * parent `key` remount resets defaults after `router.refresh()` without an effect.
+ *
+ * @param props.orderId - Order id submitted with the form.
+ * @param props.shipment - Current carrier shipment (prefill).
+ * @param props.trackAction - uploadCarrierTrackingAction bound via useActionState.
+ * @param props.trackPending - Submit in flight.
+ * @param props.trackState - Last action result for feedback.
+ * @returns Carrier tracking form.
+ * @calledBy OrderShippingPanel
+ */
+function CarrierTrackingForm({
+  orderId,
+  shipment,
+  trackAction,
+  trackPending,
+  trackState,
+}: CarrierTrackingFormProps) {
+  const [carrierOption, setCarrierOption] = useState(() =>
+    carrierSelectValue(shipment.carrierName),
+  );
+  const customCarrierDefault =
+    shipment.carrierName &&
+    !(CARRIER_OPTIONS as readonly string[]).includes(shipment.carrierName)
+      ? shipment.carrierName
+      : "";
+
+  return (
+    <form
+      action={trackAction}
+      className="border-border space-y-3 rounded-lg border p-3"
+    >
+      <p className="text-foreground text-sm font-medium">
+        {shipment.trackingCode
+          ? "Actualizar seguimiento"
+          : "Subir código de seguimiento"}
+      </p>
+      <p className="text-muted-foreground text-xs">
+        El comprador verá la transportadora y el código en su pedido. Tú pagas
+        el envío directamente a la transportadora.
+      </p>
+      <input type="hidden" name="orderId" value={orderId} />
+      <div className="space-y-2">
+        <Label htmlFor="carrierName">Transportadora</Label>
+        <Select
+          id="carrierName"
+          name="carrierName"
+          required
+          value={carrierOption}
+          onChange={(e) => setCarrierOption(e.target.value)}
+          disabled={trackPending}
+        >
+          {CARRIER_OPTIONS.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </Select>
+      </div>
+      {carrierOption === "Otro" ? (
+        <div className="space-y-2">
+          <Label htmlFor="carrierNameOther">Nombre de la empresa</Label>
+          <Input
+            id="carrierNameOther"
+            name="carrierNameOther"
+            required
+            minLength={2}
+            maxLength={80}
+            defaultValue={customCarrierDefault}
+            placeholder="Ej. Mensajeros Urbanos"
+            disabled={trackPending}
+          />
+        </div>
+      ) : null}
+      <div className="space-y-2">
+        <Label htmlFor="trackingCode">Código de seguimiento</Label>
+        <Input
+          id="trackingCode"
+          name="trackingCode"
+          required
+          minLength={4}
+          defaultValue={shipment.trackingCode ?? ""}
+          placeholder="Ej. 1234567890"
+          disabled={trackPending}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="evidenceUrl">URL del comprobante (opcional)</Label>
+        <Input
+          id="evidenceUrl"
+          name="evidenceUrl"
+          type="url"
+          defaultValue={shipment.evidenceUrl ?? ""}
+          placeholder="https://…"
+          disabled={trackPending}
+        />
+      </div>
+      <Button type="submit" fullWidth loading={trackPending}>
+        Guardar seguimiento
+      </Button>
+      <ActionFeedback state={trackState} />
+    </form>
+  );
 }
 
 /**
@@ -333,20 +466,6 @@ export function OrderShippingPanel({
                 </dd>
               </div>
             ) : null}
-            {shipment.carrierName ? (
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Transportadora</dt>
-                <dd className="text-foreground">{shipment.carrierName}</dd>
-              </div>
-            ) : null}
-            {shipment.trackingCode ? (
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Seguimiento</dt>
-                <dd className="text-foreground font-mono text-xs">
-                  {shipment.trackingCode}
-                </dd>
-              </div>
-            ) : null}
             {shipment.deliveredAt ? (
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">Recepción confirmada</dt>
@@ -364,6 +483,55 @@ export function OrderShippingPanel({
               </div>
             ) : null}
           </dl>
+
+          {shipment.method === "CARRIER" && shipment.trackingCode ? (
+            <div
+              className="border-border bg-muted/40 space-y-2 rounded-lg border p-3"
+              data-testid="carrier-tracking-visible"
+            >
+              <p className="text-foreground text-sm font-medium">
+                Seguimiento del envío
+              </p>
+              <dl className="grid gap-2 text-sm">
+                {shipment.carrierName ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Transportadora</dt>
+                    <dd className="text-foreground font-medium">
+                      {shipment.carrierName}
+                    </dd>
+                  </div>
+                ) : null}
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Código</dt>
+                  <dd className="text-foreground font-mono text-xs break-all">
+                    {shipment.trackingCode}
+                  </dd>
+                </div>
+                {shipment.evidenceUrl ? (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Comprobante</dt>
+                    <dd>
+                      <a
+                        href={shipment.evidenceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-foreground underline underline-offset-2"
+                      >
+                        Ver enlace
+                      </a>
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+              {isBuyer ? (
+                <p className="text-muted-foreground text-xs">
+                  Usa este código en la página de la transportadora para ver el
+                  estado del paquete. Cuando lo tengas en mano, marca «Ya recibí
+                  el iPhone».
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {showSwitchToPremium ? (
             <form
@@ -418,49 +586,14 @@ export function OrderShippingPanel({
           isSeller &&
           !delivered &&
           orderStatus === "PAID" ? (
-            <form
-              action={trackAction}
-              className="border-border space-y-3 rounded-lg border p-3"
-            >
-              <p className="text-foreground text-sm font-medium">
-                {shipment.trackingCode
-                  ? "Actualizar seguimiento"
-                  : "Subir código de seguimiento"}
-              </p>
-              <input type="hidden" name="orderId" value={orderId} />
-              <div className="space-y-2">
-                <Label htmlFor="carrierName">Transportadora</Label>
-                <Select
-                  id="carrierName"
-                  name="carrierName"
-                  required
-                  defaultValue={shipment.carrierName ?? "Servientrega"}
-                  disabled={trackPending}
-                >
-                  {CARRIER_OPTIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="trackingCode">Código de seguimiento</Label>
-                <Input
-                  id="trackingCode"
-                  name="trackingCode"
-                  required
-                  minLength={4}
-                  defaultValue={shipment.trackingCode ?? ""}
-                  placeholder="Ej. 1234567890"
-                  disabled={trackPending}
-                />
-              </div>
-              <Button type="submit" fullWidth loading={trackPending}>
-                Guardar seguimiento
-              </Button>
-              <ActionFeedback state={trackState} />
-            </form>
+            <CarrierTrackingForm
+              key={shipment.carrierName ?? "carrier-tracking-new"}
+              orderId={orderId}
+              shipment={shipment}
+              trackAction={trackAction}
+              trackPending={trackPending}
+              trackState={trackState}
+            />
           ) : null}
 
           {shipment.method === "PREMIUM_BOGOTA" &&
@@ -496,6 +629,7 @@ export function OrderShippingPanel({
                 </label>
                 <div className="space-y-2">
                   <Label htmlFor="batteryHealthPct">Batería %</Label>
+                  {/* Empty by default — blank submits as null, not 0 */}
                   <Input
                     id="batteryHealthPct"
                     name="batteryHealthPct"
@@ -503,6 +637,7 @@ export function OrderShippingPanel({
                     min={0}
                     max={100}
                     placeholder="85"
+                    defaultValue=""
                   />
                 </div>
                 <div className="space-y-2">
@@ -557,7 +692,7 @@ export function OrderShippingPanel({
           shipment.status !== "FAILED" ? (
             <p className="text-muted-foreground text-xs">
               {shipment.method === "CARRIER"
-                ? "Cuando el vendedor suba el seguimiento, podrás marcar que recibiste el iPhone."
+                ? "El vendedor eligió transportadora. Cuando suba el código de seguimiento, lo verás aquí y podrás marcar que recibiste el iPhone."
                 : "Cuando TruePhone complete la inspección y el envío, podrás marcar que recibiste el iPhone."}
             </p>
           ) : null}

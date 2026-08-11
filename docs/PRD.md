@@ -4,7 +4,7 @@
 **Version:** 1.0  
 **Status:** Draft  
 **Author:** Founding Team  
-**Last Updated:** July 2026
+**Last Updated:** August 2026
 
 > Former working name **iPhoneSeguro** is retired. The product brand is **TruePhone**.
 
@@ -274,37 +274,65 @@ These users will not be part of Version 1.
 
 # 10. Business Model
 
-Seller Commission:
+> Canonical money rules: `docs/FINANCIAL_MODEL.md`.  
+> Canonical shipping methods: `docs/SHIPPING.md`.
 
-**0%**
+## Seller commission
 
-Buyer Protection Fee:
+**0% marketplace commission** on sale price for MVP.
 
-**6%**
+On Carrier shipping the seller receives the full **Sale Price**. If they choose **Premium Bogotá**, they pay **$20,000 COP** logistics (deducted at payout) — not a marketplace commission.
 
-Example:
+TruePhone growth monetization is primarily **buyer-funded** (10% fee).
 
-Seller Price:
+## Buyer marketplace fee
 
-2,000,000 COP
+**10%** of Sale Price (default), charged to the buyer at checkout.
 
-Buyer Pays:
+This all-in fee covers Wompi collection, Wompi payout (from Wompi Cuenta), and TruePhone margin. TruePhone does **not** add IVA on top of the 10%; only Wompi’s own IVA on its fees is a processing cost (see Financial Model).
 
-2,120,000 COP
+**Loyalty / seller no-ship:** if the **seller cancels after payment** or does not send the phone, do **not** auto-refund immediately. Offer the buyer a **choice**: (A) help find another phone with a **one-time 8%** fee on that replacement purchase, or (B) **full refund**. The 8% is **only for that one replacement buy**, not ongoing.
 
-Seller Receives:
+Shipping / logistics:
 
-2,000,000 COP
+- **Premium Bogotá:** seller pays **$20,000 COP** (deducted at payout); TruePhone pickup + inspect + deliver.
+- **Carrier:** seller ships via Servientrega / Envía / other and uploads tracking (buyer can see the code). Required outside Bogotá; optional in Bogotá instead of Premium.
 
-TruePhone Revenue:
+See `docs/SHIPPING.md`.
 
-120,000 COP
+## Recommended prices (seller guidance)
 
-The protection fee should always be clearly displayed before checkout.
+Admins maintain a reference price table (model + storage + condition). Sellers see it when listing so they can price with a market baseline. See Phase 13 in `docs/plan.md`.
+
+Example (10%, Carrier — ignores Premium):
+
+|                                                    | COP       |
+| -------------------------------------------------- | --------- |
+| Seller Price                                       | 2,000,000 |
+| Buyer Pays                                         | 2,200,000 |
+| Seller Receives (after confirm / 24h auto-release) | 2,000,000 |
+| Fee pool (before Wompi costs)                      | 200,000   |
+
+The marketplace fee and the **24-hour confirmation policy** should always be clearly displayed before / when the buyer pays.
 
 No hidden charges.
 
 No surprises.
+
+## Settlement (trust) — canonical flow
+
+> **Buyer pays → TruePhone holds → buyer marks received → buyer confirms (or 24h) → then TruePhone pays the seller.**
+
+Buyer pays via Wompi Checkout (cards enabled for growth). Funds are held under Financial Core rules (Wompi Cuenta). The seller is **not** paid at checkout.
+
+At purchase the buyer **must see** the **24-hour** rule: after they mark that they received the phone, they have 24 hours on the order page to report if it is not correct; otherwise TruePhone pays the seller.
+
+Seller fulfills via **Premium Bogotá** or **Carrier** (`docs/SHIPPING.md`). Buyer marks received → confirms or 24h elapses → TruePhone pays seller (bank from Wompi Cuenta; minus $20,000 if Premium).
+
+**Seller “mark complete” / seller “mark delivered” is not settlement.**
+
+See `docs/FINANCIAL_MODEL.md` for cancels, chargebacks, battery tolerance, and failed payouts.  
+See `docs/SHIPPING.md` for fulfillment.
 
 ---
 
@@ -1018,31 +1046,40 @@ Reads reviews.
 
 ↓
 
-Reviews protection fee.
+Reviews protection / marketplace fee (10%).
 
 ↓
 
-Purchases device.
+Sees **24-hour** rule: after marking received, confirm or payment goes to seller.
 
 ↓
 
-Receives confirmation.
+Purchases device (Wompi Checkout).
 
 ↓
 
-Seller ships device.
+TruePhone holds funds (seller not paid yet).
 
 ↓
 
-Buyer confirms delivery.
+Seller fulfills: **Premium Bogotá** ($20,000 seller) or **Carrier** (upload tracking; buyer can see code).
 
 ↓
 
-Seller receives payment.
+Buyer marks **Ya recibí el iPhone**.
 
 ↓
 
-Buyer leaves review.
+Buyer confirms device matches listing  
+(or 24 hours after marking received with no response).
+
+↓
+
+TruePhone pays seller (Wompi Cuenta → bank; minus Premium fee if applicable).
+
+↓
+
+Order completed — buyer/seller may leave reviews.
 
 ---
 
@@ -1151,6 +1188,15 @@ Messages should support:
 - Notifications
 
 Phone numbers should not be exposed by default.
+
+### Public listing Q&A (post-MVP)
+
+Separate from private messaging: every **published** listing should offer a **public** Q&A thread where prospective buyers ask device questions and the seller answers for all visitors to see.
+
+- Guests may read; asking requires a registered account.
+- Does not replace private buyer↔seller chat for negotiation.
+- Moderatable (report / hide). Discourage off-platform contact.
+- Planned in `docs/plan.md` Phase **8b**.
 
 ---
 
@@ -1395,11 +1441,13 @@ Answer common concerns.
 
 Examples
 
-Why do you charge 6%?
+Why do you charge 10%?
 
 How are listings reviewed?
 
 What happens if there is a problem?
+
+What are the shipping options?
 
 ---
 
@@ -1773,7 +1821,17 @@ Security
 
 Statistics
 
-Completed Purchases
+**Public activity strip (Swappa-style — required):**
+
+`Listings: N total, N active, N bought` (Spanish UI labels as product copy)
+
+Show on:
+
+- Public profile
+- Own `/perfil`
+- Order / sale detail **Seller** and **Buyer** party cards (avatar, name, member since, rating + the three counters)
+
+**Listings — total** · **Listings — active** · **Bought** (completed purchases as buyer)
 
 Completed Sales
 
@@ -1784,6 +1842,8 @@ Response Time
 Member Since
 
 Verified Seller Badge
+
+Definitions and placement: `docs/plan.md` Phase 3 (+ Phase 9 party cards). This is a public trust signal, **not** a private analytics dashboard.
 
 ---
 
@@ -1816,6 +1876,8 @@ Active Listings
 Response Time
 
 Member Since
+
+**Public counters strip:** Listings total / active / bought (same component as order party cards)
 
 ---
 
@@ -1877,6 +1939,8 @@ Payment Status
 
 Seller Information
 
+**Party cards:** Seller + Buyer summaries on the order page (avatar, name, member since, rating, public counters: total / active / bought) — Swappa-style trust strip
+
 Support
 
 Leave Review
@@ -1888,6 +1952,8 @@ Seller View
 Sold Device
 
 Buyer Information
+
+**Same party cards** (both sides visible to order participants)
 
 Shipping Status
 
@@ -2049,7 +2115,7 @@ Buying Guide
 
 Selling Guide
 
-FAQ
+FAQ (canonical page — `docs/plan.md` Phase **23**; home may show a short FAQ teaser)
 
 Policies
 
@@ -2248,17 +2314,31 @@ Every feature should be designed with security as a primary concern.
 
 ## Authentication
 
-Support:
+Support (V1):
 
 Email + Password
 
 Google Sign-In
 
-Future:
+Chosen next methods (see `docs/plan.md` Phase 2):
 
 Apple Sign-In
 
-Multi-factor authentication (MFA)
+WhatsApp login / OTP via WhatsApp
+
+Facebook / Meta login
+
+Optional later (Phase 21 security — not growth login):
+
+Phone OTP (SMS)
+
+Multi-factor authentication (MFA) — especially REVIEWER/ADMIN and sellers with payouts
+
+Passkeys / WebAuthn
+
+Magic link email
+
+Seller identity verification (cédula + facial) remains independent of login method.
 
 ---
 
@@ -2489,7 +2569,13 @@ Review submitted
 
 Account created
 
+Public Q&A question / answer (when Phase 8b ships)
+
 ---
+
+Analytics **surfaces** are for **administrators and reviewers / ops** (dashboards in Phase 13 / 15) — GMV, conversion, approval rates, queue health, growth.
+
+Buyers and sellers do **not** get a private analytics app. They get the public activity strip on profiles and order party cards (`total` / `active` / `bought`) per Phase 3.
 
 Analytics should inform product decisions, not collect unnecessary personal information.
 
@@ -2683,12 +2769,13 @@ The product should evolve continuously to reduce these risks.
 
 The following strategic questions remain open and should be revisited as the company grows:
 
-- Should escrow become mandatory for all transactions?
+- ~~Should shipping be integrated into the platform?~~ → **Yes for MVP** — three methods in `docs/SHIPPING.md`
+- ~~Should escrow become mandatory for all transactions?~~ → **Hold-until-confirm (or 24h after buyer marks received) via Financial Core** — see `docs/FINANCIAL_MODEL.md` (not marketed as an escrow company)
 - Should professional sellers receive dedicated tools?
-- Should shipping be integrated into the platform?
 - Should buyers be able to negotiate prices?
-- Should device certification become a premium service?
+- Should device certification become a premium add-on beyond Premium / Drop-off inspection?
 - Should TruePhone eventually support additional product categories?
+- When should BRE-B payouts replace or complement bank payouts?
 
 These decisions should always be evaluated against the platform's core promise of trust.
 
