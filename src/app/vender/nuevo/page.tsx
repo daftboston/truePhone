@@ -13,6 +13,7 @@ import { ListingWizardShell } from "@/features/listings/components/listing-wizar
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getCatalog } from "@/lib/listings";
+import { getSellerPriceGuideMap } from "@/lib/recommended-prices";
 
 export const metadata: Metadata = {
   title: "Nuevo anuncio",
@@ -32,7 +33,10 @@ export default async function NewListingPage() {
     redirect("/vender");
   }
 
-  const catalog = await getCatalog();
+  const [catalog, priceGuideByCombo] = await Promise.all([
+    getCatalog(),
+    getSellerPriceGuideMap(),
+  ]);
   if (
     catalog.models.length === 0 ||
     catalog.colors.length === 0 ||
@@ -59,6 +63,7 @@ export default async function NewListingPage() {
           colors={catalog.colors}
           storages={catalog.storages}
           colorIdsByModelId={catalog.colorIdsByModelId}
+          priceGuideByCombo={priceGuideByCombo}
         />
       </ListingWizardShell>
     </AppShell>

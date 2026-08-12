@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   ChevronRight,
   ClipboardCheck,
   Heart,
@@ -44,6 +45,7 @@ type AccountNavProps = {
   verificationHref: string;
   canReview?: boolean;
   unreadMessages?: number;
+  unreadNotifications?: number;
   className?: string;
 };
 
@@ -55,6 +57,7 @@ type AccountNavProps = {
  * @param verificationHref - Link into the identity verification flow.
  * @param canReview - When true, includes the operations review section.
  * @param unreadMessages - Unread count badge for Mensajes.
+ * @param unreadNotifications - Unread count badge for Notificaciones.
  * @returns Ordered nav groups for AccountNav.
  * @calledBy AccountNav
  */
@@ -62,6 +65,7 @@ function buildGroups(
   verificationHref: string,
   canReview: boolean,
   unreadMessages: number,
+  unreadNotifications: number,
 ): NavGroup[] {
   const groups: NavGroup[] = [
     {
@@ -73,6 +77,12 @@ function buildGroups(
           label: "Mensajes",
           icon: MessageSquare,
           badge: unreadMessages,
+        },
+        {
+          href: "/notificaciones",
+          label: "Notificaciones",
+          icon: Bell,
+          badge: unreadNotifications,
         },
         { href: "/favoritos", label: "Favoritos", icon: Heart },
         { label: "Direcciones", icon: MapPin, soon: true },
@@ -158,6 +168,7 @@ function formatBadge(count: number) {
  * @param props.verificationHref - Destination for the Verificación item.
  * @param props.canReview - Shows ops review nav when the user can moderate.
  * @param props.unreadMessages - Badge count on Mensajes.
+ * @param props.unreadNotifications - Badge count on Notificaciones.
  * @param props.className - Optional classes on the nav root.
  * @returns Account sidebar navigation.
  * @calledBy account layout
@@ -166,10 +177,16 @@ export function AccountNav({
   verificationHref,
   canReview = false,
   unreadMessages = 0,
+  unreadNotifications = 0,
   className,
 }: AccountNavProps) {
   const pathname = usePathname();
-  const groups = buildGroups(verificationHref, canReview, unreadMessages);
+  const groups = buildGroups(
+    verificationHref,
+    canReview,
+    unreadMessages,
+    unreadNotifications,
+  );
 
   return (
     <nav aria-label="Mi TruePhone" className={cn("space-y-6", className)}>

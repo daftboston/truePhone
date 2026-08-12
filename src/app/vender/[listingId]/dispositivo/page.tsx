@@ -13,6 +13,7 @@ import { ListingWizardShell } from "@/features/listings/components/listing-wizar
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getCatalog, getOwnedListing } from "@/lib/listings";
+import { getSellerPriceGuideMap } from "@/lib/recommended-prices";
 
 type PageProps = {
   params: Promise<{ listingId: string }>;
@@ -41,7 +42,10 @@ export default async function EditDevicePage({ params }: PageProps) {
   if (!listing) notFound();
   if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
-  const catalog = await getCatalog();
+  const [catalog, priceGuideByCombo] = await Promise.all([
+    getCatalog(),
+    getSellerPriceGuideMap(),
+  ]);
 
   return (
     <AppShell mainClassName="max-w-lg">
@@ -56,6 +60,7 @@ export default async function EditDevicePage({ params }: PageProps) {
           colors={catalog.colors}
           storages={catalog.storages}
           colorIdsByModelId={catalog.colorIdsByModelId}
+          priceGuideByCombo={priceGuideByCombo}
           listingId={listing.id}
           defaults={{
             iphoneModelId: listing.iphoneModelId,

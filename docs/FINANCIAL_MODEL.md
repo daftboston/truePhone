@@ -469,14 +469,14 @@ Do not mark marketplace order fully **completed** until payout succeeds (or an e
 
 # 11. Gap vs current codebase
 
-Present: collect via Wompi/mock; **10%** fee engine + Ledger hold; shipping (Carrier + Premium); **buyer** starts 24h clock via “Ya recibí”; checkout/pay **24h disclosure**; hourly cron auto-release (`/api/cron/buyer-confirm-expiry`); seller cannot complete as settlement; payout adapter mock/manual/stub.
+Present: collect via Wompi/mock; **10%** fee engine + Ledger hold; shipping (Carrier + Premium); **buyer** starts 24h clock via “Ya recibí”; checkout/pay **24h disclosure**; hourly cron auto-release (`/api/cron/buyer-confirm-expiry`); seller cannot complete as settlement; payout adapter mock/manual/stub; **Phase 12 settlement reminders** (received confirm + pre-deadline nudge).
 
 Missing for full MVP model:
 
 - ~~Seller bank account UI + require default bank for settlement destination~~
 - ~~Ops manual dispersion queue (authorized → pay in Wompi → mark completed)~~
+- ~~Phase 12 settlement reminders (complements checkout disclosure)~~
 - Chargeback webhook ingestion UX / ops tooling
-- Phase 12 settlement reminders (complements checkout disclosure)
 
 **Post-MVP (Phase 24):** Live Pagos a Terceros lote API (`WOMPI_PAYOUTS_*`) + payout webhooks — replaces manual Wompi dashboard step only.
 

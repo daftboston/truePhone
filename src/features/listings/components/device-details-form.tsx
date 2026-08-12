@@ -2,8 +2,8 @@
 
 /**
  * @file device-details-form.tsx
- * @description DeviceDetailsForm component for the listings feature.tsx.
- * @dependencies react, @prisma/client, @/features/listings/actions/listings, @/features/listings/schemas/listing, @/features/listings/types
+ * @description Device details + price step for the sell wizard, with recommended price guide.
+ * @dependencies react, @prisma/client, listings actions/schemas, SellerPriceGuide
  */
 
 import { useActionState, useMemo, useState } from "react";
@@ -24,6 +24,11 @@ import {
   conditionLabels,
 } from "@/features/listings/schemas/listing";
 import type { ListingActionState } from "@/features/listings/types";
+import { SellerPriceGuide } from "@/features/recommended-prices/components/seller-price-guide";
+import {
+  sellerPriceGuideKey,
+  type SellerPriceGuideEntry,
+} from "@/features/recommended-prices/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +40,8 @@ type DeviceFormProps = {
   colors: IphoneColor[];
   storages: IphoneStorage[];
   colorIdsByModelId: Record<string, string[]>;
+  /** Effective admin guide rows keyed by sellerPriceGuideKey. */
+  priceGuideByCombo?: Record<string, SellerPriceGuideEntry>;
   listingId?: string;
   defaults?: {
     iphoneModelId: string;
@@ -53,11 +60,11 @@ type DeviceFormProps = {
 /**
  * formatCop
  *
- * Formats a display value for listings UI.
+ * Formats integer COP for the in-form fee calculator.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy listings UI and related modules
+ * @param value - Amount in COP pesos.
+ * @returns Localized currency string.
+ * @calledBy DeviceDetailsForm
  */
 function formatCop(value: number) {
   return new Intl.NumberFormat("es-CO", {
@@ -70,11 +77,11 @@ function formatCop(value: number) {
 /**
  * parsePriceInput
  *
- * Supports listings by implementing parsePriceInput.
+ * Strips non-digits and leading zeros while the seller types a COP price.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy listings UI and related modules
+ * @param raw - Raw input string from the price field.
+ * @returns Display string and numeric amount (0 when empty).
+ * @calledBy DeviceDetailsForm
  */
 function parsePriceInput(raw: string) {
   const digits = raw.replace(/[^\d]/g, "");
@@ -87,17 +94,19 @@ function parsePriceInput(raw: string) {
 /**
  * DeviceDetailsForm
  *
- * Renders the Device Details Form UI for listings.
+ * Collects model, storage, condition, accessories, and listing price.
+ * Shows a read-only RecommendedPrice guide when the combo matches.
  *
- * @param props - DeviceDetailsForm props.
- * @returns DeviceDetailsForm React element.
- * @calledBy listings pages and parent components
+ * @param props - Catalog options, optional draft defaults, and price guide map.
+ * @returns Device details form for create/update listing steps.
+ * @calledBy NewListingPage, EditDevicePage
  */
 export function DeviceDetailsForm({
   models,
   colors,
   storages,
   colorIdsByModelId,
+  priceGuideByCombo = {},
   listingId,
   defaults,
 }: DeviceFormProps) {
@@ -116,6 +125,12 @@ export function DeviceDetailsForm({
   const [selectedColorId, setSelectedColorId] = useState(
     defaults?.iphoneColorId ?? "",
   );
+  const [selectedStorageId, setSelectedStorageId] = useState(
+    defaults?.iphoneStorageId ?? "",
+  );
+  const [selectedCondition, setSelectedCondition] = useState<Condition | "">(
+    defaults?.condition ?? "EXCELLENT",
+  );
 
   const availableColors = useMemo(() => {
     if (!selectedModelId) return [];
@@ -132,6 +147,27 @@ export function DeviceDetailsForm({
   );
   const fees = useMemo(() => computeFees(priceAmount), [priceAmount]);
   const feePercent = Math.round(BUYER_PROTECTION_FEE_RATE * 100);
+
+  // Resolve guide when model + storage + condition are all set
+  const priceGuideEntry = useMemo(() => {
+    if (!selectedModelId || !selectedStorageId || !selectedCondition) {
+      return null;
+    }
+    return (
+      priceGuideByCombo[
+        sellerPriceGuideKey(
+          selectedModelId,
+          selectedStorageId,
+          selectedCondition,
+        )
+      ] ?? null
+    );
+  }, [
+    priceGuideByCombo,
+    selectedModelId,
+    selectedStorageId,
+    selectedCondition,
+  ]);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -169,7 +205,8 @@ export function DeviceDetailsForm({
             id="iphoneStorageId"
             name="iphoneStorageId"
             required
-            defaultValue={defaults?.iphoneStorageId ?? ""}
+            value={selectedStorageId}
+            onChange={(event) => setSelectedStorageId(event.target.value)}
           >
             <option value="" disabled>
               Selecciona
@@ -214,7 +251,10 @@ export function DeviceDetailsForm({
             id="condition"
             name="condition"
             required
-            defaultValue={defaults?.condition ?? "EXCELLENT"}
+            value={selectedCondition}
+            onChange={(event) =>
+              setSelectedCondition(event.target.value as Condition)
+            }
           >
             {(Object.keys(conditionLabels) as Condition[]).map((key) => (
               <option key={key} value={key}>
@@ -258,6 +298,8 @@ export function DeviceDetailsForm({
             protección TruePhone ({feePercent}%).
           </p>
         </div>
+
+        <SellerPriceGuide entry={priceGuideEntry} />
 
         <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4">
           <p className="text-foreground text-sm font-semibold">

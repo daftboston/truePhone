@@ -15,6 +15,7 @@ import {
   MessageSquareWarning,
   ShieldAlert,
   Star,
+  Tags,
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -30,6 +31,7 @@ import {
 import { countListingsForReview } from "@/lib/listings-review";
 import { countPaymentsByStatus } from "@/lib/payments";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
+import { countRecommendedPrices } from "@/lib/recommended-prices";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -129,12 +131,14 @@ export default async function ReviewHubPage() {
     identityPending,
     paymentCounts,
     authorizedPayoutCount,
+    recommendedPriceCount,
     reviewReportsOpen,
   ] = await Promise.all([
     countListingsForReview(),
     countPendingIdentityVerifications(),
     isAdmin ? countPaymentsByStatus() : Promise.resolve(null),
     isAdmin ? countAuthorizedPayouts() : Promise.resolve(0),
+    isAdmin ? countRecommendedPrices() : Promise.resolve(0),
     countOpenReviewReports(),
   ]);
 
@@ -254,6 +258,13 @@ export default async function ReviewHubPage() {
             }
             icon={CreditCard}
             emphasized={(authorizedPayoutCount ?? 0) > 0}
+          />
+          <QueueCard
+            href="/revision/precios"
+            title="Precios de referencia"
+            description="Guía para vendedores por modelo, almacenamiento y estado."
+            count={recommendedPriceCount}
+            icon={Tags}
           />
           <aside className="border-border bg-muted/50 flex gap-3 rounded-xl border p-4">
             <ShieldAlert

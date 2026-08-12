@@ -20,7 +20,7 @@ import {
   uploadCarrierTrackingSchema,
   type ShippingActionState,
 } from "@/features/shipping/schemas/shipping";
-import { getCurrentProfile } from "@/lib/auth/session";
+import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import {
   confirmOrderByBuyer,
@@ -49,6 +49,20 @@ function revalidateShippingPaths(orderId: string) {
   revalidatePath(`/compras/${orderId}`);
   revalidatePath(`/ventas/${orderId}`);
   revalidatePath("/revision");
+}
+
+/**
+ * revalidateAfterBuyerReceived
+ *
+ * Same as shipping path revalidation plus activity center (Phase 12 notification).
+ *
+ * @param orderId - Order that started the confirm window.
+ * @calledBy markOrderReceivedByBuyerAction
+ */
+function revalidateAfterBuyerReceived(orderId: string) {
+  revalidateShippingPaths(orderId);
+  revalidatePath("/notificaciones");
+  revalidatePath("/", "layout");
 }
 
 /**
@@ -248,10 +262,11 @@ export async function markOrderReceivedByBuyerAction(
   const result = await markOrderReceivedByBuyer({
     orderId: parsed.data.orderId,
     buyerId: current.profile.id,
+    siteOrigin: await getRequestOrigin(),
   });
   if (!result.ok) return { ok: false, error: result.error };
 
-  revalidateShippingPaths(parsed.data.orderId);
+  revalidateAfterBuyerReceived(parsed.data.orderId);
   return { ok: true, message: result.message };
 }
 

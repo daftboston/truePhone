@@ -4,6 +4,8 @@
 
 Version 1.3
 
+**Engineering status:** Phases **7–11 + 10b–10d closed**. Active line: `mvp/phases-12-13` (Phase 12 settlement reminders + Phase 13 price table / Phase 5 seller guide). See [ROADMAP.md](./ROADMAP.md).
+
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
 **Business logic source:** this file + `docs/PRD.md` — not Figma  
@@ -307,10 +309,10 @@ Result: Complete seller workflow with possession proof.
 
 ### Pending follow-up (not blocking Phase 6)
 
-| Item                                               | Status   | When to do it            | Notes                                                                              |
-| -------------------------------------------------- | -------- | ------------------------ | ---------------------------------------------------------------------------------- |
-| **Filter listing colors by selected iPhone model** | **Done** | Completed before Phase 7 | `IphoneModelColor` join + seed mappings + wizard filter + server validation.       |
-| **Seller price guide UI**                          | Pending  | With Phase 13 data       | Read-only reference from `RecommendedPrice` (or equivalent); never blocks publish. |
+| Item                                               | Status   | When to do it            | Notes                                                                                                     |
+| -------------------------------------------------- | -------- | ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| **Filter listing colors by selected iPhone model** | **Done** | Completed before Phase 7 | `IphoneModelColor` join + seed mappings + wizard filter + server validation.                              |
+| **Seller price guide UI**                          | **Done** | With Phase 13 data       | Read-only reference from `RecommendedPrice` next to price on `/vender` device step; never blocks publish. |
 
 ---
 
@@ -582,6 +584,8 @@ Features
 
 Result: Users stay informed.
 
+Status: **Settlement slice landed** (in-app + email on buyer «Ya recibí»; hourly cron reminders within 6h of deadline; `/notificaciones` activity center + preferences). Push and non-settlement event types remain future work.
+
 ---
 
 # Phase 13 — Admin Panel
@@ -606,7 +610,7 @@ Features
 
 Result: Business operations + pricing intelligence for sellers.
 
-Status: Not started (price table is a priority slice of this phase; can land before full admin dashboard).
+Status: Price table slice landed (`RecommendedPrice` + admin CRUD at `/revision/precios`). Full admin dashboard still open.
 
 ---
 

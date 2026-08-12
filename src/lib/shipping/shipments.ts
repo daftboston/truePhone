@@ -551,15 +551,18 @@ export async function recordPremiumInspection(input: {
  * markOrderReceivedByBuyer
  *
  * Buyer ack of physical receipt; delegates to Financial Core onBuyerMarkedReceived.
+ * On success, enqueues Phase 12 settlement notification (confirm CTA + 24h disclosure).
  *
  * @param input.orderId - Order UUID.
  * @param input.buyerId - Must be the order buyer.
+ * @param input.siteOrigin - Absolute origin for email deep links (optional).
  * @returns ShippingResult.
  * @calledBy Buyer receipt actions
  */
 export async function markOrderReceivedByBuyer(input: {
   orderId: string;
   buyerId: string;
+  siteOrigin?: string;
 }): Promise<ShippingResult> {
   const core = await onBuyerMarkedReceived({
     orderId: input.orderId,
@@ -568,6 +571,22 @@ export async function markOrderReceivedByBuyer(input: {
   if (!core.ok) {
     return { ok: false, error: core.error };
   }
+
+  // Settlement notification must not fail the receipt ack if email/prefs misbehave.
+  try {
+    const { notifyBuyerReceivedConfirm } =
+      await import("@/lib/notifications/settlement");
+    await notifyBuyerReceivedConfirm({
+      orderId: input.orderId,
+      siteOrigin:
+        input.siteOrigin ??
+        process.env.NEXT_PUBLIC_SITE_URL ??
+        "http://localhost:3000",
+    });
+  } catch (error) {
+    console.error("[notifications:buyer-received]", error);
+  }
+
   return {
     ok: true,
     message:

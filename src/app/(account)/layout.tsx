@@ -1,7 +1,7 @@
 /**
  * @file layout.tsx
  * @description Authenticated account shell with side nav, verification, and unread counts.
- * @dependencies AppShell, AccountNav, auth/session, identity and messages helpers
+ * @dependencies AppShell, AccountNav, auth/session, identity, messages, notifications
  */
 
 import { headers } from "next/headers";
@@ -18,6 +18,7 @@ import {
   requireCurrentProfile,
 } from "@/lib/auth/session";
 import { countUnreadForUser } from "@/lib/messages";
+import { countUnreadNotifications } from "@/lib/notifications";
 
 /**
  * AccountLayout
@@ -37,10 +38,13 @@ export default async function AccountLayout({
   const search = headerStore.get("x-search") ?? "";
   const current = await requireCurrentProfile(`${pathname}${search}`);
   const { profile } = current;
-  const [verification, unreadMessages] = await Promise.all([
-    getLatestIdentityVerification(profile.id),
-    countUnreadForUser(profile.id),
-  ]);
+  const [verification, unreadMessages, unreadNotifications] = await Promise.all(
+    [
+      getLatestIdentityVerification(profile.id),
+      countUnreadForUser(profile.id),
+      countUnreadNotifications(profile.id),
+    ],
+  );
   const verified = isSellerIdentityVerified(profile.verifikStatus);
 
   const verificationHref = verified
@@ -58,6 +62,7 @@ export default async function AccountLayout({
           verificationHref={verificationHref}
           canReview={canAccessReviewPortal(profile.role)}
           unreadMessages={unreadMessages}
+          unreadNotifications={unreadNotifications}
           className="border-border md:sticky md:top-20 md:rounded-xl md:border md:p-4"
         />
         <div className="min-w-0 space-y-6 md:space-y-8">{children}</div>

@@ -137,6 +137,12 @@ enum InspectionResult {
   FAILED
 }
 
+/// In-app / email notification kinds (Phase 12). Settlement types ship first.
+enum NotificationType {
+  BUYER_RECEIVED_CONFIRM
+  BUYER_CONFIRM_REMINDER
+}
+
 // Models
 model Profile {
   id                  String      @id @default(cuid())
@@ -178,6 +184,8 @@ model Profile {
   sellerBankAccounts     SellerBankAccount[]
   feeEntitlements        FeeEntitlement[]         @relation("FeeEntitlementBuyer")
   payouts                Payout[]
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
 
   @@map("profiles")
 }
@@ -217,6 +225,7 @@ model IphoneModel {
   createdAt   DateTime          @default(now())
   listings    Listing[]
   modelColors IphoneModelColor[]
+  recommendedPrices RecommendedPrice[]
 
   @@map("iphone_models")
 }
@@ -251,7 +260,34 @@ model IphoneStorage {
   valueGb   Int       @unique
   createdAt DateTime  @default(now())
   listings  Listing[]
+  recommendedPrices RecommendedPrice[]
+
   @@map("iphone_storages")
+}
+
+/// Admin-maintained pricing guide for sellers (model + storage + condition → COP).
+/// Guidance only — never forces listing price. Phase 13 CRUD; Phase 5 seller display.
+model RecommendedPrice {
+  id              String        @id @default(cuid())
+  iphoneModelId   String
+  iphoneModel     IphoneModel   @relation(fields: [iphoneModelId], references: [id], onDelete: Cascade)
+  iphoneStorageId String
+  iphoneStorage   IphoneStorage @relation(fields: [iphoneStorageId], references: [id], onDelete: Cascade)
+  condition       Condition
+  /// Reference sale price in integer COP pesos.
+  priceCop        Int
+  minPriceCop     Int?
+  maxPriceCop     Int?
+  notes           String?
+  effectiveFrom   DateTime?
+  effectiveTo     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([iphoneModelId, iphoneStorageId, condition])
+  @@index([iphoneModelId])
+  @@index([condition])
+  @@map("recommended_prices")
 }
 
 model Listing {
@@ -485,6 +521,7 @@ model Order {
   shipment       Shipment?
   feeEntitlementSource FeeEntitlement? @relation("FeeEntitlementSourceOrder")
   feeEntitlementUsed   FeeEntitlement? @relation("FeeEntitlementUsedOrder")
+  notifications  Notification[]
 
   @@index([buyerId, createdAt])
   @@index([sellerId, createdAt])
@@ -723,4 +760,42 @@ model Favorite {
 
   @@unique([userId, listingId])
   @@map("favorites")
+}
+
+/// In-app notification row (Phase 12). Email delivery is tracked on the same row.
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  body        String
+  /// Relative app path (e.g. /compras/{orderId}).
+  href        String?
+  orderId     String?
+  order       Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  readAt      DateTime?
+  emailSentAt DateTime?
+  /// Idempotency key (e.g. buyer-received:{orderId}).
+  dedupeKey   String           @unique
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([orderId])
+  @@map("notifications")
+}
+
+/// Per-user channel preferences for notifications (defaults = all on).
+model NotificationPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled      Boolean  @default(true)
+  emailOrderUpdates Boolean  @default(true)
+  inAppEnabled      Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("notification_preferences")
 }

@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phases 0–11 collect/marketplace loop present → **MVP settlement nearly complete** (seller bank + **manual** Wompi dispersion landed; API lotes → Phase 24; Phase 12/13 remain)  
+**Status:** Phases **0–11 + 10b–10d closed**. MVP settlement loop landed (manual Wompi payouts). Phase **12** settlement reminders + Phase **13** price table (and Phase **5** seller guide) landed in code — finish/harden on branch `mvp/phases-12-13`, then soft-launch polish. Automated Pagos a Terceros → Phase **24**.  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Money:** [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md)  
 **Shipping:** [SHIPPING.md](./SHIPPING.md)  
@@ -12,12 +12,35 @@ Former working name **iPhoneSeguro** is retired. Brand in product and docs is **
 
 ---
 
+## Branch map (engineering)
+
+| Branch                                        | Role                                                                                                                |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `main`                                        | Production baseline (last merge: listing color filter; **behind** MVP work)                                         |
+| `mvp/phases-12-13`                            | **Active** — closes Phase 12/13 MVP slices on top of settlement already shipped from former `mvp/close-phases-7-11` |
+| `mvp/close-phases-7-11`                       | **Retired name** — history preserved via rename; Phases 7–11 + 10b–10d already shipped on this line                 |
+| `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded by `main` / MVP branches                                            |
+| `origin/cursor/code-documentation-skill-5f7c` | Docs/skill PR branch; not product feature work                                                                      |
+
+```text
+main (Jul 19)
+  │
+  └── mvp/close-phases-7-11  (renamed →)
+        └── mvp/phases-12-13   ← you are here
+              • 7–11 marketplace loop      DONE (committed)
+              • 10b–10d settlement         DONE (committed)
+              • 12 notifications slice     in working tree
+              • 13 price table + /vender   in working tree
+```
+
+---
+
 ## Current focus
 
-1. Admin **recommended price table** (Phase **13** slice) + seller guide in sell flow (Phase **5**)
-2. Phase 12 settlement notifications (24h reminders)
-3. Chargeback / refund ops tooling as volume grows
-4. Phase 24 when ready: automate Pagos a Terceros API lotes (replace manual Wompi step)
+1. Finish & harden Phase **12** / **13** on `mvp/phases-12-13` (commit, stage smoke, merge toward `main`)
+2. Soft-launch hardening (chargeback / refund ops as volume grows)
+3. Small polish still open inside earlier phases: public counters (3/9), order party cards
+4. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
 
@@ -36,35 +59,36 @@ Full phase detail: [plan.md](./plan.md)
 
 ## Phase checklist
 
-| Phase               | Status                                                                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------ |
-| 0 Foundation        | Complete                                                                                         |
-| 1 Design System     | Complete (core primitives; Dialog/Drawer/Toast/DataTable with later forms)                       |
-| 2 Authentication    | Complete (V1 email + Google); **next: Apple, WhatsApp, Facebook**                                |
-| 3 Profiles          | Complete; **public counters follow-up** (total / active / bought)                                |
-| 4 Seller identity   | Complete (manual review pipeline)                                                                |
-| 5 Listing creation  | Complete + **pending** seller price-guide UI (needs Phase 13 table)                              |
-| 6 Review Portal     | Complete                                                                                         |
-| 7 Marketplace       | Complete                                                                                         |
-| 8 Messaging         | Complete (private DMs)                                                                           |
-| 8b Listing Q&A      | Not started — **public** questions on listings (post-MVP)                                        |
-| 9 Orders            | Complete; **party cards + public counters** still to land on order detail                        |
-| 10 Payments         | Collect-only (Wompi + mock; fee UI 10%)                                                          |
-| 10b Financial Core  | Core landed — Ledger, hold, fee engine; **seller bank + manual Wompi pay**; API lotes → Phase 24 |
-| 10c Shipping        | Landed — Carrier tracking + Premium Bogotá + buyer received → 24h                                |
-| 10d Order lifecycle | Landed — **24h disclosed at buy/pay**; confirm UX; cron auto-release; seller-complete killed     |
-| 11 Reviews          | Complete                                                                                         |
-| 12 Notifications    | Not started — include 24h reminders                                                              |
-| 13 Admin            | Not started — **priority: recommended price table**                                              |
-| 15 Analytics        | Not started — **admin / reviewer / ops only**                                                    |
-| 19 Mobile           | Not started as polish pass — responsive baseline exists                                          |
-| 23 Launch / FAQ     | Not started — FAQ page in launch prep                                                            |
+| Phase                    | Status                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| 0 Foundation             | **Complete**                                                                                 |
+| 1 Design System          | **Complete** (core primitives; Dialog/Drawer/Toast/DataTable with later forms)               |
+| 2 Authentication         | **Complete** (V1 email + Google); later: Apple, WhatsApp, Facebook                           |
+| 3 Profiles               | **Complete**; public counters follow-up (total / active / bought)                            |
+| 4 Seller identity        | **Complete** (manual review pipeline)                                                        |
+| 5 Listing creation       | **Complete** + seller price-guide UI (**landed** with Phase 13)                              |
+| 6 Review Portal          | **Complete**                                                                                 |
+| 7 Marketplace            | **Complete — closed**                                                                        |
+| 8 Messaging              | **Complete — closed** (private DMs)                                                          |
+| 8b Listing Q&A           | Not started — **public** questions on listings (post-MVP)                                    |
+| 9 Orders                 | **Complete — closed**; party cards + public counters still to land on order detail           |
+| 10 Payments              | **Closed** for collect (Wompi + mock; fee UI 10%)                                            |
+| 10b Financial Core       | **Closed** — Ledger, hold, fee engine; seller bank + manual Wompi pay; API lotes → Phase 24  |
+| 10c Shipping             | **Closed** — Carrier + Premium Bogotá + buyer received → 24h                                 |
+| 10d Order lifecycle      | **Closed** — 24h disclosed; confirm UX; cron auto-release; seller-complete killed            |
+| 11 Reviews               | **Complete — closed**                                                                        |
+| 12 Notifications         | **Settlement slice landed** — received confirm + deadline reminders; activity center         |
+| 13 Admin                 | **Price table landed** (`RecommendedPrice` + `/revision/precios`); full dashboard still open |
+| 15 Analytics             | Not started — **admin / reviewer / ops only**                                                |
+| 19 Mobile                | Not started as polish pass — responsive baseline exists                                      |
+| 23 Launch / FAQ          | Not started — FAQ page in launch prep                                                        |
+| 24 Auto payouts / native | Not started — Pagos a Terceros API + native apps (post-MVP)                                  |
 
 ---
 
 ## MVP
 
-MVP = Phases **0–11** plus **10b–10d**, shipping per [SHIPPING.md](./SHIPPING.md), money per [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md), and admin price guide (Phase 13 slice + Phase 5 display).
+MVP = Phases **0–11** plus **10b–10d**, shipping per [SHIPPING.md](./SHIPPING.md), money per [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md), and admin price guide (Phase 13 slice + Phase 5 display). Settlement reminders (Phase 12 slice) are in for launch quality.
 
 MVP seller payouts: Financial Core **authorizes** → ops pays **manually in Wompi** → ops marks completed in TruePhone. Automated Pagos a Terceros API is **Phase 24**.
 
@@ -76,14 +100,14 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-1. Admin recommended prices (Phase 13) → seller reference in `/vender` (Phase 5)
-2. Notifications for buyer-received + 24h reminders (Phase 12)
-3. Public activity counters on profiles + order party cards (Phase 3 / 9)
+1. Harden & merge Phase 12 + 13 work on `mvp/phases-12-13` → `main`
+2. Public activity counters on profiles + order party cards (Phase 3 / 9)
+3. Soft-launch / chargeback-refund ops as needed
 4. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)
 
 1. FAQ page (Phase 23 can start early for support load)
 2. Mobile polish (Phase 19) + Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap)
-3. Public listing Q&A (Phase 8b) after notifications
+3. Public listing Q&A (Phase 8b)
 4. Admin / reviewer analytics (Phase 15)

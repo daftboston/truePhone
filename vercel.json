@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/buyer-confirm-expiry",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/settlement-reminders",
+      "schedule": "30 * * * *"
     }
   ]
 }

@@ -67,6 +67,12 @@ Listings must not skip forward states in product workflows. Public browse only s
 
 `FLAWLESS` | `EXCELLENT` | `GOOD` | `FAIR` | `POOR`
 
+## NotificationType
+
+`BUYER_RECEIVED_CONFIRM` | `BUYER_CONFIRM_REMINDER`
+
+Settlement-critical types first (Phase 12). Additional event types can extend the enum later.
+
 ---
 
 # Models (current)
@@ -277,6 +283,44 @@ Table: `shipment_inspections`.
 
 Unique `(userId, listingId)` favorites.
 
+## RecommendedPrice
+
+Admin-maintained seller pricing guide (Phase 13). Unique on `(iphoneModelId, iphoneStorageId, condition)`.
+
+| Field                           | Meaning                                              |
+| ------------------------------- | ---------------------------------------------------- |
+| `priceCop`                      | Reference sale price (integer COP pesos)             |
+| `minPriceCop` / `maxPriceCop`   | Optional guidance band                               |
+| `notes`                         | Internal admin notes                                 |
+| `effectiveFrom` / `effectiveTo` | Optional validity window; lookup skips inactive rows |
+
+Does **not** force listing price — guidance only. Seller-facing display: `/vender` device step (`SellerPriceGuide`).
+
+Table: `recommended_prices`.
+
+## Notification
+
+In-app activity rows (Phase 12). Idempotent via unique `dedupeKey` (e.g. `buyer-received:{orderId}`, `buyer-confirm-reminder:{orderId}`).
+
+| Field            | Notes                                     |
+| ---------------- | ----------------------------------------- |
+| `userId`         | FK → Profile (recipient)                  |
+| `type`           | `NotificationType`                        |
+| `title` / `body` | Spanish UX copy                           |
+| `href`           | Relative path (e.g. `/compras/{orderId}`) |
+| `orderId`        | Optional FK → Order                       |
+| `readAt`         | Null = unread for badges                  |
+| `emailSentAt`    | Set after successful email delivery       |
+| `dedupeKey`      | Unique; cron / retry safe                 |
+
+Table: `notifications`.
+
+## NotificationPreference
+
+Per-user channel flags (`emailEnabled`, `emailOrderUpdates`, `inAppEnabled`). Defaults = all on when no row exists.
+
+Table: `notification_preferences`.
+
 ---
 
 # Planned schema (not yet in Prisma)
@@ -285,7 +329,6 @@ Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.
 
 - **AuditLog** — reviewer and admin actions
 - **Dispute** — first-class dispute entity (freeze today is `Order.payoutFrozen` + Ledger)
-- **RecommendedPrice** — admin-maintained guide: `iphoneModelId` + storage + `Condition` → reference COP (seller-facing in Phase 5; CRUD in Phase 13)
 
 ---
 
@@ -293,6 +336,8 @@ Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.
 
 - Unique constraints: `profiles.authUserId`, `listings.slug`, `listings.imeiHash`
 - Listing: `@@index([status])`, `@@index([sellerId])`
+- RecommendedPrice: unique `(iphoneModelId, iphoneStorageId, condition)`; indexes on `iphoneModelId`, `condition`
+- Notification: unique `dedupeKey`; indexes `(userId, createdAt)`, `(userId, readAt)`, `orderId`
 - Message / block / report: see **Message**, **UserBlock**, **ConversationReport** above
 - Order: `(buyerId, createdAt)`, `(sellerId, createdAt)`, `listingId`, `status`; partial unique on `listingId` where `AWAITING_PAYMENT` \| `PAID`
 - Payment: `reference` unique; `(orderId, createdAt)`, `(buyerId, createdAt)`, `status`, provider ids
