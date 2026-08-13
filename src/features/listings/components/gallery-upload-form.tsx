@@ -3,7 +3,7 @@
 /**
  * @file gallery-upload-form.tsx
  * @description GalleryUploadForm component for the listings feature.tsx.
- * @dependencies react, next/image, @/features/listings/actions/listings, @/features/listings/types, @/components/ui/button
+ * @dependencies react, next/image, @/features/listings/actions/listings, @/features/listings/types, @/components/ui/button, @/components/ui/file-input
  */
 
 import { useActionState, useState, useTransition } from "react";
@@ -16,7 +16,7 @@ import {
 } from "@/features/listings/actions/listings";
 import type { ListingActionState } from "@/features/listings/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FileInput } from "@/components/ui/file-input";
 import { Label } from "@/components/ui/label";
 
 type GalleryFormProps = {
@@ -95,13 +95,12 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
       <form action={formAction} className="space-y-3">
         <div className="space-y-2">
           <Label htmlFor="image">Agregar foto</Label>
-          <Input
+          <FileInput
             id="image"
             name="image"
-            type="file"
             accept="image/jpeg,image/png,image/webp"
             required
-            className="cursor-pointer pt-2"
+            buttonLabel="Elegir foto"
           />
         </div>
         {state?.ok === false ? (

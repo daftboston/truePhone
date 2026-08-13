@@ -3,7 +3,7 @@
 /**
  * @file possession-form.tsx
  * @description PossessionForm component for the listings feature.tsx.
- * @dependencies react, next/image, @/features/listings/actions/listings, @/features/listings/types, @/components/ui/button
+ * @dependencies react, next/image, @/features/listings/actions/listings, @/features/listings/types, @/components/ui/button, @/components/ui/file-input
  */
 
 import { useActionState } from "react";
@@ -12,7 +12,7 @@ import Image from "next/image";
 import { uploadPossessionPhotoAction } from "@/features/listings/actions/listings";
 import type { ListingActionState } from "@/features/listings/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FileInput } from "@/components/ui/file-input";
 import { Label } from "@/components/ui/label";
 
 type PossessionFormProps = {
@@ -71,13 +71,12 @@ export function PossessionForm({
       <form action={formAction} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="possessionImage">Foto con el código</Label>
-          <Input
+          <FileInput
             id="possessionImage"
             name="possessionImage"
-            type="file"
             accept="image/jpeg,image/png,image/webp"
             required
-            className="cursor-pointer pt-2"
+            buttonLabel="Elegir foto"
           />
         </div>
 

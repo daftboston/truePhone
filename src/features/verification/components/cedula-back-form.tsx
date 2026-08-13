@@ -3,7 +3,7 @@
 /**
  * @file cedula-back-form.tsx
  * @description CedulaBackForm component for the verification feature.tsx.
- * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/input
+ * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/file-input
  */
 
 import { useActionState } from "react";
@@ -11,7 +11,7 @@ import { useActionState } from "react";
 import { saveCedulaBackAction } from "@/features/verification/actions/identity";
 import type { VerificationActionState } from "@/features/verification/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FileInput } from "@/components/ui/file-input";
 import { Label } from "@/components/ui/label";
 
 /**
@@ -33,13 +33,12 @@ export function CedulaBackForm() {
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="backImage">Foto del reverso</Label>
-        <Input
+        <FileInput
           id="backImage"
           name="backImage"
-          type="file"
           accept="image/jpeg,image/png,image/webp"
           required
-          className="cursor-pointer pt-2"
+          buttonLabel="Elegir foto"
         />
         <p className="text-muted-foreground text-xs">
           Asegúrate de que el código de barras o QR se vea completo.

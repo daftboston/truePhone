@@ -3,7 +3,7 @@
 /**
  * @file cedula-front-form.tsx
  * @description CedulaFrontForm component for the verification feature.tsx.
- * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/input
+ * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/file-input, @/components/ui/input
  */
 
 import { useActionState } from "react";
@@ -11,6 +11,7 @@ import { useActionState } from "react";
 import { saveCedulaFrontAction } from "@/features/verification/actions/identity";
 import type { VerificationActionState } from "@/features/verification/types";
 import { Button } from "@/components/ui/button";
+import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -50,13 +51,12 @@ export function CedulaFrontForm() {
 
       <div className="space-y-2">
         <Label htmlFor="frontImage">Foto del frente</Label>
-        <Input
+        <FileInput
           id="frontImage"
           name="frontImage"
-          type="file"
           accept="image/jpeg,image/png,image/webp"
           required
-          className="cursor-pointer pt-2"
+          buttonLabel="Elegir foto"
         />
         <p className="text-muted-foreground text-xs">
           Buena luz, sin reflejos. JPG, PNG o WebP · máx. 5 MB.
