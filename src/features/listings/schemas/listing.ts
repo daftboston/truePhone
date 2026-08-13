@@ -1,6 +1,6 @@
 /**
  * @file listing.ts
- * @description Zod schemas and related types for listings (listing.ts).
+ * @description Zod schemas, Colombian operators, and helpers for listings.
  * @dependencies node:crypto, @prisma/client, zod, @/lib/financial-core/fees
  */
 
@@ -55,16 +55,77 @@ export const createListingSchema = z.object({
 /** updateListingDetailsSchema — validates input for related updateListingDetails flows. */
 export const updateListingDetailsSchema = createListingSchema;
 
+/** Colombian mobile operators shown when the iPhone is carrier-locked. */
+export const COLOMBIAN_OPERATORS = [
+  "Claro",
+  "Movistar",
+  "Tigo",
+  "WOM",
+  "ETB",
+] as const;
+
+export type ColombianOperator = (typeof COLOMBIAN_OPERATORS)[number];
+
+/**
+ * matchColombianOperator
+ *
+ * Maps a stored or typed carrier name onto the canonical Colombian operator list.
+ *
+ * @param value - Free-text or previously saved carrier (e.g. "claro").
+ * @returns Canonical operator label, or null when it is not a known operator.
+ * @calledBy updateListingSecuritySchema, SecurityForm, resolveListingCarrier
+ */
+export function matchColombianOperator(
+  value: string | null | undefined,
+): ColombianOperator | null {
+  if (!value?.trim()) return null;
+  const normalized = value.trim().toLowerCase();
+  return (
+    COLOMBIAN_OPERATORS.find(
+      (operator) => operator.toLowerCase() === normalized,
+    ) ?? null
+  );
+}
+
+/**
+ * resolveListingCarrier
+ *
+ * Persists a carrier only when the listing is locked to an operator.
+ *
+ * @param unlocked - Form value: "true" means factory-unlocked.
+ * @param carrier - Selected or previously saved operator name.
+ * @returns Canonical operator, or null when the device is unlocked.
+ * @calledBy updateListingSecurityAction
+ */
+export function resolveListingCarrier(
+  unlocked: "true" | "false",
+  carrier: string | null | undefined,
+): ColombianOperator | null {
+  if (unlocked === "true") return null;
+  return matchColombianOperator(carrier);
+}
+
 /** updateListingSecuritySchema — validates input for related updateListingSecurity flows. */
-export const updateListingSecuritySchema = z.object({
-  imei: z
-    .string()
-    .trim()
-    .regex(/^\d{15}$/, "El IMEI debe tener 15 dígitos."),
-  activationLocked: z.enum(["true", "false"]),
-  unlocked: z.enum(["true", "false"]),
-  carrier: z.string().trim().max(40).optional().or(z.literal("")),
-});
+export const updateListingSecuritySchema = z
+  .object({
+    imei: z
+      .string()
+      .trim()
+      .regex(/^\d{15}$/, "El IMEI debe tener 15 dígitos."),
+    activationLocked: z.enum(["true", "false"]),
+    unlocked: z.enum(["true", "false"]),
+    carrier: z.string().trim().max(40).optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    if (data.unlocked !== "false") return;
+    if (!matchColombianOperator(data.carrier)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["carrier"],
+        message: "Selecciona el operador.",
+      });
+    }
+  });
 
 /** Listing preview: equipment + default 10% marketplace fee. */
 export function computeFees(price: number) {

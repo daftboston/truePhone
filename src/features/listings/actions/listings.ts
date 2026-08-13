@@ -17,6 +17,7 @@ import {
   generatePossessionCode,
   hashImei,
   imeiLast4,
+  resolveListingCarrier,
   updateListingDetailsSchema,
   updateListingSecuritySchema,
 } from "@/features/listings/schemas/listing";
@@ -463,7 +464,7 @@ export async function updateListingSecurityAction(
       imeiLast4: imeiLast4(parsed.data.imei),
       activationLocked: false,
       unlocked: parsed.data.unlocked === "true",
-      carrier: parsed.data.carrier || null,
+      carrier: resolveListingCarrier(parsed.data.unlocked, parsed.data.carrier),
     },
   });
 

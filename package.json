@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/messages-access.test.ts src/lib/payments-provider.test.ts src/lib/reviews.test.ts src/lib/financial-core/fees.test.ts src/lib/shipping/eligibility.test.ts src/lib/order-timeline.test.ts src/features/shipping/schemas/shipping-schemas.test.ts src/features/recommended-prices/schemas/recommended-price.test.ts src/lib/notifications/settlement.test.ts"
+    "test": "tsx --test src/lib/messages-access.test.ts src/lib/payments-provider.test.ts src/lib/reviews.test.ts src/lib/financial-core/fees.test.ts src/lib/shipping/eligibility.test.ts src/lib/order-timeline.test.ts src/features/shipping/schemas/shipping-schemas.test.ts src/features/recommended-prices/schemas/recommended-price.test.ts src/lib/notifications/settlement.test.ts src/features/listings/schemas/listing-security.test.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
