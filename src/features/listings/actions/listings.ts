@@ -29,6 +29,7 @@ import {
   getCatalog,
   getOwnedListing,
   isColorAllowedForModel,
+  isStorageAllowedForModel,
   requireVerifiedSeller,
 } from "@/lib/listings";
 import { prisma } from "@/lib/db";
@@ -159,6 +160,15 @@ export async function createListingAction(
     };
   }
 
+  const storageAllowed = await isStorageAllowedForModel(model.id, storage.id);
+  if (!storageAllowed) {
+    return {
+      ok: false,
+      error:
+        "Ese almacenamiento no está disponible para el modelo seleccionado.",
+    };
+  }
+
   const fees = computeFees(parsed.data.price);
   const idSuffix = crypto.randomUUID().slice(0, 8);
   const title = buildListingTitle({
@@ -267,6 +277,15 @@ export async function updateListingDetailsAction(
     return {
       ok: false,
       error: "Ese color no está disponible para el modelo seleccionado.",
+    };
+  }
+
+  const storageAllowed = await isStorageAllowedForModel(model.id, storage.id);
+  if (!storageAllowed) {
+    return {
+      ok: false,
+      error:
+        "Ese almacenamiento no está disponible para el modelo seleccionado.",
     };
   }
 

@@ -16,6 +16,7 @@ import {
 import type { RecommendedPriceActionState } from "@/features/recommended-prices/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { isStorageAllowedForModel } from "@/lib/listings";
 
 /**
  * requireAdmin
@@ -101,6 +102,15 @@ export async function upsertRecommendedPriceAction(
   }
   if (!storage) {
     return { ok: false, error: "Almacenamiento no encontrado." };
+  }
+
+  const storageAllowed = await isStorageAllowedForModel(model.id, storage.id);
+  if (!storageAllowed) {
+    return {
+      ok: false,
+      error:
+        "Ese almacenamiento no está disponible para el modelo seleccionado.",
+    };
   }
 
   const payload = {

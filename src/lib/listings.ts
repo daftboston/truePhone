@@ -121,31 +121,37 @@ export function getSellerDraftResumePath(listing: {
  * Lists active iPhone models for catalog pickers.
  *
  * @returns iPhoneModel rows ordered for display.
- * @calledBy Listing create forms
+ * @calledBy AppShell, listing create forms
  */
 export async function listIphoneModels() {
   return prisma.iphoneModel.findMany({
-    orderBy: [{ releaseYear: "desc" }, { name: "asc" }],
+    orderBy: [{ sortOrder: "desc" }, { name: "asc" }],
   });
 }
 
 /**
  * getCatalog
  *
- * Loads models, colors, and storages for listing forms.
+ * Loads models, colors, storages, and per-model color/storage joins for listing forms.
  *
- * @returns Catalog maps used by create/edit listing UI.
- * @calledBy Seller listing wizard pages
+ * @returns Catalog maps used by create/edit listing UI and browse filters.
+ * @calledBy Seller listing wizard pages, SearchPage, AdminRecommendedPricesPage
  */
 export async function getCatalog() {
-  const [models, colors, storages, modelColors] = await Promise.all([
-    prisma.iphoneModel.findMany({ orderBy: { releaseYear: "desc" } }),
-    prisma.iphoneColor.findMany({ orderBy: { name: "asc" } }),
-    prisma.iphoneStorage.findMany({ orderBy: { valueGb: "asc" } }),
-    prisma.iphoneModelColor.findMany({
-      select: { iphoneModelId: true, iphoneColorId: true },
-    }),
-  ]);
+  const [models, colors, storages, modelColors, modelStorages] =
+    await Promise.all([
+      prisma.iphoneModel.findMany({
+        orderBy: [{ sortOrder: "desc" }, { name: "asc" }],
+      }),
+      prisma.iphoneColor.findMany({ orderBy: { name: "asc" } }),
+      prisma.iphoneStorage.findMany({ orderBy: { valueGb: "asc" } }),
+      prisma.iphoneModelColor.findMany({
+        select: { iphoneModelId: true, iphoneColorId: true },
+      }),
+      prisma.iphoneModelStorage.findMany({
+        select: { iphoneModelId: true, iphoneStorageId: true },
+      }),
+    ]);
 
   const colorIdsByModelId: Record<string, string[]> = {};
   for (const link of modelColors) {
@@ -153,7 +159,19 @@ export async function getCatalog() {
     colorIdsByModelId[link.iphoneModelId].push(link.iphoneColorId);
   }
 
-  return { models, colors, storages, colorIdsByModelId };
+  const storageIdsByModelId: Record<string, string[]> = {};
+  for (const link of modelStorages) {
+    storageIdsByModelId[link.iphoneModelId] ??= [];
+    storageIdsByModelId[link.iphoneModelId].push(link.iphoneStorageId);
+  }
+
+  return {
+    models,
+    colors,
+    storages,
+    colorIdsByModelId,
+    storageIdsByModelId,
+  };
 }
 
 /**
@@ -173,6 +191,29 @@ export async function isColorAllowedForModel(
   const link = await prisma.iphoneModelColor.findUnique({
     where: {
       iphoneModelId_iphoneColorId: { iphoneModelId, iphoneColorId },
+    },
+    select: { id: true },
+  });
+  return Boolean(link);
+}
+
+/**
+ * isStorageAllowedForModel
+ *
+ * Validates that a storage capacity is allowed for a given iPhone model.
+ *
+ * @param iphoneModelId - iPhoneModel UUID.
+ * @param iphoneStorageId - IphoneStorage UUID.
+ * @returns True when the join exists.
+ * @calledBy Listing create/update validation, recommended-price upsert
+ */
+export async function isStorageAllowedForModel(
+  iphoneModelId: string,
+  iphoneStorageId: string,
+) {
+  const link = await prisma.iphoneModelStorage.findUnique({
+    where: {
+      iphoneModelId_iphoneStorageId: { iphoneModelId, iphoneStorageId },
     },
     select: { id: true },
   });

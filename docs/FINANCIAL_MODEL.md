@@ -476,7 +476,7 @@ Missing for full MVP model:
 - ~~Seller bank account UI + require default bank for settlement destination~~
 - ~~Ops manual dispersion queue (authorized → pay in Wompi → mark completed)~~
 - ~~Phase 12 settlement reminders (complements checkout disclosure)~~
-- Chargeback webhook ingestion UX / ops tooling
+- ~~Chargeback webhook ingestion UX / ops tooling~~ (`VOIDED` after collection → Financial Core; `/revision/disputas`)
 
 **Post-MVP (Phase 24):** Live Pagos a Terceros lote API (`WOMPI_PAYOUTS_*`) + payout webhooks — replaces manual Wompi dashboard step only.
 

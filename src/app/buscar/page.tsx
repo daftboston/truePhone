@@ -67,7 +67,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
   const seriesModels = query.seriesKey
     ? catalog.models.filter(
-        (model) => getModelSeriesKey(model.name).key === query.seriesKey,
+        (model) => getModelSeriesKey(model).key === query.seriesKey,
       )
     : [];
 
@@ -78,17 +78,25 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const sidebarModels = selectedModel
     ? catalog.models.filter(
         (model) =>
-          getModelSeriesKey(model.name).key ===
-          getModelSeriesKey(selectedModel.name).key,
+          getModelSeriesKey(model).key === getModelSeriesKey(selectedModel).key,
       )
     : seriesModels;
 
   const heading = selectedModel
     ? selectedModel.name
     : seriesModels[0]
-      ? getModelSeriesKey(seriesModels[0].name).label
+      ? getModelSeriesKey(seriesModels[0]).label
       : "Anuncios";
 
+  const sidebarStorageIds = new Set(
+    sidebarModels.flatMap(
+      (model) => catalog.storageIdsByModelId[model.id] ?? [],
+    ),
+  );
+  const sidebarStorages =
+    sidebarStorageIds.size > 0
+      ? catalog.storages.filter((storage) => sidebarStorageIds.has(storage.id))
+      : catalog.storages;
   const { minPrice, maxPrice } = priceBandBounds(query.price);
   const filterOptions = {
     q: query.q || undefined,
@@ -133,7 +141,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
   );
 
   return (
-    <AppShell mainClassName="max-w-6xl gap-6">
+    <AppShell mainClassName="gap-6">
       <div className="space-y-2">
         <Button asChild variant="outline" size="sm">
           <Link href="/explorar">← Explorar modelos</Link>
@@ -150,7 +158,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         <BrowseFilters
           query={{ ...query, page }}
           models={sidebarModels}
-          storages={catalog.storages}
+          storages={sidebarStorages}
           className="border-border max-h-[calc(100vh-7rem)] overflow-y-auto md:sticky md:top-20 md:rounded-xl md:border md:p-3"
         />
 

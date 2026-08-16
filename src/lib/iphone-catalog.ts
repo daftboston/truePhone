@@ -1,13 +1,21 @@
 /**
  * @file iphone-catalog.ts
- * @description Client-safe iPhone model series grouping and typeahead matching.
+ * @description Client-safe iPhone catalog grouping, typeahead matching, and storage labels.
  * @dependencies none
  */
+
+import type {
+  IphoneProductLineId,
+  IphoneVariantTypeId,
+} from "@/lib/iphone-catalog-data";
 
 export type CatalogModel = {
   id: string;
   name: string;
   slug: string;
+  productLine: IphoneProductLineId;
+  generation: number;
+  variantType: IphoneVariantTypeId;
   releaseYear: number | null;
 };
 
@@ -16,6 +24,22 @@ export type ModelSeries = {
   label: string;
   sort: number;
   models: CatalogModel[];
+};
+
+const VARIANT_SORT: Record<IphoneVariantTypeId, number> = {
+  MINI: 1,
+  STANDARD: 2,
+  PLUS: 3,
+  PRO: 4,
+  PRO_MAX: 5,
+  E: 6,
+  AIR: 2,
+};
+
+const PRODUCT_LINE_RANK: Record<IphoneProductLineId, number> = {
+  IPHONE_AIR: 2,
+  IPHONE: 1,
+  IPHONE_SE: 0,
 };
 
 /**
@@ -35,52 +59,66 @@ function normalizeSearch(value: string) {
     .trim();
 }
 
-/** Group catalog models into generation series (16, 15, SE, …). */
+/**
+ * formatStorageLabel
+ *
+ * Formats a capacity in GB as a user-facing GB/TB label.
+ *
+ * @param valueGb - Storage size in gigabytes.
+ * @returns Localized capacity label (e.g. "256 GB", "1 TB").
+ * @calledBy DeviceDetailsForm, BrowseFilters, RecommendedPriceForm
+ */
+export function formatStorageLabel(valueGb: number): string {
+  if (valueGb >= 1024 && valueGb % 1024 === 0) {
+    return `${valueGb / 1024} TB`;
+  }
+  return `${valueGb} GB`;
+}
+
 /**
  * getModelSeriesKey
  *
- * Group catalog models into generation series (16, 15, SE, …).
+ * Resolves browse/explore series from product line + generation.
+ * SE and Air stay on their own lines; they are never folded into 13/14/17.
  *
- * @param name - iPhone model display name.
+ * @param model - Catalog model with product-line fields.
  * @returns Series key, Spanish label, and sort weight.
- * @calledBy groupModelsBySeries, matchModelsForSearch
+ * @calledBy groupModelsBySeries, matchModelsForSearch, SearchPage
  */
-export function getModelSeriesKey(name: string): {
+export function getModelSeriesKey(model: CatalogModel): {
   key: string;
   label: string;
   sort: number;
 } {
-  if (/iphone\s+se/i.test(name)) {
+  if (model.productLine === "IPHONE_SE") {
     return { key: "se", label: "Serie iPhone SE", sort: 0 };
   }
 
-  const match = name.match(/iPhone\s+(\d+)/i);
-  if (match) {
-    const generation = Number(match[1]);
-    return {
-      key: String(generation),
-      label: `Serie iPhone ${generation}`,
-      sort: generation,
-    };
+  if (model.productLine === "IPHONE_AIR") {
+    return { key: "air", label: "iPhone Air", sort: 16.9 };
   }
 
-  return { key: "other", label: "Otros modelos", sort: -1 };
+  return {
+    key: String(model.generation),
+    label: `Serie iPhone ${model.generation}`,
+    sort: model.generation,
+  };
 }
 
 /**
  * groupModelsBySeries
  *
- * Groups catalog models into sorted generation series.
+ * Groups catalog models into product-line series (not name-parsed generations).
  *
  * @param models - Catalog model rows.
- * @returns ModelSeries array newest generation first.
+ * @returns ModelSeries array newest family first.
  * @calledBy Listing create/browse model pickers
  */
 export function groupModelsBySeries(models: CatalogModel[]): ModelSeries[] {
   const byKey = new Map<string, ModelSeries>();
 
   for (const model of models) {
-    const meta = getModelSeriesKey(model.name);
+    const meta = getModelSeriesKey(model);
     const existing = byKey.get(meta.key);
     if (existing) {
       existing.models.push(model);
@@ -95,25 +133,33 @@ export function groupModelsBySeries(models: CatalogModel[]): ModelSeries[] {
   }
 
   return [...byKey.values()]
-    .map((series) => ({
-      ...series,
-      models: [...series.models].sort((a, b) => {
-        const yearDelta = (b.releaseYear ?? 0) - (a.releaseYear ?? 0);
-        if (yearDelta !== 0) return yearDelta;
-        return a.name.localeCompare(b.name, "es");
-      }),
-    }))
+    .map((series) => {
+      const maxYear = Math.max(
+        ...series.models.map((model) => model.releaseYear ?? 0),
+      );
+      const lineRank = Math.max(
+        ...series.models.map(
+          (model) => PRODUCT_LINE_RANK[model.productLine] ?? 0,
+        ),
+      );
+      return {
+        ...series,
+        sort: maxYear * 10 + lineRank,
+        models: [...series.models].sort((a, b) => {
+          const variantDelta =
+            VARIANT_SORT[a.variantType] - VARIANT_SORT[b.variantType];
+          if (variantDelta !== 0) return variantDelta;
+          return a.name.localeCompare(b.name, "es");
+        }),
+      };
+    })
     .sort((a, b) => b.sort - a.sort);
 }
 
 /**
- * Typeahead matching: typing a series (e.g. "iphone 14") returns that
- * series' models; typing a specific model narrows within the series.
- */
-/**
  * matchModelsForSearch
  *
- * Typeahead matching: series queries return that series' models; model queries narrow within series.
+ * Typeahead matching: product-line queries return that line; model queries narrow within it.
  *
  * @param models - Catalog models to search.
  * @param query - User typeahead input.
@@ -127,20 +173,33 @@ export function matchModelsForSearch(
   const q = normalizeSearch(query);
   if (!q) return [];
 
-  if (/\bse\b/.test(q) && !/\d/.test(q)) {
-    return models.filter((model) => /iphone\s+se/i.test(model.name));
+  if (/\bse\b/.test(q)) {
+    const seModels = models.filter(
+      (model) => model.productLine === "IPHONE_SE",
+    );
+    const genMatch = q.match(/\b([23])\b/);
+    if (genMatch) {
+      const generation = Number(genMatch[1]);
+      return seModels.filter((model) => model.generation === generation);
+    }
+    return seModels;
   }
 
-  const seriesMatch = q.match(/(?:iphone\s*)?(\d{1,2})\b/);
+  if (/\bair\b/.test(q)) {
+    return models.filter((model) => model.productLine === "IPHONE_AIR");
+  }
+
+  const seriesMatch = q.match(/(?:iphone\s*)?(1[2-7])\b/);
   if (seriesMatch) {
-    const seriesKey = seriesMatch[1];
+    const generation = Number(seriesMatch[1]);
     const inSeries = models.filter(
-      (model) => getModelSeriesKey(model.name).key === seriesKey,
+      (model) =>
+        model.productLine === "IPHONE" && model.generation === generation,
     );
 
     const remainder = q
       .replace(/\biphone\b/g, " ")
-      .replace(new RegExp(`\\b${seriesKey}\\b`), " ")
+      .replace(new RegExp(`\\b${seriesMatch[1]}\\b`), " ")
       .replace(/\s+/g, " ")
       .trim();
 
@@ -172,7 +231,7 @@ export function browseModelHref(modelId: string) {
 /**
  * browseSeriesHref
  *
- * Builds marketplace browse URL filtered to a generation series key.
+ * Builds marketplace browse URL filtered to a product-line series key.
  *
  * @param seriesKey - Series key from getModelSeriesKey.
  * @returns Path with query string.

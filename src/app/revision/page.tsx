@@ -1,6 +1,6 @@
 /**
  * @file page.tsx
- * @description Reviewer/admin hub linking listing, identity, payments, and review queues.
+ * @description Reviewer/admin hub linking listing, identity, payments, disputes, and review queues.
  * @dependencies Review portal access checks and queue summaries
  */
 
@@ -29,6 +29,7 @@ import {
 } from "@/lib/auth/session";
 import { countListingsForReview } from "@/lib/listings-review";
 import { countPaymentsByStatus } from "@/lib/payments";
+import { countOpsDisputeQueue } from "@/lib/payments/ops-disputes";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
 import { countOpenReviewReports } from "@/lib/reviews";
@@ -130,6 +131,7 @@ export default async function ReviewHubPage() {
     identityPending,
     paymentCounts,
     authorizedPayoutCount,
+    disputeQueueCount,
     recommendedPriceCount,
     reviewReportsOpen,
   ] = await Promise.all([
@@ -137,6 +139,7 @@ export default async function ReviewHubPage() {
     countPendingIdentityVerifications(),
     isAdmin ? countPaymentsByStatus() : Promise.resolve(null),
     isAdmin ? countAuthorizedPayouts() : Promise.resolve(0),
+    isAdmin ? countOpsDisputeQueue() : Promise.resolve(0),
     isAdmin ? countRecommendedPrices() : Promise.resolve(0),
     countOpenReviewReports(),
   ]);
@@ -253,6 +256,14 @@ export default async function ReviewHubPage() {
               }
               icon={CreditCard}
               emphasized={(authorizedPayoutCount ?? 0) > 0}
+            />
+            <QueueCard
+              href="/revision/disputas"
+              title="Disputas y contracargos"
+              description="Pagos congelados, reembolsos ops y pérdidas absorbidas en Cuenta Wompi."
+              count={disputeQueueCount}
+              icon={ShieldAlert}
+              emphasized={disputeQueueCount > 0}
             />
             <QueueCard
               href="/revision/precios"

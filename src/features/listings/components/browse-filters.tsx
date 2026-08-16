@@ -14,6 +14,7 @@ import {
   type BrowseQuery,
 } from "@/features/listings/schemas/browse";
 import { conditionLabels } from "@/features/listings/schemas/listing";
+import { formatStorageLabel } from "@/lib/iphone-catalog";
 import { cn } from "@/lib/utils";
 
 type BrowseFiltersProps = {
@@ -174,7 +175,7 @@ export function BrowseFilters({
               storageId: storage.id,
               page: 1,
             })}
-            label={`${storage.valueGb} GB`}
+            label={formatStorageLabel(storage.valueGb)}
             selected={query.storageId === storage.id}
           />
         ))}

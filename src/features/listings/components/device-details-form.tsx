@@ -3,7 +3,7 @@
 /**
  * @file device-details-form.tsx
  * @description Device details + price step for the sell wizard, with recommended price guide.
- * @dependencies react, @prisma/client, listings actions/schemas, SellerPriceGuide
+ * @dependencies react, @prisma/client, listings actions/schemas, SellerPriceGuide, @/lib/iphone-catalog
  */
 
 import { useActionState, useMemo, useState } from "react";
@@ -24,6 +24,7 @@ import {
   conditionLabels,
 } from "@/features/listings/schemas/listing";
 import type { ListingActionState } from "@/features/listings/types";
+import { formatStorageLabel } from "@/lib/iphone-catalog";
 import { SellerPriceGuide } from "@/features/recommended-prices/components/seller-price-guide";
 import {
   sellerPriceGuideKey,
@@ -40,6 +41,7 @@ type DeviceFormProps = {
   colors: IphoneColor[];
   storages: IphoneStorage[];
   colorIdsByModelId: Record<string, string[]>;
+  storageIdsByModelId: Record<string, string[]>;
   /** Effective admin guide rows keyed by sellerPriceGuideKey. */
   priceGuideByCombo?: Record<string, SellerPriceGuideEntry>;
   listingId?: string;
@@ -106,6 +108,7 @@ export function DeviceDetailsForm({
   colors,
   storages,
   colorIdsByModelId,
+  storageIdsByModelId,
   priceGuideByCombo = {},
   listingId,
   defaults,
@@ -137,6 +140,12 @@ export function DeviceDetailsForm({
     const allowed = new Set(colorIdsByModelId[selectedModelId] ?? []);
     return colors.filter((color) => allowed.has(color.id));
   }, [selectedModelId, colorIdsByModelId, colors]);
+
+  const availableStorages = useMemo(() => {
+    if (!selectedModelId) return [];
+    const allowed = new Set(storageIdsByModelId[selectedModelId] ?? []);
+    return storages.filter((storage) => allowed.has(storage.id));
+  }, [selectedModelId, storageIdsByModelId, storages]);
 
   const [priceInput, setPriceInput] = useState(
     defaults?.price != null && defaults.price > 0 ? String(defaults.price) : "",
@@ -170,114 +179,163 @@ export function DeviceDetailsForm({
   ]);
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="iphoneModelId">Modelo</Label>
-        <Select
-          id="iphoneModelId"
-          name="iphoneModelId"
-          required
-          value={selectedModelId}
-          onChange={(event) => {
-            const nextModelId = event.target.value;
-            setSelectedModelId(nextModelId);
-            const allowed = new Set(colorIdsByModelId[nextModelId] ?? []);
-            setSelectedColorId((current) =>
-              allowed.has(current) ? current : "",
-            );
-          }}
-        >
-          <option value="" disabled>
-            Selecciona
-          </option>
-          {models.map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.name}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form
+      action={formAction}
+      className="grid gap-6 lg:grid-cols-2 lg:items-start"
+    >
+      <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="iphoneStorageId">Almacenamiento</Label>
+          <Label htmlFor="iphoneModelId">Modelo</Label>
           <Select
-            id="iphoneStorageId"
-            name="iphoneStorageId"
+            id="iphoneModelId"
+            name="iphoneModelId"
             required
-            value={selectedStorageId}
-            onChange={(event) => setSelectedStorageId(event.target.value)}
+            value={selectedModelId}
+            onChange={(event) => {
+              const nextModelId = event.target.value;
+              setSelectedModelId(nextModelId);
+              const allowedColors = new Set(
+                colorIdsByModelId[nextModelId] ?? [],
+              );
+              setSelectedColorId((current) =>
+                allowedColors.has(current) ? current : "",
+              );
+              const allowedStorages = new Set(
+                storageIdsByModelId[nextModelId] ?? [],
+              );
+              setSelectedStorageId((current) =>
+                allowedStorages.has(current) ? current : "",
+              );
+            }}
           >
             <option value="" disabled>
               Selecciona
             </option>
-            {storages.map((storage) => (
-              <option key={storage.id} value={storage.id}>
-                {storage.valueGb} GB
+            {models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name}
               </option>
             ))}
           </Select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="iphoneColorId">Color</Label>
-          <Select
-            id="iphoneColorId"
-            name="iphoneColorId"
-            required
-            disabled={!selectedModelId || availableColors.length === 0}
-            value={selectedColorId}
-            onChange={(event) => setSelectedColorId(event.target.value)}
-          >
-            <option value="" disabled>
-              {!selectedModelId
-                ? "Elige un modelo primero"
-                : availableColors.length === 0
-                  ? "Sin colores para este modelo"
-                  : "Selecciona"}
-            </option>
-            {availableColors.map((color) => (
-              <option key={color.id} value={color.id}>
-                {color.name}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="iphoneStorageId">Almacenamiento</Label>
+            <Select
+              id="iphoneStorageId"
+              name="iphoneStorageId"
+              required
+              disabled={!selectedModelId || availableStorages.length === 0}
+              value={selectedStorageId}
+              onChange={(event) => setSelectedStorageId(event.target.value)}
+            >
+              <option value="" disabled>
+                {!selectedModelId
+                  ? "Elige un modelo primero"
+                  : availableStorages.length === 0
+                    ? "Sin capacidades para este modelo"
+                    : "Selecciona"}
               </option>
-            ))}
-          </Select>
+              {availableStorages.map((storage) => (
+                <option key={storage.id} value={storage.id}>
+                  {formatStorageLabel(storage.valueGb)}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="iphoneColorId">Color</Label>
+            <Select
+              id="iphoneColorId"
+              name="iphoneColorId"
+              required
+              disabled={!selectedModelId || availableColors.length === 0}
+              value={selectedColorId}
+              onChange={(event) => setSelectedColorId(event.target.value)}
+            >
+              <option value="" disabled>
+                {!selectedModelId
+                  ? "Elige un modelo primero"
+                  : availableColors.length === 0
+                    ? "Sin colores para este modelo"
+                    : "Selecciona"}
+              </option>
+              {availableColors.map((color) => (
+                <option key={color.id} value={color.id}>
+                  {color.name}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="condition">Estado</Label>
+            <Select
+              id="condition"
+              name="condition"
+              required
+              value={selectedCondition}
+              onChange={(event) =>
+                setSelectedCondition(event.target.value as Condition)
+              }
+            >
+              {(Object.keys(conditionLabels) as Condition[]).map((key) => (
+                <option key={key} value={key}>
+                  {conditionLabels[key]}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="batteryHealth">Salud de batería (%)</Label>
+            <Input
+              id="batteryHealth"
+              name="batteryHealth"
+              type="number"
+              min={70}
+              max={100}
+              required
+              defaultValue={defaults?.batteryHealth ?? 90}
+            />
+          </div>
+        </div>
+
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">Accesorios</legend>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="hasBox"
+              defaultChecked={defaults?.hasBox}
+              className="size-4 rounded border"
+            />
+            Caja original
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="hasCharger"
+              defaultChecked={defaults?.hasCharger}
+              className="size-4 rounded border"
+            />
+            Cargador
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="hasReceipt"
+              defaultChecked={defaults?.hasReceipt}
+              className="size-4 rounded border"
+            />
+            Factura / recibo
+          </label>
+        </fieldset>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="condition">Estado</Label>
-          <Select
-            id="condition"
-            name="condition"
-            required
-            value={selectedCondition}
-            onChange={(event) =>
-              setSelectedCondition(event.target.value as Condition)
-            }
-          >
-            {(Object.keys(conditionLabels) as Condition[]).map((key) => (
-              <option key={key} value={key}>
-                {conditionLabels[key]}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="batteryHealth">Salud de batería (%)</Label>
-          <Input
-            id="batteryHealth"
-            name="batteryHealth"
-            type="number"
-            min={70}
-            max={100}
-            required
-            defaultValue={defaults?.batteryHealth ?? 90}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="price">Precio del equipo (COP)</Label>
           <Input
@@ -338,58 +396,34 @@ export function DeviceDetailsForm({
             </div>
           </dl>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Descripción</Label>
-        <Textarea
-          id="description"
-          name="description"
-          defaultValue={defaults?.description ?? ""}
-          placeholder="Cuéntales a los compradores el estado real del equipo."
-        />
+        <div className="space-y-2">
+          <Label htmlFor="description">Descripción</Label>
+          <Textarea
+            id="description"
+            name="description"
+            defaultValue={defaults?.description ?? ""}
+            placeholder="Cuéntales a los compradores el estado real del equipo."
+          />
+        </div>
       </div>
-
-      <fieldset className="space-y-2">
-        <legend className="text-sm font-medium">Accesorios</legend>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="hasBox"
-            defaultChecked={defaults?.hasBox}
-            className="size-4 rounded border"
-          />
-          Caja original
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="hasCharger"
-            defaultChecked={defaults?.hasCharger}
-            className="size-4 rounded border"
-          />
-          Cargador
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="hasReceipt"
-            defaultChecked={defaults?.hasReceipt}
-            className="size-4 rounded border"
-          />
-          Factura / recibo
-        </label>
-      </fieldset>
 
       {state?.ok === false ? (
-        <p className="text-destructive text-sm" role="alert">
+        <p className="text-destructive text-sm lg:col-span-2" role="alert">
           {state.error}
         </p>
       ) : null}
 
-      <Button type="submit" fullWidth loading={pending}>
-        Continuar
-      </Button>
+      <div className="lg:col-span-2">
+        <Button
+          type="submit"
+          fullWidth
+          className="lg:max-w-xs"
+          loading={pending}
+        >
+          Continuar
+        </Button>
+      </div>
     </form>
   );
 }

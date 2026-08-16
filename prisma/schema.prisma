@@ -40,6 +40,24 @@ enum Condition {
   POOR
 }
 
+/// Independent iPhone product lines. Numbered models, SE, and Air are not the same line.
+enum IphoneProductLine {
+  IPHONE
+  IPHONE_SE
+  IPHONE_AIR
+}
+
+/// Commercial variant within a product line (not a generation by itself).
+enum IphoneVariantType {
+  STANDARD
+  MINI
+  PLUS
+  PRO
+  PRO_MAX
+  E
+  AIR
+}
+
 enum IdentityVerificationStatus {
   DRAFT
   PENDING
@@ -217,16 +235,28 @@ model IdentityVerification {
 }
 
 model IphoneModel {
-  id          String            @id @default(cuid())
-  name        String            @unique
-  slug        String            @unique
-  modelNumber String?
-  releaseYear Int?
-  createdAt   DateTime          @default(now())
-  listings    Listing[]
-  modelColors IphoneModelColor[]
+  id            String             @id @default(cuid())
+  name          String             @unique
+  slug          String             @unique
+  modelNumber   String?
+  /// Independent line: numbered iPhone, SE, or Air. SE is never a 13/14 variant.
+  productLine   IphoneProductLine
+  /// Generation within the product line (SE 2/3, numbered 12–17, Air 1).
+  generation    Int
+  variantType   IphoneVariantType
+  releaseYear   Int?
+  /// Stable catalog order (1 = oldest in scope). Higher = newer for pickers.
+  sortOrder     Int
+  createdAt     DateTime           @default(now())
+  listings      Listing[]
+  modelColors   IphoneModelColor[]
+  modelStorages IphoneModelStorage[]
   recommendedPrices RecommendedPrice[]
 
+  @@unique([productLine, generation, variantType])
+  @@index([productLine, generation])
+  @@index([sortOrder])
+  @@index([releaseYear])
   @@map("iphone_models")
 }
 
@@ -255,11 +285,26 @@ model IphoneModelColor {
   @@map("iphone_model_colors")
 }
 
+/// Allowed storage capacities per iPhone model (listing wizard filter).
+model IphoneModelStorage {
+  id              String        @id @default(cuid())
+  iphoneModelId   String
+  iphoneModel     IphoneModel   @relation(fields: [iphoneModelId], references: [id], onDelete: Cascade)
+  iphoneStorageId String
+  iphoneStorage   IphoneStorage @relation(fields: [iphoneStorageId], references: [id], onDelete: Cascade)
+
+  @@unique([iphoneModelId, iphoneStorageId])
+  @@index([iphoneModelId])
+  @@index([iphoneStorageId])
+  @@map("iphone_model_storages")
+}
+
 model IphoneStorage {
-  id        String    @id @default(cuid())
-  valueGb   Int       @unique
-  createdAt DateTime  @default(now())
-  listings  Listing[]
+  id            String               @id @default(cuid())
+  valueGb       Int                  @unique
+  createdAt     DateTime             @default(now())
+  listings      Listing[]
+  modelStorages IphoneModelStorage[]
   recommendedPrices RecommendedPrice[]
 
   @@map("iphone_storages")

@@ -60,6 +60,7 @@ export default async function EditDevicePage({ params }: PageProps) {
           colors={catalog.colors}
           storages={catalog.storages}
           colorIdsByModelId={catalog.colorIdsByModelId}
+          storageIdsByModelId={catalog.storageIdsByModelId}
           priceGuideByCombo={priceGuideByCombo}
           listingId={listing.id}
           defaults={{

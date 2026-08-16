@@ -38,7 +38,7 @@ main (Jul 19)
 ## Current focus
 
 1. Finish & harden Phase **12** / **13** on `mvp/phases-12-13` (commit, stage smoke, merge toward `main`)
-2. Soft-launch hardening (chargeback / refund ops as volume grows)
+2. Chargeback / refund ops (`/revision/disputas` + Wompi `VOIDED` ingestion) — landing on this branch
 3. Small polish still open inside earlier phases: public counters (3/9), order party cards
 4. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
@@ -103,7 +103,7 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 1. Harden & merge Phase 12 + 13 work on `mvp/phases-12-13` → `main`
 2. Public activity counters on profiles + order party cards (Phase 3 / 9)
-3. Soft-launch / chargeback-refund ops as needed
+3. Chargeback / refund ops (`/revision/disputas`) — in working tree on `mvp/phases-12-13`
 4. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)

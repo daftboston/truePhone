@@ -7,13 +7,14 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Condition } from "@prisma/client";
 
 import { upsertRecommendedPriceAction } from "@/features/recommended-prices/actions/recommended-prices";
 import type { RecommendedPriceActionState } from "@/features/recommended-prices/types";
 import { conditionLabels } from "@/features/listings/schemas/listing";
+import { formatStorageLabel } from "@/lib/iphone-catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 export type RecommendedPriceFormCatalog = {
   models: { id: string; name: string }[];
   storages: { id: string; valueGb: number }[];
+  storageIdsByModelId: Record<string, string[]>;
 };
 
 export type RecommendedPriceFormValues = {
@@ -77,6 +79,18 @@ export function RecommendedPriceForm({
   >(upsertRecommendedPriceAction, null);
 
   const isEdit = Boolean(initial?.id);
+  const [selectedModelId, setSelectedModelId] = useState(
+    initial?.iphoneModelId ?? "",
+  );
+  const [selectedStorageId, setSelectedStorageId] = useState(
+    initial?.iphoneStorageId ?? "",
+  );
+
+  const availableStorages = useMemo(() => {
+    if (!selectedModelId) return [];
+    const allowed = new Set(catalog.storageIdsByModelId[selectedModelId] ?? []);
+    return catalog.storages.filter((storage) => allowed.has(storage.id));
+  }, [catalog.storageIdsByModelId, catalog.storages, selectedModelId]);
 
   // After success, refresh the table; drop `?edit=` when leaving edit mode.
   useEffect(() => {
@@ -99,8 +113,18 @@ export function RecommendedPriceForm({
           <Select
             id="iphoneModelId"
             name="iphoneModelId"
-            defaultValue={initial?.iphoneModelId ?? ""}
+            value={selectedModelId}
             required
+            onChange={(event) => {
+              const nextModelId = event.target.value;
+              setSelectedModelId(nextModelId);
+              const allowed = new Set(
+                catalog.storageIdsByModelId[nextModelId] ?? [],
+              );
+              setSelectedStorageId((current) =>
+                allowed.has(current) ? current : "",
+              );
+            }}
             key={`model-${initial?.id ?? "new"}-${initial?.iphoneModelId ?? ""}`}
           >
             <option value="" disabled>
@@ -124,16 +148,22 @@ export function RecommendedPriceForm({
           <Select
             id="iphoneStorageId"
             name="iphoneStorageId"
-            defaultValue={initial?.iphoneStorageId ?? ""}
+            value={selectedStorageId}
             required
+            disabled={!selectedModelId || availableStorages.length === 0}
+            onChange={(event) => setSelectedStorageId(event.target.value)}
             key={`storage-${initial?.id ?? "new"}-${initial?.iphoneStorageId ?? ""}`}
           >
             <option value="" disabled>
-              Selecciona GB
+              {!selectedModelId
+                ? "Elige un modelo primero"
+                : availableStorages.length === 0
+                  ? "Sin capacidades para este modelo"
+                  : "Selecciona GB"}
             </option>
-            {catalog.storages.map((storage) => (
+            {availableStorages.map((storage) => (
               <option key={storage.id} value={storage.id}>
-                {storage.valueGb} GB
+                {formatStorageLabel(storage.valueGb)}
               </option>
             ))}
           </Select>

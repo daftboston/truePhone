@@ -20,6 +20,7 @@ import {
 } from "@/features/listings/schemas/listing";
 import { claimListingForReviewAction } from "@/features/listings/actions/review";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { formatStorageLabel } from "@/lib/iphone-catalog";
 import {
   findPossibleDuplicateListings,
   getListingForReview,
@@ -189,7 +190,7 @@ export default async function ListingReviewDetailPage({ params }: PageProps) {
               <dd className="text-foreground">{listing.iphoneColor.name}</dd>
               <dt>Almacenamiento</dt>
               <dd className="text-foreground">
-                {listing.iphoneStorage.valueGb} GB
+                {formatStorageLabel(listing.iphoneStorage.valueGb)}
               </dd>
               <dt>Condición</dt>
               <dd className="text-foreground">

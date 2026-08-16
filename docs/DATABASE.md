@@ -2,7 +2,7 @@
 
 **Project:** TruePhone  
 **Version:** 1.0  
-**Last Updated:** July 2026  
+**Last Updated:** August 2026  
 **Source of schema:** `prisma/schema.prisma`
 
 ---
@@ -67,6 +67,14 @@ Listings must not skip forward states in product workflows. Public browse only s
 
 `FLAWLESS` | `EXCELLENT` | `GOOD` | `FAIR` | `POOR`
 
+## IphoneProductLine
+
+`IPHONE` | `IPHONE_SE` | `IPHONE_AIR`
+
+## IphoneVariantType
+
+`STANDARD` | `MINI` | `PLUS` | `PRO` | `PRO_MAX` | `E` | `AIR`
+
 ## NotificationType
 
 `BUYER_RECEIVED_CONFIRM` | `BUYER_CONFIRM_REMINDER`
@@ -96,13 +104,31 @@ Cédula + selfie submission for seller identity (Phase 4).
 
 ## IphoneModel / IphoneColor / IphoneStorage
 
-Catalog lookup tables for listing attributes.
+Catalog lookup tables for listing attributes. The catalog is **product-line first**, not “generation → variant” for every iPhone.
+
+**`IphoneProductLine`:** `IPHONE` | `IPHONE_SE` | `IPHONE_AIR`
+
+Numbered models (12–17, including `e` variants), the SE line, and iPhone Air are independent lines. SE must never be stored as an iPhone 13/14 variant. Air must never be stored as an iPhone 17 variant.
+
+**`IphoneModel` fields:**
+
+| Field         | Meaning                                                              |
+| ------------- | -------------------------------------------------------------------- |
+| `productLine` | Independent commercial line                                          |
+| `generation`  | Generation **within that line** (SE 2/3, numbered 12–17, Air 1)      |
+| `variantType` | `STANDARD` \| `MINI` \| `PLUS` \| `PRO` \| `PRO_MAX` \| `E` \| `AIR` |
+| `releaseYear` | Commercial introduction year                                         |
+| `sortOrder`   | Stable catalog order (1 = oldest in the 2020+ set)                   |
+
+Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts` and are applied by `prisma/seed.ts`.
 
 **`IphoneModelColor`** joins models to their allowed colors so `/vender` only offers colors that belong to the selected model.
 
+**`IphoneModelStorage`** joins models to their allowed capacities (GB) the same way. Listings and recommended prices must use a storage that exists for that model.
+
 ## Listing
 
-Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flags, review metadata, and `searchVector` (Postgres `tsvector`) for V1 search.
+Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flags, review metadata, and `searchVector` (Postgres `tsvector`) for V1 search. `carrier` is set only when `unlocked = false` and must be a Colombian operator (`Claro`, `Movistar`, `Tigo`, `WOM`, `ETB`).
 
 **Public browse (Phase 7):** only `status = PUBLISHED` and `deletedAt IS NULL`. Helpers live in `src/lib/listings-marketplace.ts` (`listFeaturedListings`, `listPublishedListings`, `getPublishedListingBySlug`).
 
@@ -186,7 +212,7 @@ Purchase / reserve / payment lifecycle (Phases 9–10b).
 | `sellerAmountPesos` / `premiumShippingFeePesos` / `sellerFeePesos`    | Seller-side snapshots (`sellerFeePesos` = 0 in MVP)                              |
 | `fundsHeldAt` / `payoutAuthorizedAt` / `payoutCompletedAt`            | Financial Core settlement                                                        |
 | `buyerConfirmedAt` / `buyerConfirmDeadlineAt`                         | Confirm or 24h auto-release after buyer marks received                           |
-| `payoutFrozen`                                                        | Dispute / chargeback freeze                                                      |
+| `payoutFrozen`                                                        | Dispute / chargeback freeze; ops queue at `/revision/disputas`                   |
 | `sellerFulfillmentAbandonedAt`                                        | Seller cancel / no-ship after pay                                                |
 | `cancelReason` / `cancelledAt` / `cancelledById`                      | Set on cancel                                                                    |
 | `paidAt`                                                              | Set when Compra Garantizada payment succeeds                                     |
@@ -230,13 +256,13 @@ Table: `payment_webhook_events`.
 
 Append-only money facts (Phase 10b). Financial Core is the only writer.
 
-| Field                    | Notes                                                                                    |
-| ------------------------ | ---------------------------------------------------------------------------------------- |
-| `orderId`                | FK → Order                                                                               |
-| `paymentId` / `payoutId` | Optional links                                                                           |
-| `type`                   | `PAYMENT_APPROVED`, `HOLD_CREATED`, `FEE_SNAPSHOT`, payout/refund/dispute/confirm events |
-| `amountPesos`            | Integer COP                                                                              |
-| `memo` / `metadata`      | Human + structured context                                                               |
+| Field                    | Notes                                                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `orderId`                | FK → Order                                                                                                  |
+| `paymentId` / `payoutId` | Optional links                                                                                              |
+| `type`                   | `PAYMENT_APPROVED`, `HOLD_CREATED`, `FEE_SNAPSHOT`, payout/refund/`CHARGEBACK_*`/`DISPUTE_*`/confirm events |
+| `amountPesos`            | Integer COP                                                                                                 |
+| `memo` / `metadata`      | Human + structured context                                                                                  |
 
 Table: `ledger_entries`.
 
@@ -328,7 +354,7 @@ Table: `notification_preferences`.
 Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`):
 
 - **AuditLog** — reviewer and admin actions
-- **Dispute** — first-class dispute entity (freeze today is `Order.payoutFrozen` + Ledger)
+- **Dispute** — first-class dispute entity (MVP freeze is `Order.payoutFrozen` + Ledger; ops UI at `/revision/disputas`)
 
 ---
 

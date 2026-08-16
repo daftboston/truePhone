@@ -25,6 +25,7 @@ import { conditionLabels } from "@/features/listings/schemas/listing";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getAuthUser, getCurrentProfile } from "@/lib/auth/session";
 import { isListingFavorited } from "@/lib/favorites";
+import { formatStorageLabel } from "@/lib/iphone-catalog";
 import {
   getPublishedListingBySlug,
   listRelatedPublishedListings,
@@ -51,7 +52,7 @@ export async function generateMetadata({
   const price = listing.finalPrice ?? listing.price;
   const description =
     listing.description?.trim() ||
-    `${listing.iphoneModel.name} · ${listing.iphoneStorage.valueGb} GB · ${listing.iphoneColor.name}. Revisado en TruePhone.`;
+    `${listing.iphoneModel.name} · ${formatStorageLabel(listing.iphoneStorage.valueGb)} · ${listing.iphoneColor.name}. Revisado en TruePhone.`;
 
   return {
     title: listing.title,
@@ -130,10 +131,7 @@ export default async function PublicListingPage({ params }: PageProps) {
   const isOwnListing = current?.profile.id === listing.sellerId;
 
   return (
-    <AppShell
-      className="pb-24 md:pb-0"
-      mainClassName="max-w-5xl gap-8 md:gap-10"
-    >
+    <AppShell className="pb-24 md:pb-0" mainClassName="gap-8 md:gap-10">
       <RecordRecentlyViewed slug={listing.slug} title={listing.title} />
       <div className="space-y-2">
         <Button asChild variant="outline" size="sm">
@@ -163,7 +161,8 @@ export default async function PublicListingPage({ params }: PageProps) {
               ) : null}
             </div>
             <p className="text-muted-foreground text-sm">
-              {listing.iphoneModel.name} · {listing.iphoneStorage.valueGb} GB ·{" "}
+              {listing.iphoneModel.name} ·{" "}
+              {formatStorageLabel(listing.iphoneStorage.valueGb)} ·{" "}
               {listing.iphoneColor.name}
             </p>
           </div>
@@ -272,7 +271,7 @@ export default async function PublicListingPage({ params }: PageProps) {
           <div className="flex justify-between gap-4 sm:block sm:space-y-1">
             <dt>Almacenamiento</dt>
             <dd className="text-foreground font-medium">
-              {listing.iphoneStorage.valueGb} GB
+              {formatStorageLabel(listing.iphoneStorage.valueGb)}
             </dd>
           </div>
           <div className="flex justify-between gap-4 sm:block sm:space-y-1">

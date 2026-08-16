@@ -17,6 +17,7 @@ import {
   listingStatusLabel,
 } from "@/features/listings/schemas/listing";
 import { publicListingPath } from "@/lib/listings-marketplace";
+import { formatStorageLabel } from "@/lib/iphone-catalog";
 import type { getOwnedListing } from "@/lib/listings";
 import { prisma } from "@/lib/db";
 
@@ -164,7 +165,7 @@ export async function SellerListingSummary({
             <dd className="text-foreground">{listing.iphoneColor.name}</dd>
             <dt>Almacenamiento</dt>
             <dd className="text-foreground">
-              {listing.iphoneStorage.valueGb} GB
+              {formatStorageLabel(listing.iphoneStorage.valueGb)}
             </dd>
             <dt>Condición</dt>
             <dd className="text-foreground">

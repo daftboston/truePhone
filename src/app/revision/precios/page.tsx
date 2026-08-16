@@ -8,7 +8,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { DeleteRecommendedPriceButton } from "@/features/recommended-prices/comp
 import { RecommendedPriceForm } from "@/features/recommended-prices/components/recommended-price-form";
 import { getCurrentProfile, roleLabel } from "@/lib/auth/session";
 import { formatOrderMoney } from "@/lib/format-money";
+import { formatStorageLabel } from "@/lib/iphone-catalog";
 import { getCatalog } from "@/lib/listings";
 import {
   getRecommendedPriceById,
@@ -51,7 +51,7 @@ export default async function AdminRecommendedPricesPage({
 
   if (current.profile.role !== "ADMIN") {
     return (
-      <AppShell mainClassName="max-w-lg justify-center">
+      <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
           description="Solo administradores pueden gestionar la tabla de precios de referencia."
@@ -61,7 +61,7 @@ export default async function AdminRecommendedPricesPage({
             </Button>
           }
         />
-      </AppShell>
+      </div>
     );
   }
 
@@ -81,6 +81,7 @@ export default async function AdminRecommendedPricesPage({
       id: storage.id,
       valueGb: storage.valueGb,
     })),
+    storageIdsByModelId: catalog.storageIdsByModelId,
   };
 
   const initial = editing
@@ -99,11 +100,8 @@ export default async function AdminRecommendedPricesPage({
     : null;
 
   return (
-    <AppShell mainClassName="max-w-4xl gap-8">
-      <div className="space-y-3">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/revision">← Cola de confianza</Link>
-        </Button>
+    <div className="space-y-8">
+      <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-foreground text-xl font-semibold tracking-tight">
             Precios de referencia
@@ -130,7 +128,11 @@ export default async function AdminRecommendedPricesPage({
               : "Si la combinación ya existe, se actualiza el precio de referencia."}
           </p>
         </div>
-        <RecommendedPriceForm catalog={formCatalog} initial={initial} />
+        <RecommendedPriceForm
+          key={initial?.id ?? "new"}
+          catalog={formCatalog}
+          initial={initial}
+        />
       </section>
 
       <section className="space-y-3" aria-label="Tabla de precios">
@@ -163,7 +165,7 @@ export default async function AdminRecommendedPricesPage({
               <tbody>
                 {rows.map((row) => {
                   const effective = isRecommendedPriceEffective(row);
-                  const label = `${row.iphoneModel.name} ${row.iphoneStorage.valueGb} GB · ${conditionLabels[row.condition]}`;
+                  const label = `${row.iphoneModel.name} ${formatStorageLabel(row.iphoneStorage.valueGb)} · ${conditionLabels[row.condition]}`;
                   const band =
                     row.minPriceCop != null || row.maxPriceCop != null
                       ? `${row.minPriceCop != null ? formatOrderMoney(row.minPriceCop) : "—"} – ${row.maxPriceCop != null ? formatOrderMoney(row.maxPriceCop) : "—"}`
@@ -181,7 +183,7 @@ export default async function AdminRecommendedPricesPage({
                         {row.iphoneModel.name}
                       </td>
                       <td className="px-3 py-2.5 tabular-nums">
-                        {row.iphoneStorage.valueGb}
+                        {formatStorageLabel(row.iphoneStorage.valueGb)}
                       </td>
                       <td className="px-3 py-2.5">
                         {conditionLabels[row.condition]}
@@ -220,6 +222,6 @@ export default async function AdminRecommendedPricesPage({
           </div>
         )}
       </section>
-    </AppShell>
+    </div>
   );
 }

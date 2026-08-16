@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Public barrel for TruePhone Financial Core (holds, fees, ledger, payouts, refunds).
+ * @description Public barrel for TruePhone Financial Core (holds, fees, ledger, payouts, refunds, chargebacks).
  * @dependencies financial-core modules; see docs/FINANCIAL_MODEL.md
  *
  * Marketplace / Shipping must not call Wompi payout or refund APIs directly.
@@ -49,3 +49,13 @@ export {
   confirmManualPayoutCompleted,
   processExpiredBuyerConfirmations,
 } from "@/lib/financial-core/settlement";
+export {
+  recordChargebackReceived,
+  authorizeOpsRefund,
+  resolveDisputeForSeller,
+  markChargebackAbsorbed,
+  type ChargebackSource,
+  type OpsRefundReason,
+  type OpsListingOutcome,
+  type FinancialMoneyResult,
+} from "@/lib/financial-core/chargebacks";

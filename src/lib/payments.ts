@@ -11,7 +11,10 @@ import {
   type PaymentStatus,
 } from "@prisma/client";
 
-import { recordPaymentHold } from "@/lib/financial-core";
+import {
+  recordChargebackReceived,
+  recordPaymentHold,
+} from "@/lib/financial-core";
 import { prisma } from "@/lib/db";
 import { resolvePaymentProvider } from "@/lib/payments/resolve-provider";
 import {
@@ -548,6 +551,7 @@ type WompiWebhookBody = {
  * handleWompiWebhook
  *
  * Verifies Wompi event checksum and applies payment status transitions.
+ * VOIDED after a succeeded collection is ingested as a chargeback (Financial Core).
  *
  * @param input - Raw webhook body and headers/secrets.
  * @returns Handling result.
@@ -662,16 +666,25 @@ export async function handleWompiWebhook(input: {
       tx.status === "ERROR" ||
       tx.status === "VOIDED"
     ) {
-      if (tx.status === "VOIDED" && payment.status === "SUCCEEDED") {
-        await prisma.payment.update({
-          where: { id: payment.id },
-          data: {
-            status: "REFUNDED",
-            refundedAt: new Date(),
-            refundAmount: payment.amount,
-            providerPaymentId: tx.id,
-          },
+      if (
+        tx.status === "VOIDED" &&
+        (payment.status === "SUCCEEDED" || payment.status === "REFUNDED")
+      ) {
+        // Unexpected void after collection = chargeback / bank reversal.
+        const amountPesos =
+          typeof tx.amount_in_cents === "number"
+            ? wompiCentsToPesos(tx.amount_in_cents)
+            : undefined;
+        const result = await recordChargebackReceived({
+          paymentId: payment.id,
+          amountPesos,
+          providerReference: tx.id,
+          source: "webhook",
+          memo: tx.status_message || "Wompi VOIDED after collection",
         });
+        if (!result.ok) {
+          throw new Error(result.error);
+        }
       } else {
         await markPaymentFailed({
           paymentId: payment.id,

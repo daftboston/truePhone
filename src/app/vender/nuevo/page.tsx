@@ -63,6 +63,7 @@ export default async function NewListingPage() {
           colors={catalog.colors}
           storages={catalog.storages}
           colorIdsByModelId={catalog.colorIdsByModelId}
+          storageIdsByModelId={catalog.storageIdsByModelId}
           priceGuideByCombo={priceGuideByCombo}
         />
       </ListingWizardShell>
