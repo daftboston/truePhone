@@ -24,7 +24,8 @@ type ListingWizardShellProps = {
 /**
  * ListingWizardShell
  *
- * Renders the Listing Wizard Shell UI for listings.
+ * Wide sell-wizard chrome: progress header, step content, and a sticky
+ * Atrás / Guardar y salir bar. Desktop steps use two-column forms inside.
  *
  * @param props - ListingWizardShell props.
  * @returns ListingWizardShell React element.
@@ -41,7 +42,7 @@ export function ListingWizardShell({
   const reason = rejectionReason?.trim();
 
   return (
-    <div className={cn("mx-auto w-full max-w-lg space-y-6", className)}>
+    <div className={cn("flex min-h-0 w-full flex-1 flex-col gap-6", className)}>
       <StepProgressHeader
         step={step}
         totalSteps={LISTING_STEPS.length}
@@ -61,10 +62,14 @@ export function ListingWizardShell({
           </p>
         </aside>
       ) : null}
-      {children}
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="min-w-0 flex-1">{children}</div>
+      <div className="bg-background/95 sticky bottom-20 z-10 -mx-4 mt-auto flex flex-col gap-2 border-t px-4 py-3 sm:flex-row md:bottom-0 md:-mx-6 md:px-6">
         {listingId && step > 1 ? (
-          <Button variant="outline" asChild className="flex-1">
+          <Button
+            variant="outline"
+            asChild
+            className="flex-1 lg:min-w-40 lg:flex-none"
+          >
             <Link
               href={`/vender/${listingId}/${LISTING_STEPS[step - 2]?.pathSuffix ?? "dispositivo"}`}
             >
@@ -72,7 +77,11 @@ export function ListingWizardShell({
             </Link>
           </Button>
         ) : null}
-        <Button variant="ghost" asChild className="flex-1">
+        <Button
+          variant="ghost"
+          asChild
+          className="flex-1 lg:min-w-40 lg:flex-none"
+        >
           <Link href="/vender">Guardar y salir</Link>
         </Button>
       </div>

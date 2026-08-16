@@ -8,7 +8,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,7 +49,7 @@ export default async function AdminPaymentsPage() {
 
   if (current.profile.role !== "ADMIN") {
     return (
-      <AppShell mainClassName="max-w-lg justify-center">
+      <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
           description="Solo administradores pueden ver el historial de pagos."
@@ -60,7 +59,7 @@ export default async function AdminPaymentsPage() {
             </Button>
           }
         />
-      </AppShell>
+      </div>
     );
   }
 
@@ -77,11 +76,8 @@ export default async function AdminPaymentsPage() {
   const refunded = counts.REFUNDED;
 
   return (
-    <AppShell mainClassName="max-w-3xl gap-8">
-      <div className="space-y-3">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/revision">← Cola de confianza</Link>
-        </Button>
+    <div className="space-y-8">
+      <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-foreground text-xl font-semibold tracking-tight">
             Pagos
@@ -266,6 +262,6 @@ export default async function AdminPaymentsPage() {
           </ul>
         )}
       </section>
-    </AppShell>
+    </div>
   );
 }

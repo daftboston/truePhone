@@ -54,8 +54,11 @@ export function SecurityForm({ listingId, defaults }: SecurityFormProps) {
   const lockedToOperator = unlocked === "false";
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4 text-sm">
+    <form
+      action={formAction}
+      className="grid gap-4 lg:grid-cols-2 lg:items-start"
+    >
+      <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4 text-sm lg:col-span-2">
         <p className="text-foreground font-medium">IMEI y Activation Lock</p>
         <p className="text-muted-foreground">
           Encuentra el IMEI en Ajustes → General → Información. No publicamos el
@@ -142,17 +145,26 @@ export function SecurityForm({ listingId, defaults }: SecurityFormProps) {
             </p>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <div className="hidden lg:block" />
+      )}
 
       {state?.ok === false ? (
-        <p className="text-destructive text-sm" role="alert">
+        <p className="text-destructive text-sm lg:col-span-2" role="alert">
           {state.error}
         </p>
       ) : null}
 
-      <Button type="submit" fullWidth loading={pending}>
-        Continuar
-      </Button>
+      <div className="lg:col-span-2">
+        <Button
+          type="submit"
+          fullWidth
+          className="lg:max-w-xs"
+          loading={pending}
+        >
+          Continuar
+        </Button>
+      </div>
     </form>
   );
 }

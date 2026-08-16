@@ -46,7 +46,7 @@ export default async function ListingPossessionPage({ params }: PageProps) {
     (await ensurePossessionChallenge(listing.id));
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={4}
         title="Prueba de posesión"

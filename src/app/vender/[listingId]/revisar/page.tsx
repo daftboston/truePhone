@@ -46,7 +46,7 @@ export default async function ListingReviewPage({ params }: PageProps) {
   ).length;
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={5}
         title="Revisa y envía"

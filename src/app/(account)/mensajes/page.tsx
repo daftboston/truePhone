@@ -10,7 +10,10 @@ import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { ConversationList } from "@/features/messages/components/conversation-list";
-import { requireCurrentProfile } from "@/lib/auth/session";
+import {
+  canAccessReviewPortal,
+  requireCurrentProfile,
+} from "@/lib/auth/session";
 import { listConversationsForUser } from "@/lib/messages";
 
 export const metadata: Metadata = {
@@ -51,7 +54,11 @@ export default async function MessagesInboxPage() {
           }
         />
       ) : (
-        <ConversationList conversations={conversations} />
+        <ConversationList
+          conversations={conversations}
+          viewerId={current.profile.id}
+          viewerCanReview={canAccessReviewPortal(current.profile.role)}
+        />
       )}
     </>
   );

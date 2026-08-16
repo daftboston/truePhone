@@ -135,7 +135,7 @@ export async function SellerListingSummary({
       {gallery.length > 0 ? (
         <section className="space-y-2">
           <h2 className="text-foreground text-sm font-semibold">Fotos</h2>
-          <ul className="grid grid-cols-3 gap-2">
+          <ul className="grid grid-cols-3 gap-2 lg:grid-cols-4">
             {gallery.map((image, index) => (
               <li
                 key={image.id}
@@ -146,7 +146,7 @@ export async function SellerListingSummary({
                   alt={`Foto ${index + 1}`}
                   fill
                   className="object-cover"
-                  sizes="120px"
+                  sizes="(max-width: 1024px) 30vw, 180px"
                 />
               </li>
             ))}
@@ -154,100 +154,104 @@ export async function SellerListingSummary({
         </section>
       ) : null}
 
-      <section className="border-border space-y-3 rounded-xl border p-4 text-sm">
-        <h2 className="text-foreground font-semibold">Resumen</h2>
-        <dl className="text-muted-foreground grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
-          <dt>Modelo</dt>
-          <dd className="text-foreground">{listing.iphoneModel.name}</dd>
-          <dt>Color</dt>
-          <dd className="text-foreground">{listing.iphoneColor.name}</dd>
-          <dt>Almacenamiento</dt>
-          <dd className="text-foreground">
-            {listing.iphoneStorage.valueGb} GB
-          </dd>
-          <dt>Condición</dt>
-          <dd className="text-foreground">
-            {conditionLabels[listing.condition]}
-          </dd>
-          <dt>Batería</dt>
-          <dd className="text-foreground">
-            {listing.batteryHealth != null ? `${listing.batteryHealth}%` : "—"}
-          </dd>
-          <dt>IMEI</dt>
-          <dd className="text-foreground">
-            {listing.imeiLast4 ? `•••• ${listing.imeiLast4}` : "—"}
-          </dd>
-          <dt>Liberado</dt>
-          <dd className="text-foreground">
-            {listing.unlocked ? "Sí" : "No"}
-            {listing.carrier ? ` · ${listing.carrier}` : ""}
-          </dd>
-          <dt>Accesorios</dt>
-          <dd className="text-foreground">
-            {[
-              listing.hasBox ? "Caja" : null,
-              listing.hasCharger ? "Cargador" : null,
-              listing.hasReceipt ? "Factura" : null,
-            ]
-              .filter(Boolean)
-              .join(", ") || "Ninguno"}
-          </dd>
-        </dl>
-        {listing.description ? (
-          <div className="space-y-1">
-            <p className="text-foreground font-medium">Descripción</p>
-            <p className="text-muted-foreground whitespace-pre-wrap">
-              {listing.description}
-            </p>
-          </div>
-        ) : null}
-        <PriceDisplay
-          price={listing.finalPrice ?? listing.price}
-          equipmentPrice={listing.price}
-          protectionFee={listing.platformFee ?? undefined}
-          className="[&>p]:text-lg"
-        />
-      </section>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+        <section className="border-border space-y-3 rounded-xl border p-4 text-sm">
+          <h2 className="text-foreground font-semibold">Resumen</h2>
+          <dl className="text-muted-foreground grid grid-cols-[auto_1fr] gap-x-3 gap-y-2">
+            <dt>Modelo</dt>
+            <dd className="text-foreground">{listing.iphoneModel.name}</dd>
+            <dt>Color</dt>
+            <dd className="text-foreground">{listing.iphoneColor.name}</dd>
+            <dt>Almacenamiento</dt>
+            <dd className="text-foreground">
+              {listing.iphoneStorage.valueGb} GB
+            </dd>
+            <dt>Condición</dt>
+            <dd className="text-foreground">
+              {conditionLabels[listing.condition]}
+            </dd>
+            <dt>Batería</dt>
+            <dd className="text-foreground">
+              {listing.batteryHealth != null
+                ? `${listing.batteryHealth}%`
+                : "—"}
+            </dd>
+            <dt>IMEI</dt>
+            <dd className="text-foreground">
+              {listing.imeiLast4 ? `•••• ${listing.imeiLast4}` : "—"}
+            </dd>
+            <dt>Liberado</dt>
+            <dd className="text-foreground">
+              {listing.unlocked ? "Sí" : "No"}
+              {listing.carrier ? ` · ${listing.carrier}` : ""}
+            </dd>
+            <dt>Accesorios</dt>
+            <dd className="text-foreground">
+              {[
+                listing.hasBox ? "Caja" : null,
+                listing.hasCharger ? "Cargador" : null,
+                listing.hasReceipt ? "Factura" : null,
+              ]
+                .filter(Boolean)
+                .join(", ") || "Ninguno"}
+            </dd>
+          </dl>
+          {listing.description ? (
+            <div className="space-y-1">
+              <p className="text-foreground font-medium">Descripción</p>
+              <p className="text-muted-foreground whitespace-pre-wrap">
+                {listing.description}
+              </p>
+            </div>
+          ) : null}
+          <PriceDisplay
+            price={listing.finalPrice ?? listing.price}
+            equipmentPrice={listing.price}
+            protectionFee={listing.platformFee ?? undefined}
+            className="[&>p]:text-lg"
+          />
+        </section>
 
-      <div className="space-y-2">
-        {listing.status === "PUBLISHED" && listing.slug ? (
-          <Button fullWidth asChild>
-            <Link href={publicListingPath(listing.slug)}>
-              Ver anuncio público
-            </Link>
-          </Button>
-        ) : null}
-
-        {relatedOrder ? (
-          <Button fullWidth asChild>
-            <Link href={`/ventas/${relatedOrder.id}`}>Ver pedido</Link>
-          </Button>
-        ) : null}
-
-        {listing.status === "REJECTED" ? (
-          <ReopenRejectedListingButton listingId={listing.id} />
-        ) : null}
-
-        {canChatReviewer ? (
-          <Button fullWidth variant="outline" asChild>
-            <Link href={`/mensajes/${listing.id}`}>Chat con revisor</Link>
-          </Button>
-        ) : null}
-
-        {awaitingReviewer ? (
-          <div className="space-y-1">
-            <Button fullWidth variant="outline" disabled>
-              Chat con revisor
+        <div className="space-y-2">
+          {listing.status === "PUBLISHED" && listing.slug ? (
+            <Button fullWidth asChild>
+              <Link href={publicListingPath(listing.slug)}>
+                Ver anuncio público
+              </Link>
             </Button>
-            <p className="text-muted-foreground text-center text-xs">
-              Podrás escribirle cuando un revisor tome tu anuncio.
-            </p>
-          </div>
-        ) : null}
+          ) : null}
 
-        <Button fullWidth variant="outline" asChild>
-          <Link href="/vender">Volver a mis anuncios</Link>
-        </Button>
+          {relatedOrder ? (
+            <Button fullWidth asChild>
+              <Link href={`/ventas/${relatedOrder.id}`}>Ver pedido</Link>
+            </Button>
+          ) : null}
+
+          {listing.status === "REJECTED" ? (
+            <ReopenRejectedListingButton listingId={listing.id} />
+          ) : null}
+
+          {canChatReviewer ? (
+            <Button fullWidth variant="outline" asChild>
+              <Link href={`/mensajes/${listing.id}`}>Chat con revisor</Link>
+            </Button>
+          ) : null}
+
+          {awaitingReviewer ? (
+            <div className="space-y-1">
+              <Button fullWidth variant="outline" disabled>
+                Chat con revisor
+              </Button>
+              <p className="text-muted-foreground text-center text-xs">
+                Podrás escribirle cuando un revisor tome tu anuncio.
+              </p>
+            </div>
+          ) : null}
+
+          <Button fullWidth variant="outline" asChild>
+            <Link href="/vender">Volver a mis anuncios</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

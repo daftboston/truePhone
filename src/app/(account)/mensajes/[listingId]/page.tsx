@@ -12,8 +12,10 @@ import { Button } from "@/components/ui/button";
 import { MarkThreadReadOnOpen } from "@/features/messages/components/mark-thread-read-on-open";
 import { ThreadRefreshPoller } from "@/features/messages/components/thread-refresh-poller";
 import { ThreadView } from "@/features/messages/components/thread-view";
-import { requireCurrentProfile } from "@/lib/auth/session";
-import { publicListingPath } from "@/lib/listings-marketplace";
+import {
+  canAccessReviewPortal,
+  requireCurrentProfile,
+} from "@/lib/auth/session";
 import {
   areMessagingBlocked,
   canSendInListingThread,
@@ -22,6 +24,7 @@ import {
   getProfileCard,
   getThreadMessages,
   isUserBlockedBy,
+  listingHrefForThreadViewer,
   resolveThreadCounterpart,
 } from "@/lib/messages";
 
@@ -131,10 +134,11 @@ export default async function MessageThreadPage({
       ? sendAccess.error
       : undefined;
 
-  const listingHref =
-    listing.status === "PUBLISHED"
-      ? publicListingPath(listing.slug)
-      : `/vender/${listing.id}`;
+  const listingJump = listingHrefForThreadViewer({
+    listing,
+    viewerId: current.profile.id,
+    viewerCanReview: canAccessReviewPortal(current.profile.role),
+  });
 
   return (
     <div className="space-y-4">
@@ -149,7 +153,10 @@ export default async function MessageThreadPage({
       <ThreadView
         listingId={listing.id}
         listingTitle={listing.title}
-        listingHref={listingHref}
+        listingStatus={listing.status}
+        listingHref={listingJump?.href}
+        listingImageUrl={listing.images[0]?.imageUrl ?? null}
+        listingPrice={listing.finalPrice ?? listing.price}
         currentUserId={current.profile.id}
         otherUser={otherUser}
         messages={messages}

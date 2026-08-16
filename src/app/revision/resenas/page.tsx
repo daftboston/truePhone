@@ -8,7 +8,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { ReviewCard } from "@/components/review-card";
 import { Badge } from "@/components/ui/badge";
@@ -46,7 +45,7 @@ export default async function ReviewReportsPage() {
 
   if (!canAccessReviewPortal(current.profile.role)) {
     return (
-      <AppShell mainClassName="max-w-lg justify-center">
+      <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
           description="Solo revisores y administradores pueden moderar reseñas."
@@ -56,18 +55,15 @@ export default async function ReviewReportsPage() {
             </Button>
           }
         />
-      </AppShell>
+      </div>
     );
   }
 
   const reports = await listOpenReviewReports(80);
 
   return (
-    <AppShell mainClassName="max-w-3xl gap-8">
-      <div className="space-y-3">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/revision">← Cola de confianza</Link>
-        </Button>
+    <div className="space-y-8">
+      <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-foreground text-xl font-semibold tracking-tight">
             Reseñas reportadas
@@ -121,6 +117,6 @@ export default async function ReviewReportsPage() {
           ))}
         </ul>
       )}
-    </AppShell>
+    </div>
   );
 }

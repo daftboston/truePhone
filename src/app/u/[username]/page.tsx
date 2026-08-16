@@ -70,7 +70,7 @@ export default async function PublicProfilePage({
   const sharePath = `/u/${profile.username}`;
 
   return (
-    <AppShell mainClassName="max-w-lg gap-6">
+    <AppShell mainClassName="gap-6">
       <ProfileHeader
         fullName={profile.fullName}
         username={profile.username}

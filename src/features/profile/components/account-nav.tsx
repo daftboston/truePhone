@@ -9,17 +9,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BadgeCheck,
   Bell,
   ChevronRight,
   ClipboardCheck,
+  ClipboardList,
+  CreditCard,
   Heart,
   MapPin,
   MessageSquare,
   Package,
   Pencil,
+  ShieldAlert,
   ShieldCheck,
   ShoppingBag,
+  Star,
   Store,
+  Tags,
   UserRound,
   Wallet,
 } from "lucide-react";
@@ -44,6 +50,7 @@ type NavGroup = {
 type AccountNavProps = {
   verificationHref: string;
   canReview?: boolean;
+  isAdmin?: boolean;
   unreadMessages?: number;
   unreadNotifications?: number;
   className?: string;
@@ -56,6 +63,7 @@ type AccountNavProps = {
  *
  * @param verificationHref - Link into the identity verification flow.
  * @param canReview - When true, includes the operations review section.
+ * @param isAdmin - When true, adds admin-only ops links (pagos, disputas, precios).
  * @param unreadMessages - Unread count badge for Mensajes.
  * @param unreadNotifications - Unread count badge for Notificaciones.
  * @returns Ordered nav groups for AccountNav.
@@ -64,6 +72,7 @@ type AccountNavProps = {
 function buildGroups(
   verificationHref: string,
   canReview: boolean,
+  isAdmin: boolean,
   unreadMessages: number,
   unreadNotifications: number,
 ): NavGroup[] {
@@ -104,15 +113,53 @@ function buildGroups(
   ];
 
   if (canReview) {
+    const opsItems: NavItem[] = [
+      {
+        href: "/revision",
+        label: "Centro de revisión",
+        icon: ClipboardCheck,
+        exact: true,
+      },
+      {
+        href: "/revision/anuncios",
+        label: "Cola de anuncios",
+        icon: ClipboardList,
+      },
+      {
+        href: "/revision/identidad",
+        label: "Identidad",
+        icon: BadgeCheck,
+      },
+      {
+        href: "/revision/resenas",
+        label: "Reseñas",
+        icon: Star,
+      },
+    ];
+
+    if (isAdmin) {
+      opsItems.push(
+        {
+          href: "/revision/pagos",
+          label: "Pagos",
+          icon: CreditCard,
+        },
+        {
+          href: "/revision/disputas",
+          label: "Disputas",
+          icon: ShieldAlert,
+        },
+        {
+          href: "/revision/precios",
+          label: "Precios",
+          icon: Tags,
+        },
+      );
+    }
+
     groups.push({
       title: "Operaciones",
-      items: [
-        {
-          href: "/revision",
-          label: "Revisión",
-          icon: ClipboardCheck,
-        },
-      ],
+      items: opsItems,
     });
   }
 
@@ -167,15 +214,17 @@ function formatBadge(count: number) {
  *
  * @param props.verificationHref - Destination for the Verificación item.
  * @param props.canReview - Shows ops review nav when the user can moderate.
+ * @param props.isAdmin - Adds admin-only ops destinations.
  * @param props.unreadMessages - Badge count on Mensajes.
  * @param props.unreadNotifications - Badge count on Notificaciones.
  * @param props.className - Optional classes on the nav root.
  * @returns Account sidebar navigation.
- * @calledBy account layout
+ * @calledBy AuthenticatedSidebarShell
  */
 export function AccountNav({
   verificationHref,
   canReview = false,
+  isAdmin = false,
   unreadMessages = 0,
   unreadNotifications = 0,
   className,
@@ -184,6 +233,7 @@ export function AccountNav({
   const groups = buildGroups(
     verificationHref,
     canReview,
+    isAdmin,
     unreadMessages,
     unreadNotifications,
   );

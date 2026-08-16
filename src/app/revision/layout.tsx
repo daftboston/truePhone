@@ -1,20 +1,21 @@
 /**
  * @file layout.tsx
- * @description Authenticated account shell with the shared Mi TruePhone sidebar.
+ * @description Ops/review layout that keeps AccountNav on every /revision page.
  * @dependencies AuthenticatedSidebarShell
  */
 
 import { AuthenticatedSidebarShell } from "@/features/profile/components/authenticated-sidebar-shell";
 
 /**
- * AccountLayout
+ * RevisionLayout
  *
- * Wraps Mi TruePhone routes in the shared sidebar chrome.
+ * Reuses Mi TruePhone sidebar chrome so reviewer/admin queues never lose
+ * the lateral bar (cola de anuncios, identidad, pagos, etc.).
  *
- * @param props.children - Account route pages.
+ * @param props.children - Review portal pages.
  * @returns Authenticated sidebar shell.
  */
-export default function AccountLayout({
+export default function RevisionLayout({
   children,
 }: {
   children: React.ReactNode;

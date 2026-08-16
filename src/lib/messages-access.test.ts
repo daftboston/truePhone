@@ -16,6 +16,7 @@ import {
 } from "@/features/messages/schemas/message";
 import {
   evaluateListingMessageSendAccess,
+  listingHrefForThreadViewer,
   resolveThreadCounterpart,
   type ThreadListing,
 } from "@/lib/messages";
@@ -38,6 +39,9 @@ function listing(
     slug: "iphone-13",
     reviewerId: null,
     deletedAt: null,
+    price: 2_500_000,
+    finalPrice: 2_750_000,
+    images: [],
     ...overrides,
   };
 }
@@ -226,5 +230,68 @@ describe("messaging schemas + rate limit", () => {
   it("keeps a finite send rate limit for abuse protection", () => {
     assert.ok(MESSAGE_RATE_LIMIT > 0);
     assert.ok(MESSAGE_RATE_LIMIT <= 60);
+  });
+});
+
+describe("listingHrefForThreadViewer", () => {
+  const published = listing({ status: "PUBLISHED", sellerId: "seller" });
+  const pending = listing({
+    status: "PENDING_REVIEW",
+    sellerId: "seller",
+    reviewerId: "reviewer",
+  });
+
+  it("opens the public listing for a published anuncio", () => {
+    const jump = listingHrefForThreadViewer({
+      listing: published,
+      viewerId: "buyer",
+      viewerCanReview: false,
+    });
+    assert.deepEqual(jump, {
+      href: "/anuncios/iphone-13",
+      label: "Ver anuncio",
+    });
+  });
+
+  it("sends the seller to their listing hub when it is not public", () => {
+    const jump = listingHrefForThreadViewer({
+      listing: pending,
+      viewerId: "seller",
+      viewerCanReview: false,
+    });
+    assert.deepEqual(jump, {
+      href: "/vender/listing-1",
+      label: "Ver anuncio",
+    });
+  });
+
+  it("sends a reviewer to the ops listing page when it is not public", () => {
+    const jump = listingHrefForThreadViewer({
+      listing: pending,
+      viewerId: "reviewer",
+      viewerCanReview: true,
+    });
+    assert.deepEqual(jump, {
+      href: "/revision/anuncios/listing-1",
+      label: "Ver anuncio",
+    });
+  });
+
+  it("still opens the public page for ops when the listing is published", () => {
+    const jump = listingHrefForThreadViewer({
+      listing: published,
+      viewerId: "reviewer",
+      viewerCanReview: true,
+    });
+    assert.equal(jump?.href, "/anuncios/iphone-13");
+  });
+
+  it("hides the jump for a buyer when the listing is not public", () => {
+    const jump = listingHrefForThreadViewer({
+      listing: pending,
+      viewerId: "buyer",
+      viewerCanReview: false,
+    });
+    assert.equal(jump, null);
   });
 });

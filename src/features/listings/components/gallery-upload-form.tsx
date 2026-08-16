@@ -47,81 +47,83 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
 
   return (
     <div className="space-y-5">
-      {images.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3">
-          {images.map((image) => (
-            <div key={image.id} className="space-y-2">
-              <div className="bg-muted relative aspect-square overflow-hidden rounded-xl">
-                <Image
-                  src={image.imageUrl}
-                  alt="Foto del anuncio"
-                  fill
-                  className="object-cover"
-                  sizes="160px"
-                />
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                fullWidth
-                loading={deletePending && deletePendingId === image.id}
-                onClick={() => {
-                  setDeleteError(null);
-                  setDeletePendingId(image.id);
-                  startDelete(async () => {
-                    const result = await deleteListingGalleryImageAction(
-                      listingId,
-                      image.id,
-                    );
-                    if (result && result.ok === false) {
-                      setDeleteError(result.error);
-                    }
-                    setDeletePendingId(null);
-                  });
-                }}
-              >
-                Eliminar
-              </Button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-muted-foreground text-sm">
-          Aún no hay fotos. Agrega al menos una imagen clara del iPhone.
-        </p>
-      )}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <form action={formAction} className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="image">Agregar foto</Label>
+            <FileInput
+              id="image"
+              name="image"
+              accept="image/jpeg,image/png,image/webp"
+              required
+              buttonLabel="Elegir foto"
+            />
+          </div>
+          {state?.ok === false ? (
+            <p className="text-destructive text-sm" role="alert">
+              {state.error}
+            </p>
+          ) : null}
+          {state?.ok === true ? (
+            <p className="text-success text-sm" role="status">
+              {state.message}
+            </p>
+          ) : null}
+          {deleteError ? (
+            <p className="text-destructive text-sm" role="alert">
+              {deleteError}
+            </p>
+          ) : null}
+          <Button type="submit" variant="outline" fullWidth loading={pending}>
+            Subir foto
+          </Button>
+        </form>
 
-      <form action={formAction} className="space-y-3">
-        <div className="space-y-2">
-          <Label htmlFor="image">Agregar foto</Label>
-          <FileInput
-            id="image"
-            name="image"
-            accept="image/jpeg,image/png,image/webp"
-            required
-            buttonLabel="Elegir foto"
-          />
-        </div>
-        {state?.ok === false ? (
-          <p className="text-destructive text-sm" role="alert">
-            {state.error}
+        {images.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {images.map((image) => (
+              <div key={image.id} className="space-y-2">
+                <div className="bg-muted relative aspect-square overflow-hidden rounded-xl">
+                  <Image
+                    src={image.imageUrl}
+                    alt="Foto del anuncio"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 45vw, 280px"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                  loading={deletePending && deletePendingId === image.id}
+                  onClick={() => {
+                    setDeleteError(null);
+                    setDeletePendingId(image.id);
+                    startDelete(async () => {
+                      const result = await deleteListingGalleryImageAction(
+                        listingId,
+                        image.id,
+                      );
+                      if (result && result.ok === false) {
+                        setDeleteError(result.error);
+                      }
+                      setDeletePendingId(null);
+                    });
+                  }}
+                >
+                  Eliminar
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Aún no hay fotos. Agrega al menos una imagen clara del iPhone.
           </p>
-        ) : null}
-        {state?.ok === true ? (
-          <p className="text-success text-sm" role="status">
-            {state.message}
-          </p>
-        ) : null}
-        {deleteError ? (
-          <p className="text-destructive text-sm" role="alert">
-            {deleteError}
-          </p>
-        ) : null}
-        <Button type="submit" variant="outline" fullWidth loading={pending}>
-          Subir foto
-        </Button>
-      </form>
+        )}
+      </div>
 
       {continueError ? (
         <p className="text-destructive text-sm" role="alert">
@@ -132,6 +134,7 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
       <Button
         type="button"
         fullWidth
+        className="lg:max-w-xs"
         loading={continuePending}
         onClick={() => {
           setContinueError(null);

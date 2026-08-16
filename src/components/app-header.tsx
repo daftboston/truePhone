@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { CatalogModel } from "@/lib/iphone-catalog";
-import { cn } from "@/lib/utils";
+import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
 type AppHeaderProps = {
   className?: string;
@@ -107,7 +107,12 @@ export function AppHeader({
       </div>
 
       {/* Desktop */}
-      <div className="mx-auto hidden h-16 max-w-7xl items-center gap-8 px-6 md:flex">
+      <div
+        className={cn(
+          "mx-auto hidden h-16 w-full items-center gap-8 px-6 md:flex",
+          SHELL_WIDTH_CLASS,
+        )}
+      >
         <Link
           href="/"
           className="text-foreground shrink-0 text-lg font-semibold tracking-tight"

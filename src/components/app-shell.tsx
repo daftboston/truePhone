@@ -9,7 +9,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { getProfileByAuthUserId } from "@/lib/auth/profile";
 import { getAuthUser } from "@/lib/auth/session";
 import { listIphoneModels } from "@/lib/listings";
-import { cn } from "@/lib/utils";
+import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -23,7 +23,8 @@ type AppShellProps = {
  * Loads the current user, profile, and catalog models, then wraps page content.
  *
  * @param props.children - Page content rendered in main.
- * @param props.mainClassName - Extra classes for the main container.
+ * @param props.mainClassName - Extra classes for the main container (may
+ *   override the default 1440px cap, e.g. `max-w-lg` for focused empty states).
  * @param props.className - Extra classes for the outer shell.
  * @returns Full-height layout with AppHeader and BottomNav.
  * @calledBy Root marketing pages and AccountLayout
@@ -60,7 +61,8 @@ export async function AppShell({
       />
       <main
         className={cn(
-          "mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 md:px-6 md:py-10",
+          "mx-auto flex w-full flex-1 flex-col px-4 py-6 md:px-6 md:py-6",
+          SHELL_WIDTH_CLASS,
           mainClassName,
         )}
       >

@@ -58,7 +58,7 @@ export function ReviewListingForm({
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <div className="space-y-5">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
       <dl className="border-border space-y-3 rounded-xl border p-4 text-sm">
         <div>
           <dt className="text-muted-foreground text-xs">Anuncio</dt>
@@ -111,55 +111,57 @@ export function ReviewListingForm({
         />
       </dl>
 
-      <p className="text-muted-foreground text-sm">
-        Al enviar, un revisor de TruePhone validará el anuncio antes de
-        publicarlo.
-      </p>
-
-      {error ? (
-        <p className="text-destructive text-sm" role="alert">
-          {error}
+      <div className="space-y-4">
+        <p className="text-muted-foreground text-sm">
+          Al enviar, un revisor de TruePhone validará el anuncio antes de
+          publicarlo.
         </p>
-      ) : null}
 
-      <Button
-        type="button"
-        fullWidth
-        loading={pending}
-        onClick={() => {
-          setError(null);
-          startTransition(async () => {
-            try {
-              const result = await submitListingForReviewAction(listingId);
-              if (result && result.ok === false) {
-                setError(result.error);
+        {error ? (
+          <p className="text-destructive text-sm" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        <Button
+          type="button"
+          fullWidth
+          loading={pending}
+          onClick={() => {
+            setError(null);
+            startTransition(async () => {
+              try {
+                const result = await submitListingForReviewAction(listingId);
+                if (result && result.ok === false) {
+                  setError(result.error);
+                }
+              } catch {
+                // redirect
               }
-            } catch {
-              // redirect
-            }
-          });
-        }}
-      >
-        Enviar a revisión
-      </Button>
+            });
+          }}
+        >
+          Enviar a revisión
+        </Button>
 
-      <Button
-        type="button"
-        variant="outline"
-        fullWidth
-        loading={deletePending}
-        onClick={() => {
-          startDelete(async () => {
-            try {
-              await deleteDraftListingAction(listingId);
-            } catch {
-              // redirect
-            }
-          });
-        }}
-      >
-        Eliminar borrador
-      </Button>
+        <Button
+          type="button"
+          variant="outline"
+          fullWidth
+          loading={deletePending}
+          onClick={() => {
+            startDelete(async () => {
+              try {
+                await deleteDraftListingAction(listingId);
+              } catch {
+                // redirect
+              }
+            });
+          }}
+        >
+          Eliminar borrador
+        </Button>
+      </div>
     </div>
   );
 }

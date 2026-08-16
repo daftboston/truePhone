@@ -34,7 +34,7 @@ export default async function ExplorePage() {
   const seriesList = groupModelsBySeries(catalog.models);
 
   return (
-    <AppShell mainClassName="max-w-5xl gap-10">
+    <AppShell mainClassName="gap-10">
       <div className="mx-auto max-w-xl space-y-4 text-center">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
           Explorar iPhones

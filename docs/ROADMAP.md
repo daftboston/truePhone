@@ -44,14 +44,15 @@ main (Jul 19)
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
 
-| Feature                                            | Plan home                                     | Notes                                          |
-| -------------------------------------------------- | --------------------------------------------- | ---------------------------------------------- |
-| Public counters (listings total / active / bought) | Phase **3** + order party cards (Phase **9**) | Swappa-style public strip — not user analytics |
-| Extra auth: Apple + WhatsApp + Facebook            | Phase **2** roadmap                           | Chosen next methods                            |
-| Public listing Q&A                                 | Phase **8b**                                  | Post-MVP; distinct from private DMs            |
-| Admin / reviewer analytics                         | Phase **15** (+ Phase **13** dashboards)      | Ops only — no buyer/seller analytics app       |
-| Mobile web polish                                  | Phase **19**                                  | Native apps stay Phase **24**                  |
-| FAQ page                                           | Phase **23**                                  | Canonical help/FAQ before launch               |
+| Feature                                            | Plan home                                     | Notes                                              |
+| -------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- |
+| Public counters (listings total / active / bought) | Phase **3** + order party cards (Phase **9**) | Swappa-style public strip — not user analytics     |
+| Extra auth: Apple + WhatsApp + Facebook            | Phase **2** roadmap                           | Chosen next methods                                |
+| Public listing Q&A                                 | Phase **8b**                                  | Post-MVP; distinct from private DMs                |
+| Admin / reviewer analytics                         | Phase **15** (+ Phase **13** dashboards)      | Ops only — no buyer/seller analytics app           |
+| Mobile web polish                                  | Phase **19**                                  | Native apps stay Phase **24**                      |
+| Camera from the phone (listing / posesión / KYC)   | Phase **19**                                  | Mobile web **Tomar foto**; native camera is **24** |
+| FAQ page                                           | Phase **23**                                  | Canonical help/FAQ before launch                   |
 
 Full phase detail: [plan.md](./plan.md)
 
@@ -80,7 +81,7 @@ Full phase detail: [plan.md](./plan.md)
 | 12 Notifications         | **Settlement slice landed** — received confirm + deadline reminders; activity center         |
 | 13 Admin                 | **Price table landed** (`RecommendedPrice` + `/revision/precios`); full dashboard still open |
 | 15 Analytics             | Not started — **admin / reviewer / ops only**                                                |
-| 19 Mobile                | Not started as polish pass — responsive baseline exists                                      |
+| 19 Mobile                | Not started as polish pass — responsive baseline exists; **Tomar foto** is in this phase     |
 | 23 Launch / FAQ          | Not started — FAQ page in launch prep                                                        |
 | 24 Auto payouts / native | Not started — Pagos a Terceros API + native apps (post-MVP)                                  |
 
@@ -108,6 +109,6 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 ## Post-MVP growth sequence (suggested)
 
 1. FAQ page (Phase 23 can start early for support load)
-2. Mobile polish (Phase 19) + Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap)
+2. Mobile polish (Phase 19: responsive + **Tomar foto** on sell / posesión / cédula / selfie) + Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap)
 3. Public listing Q&A (Phase 8b)
 4. Admin / reviewer analytics (Phase 15)

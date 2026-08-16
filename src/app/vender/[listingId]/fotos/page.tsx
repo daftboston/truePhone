@@ -46,7 +46,7 @@ export default async function ListingPhotosPage({ params }: PageProps) {
   );
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={2}
         title="Fotos del iPhone"

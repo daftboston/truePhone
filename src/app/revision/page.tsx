@@ -18,7 +18,6 @@ import {
   Tags,
 } from "lucide-react";
 
-import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -110,7 +109,7 @@ export default async function ReviewHubPage() {
 
   if (!canAccessReviewPortal(current.profile.role)) {
     return (
-      <AppShell mainClassName="max-w-lg justify-center">
+      <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
           description="Solo revisores y administradores pueden ver el centro de revisión."
@@ -120,7 +119,7 @@ export default async function ReviewHubPage() {
             </Button>
           }
         />
-      </AppShell>
+      </div>
     );
   }
 
@@ -154,33 +153,28 @@ export default async function ReviewHubPage() {
     reviewReportsOpen;
 
   return (
-    <AppShell mainClassName="max-w-2xl gap-8">
-      <div className="space-y-3">
-        <Button asChild variant="outline" size="sm">
-          <Link href="/perfil">← Mi TruePhone</Link>
-        </Button>
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-foreground text-xl font-semibold tracking-tight md:text-2xl">
-              Cola de confianza
-            </h1>
-            <Badge variant="outline">{roleLabel(current.profile.role)}</Badge>
-          </div>
-          <p className="text-muted-foreground text-sm">
-            Hola, {firstName}. Protege la calidad del marketplace antes de que
-            un anuncio sea público.
-          </p>
-          <p className="text-foreground text-sm font-medium">
-            {openWork === 0
-              ? "No hay trabajo pendiente en las colas activas."
-              : `${openWork} elemento${openWork === 1 ? "" : "s"} por atender.`}
-          </p>
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-foreground text-xl font-semibold tracking-tight md:text-2xl">
+            Cola de confianza
+          </h1>
+          <Badge variant="outline">{roleLabel(current.profile.role)}</Badge>
         </div>
+        <p className="text-muted-foreground text-sm">
+          Hola, {firstName}. Protege la calidad del marketplace antes de que un
+          anuncio sea público.
+        </p>
+        <p className="text-foreground text-sm font-medium">
+          {openWork === 0
+            ? "No hay trabajo pendiente en las colas activas."
+            : `${openWork} elemento${openWork === 1 ? "" : "s"} por atender.`}
+        </p>
       </div>
 
       <section className="space-y-3" aria-label="Colas activas">
         <h2 className="text-foreground text-sm font-semibold">Colas activas</h2>
-        <div className="grid gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <QueueCard
             href="/revision/anuncios?tab=pendiente"
             title="Anuncios pendientes"
@@ -242,45 +236,47 @@ export default async function ReviewHubPage() {
           <h2 className="text-foreground text-sm font-semibold">
             Administración
           </h2>
-          <QueueCard
-            href="/revision/pagos"
-            title="Liquidaciones y cobros"
-            description="Paga en Wompi las liquidaciones autorizadas; historial de checkout."
-            count={
-              (authorizedPayoutCount ?? 0) +
-              (paymentCounts
-                ? paymentCounts.SUCCEEDED +
-                  paymentCounts.PENDING +
-                  paymentCounts.REQUIRES_ACTION +
-                  paymentCounts.FAILED +
-                  paymentCounts.REFUNDED
-                : 0)
-            }
-            icon={CreditCard}
-            emphasized={(authorizedPayoutCount ?? 0) > 0}
-          />
-          <QueueCard
-            href="/revision/precios"
-            title="Precios de referencia"
-            description="Guía para vendedores por modelo, almacenamiento y estado."
-            count={recommendedPriceCount}
-            icon={Tags}
-          />
-          <aside className="border-border bg-muted/50 flex gap-3 rounded-xl border p-4">
-            <ShieldAlert
-              className="text-muted-foreground mt-0.5 size-5 shrink-0"
-              aria-hidden
+          <div className="grid gap-3 sm:grid-cols-2">
+            <QueueCard
+              href="/revision/pagos"
+              title="Liquidaciones y cobros"
+              description="Paga en Wompi las liquidaciones autorizadas; historial de checkout."
+              count={
+                (authorizedPayoutCount ?? 0) +
+                (paymentCounts
+                  ? paymentCounts.SUCCEEDED +
+                    paymentCounts.PENDING +
+                    paymentCounts.REQUIRES_ACTION +
+                    paymentCounts.FAILED +
+                    paymentCounts.REFUNDED
+                  : 0)
+              }
+              icon={CreditCard}
+              emphasized={(authorizedPayoutCount ?? 0) > 0}
             />
-            <div className="space-y-1 text-sm">
-              <p className="text-foreground font-semibold">Más admin</p>
-              <p className="text-muted-foreground leading-relaxed">
-                Dispersión al vendedor es manual en Wompi (supervisión). La API
-                automática llega en Phase 24.
-              </p>
-            </div>
-          </aside>
+            <QueueCard
+              href="/revision/precios"
+              title="Precios de referencia"
+              description="Guía para vendedores por modelo, almacenamiento y estado."
+              count={recommendedPriceCount}
+              icon={Tags}
+            />
+            <aside className="border-border bg-muted/50 flex gap-3 rounded-xl border p-4">
+              <ShieldAlert
+                className="text-muted-foreground mt-0.5 size-5 shrink-0"
+                aria-hidden
+              />
+              <div className="space-y-1 text-sm">
+                <p className="text-foreground font-semibold">Más admin</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  Dispersión al vendedor es manual en Wompi (supervisión). La
+                  API automática llega en Phase 24.
+                </p>
+              </div>
+            </aside>
+          </div>
         </section>
       ) : null}
-    </AppShell>
+    </div>
   );
 }

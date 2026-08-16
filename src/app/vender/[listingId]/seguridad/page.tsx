@@ -42,7 +42,7 @@ export default async function ListingSecurityPage({ params }: PageProps) {
   if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={3}
         title="IMEI y Activation Lock"

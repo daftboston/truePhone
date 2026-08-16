@@ -284,7 +284,7 @@ Result: Identity-verified sellers.
 Features
 
 - Create listing / drafts
-- Image upload
+- Image upload (file / gallery picker). **Camera from the phone** is Phase **19** — do not bolt it onto Phase 5.
 - Device information, condition, battery health, accessories
 - Description
 - IMEI validation / last-4 handling
@@ -703,11 +703,43 @@ Tasks
 - Image optimization (gallery swipe, LCP on listing pages)
 - Form UX on small screens (sell flow, bank details, verification)
 - Auth flows usable on mobile (prep for Apple / WhatsApp / Facebook from Phase 2 roadmap)
+- **Tomar foto** (mobile web camera) — see below; do this properly in this phase, not as a Phase 5 leftover
 - Offline / PWA (future stretch)
 
-Result: Excellent mobile web UX.
+## Tomar foto (do this properly — not a one-attribute shortcut)
 
-Status: Not started as a dedicated polish pass (baseline responsive exists from earlier phases).
+Sellers in Colombia often create listings on the phone they are selling. Phase 5 only has a file picker. Phase 19 must add an explicit camera path without breaking the gallery path.
+
+**Surfaces**
+
+| Surface                 | Route / form             | Camera               | Why                                                   |
+| ----------------------- | ------------------------ | -------------------- | ----------------------------------------------------- |
+| Listing gallery         | `/vender/…/fotos`        | Rear (`environment`) | Clear shots of the iPhone                             |
+| Possession proof        | `/vender/…/posesion`     | Rear (`environment`) | Device + possession code in one frame                 |
+| Cédula frente / reverso | `/verificacion/cedula-*` | Rear (`environment`) | Document on a flat surface                            |
+| Selfie                  | `/verificacion/selfie`   | Front (`user`)       | Face match vs cédula (already hints `capture="user"`) |
+
+**How to implement (acceptance)**
+
+- Two visible Spanish actions on each photo step: **Elegir de la galería** and **Tomar foto**. Never a single control that sometimes opens the camera.
+- Hide native browser chrome (**Choose File** / **no file selected**). Copy stays Spanish (`lang="es"`).
+- On iOS/Android Safari/Chrome, **Tomar foto** must open the system camera (HTML `capture` on a dedicated input is enough if both actions exist).
+- Gallery must always remain available. Do not force camera-only.
+- On desktop, hide **Tomar foto** or let it fall back to the file picker (`capture` is ignored). Do not show a broken webcam UI.
+- Prefer the existing [`FileInput`](../src/components/ui/file-input.tsx) (extend it) — no second upload component.
+- Possession copy should remind the seller to photograph the **iPhone and the code together**.
+- Test on a real iPhone (Safari) and an Android Chrome device, not only desktop DevTools.
+
+**Out of scope (do not pull into Phase 19)**
+
+- Custom in-browser `getUserMedia` viewfinder, filters, or multi-shot camera app
+- Native iOS/Android camera SDK — Phase **24**
+- Changing upload size/type rules or storage buckets
+- Translating user-typed listing text
+
+Result: Excellent mobile web UX, including camera capture for sell + KYC photos.
+
+Status: Not started as a dedicated polish pass (baseline responsive exists from earlier phases). **Tomar foto** is specified here; implement when Phase 19 is the active line.
 
 ---
 
@@ -789,7 +821,7 @@ Future features
 - Trade-in programs
 - More Apple devices
 - Premium seller tools
-- **Native apps** (iOS / Android) — after Phase 19 mobile web is excellent
+- **Native apps** (iOS / Android) — after Phase 19 mobile web is excellent. In-app camera SDK belongs here; Phase 19 is mobile-web **Tomar foto** only.
 - AI assistants
 - Referral / affiliate
 - Business sellers / API

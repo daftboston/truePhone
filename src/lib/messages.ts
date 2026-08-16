@@ -1,12 +1,13 @@
 /**
  * @file messages.ts
  * @description Marketplace messaging: access rules, threads, unread, and sends.
- * @dependencies @prisma/client, @/lib/db
+ * @dependencies @prisma/client, @/lib/db, @/lib/listings-marketplace
  */
 
 import { Prisma, type ListingStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
+import { publicListingPath } from "@/lib/listings-marketplace";
 
 const profileCardSelect = {
   id: true,
@@ -23,6 +24,14 @@ const listingThreadSelect = {
   sellerId: true,
   reviewerId: true,
   deletedAt: true,
+  price: true,
+  finalPrice: true,
+  images: {
+    where: { imageType: "gallery" },
+    orderBy: { displayOrder: "asc" as const },
+    take: 1,
+    select: { imageUrl: true },
+  },
 } satisfies Prisma.ListingSelect;
 
 export type MessageProfileCard = Prisma.ProfileGetPayload<{
@@ -33,11 +42,18 @@ export type ThreadListing = Prisma.ListingGetPayload<{
   select: typeof listingThreadSelect;
 }>;
 
+export type ListingThreadJump = {
+  href: string;
+  label: string;
+};
+
 export type ConversationSummary = {
   listingId: string;
   listingTitle: string;
   listingSlug: string;
   listingStatus: ListingStatus;
+  listingSellerId: string;
+  listingImageUrl: string | null;
   otherUser: MessageProfileCard;
   lastMessage: {
     id: string;
@@ -57,6 +73,52 @@ export type ThreadMessage = {
   receiverId: string;
   isRead: boolean;
 };
+
+/**
+ * listingHrefForThreadViewer
+ *
+ * Picks the listing destination for a message participant. Published listings
+ * open the public anuncio; unpublished ones open the seller hub or the ops
+ * review page. Buyers never get a dead public URL.
+ *
+ * @param input.listing - Thread listing id, slug, status, and seller.
+ * @param input.viewerId - Current profile UUID.
+ * @param input.viewerCanReview - True for REVIEWER / ADMIN.
+ * @returns Href + "Ver anuncio" label, or null when this viewer has no page.
+ * @calledBy Message thread page, ConversationList
+ *
+ * @example
+ * listingHrefForThreadViewer({
+ *   listing: { id, slug, status: "PUBLISHED", sellerId },
+ *   viewerId: buyerId,
+ *   viewerCanReview: false,
+ * });
+ */
+export function listingHrefForThreadViewer(input: {
+  listing: Pick<ThreadListing, "id" | "slug" | "status" | "sellerId">;
+  viewerId: string;
+  viewerCanReview: boolean;
+}): ListingThreadJump | null {
+  const { listing, viewerId, viewerCanReview } = input;
+  const isSeller = viewerId === listing.sellerId;
+
+  if (listing.status === "PUBLISHED" && listing.slug) {
+    return { href: publicListingPath(listing.slug), label: "Ver anuncio" };
+  }
+
+  if (viewerCanReview) {
+    return {
+      href: `/revision/anuncios/${listing.id}`,
+      label: "Ver anuncio",
+    };
+  }
+
+  if (isSeller) {
+    return { href: `/vender/${listing.id}`, label: "Ver anuncio" };
+  }
+
+  return null;
+}
 
 /**
  * areMessagingBlocked
@@ -368,6 +430,8 @@ export async function listConversationsForUser(
     listingTitle: string;
     listingSlug: string;
     listingStatus: ListingStatus;
+    listingSellerId: string;
+    listingImageUrl: string | null;
   };
 
   type UnreadRow = {
@@ -389,7 +453,15 @@ export async function listConversationsForUser(
         o."otherUserId",
         l.title AS "listingTitle",
         l.slug AS "listingSlug",
-        l.status AS "listingStatus"
+        l.status AS "listingStatus",
+        l."sellerId" AS "listingSellerId",
+        (
+          SELECT li."imageUrl"
+          FROM listing_images li
+          WHERE li."listingId" = l.id AND li."imageType" = 'gallery'
+          ORDER BY li."displayOrder" ASC, li."createdAt" ASC
+          LIMIT 1
+        ) AS "listingImageUrl"
       FROM messages m
       INNER JOIN listings l ON l.id = m."listingId"
       CROSS JOIN LATERAL (
@@ -437,6 +509,8 @@ export async function listConversationsForUser(
         listingTitle: row.listingTitle,
         listingSlug: row.listingSlug,
         listingStatus: row.listingStatus,
+        listingSellerId: row.listingSellerId,
+        listingImageUrl: row.listingImageUrl,
         otherUser,
         lastMessage: {
           id: row.id,

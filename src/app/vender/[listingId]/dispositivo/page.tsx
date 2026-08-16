@@ -48,7 +48,7 @@ export default async function EditDevicePage({ params }: PageProps) {
   ]);
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={1}
         title="Datos del dispositivo"

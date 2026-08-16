@@ -53,7 +53,7 @@ export default async function SellerListingPage({ params }: PageProps) {
   }
 
   return (
-    <AppShell mainClassName="max-w-lg gap-6">
+    <AppShell mainClassName="gap-6">
       <SellerListingSummary listing={listing} />
     </AppShell>
   );

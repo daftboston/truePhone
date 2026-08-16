@@ -1,22 +1,24 @@
 /**
  * @file thread-view.tsx
- * @description ThreadView component for the messages feature.tsx.
- * @dependencies next/link, @/components/ui/avatar, @/features/messages/components/message-composer, @/features/messages/components/thread-safety-actions, @/lib/messages
+ * @description Thread view with listing jump card, messages, composer, and safety actions.
+ * @dependencies MessageListingCard, MessageComposer, ThreadSafetyActions, @/lib/messages
  */
 
-import Link from "next/link";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageComposer } from "@/features/messages/components/message-composer";
+import { MessageListingCard } from "@/features/messages/components/message-listing-card";
 import { ThreadSafetyActions } from "@/features/messages/components/thread-safety-actions";
 import type { MessageProfileCard, ThreadMessage } from "@/lib/messages";
 import { marketplaceSellerDisplayName } from "@/lib/messages";
 import { cn } from "@/lib/utils";
+import type { ListingStatus } from "@prisma/client";
 
 type ThreadViewProps = {
   listingId: string;
   listingTitle: string;
+  listingStatus: ListingStatus;
   listingHref?: string | null;
+  listingImageUrl?: string | null;
+  listingPrice?: number | null;
   currentUserId: string;
   otherUser: MessageProfileCard;
   messages: ThreadMessage[];
@@ -24,24 +26,6 @@ type ThreadViewProps = {
   disabledReason?: string;
   initiallyBlockedByMe?: boolean;
 };
-
-/**
- * initials
- *
- * Derives up to two uppercase initials from a display name.
- *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy messages UI and related modules
- */
-function initials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
 
 /**
  * formatTime
@@ -62,16 +46,26 @@ function formatTime(date: Date) {
 /**
  * ThreadView
  *
- * Renders the Thread View UI for messages.
+ * Renders a listing-scoped chat: jump card, safety actions, history, composer.
  *
- * @param props - ThreadView props.
- * @returns ThreadView React element.
- * @calledBy messages pages and parent components
+ * @param props.listingId - Listing this thread belongs to.
+ * @param props.listingTitle - Listing title for the jump card.
+ * @param props.listingStatus - Listing status badge.
+ * @param props.listingHref - Role-aware Ver anuncio destination.
+ * @param props.listingImageUrl - Gallery thumbnail, if any.
+ * @param props.listingPrice - Equipment price in COP.
+ * @param props.currentUserId - Viewer profile id for bubble alignment.
+ * @param props.otherUser - Counterpart profile card.
+ * @returns Thread view React element.
+ * @calledBy MessageThreadPage
  */
 export function ThreadView({
   listingId,
   listingTitle,
+  listingStatus,
   listingHref,
+  listingImageUrl,
+  listingPrice,
   currentUserId,
   otherUser,
   messages,
@@ -83,31 +77,14 @@ export function ThreadView({
 
   return (
     <div className="flex min-h-[28rem] flex-col gap-4">
-      <div className="border-border flex items-center gap-3 rounded-xl border p-3">
-        <Avatar className="size-10">
-          {otherUser.avatarUrl ? (
-            <AvatarImage src={otherUser.avatarUrl} alt={otherName} />
-          ) : null}
-          <AvatarFallback>{initials(otherName)}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <p className="text-foreground truncate text-sm font-semibold">
-            {otherName}
-          </p>
-          {listingHref ? (
-            <Link
-              href={listingHref}
-              className="text-muted-foreground hover:text-foreground truncate text-xs underline-offset-2 hover:underline"
-            >
-              {listingTitle}
-            </Link>
-          ) : (
-            <p className="text-muted-foreground truncate text-xs">
-              {listingTitle}
-            </p>
-          )}
-        </div>
-      </div>
+      <MessageListingCard
+        title={listingTitle}
+        status={listingStatus}
+        imageUrl={listingImageUrl}
+        price={listingPrice}
+        counterpartName={otherName}
+        href={listingHref}
+      />
 
       <ThreadSafetyActions
         listingId={listingId}

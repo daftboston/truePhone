@@ -14,7 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
 const pillars = [
   {
@@ -91,7 +91,12 @@ export function SiteFooter({ className }: SiteFooterProps) {
   return (
     <footer className={cn("bg-background border-border border-t", className)}>
       <section className="bg-muted/60 border-border border-b">
-        <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 md:py-16">
+        <div
+          className={cn(
+            "mx-auto px-4 py-12 md:px-6 md:py-16",
+            SHELL_WIDTH_CLASS,
+          )}
+        >
           <div className="mx-auto max-w-2xl space-y-2 text-center">
             <h2 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
               Por qué TruePhone
@@ -132,7 +137,12 @@ export function SiteFooter({ className }: SiteFooterProps) {
         </div>
       </section>
 
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-8 pb-24 md:flex-row md:items-end md:justify-between md:px-6 md:pb-10">
+      <div
+        className={cn(
+          "mx-auto flex w-full flex-col gap-6 px-4 py-8 pb-24 md:flex-row md:items-end md:justify-between md:px-6 md:pb-10",
+          SHELL_WIDTH_CLASS,
+        )}
+      >
         <div className="space-y-1">
           <p className="text-foreground text-base font-semibold tracking-tight">
             TruePhone
