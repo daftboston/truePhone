@@ -1,3 +1,9 @@
+/**
+ * @file filter-chip.tsx
+ * @description Selectable filter chip and horizontal chip group for browse UI.
+ * @dependencies @/lib/utils
+ */
+
 import { cn } from "@/lib/utils";
 
 type FilterChipProps = {
@@ -7,6 +13,18 @@ type FilterChipProps = {
   onClick?: () => void;
 };
 
+/**
+ * FilterChip
+ *
+ * Toggleable pill button for marketplace filters.
+ *
+ * @param props.label - Visible chip label.
+ * @param props.selected - Pressed/selected visual state.
+ * @param props.onClick - Selection handler.
+ * @param props.className - Optional className.
+ * @returns Button with aria-pressed.
+ * @calledBy Explore and search filter bars
+ */
 export function FilterChip({
   label,
   selected = false,
@@ -37,6 +55,17 @@ type FilterChipGroupProps = {
   "aria-label"?: string;
 };
 
+/**
+ * FilterChipGroup
+ *
+ * Horizontally scrollable group wrapper for FilterChip children.
+ *
+ * @param props.children - FilterChip nodes.
+ * @param props.className - Optional className.
+ * @param props["aria-label"] - Accessible group name.
+ * @returns Role=group container.
+ * @calledBy Explore and search filter bars
+ */
 export function FilterChipGroup({
   children,
   className,

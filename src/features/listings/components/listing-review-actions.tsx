@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file listing-review-actions.tsx
+ * @description ListingReviewActions component for the listings feature.tsx.
+ * @dependencies react, @/features/listings/actions/review, @/features/listings/schemas/review, @/features/listings/types, @/components/ui/button
+ */
+
 import { useActionState, useState } from "react";
 
 import {
@@ -21,6 +27,15 @@ type ListingReviewActionsProps = {
   initialRejectionReason: string | null;
 };
 
+/**
+ * ListingReviewActions
+ *
+ * Renders the Listing Review Actions UI for listings.
+ *
+ * @param props - ListingReviewActions props.
+ * @returns ListingReviewActions React element.
+ * @calledBy listings pages and parent components
+ */
 export function ListingReviewActions({
   listingId,
   status,
@@ -31,7 +46,7 @@ export function ListingReviewActions({
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const isApproved = status === "PUBLISHED" || status === "APPROVED";
   const isRejected = status === "REJECTED";
-  const isPending = status === "PENDING_REVIEW";
+  const isPending = status === "PENDING_REVIEW" || status === "SUBMITTED";
 
   const [notesState, notesAction, notesPending] = useActionState<
     ListingActionState,

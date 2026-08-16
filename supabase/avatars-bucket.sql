@@ -1,3 +1,7 @@
+-- @file avatars-bucket.sql
+-- @description Creates public avatars storage bucket and RLS policies for profile photo uploads.
+-- @dependencies PostgreSQL 15+, Supabase Storage
+
 -- TruePhone: public avatars bucket for Phase 3 profile photos
 -- Run once in the Supabase SQL editor
 

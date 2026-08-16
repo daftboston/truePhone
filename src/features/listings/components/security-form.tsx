@@ -1,8 +1,18 @@
 "use client";
 
-import { useActionState } from "react";
+/**
+ * @file security-form.tsx
+ * @description SecurityForm component for the listings feature.tsx.
+ * @dependencies react, @/features/listings/actions/listings, @/features/listings/schemas/listing, @/features/listings/types, @/components/ui/button, @/components/ui/input
+ */
+
+import { useActionState, useState } from "react";
 
 import { updateListingSecurityAction } from "@/features/listings/actions/listings";
+import {
+  COLOMBIAN_OPERATORS,
+  matchColombianOperator,
+} from "@/features/listings/schemas/listing";
 import type { ListingActionState } from "@/features/listings/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,16 +28,37 @@ type SecurityFormProps = {
   };
 };
 
+/**
+ * SecurityForm
+ *
+ * Collects IMEI, Activation Lock, unlock status, and Colombian operator
+ * when the device is carrier-locked.
+ *
+ * @param props.listingId - Draft listing being edited.
+ * @param props.defaults - Saved IMEI last-4, unlock flag, and carrier.
+ * @returns Security wizard step form.
+ * @calledBy ListingSecurityPage
+ */
 export function SecurityForm({ listingId, defaults }: SecurityFormProps) {
   const action = updateListingSecurityAction.bind(null, listingId);
   const [state, formAction, pending] = useActionState<
     ListingActionState,
     FormData
   >(action, null);
+  const [unlocked, setUnlocked] = useState(
+    defaults?.unlocked === false ? "false" : "true",
+  );
+  const [carrier, setCarrier] = useState(
+    matchColombianOperator(defaults?.carrier) ?? "",
+  );
+  const lockedToOperator = unlocked === "false";
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4 text-sm">
+    <form
+      action={formAction}
+      className="grid gap-4 lg:grid-cols-2 lg:items-start"
+    >
+      <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4 text-sm lg:col-span-2">
         <p className="text-foreground font-medium">IMEI y Activation Lock</p>
         <p className="text-muted-foreground">
           Encuentra el IMEI en Ajustes → General → Información. No publicamos el
@@ -77,32 +108,63 @@ export function SecurityForm({ listingId, defaults }: SecurityFormProps) {
           id="unlocked"
           name="unlocked"
           required
-          defaultValue={defaults?.unlocked === false ? "false" : "true"}
+          value={unlocked}
+          onChange={(event) => {
+            const next = event.target.value;
+            setUnlocked(next);
+            if (next === "true") setCarrier("");
+          }}
         >
           <option value="true">Libre de fábrica / liberado</option>
           <option value="false">Con operador</option>
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="carrier">Operador (si aplica)</Label>
-        <Input
-          id="carrier"
-          name="carrier"
-          defaultValue={defaults?.carrier ?? ""}
-          placeholder="Claro, Movistar, Tigo…"
-        />
-      </div>
+      {lockedToOperator ? (
+        <div className="space-y-2">
+          <Label htmlFor="carrier">Operador</Label>
+          <Select
+            id="carrier"
+            name="carrier"
+            required
+            value={carrier}
+            onChange={(event) => setCarrier(event.target.value)}
+          >
+            <option value="" disabled>
+              Selecciona
+            </option>
+            {COLOMBIAN_OPERATORS.map((operator) => (
+              <option key={operator} value={operator}>
+                {operator}
+              </option>
+            ))}
+          </Select>
+          {state?.ok === false && state.fieldErrors?.carrier?.[0] ? (
+            <p className="text-destructive text-xs">
+              {state.fieldErrors.carrier[0]}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="hidden lg:block" />
+      )}
 
       {state?.ok === false ? (
-        <p className="text-destructive text-sm" role="alert">
+        <p className="text-destructive text-sm lg:col-span-2" role="alert">
           {state.error}
         </p>
       ) : null}
 
-      <Button type="submit" fullWidth loading={pending}>
-        Continuar
-      </Button>
+      <div className="lg:col-span-2">
+        <Button
+          type="submit"
+          fullWidth
+          className="lg:max-w-xs"
+          loading={pending}
+        >
+          Continuar
+        </Button>
+      </div>
     </form>
   );
 }

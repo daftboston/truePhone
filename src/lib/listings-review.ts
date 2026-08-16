@@ -1,18 +1,35 @@
+/**
+ * @file listings-review.ts
+ * @description Reviewer queue queries and labels for listing moderation.
+ * @dependencies @prisma/client, @/features/listings/schemas/review, @/lib/db
+ */
+
 import type { ListingStatus, Prisma } from "@prisma/client";
 
 import type { ListingReviewTab } from "@/features/listings/schemas/review";
 import { prisma } from "@/lib/db";
 
-const ACTIVE_QUEUE: ListingStatus[] = ["PENDING_REVIEW"];
+// SUBMITTED is a brief hop before PENDING_REVIEW. Include it so a
+// resubmitted listing never disappears from the reviewer hub/queue.
+const ACTIVE_QUEUE: ListingStatus[] = ["SUBMITTED", "PENDING_REVIEW"];
 const APPROVED_STATUSES: ListingStatus[] = ["PUBLISHED", "APPROVED"];
 const REJECTED_STATUSES: ListingStatus[] = ["REJECTED"];
 const REVIEW_HISTORY: ListingStatus[] = [
+  "SUBMITTED",
   "PENDING_REVIEW",
   "PUBLISHED",
   "APPROVED",
   "REJECTED",
 ];
 
+/**
+ * queueWhere
+ *
+ * Builds Prisma where clause for a reviewer queue tab.
+ *
+ * @param tab - ListingReviewTab value.
+ * @returns Prisma.ListingWhereInput.
+ */
 function queueWhere(tab: ListingReviewTab): Prisma.ListingWhereInput {
   const base: Prisma.ListingWhereInput = { deletedAt: null };
 
@@ -35,6 +52,14 @@ function queueWhere(tab: ListingReviewTab): Prisma.ListingWhereInput {
   }
 }
 
+/**
+ * orderForTab
+ *
+ * Order-by clause for a reviewer queue tab.
+ *
+ * @param tab - ListingReviewTab value.
+ * @returns Prisma orderBy input.
+ */
 function orderForTab(
   tab: ListingReviewTab,
 ): Prisma.ListingOrderByWithRelationInput {
@@ -47,6 +72,15 @@ function orderForTab(
   return { updatedAt: "asc" };
 }
 
+/**
+ * parseListingReviewTab
+ *
+ * Parses a query string into a ListingReviewTab, defaulting to pendiente.
+ *
+ * @param value - Raw tab query param.
+ * @returns Valid ListingReviewTab.
+ * @calledBy Reviewer listings page
+ */
 export function parseListingReviewTab(
   value: string | undefined,
 ): ListingReviewTab {
@@ -62,11 +96,20 @@ export function parseListingReviewTab(
   return "pendiente";
 }
 
+/**
+ * reviewStatusLabel
+ *
+ * Spanish status label for a listing in the review queue.
+ *
+ * @param listing - Listing status and reviewerId fields.
+ * @returns Localized status string.
+ * @calledBy Reviewer queue UI
+ */
 export function reviewStatusLabel(listing: {
   status: string;
   reviewerId: string | null;
 }) {
-  if (listing.status === "PENDING_REVIEW") {
+  if (listing.status === "PENDING_REVIEW" || listing.status === "SUBMITTED") {
     return listing.reviewerId ? "En revisión" : "Pendiente";
   }
   if (listing.status === "PUBLISHED" || listing.status === "APPROVED") {
@@ -78,6 +121,40 @@ export function reviewStatusLabel(listing: {
   return listing.status;
 }
 
+/**
+ * reviewQueueTabForListing
+ *
+ * Maps a listing to the reviewer queue tab it belongs in.
+ *
+ * @param listing - Status and assigned reviewer.
+ * @returns Queue tab id, or null when the listing is not in review history.
+ * @calledBy listings-review tests
+ */
+export function reviewQueueTabForListing(listing: {
+  status: string;
+  reviewerId: string | null;
+}): ListingReviewTab | null {
+  if (listing.status === "SUBMITTED" || listing.status === "PENDING_REVIEW") {
+    return listing.reviewerId ? "en_revision" : "pendiente";
+  }
+  if (listing.status === "PUBLISHED" || listing.status === "APPROVED") {
+    return "aprobados";
+  }
+  if (listing.status === "REJECTED") {
+    return "rechazados";
+  }
+  return null;
+}
+
+/**
+ * listListingsForReview
+ *
+ * Lists listings for a reviewer tab with seller and image includes.
+ *
+ * @param tab - Queue tab.
+ * @returns Listing rows for the queue.
+ * @calledBy Reviewer listings page
+ */
 export async function listListingsForReview(tab: ListingReviewTab) {
   return prisma.listing.findMany({
     where: queueWhere(tab),
@@ -107,6 +184,14 @@ export async function listListingsForReview(tab: ListingReviewTab) {
   });
 }
 
+/**
+ * countListingsForReview
+ *
+ * Counts listings per reviewer tab for badges.
+ *
+ * @returns Counts keyed by tab.
+ * @calledBy Reviewer nav badges
+ */
 export async function countListingsForReview() {
   const [todos, pendiente, enRevision, aprobados, rechazados] =
     await Promise.all([
@@ -119,6 +204,15 @@ export async function countListingsForReview() {
   return { todos, pendiente, enRevision, aprobados, rechazados };
 }
 
+/**
+ * getListingForReview
+ *
+ * Loads a single listing for the reviewer detail view.
+ *
+ * @param listingId - Listing UUID.
+ * @returns Listing with full review includes or null.
+ * @calledBy Reviewer listing detail page
+ */
 export async function getListingForReview(listingId: string) {
   return prisma.listing.findFirst({
     where: {
@@ -151,6 +245,15 @@ export async function getListingForReview(listingId: string) {
   });
 }
 
+/**
+ * findPossibleDuplicateListings
+ *
+ * Finds other seller listings that may duplicate the reviewed one.
+ *
+ * @param listing - Listing fields used for similarity matching.
+ * @returns Candidate duplicate listings.
+ * @calledBy Reviewer detail duplicate panel
+ */
 export async function findPossibleDuplicateListings(listing: {
   id: string;
   sellerId: string;
@@ -189,6 +292,15 @@ export async function findPossibleDuplicateListings(listing: {
   });
 }
 
+/**
+ * sellerDisplayName
+ *
+ * Resolves a seller display name for review UI.
+ *
+ * @param seller - Profile name fields.
+ * @returns Display string.
+ * @calledBy Reviewer queue cards
+ */
 export function sellerDisplayName(seller: {
   fullName: string | null;
   username: string | null;
@@ -198,8 +310,18 @@ export function sellerDisplayName(seller: {
   return "Vendedor";
 }
 
+/**
+ * isEditableReviewStatus
+ *
+ * Whether a listing status still allows reviewer decisions.
+ *
+ * @param status - Listing status string.
+ * @returns True when pending review.
+ * @calledBy Reviewer action guards
+ */
 export function isEditableReviewStatus(status: string) {
   return (
+    status === "SUBMITTED" ||
     status === "PENDING_REVIEW" ||
     status === "PUBLISHED" ||
     status === "APPROVED" ||

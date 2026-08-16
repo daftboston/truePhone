@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: review listing before submit to TruePhone review.
+ * @dependencies Review/submit components and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Revisar anuncio",
 };
 
+/**
+ * ListingReviewPage
+ *
+ * Shows a seller preview and submit action for manual review.
+ *
+ * @returns Pre-submit review wizard step.
+ */
 export default async function ListingReviewPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();
@@ -26,18 +39,19 @@ export default async function ListingReviewPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   const galleryCount = listing.images.filter(
     (image) => image.imageType === "gallery",
   ).length;
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={5}
         title="Revisa y envía"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <ReviewListingForm
           listingId={listing.id}

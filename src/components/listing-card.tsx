@@ -1,3 +1,9 @@
+/**
+ * @file listing-card.tsx
+ * @description Linked marketplace card with image, price, condition, and trust badge.
+ * @dependencies next/image, next/link, TrustBadge, PriceDisplay, @/lib/utils
+ */
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -17,6 +23,22 @@ type ListingCardProps = {
   className?: string;
 };
 
+/**
+ * ListingCard
+ *
+ * Renders a browse-grid listing summary as a link to the public listing page.
+ *
+ * @param props.href - Destination path (usually public listing slug URL).
+ * @param props.title - Listing title.
+ * @param props.imageUrl - Optional cover image URL.
+ * @param props.price - Display price in COP.
+ * @param props.batteryHealth - Optional battery percentage.
+ * @param props.verified - When true, shows TrustBadge.
+ * @param props.conditionLabel - Human-readable condition.
+ * @param props.className - Optional className.
+ * @returns Linked card element.
+ * @calledBy Explore, search, favorites, and seller listing grids
+ */
 export function ListingCard({
   href,
   title,

@@ -1,3 +1,7 @@
+-- @file 20260715000000_init.sql
+-- @description Initial TruePhone schema: profiles, iPhone catalogs, listings, images, messages, reviews, favorites.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "public";
 

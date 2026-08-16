@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file change-password-form.tsx
+ * @description Client form for changing password while logged in.
+ * @dependencies react, changePasswordAction, design-system inputs
+ */
+
 import { useActionState } from "react";
 
 import { changePasswordAction } from "@/features/profile/actions/profile";
@@ -8,6 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * ChangePasswordForm
+ *
+ * Collects new password + confirmation and submits to changePasswordAction.
+ *
+ * @returns Password form with field errors and success/error status.
+ * @calledBy profile edit page
+ */
 export function ChangePasswordForm() {
   const [state, formAction, pending] = useActionState<
     ProfileActionState,

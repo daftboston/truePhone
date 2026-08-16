@@ -1,3 +1,7 @@
+-- @file 20260715060000_device_possession.sql
+-- @description Adds device_possession_challenges for seller photo proof of physical device possession.
+-- @dependencies PostgreSQL 15+, Supabase
+
 -- CreateTable
 CREATE TABLE "device_possession_challenges" (
     "id" TEXT NOT NULL,

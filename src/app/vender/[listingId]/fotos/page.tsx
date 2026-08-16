@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: listing photo upload.
+ * @dependencies Photo upload components and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Fotos del anuncio",
 };
 
+/**
+ * ListingPhotosPage
+ *
+ * Lets the seller upload and manage listing gallery images.
+ *
+ * @returns Photos wizard step.
+ */
 export default async function ListingPhotosPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();
@@ -26,18 +39,19 @@ export default async function ListingPhotosPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   const gallery = listing.images.filter(
     (image) => image.imageType === "gallery",
   );
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={2}
         title="Fotos del iPhone"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <GalleryUploadForm listingId={listing.id} images={gallery} />
       </ListingWizardShell>

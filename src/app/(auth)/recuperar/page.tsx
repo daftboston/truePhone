@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Password recovery request page.
+ * @dependencies Auth recover form components
+ */
+
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -8,6 +14,13 @@ export const metadata: Metadata = {
   title: "Recuperar contraseña",
 };
 
+/**
+ * RecoverPage
+ *
+ * Renders the forgot-password email form.
+ *
+ * @returns Password recovery page.
+ */
 export default function RecoverPage() {
   return (
     <AuthShell

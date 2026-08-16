@@ -1,3 +1,9 @@
+/**
+ * @file auth-shell.tsx
+ * @description Layout wrapper for auth pages with brand header, card, and optional footer.
+ * @dependencies next/link, @/lib/utils
+ */
+
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -10,6 +16,19 @@ type AuthShellProps = {
   className?: string;
 };
 
+/**
+ * AuthShell
+ *
+ * Renders a centered auth page shell with TruePhone branding and a content card.
+ *
+ * @param props.title - Page heading below the brand link.
+ * @param props.description - Short supporting copy under the title.
+ * @param props.children - Form or other auth content inside the card.
+ * @param props.footer - Optional links below the card (e.g. switch login/register).
+ * @param props.className - Optional extra classes on the outer gradient container.
+ * @returns Auth page layout.
+ * @calledBy login, register, recover, and update-password app pages
+ */
 export function AuthShell({
   title,
   description,

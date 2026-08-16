@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file avatar-upload-form.tsx
+ * @description Client form that auto-submits a selected avatar image.
+ * @dependencies react, uploadAvatarAction, Avatar, Button
+ */
+
 import { useActionState, useRef } from "react";
 
 import { uploadAvatarAction } from "@/features/profile/actions/profile";
@@ -12,6 +18,15 @@ type AvatarUploadFormProps = {
   avatarUrl: string | null;
 };
 
+/**
+ * initials
+ *
+ * Derives up to two uppercase initials from a display name.
+ *
+ * @param name - Full name or null.
+ * @returns Initials string, or `"?"` when name is empty.
+ * @calledBy AvatarUploadForm
+ */
 function initials(name: string | null) {
   if (!name) return "?";
   return name
@@ -22,6 +37,16 @@ function initials(name: string | null) {
     .toUpperCase();
 }
 
+/**
+ * AvatarUploadForm
+ *
+ * Shows the current avatar and uploads a new file via uploadAvatarAction.
+ *
+ * @param props.fullName - Used for fallback initials.
+ * @param props.avatarUrl - Current public avatar URL, if any.
+ * @returns Avatar preview plus file picker button with status messages.
+ * @calledBy profile edit page
+ */
 export function AvatarUploadForm({
   fullName,
   avatarUrl,

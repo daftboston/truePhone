@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: device details for the listing.
+ * @dependencies Device form and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -7,6 +13,7 @@ import { ListingWizardShell } from "@/features/listings/components/listing-wizar
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getCatalog, getOwnedListing } from "@/lib/listings";
+import { getSellerPriceGuideMap } from "@/lib/recommended-prices";
 
 type PageProps = {
   params: Promise<{ listingId: string }>;
@@ -16,6 +23,13 @@ export const metadata: Metadata = {
   title: "Editar dispositivo",
 };
 
+/**
+ * EditDevicePage
+ *
+ * Collects device attributes (model, storage, condition, etc.) for the listing.
+ *
+ * @returns Device details wizard step.
+ */
 export default async function EditDevicePage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();
@@ -26,22 +40,28 @@ export default async function EditDevicePage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
-  const catalog = await getCatalog();
+  const [catalog, priceGuideByCombo] = await Promise.all([
+    getCatalog(),
+    getSellerPriceGuideMap(),
+  ]);
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={1}
         title="Datos del dispositivo"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <DeviceDetailsForm
           models={catalog.models}
           colors={catalog.colors}
           storages={catalog.storages}
           colorIdsByModelId={catalog.colorIdsByModelId}
+          storageIdsByModelId={catalog.storageIdsByModelId}
+          priceGuideByCombo={priceGuideByCombo}
           listingId={listing.id}
           defaults={{
             iphoneModelId: listing.iphoneModelId,

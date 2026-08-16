@@ -1,3 +1,9 @@
+/**
+ * @file types.ts
+ * @description Shared types and helpers for the verification feature.
+ * @dependencies @prisma/client
+ */
+
 import type {
   IdentityVerification,
   IdentityVerificationStatus,
@@ -31,6 +37,15 @@ export const VERIFICATION_STEPS = [
   { id: "revisar", title: "Revisar", path: "/verificacion/revisar" },
 ] as const;
 
+/**
+ * fieldErrorsFromZod
+ *
+ * Flattens Zod issues into a field-name → messages map for form UI.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function fieldErrorsFromZod(
   error: import("zod").ZodError,
 ): Record<string, string[]> {
@@ -44,14 +59,41 @@ export function fieldErrorsFromZod(
   return fieldErrors;
 }
 
+/**
+ * isSellerIdentityVerified
+ *
+ * Predicate helper used by verification UI and actions.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function isSellerIdentityVerified(verifikStatus: string) {
   return verifikStatus === "verified";
 }
 
+/**
+ * canContinueVerification
+ *
+ * Predicate helper used by verification UI and actions.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function canContinueVerification(status: IdentityVerificationStatus) {
   return status === "DRAFT" || status === "REJECTED";
 }
 
+/**
+ * verificationStatusLabel
+ *
+ * Supports verification by implementing verificationStatusLabel.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy verification UI and related modules
+ */
 export function verificationStatusLabel(status: string) {
   switch (status) {
     case "verified":
@@ -72,6 +114,15 @@ export function verificationStatusLabel(status: string) {
   }
 }
 
+/**
+ * nextVerificationPath
+ *
+ * Returns the next incomplete identity-verification wizard step.
+ *
+ * @param draft - Current identity verification row, if any.
+ * @returns Path under `/verificacion`.
+ * @calledBy verificationNavHref, verification pages
+ */
 export function nextVerificationPath(draft: IdentityVerification | null) {
   if (!draft || !draft.privacyAcceptedAt) return "/verificacion";
   if (!draft.documentNumberHash || !draft.frontImageUrl) {
@@ -80,4 +131,30 @@ export function nextVerificationPath(draft: IdentityVerification | null) {
   if (!draft.backImageUrl) return "/verificacion/cedula-reverso";
   if (!draft.selfieImageUrl) return "/verificacion/selfie";
   return "/verificacion/revisar";
+}
+
+/**
+ * verificationNavHref
+ *
+ * Sidebar destination for Verificación. Never returns `/vender` — that
+ * made Mis anuncios and Verificación both look selected.
+ *
+ * @param input.verifikStatus - Profile identity status.
+ * @param input.verification - Latest identity verification row, if any.
+ * @returns A `/verificacion` path.
+ * @calledBy AuthenticatedSidebarShell, ProfilePage
+ */
+export function verificationNavHref(input: {
+  verifikStatus: string;
+  verification?: IdentityVerification | null;
+}) {
+  if (isSellerIdentityVerified(input.verifikStatus)) {
+    return "/verificacion";
+  }
+  if (input.verifikStatus === "pending") {
+    return "/verificacion/enviada";
+  }
+  return input.verification
+    ? nextVerificationPath(input.verification)
+    : "/verificacion";
 }

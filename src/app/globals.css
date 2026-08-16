@@ -3,6 +3,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html.disable-transitions *,
+html.disable-transitions *::before,
+html.disable-transitions *::after {
+  transition: none !important;
+}
+
 /*
   TruePhone — Stitch design language (light + dark)
   Single source for mobile and desktop. Figma visual refs retired.
@@ -192,4 +198,29 @@
 
 @utility shadow-card {
   box-shadow: var(--shadow-card);
+}
+
+/* Home hero — wide premium banner (theme tokens) */
+.home-hero-panel {
+  background: color-mix(in oklab, var(--background) 78%, var(--muted));
+  color: var(--foreground);
+  border: 1px solid color-mix(in oklab, var(--border) 55%, transparent);
+}
+
+.home-hero-pattern {
+  background-image: radial-gradient(
+    ellipse 90% 80% at 50% 50%,
+    transparent 40%,
+    color-mix(in oklab, var(--foreground) 3%, transparent) 100%
+  );
+}
+
+.home-hero-phones {
+  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.12))
+    drop-shadow(0 3px 8px rgb(0 0 0 / 0.06));
+}
+
+.dark .home-hero-phones {
+  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.4))
+    drop-shadow(0 3px 8px rgb(0 0 0 / 0.25));
 }

@@ -1,8 +1,13 @@
+/**
+ * @file page.tsx
+ * @description Queue of identity verifications awaiting manual review.
+ * @dependencies Identity review loaders and actions
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { IdentityReviewActions } from "@/features/verification/components/identity-review-actions";
@@ -15,13 +20,20 @@ export const metadata: Metadata = {
   title: "Revisión de identidad",
 };
 
+/**
+ * IdentityReviewQueuePage
+ *
+ * Lists pending identity verification submissions for staff.
+ *
+ * @returns Identity review queue.
+ */
 export default async function IdentityReviewQueuePage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/identidad");
 
   if (current.profile.role !== "REVIEWER" && current.profile.role !== "ADMIN") {
     return (
-      <AppShell mainClassName="max-w-lg justify-center">
+      <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
           description="Solo revisores y administradores pueden ver esta cola. Usa supabase/promote-reviewer.sql para asignar el rol."
@@ -31,7 +43,7 @@ export default async function IdentityReviewQueuePage() {
             </Button>
           }
         />
-      </AppShell>
+      </div>
     );
   }
 
@@ -69,7 +81,7 @@ export default async function IdentityReviewQueuePage() {
   );
 
   return (
-    <AppShell mainClassName="max-w-lg gap-6">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-foreground text-xl font-semibold tracking-tight">
           Cola de identidad
@@ -85,7 +97,7 @@ export default async function IdentityReviewQueuePage() {
           description="Cuando un vendedor envíe su cédula, aparecerá aquí."
         />
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4 lg:grid-cols-2">
           {withDocs.map(
             ({
               item,
@@ -113,6 +125,6 @@ export default async function IdentityReviewQueuePage() {
           )}
         </div>
       )}
-    </AppShell>
+    </div>
   );
 }

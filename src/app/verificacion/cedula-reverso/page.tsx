@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Verification step: upload cédula back image.
+ * @dependencies Verification upload components
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -11,6 +17,13 @@ export const metadata: Metadata = {
   title: "Cédula — reverso",
 };
 
+/**
+ * CedulaBackPage
+ *
+ * Captures the back of the Colombian ID document.
+ *
+ * @returns Cédula back upload step.
+ */
 export default async function CedulaBackPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/verificacion/cedula-reverso");

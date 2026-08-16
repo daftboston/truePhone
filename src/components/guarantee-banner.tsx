@@ -1,3 +1,9 @@
+/**
+ * @file guarantee-banner.tsx
+ * @description Trust-colored aside promoting TruePhone purchase guarantee messaging.
+ * @dependencies lucide-react, @/lib/utils
+ */
+
 import { ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -8,6 +14,17 @@ type GuaranteeBannerProps = {
   className?: string;
 };
 
+/**
+ * GuaranteeBanner
+ *
+ * Renders a shield icon with title and description for trust messaging.
+ *
+ * @param props.title - Banner heading.
+ * @param props.description - Supporting copy.
+ * @param props.className - Optional className.
+ * @returns Aside with trust styling.
+ * @calledBy Listing detail and marketing surfaces
+ */
 export function GuaranteeBanner({
   title = "Compra garantizada",
   description = "Cada iPhone es revisado manualmente antes de publicarse.",

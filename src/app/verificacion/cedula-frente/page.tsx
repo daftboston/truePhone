@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Verification step: upload cédula front image.
+ * @dependencies Verification upload components
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -11,6 +17,13 @@ export const metadata: Metadata = {
   title: "Cédula — frente",
 };
 
+/**
+ * CedulaFrontPage
+ *
+ * Captures the front of the Colombian ID document.
+ *
+ * @returns Cédula front upload step.
+ */
 export default async function CedulaFrontPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/verificacion/cedula-frente");

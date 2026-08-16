@@ -1,3 +1,9 @@
+/**
+ * @file schema.prisma
+ * @description TruePhone Prisma data model: marketplace profiles, listings, orders, payments, financial core, shipping, and reviews.
+ * @dependencies PostgreSQL 15+, Prisma Client, Supabase
+ */
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -34,12 +40,125 @@ enum Condition {
   POOR
 }
 
+/// Independent iPhone product lines. Numbered models, SE, and Air are not the same line.
+enum IphoneProductLine {
+  IPHONE
+  IPHONE_SE
+  IPHONE_AIR
+}
+
+/// Commercial variant within a product line (not a generation by itself).
+enum IphoneVariantType {
+  STANDARD
+  MINI
+  PLUS
+  PRO
+  PRO_MAX
+  E
+  AIR
+}
+
 enum IdentityVerificationStatus {
   DRAFT
   PENDING
   IN_REVIEW
   VERIFIED
   REJECTED
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  PAID
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  WOMPI
+  MOCK
+}
+
+enum LedgerEntryType {
+  PAYMENT_APPROVED
+  HOLD_CREATED
+  FEE_SNAPSHOT
+  PAYOUT_AUTHORIZED
+  PAYOUT_SUBMITTED
+  PAYOUT_COMPLETED
+  PAYOUT_FAILED
+  REFUND_APPROVED
+  REFUND_COMPLETED
+  CHARGEBACK_RECEIVED
+  DISPUTE_OPENED
+  DISPUTE_RESOLVED
+  BUYER_CONFIRMED
+  BUYER_CONFIRM_EXPIRED
+  SELLER_FULFILLMENT_ABANDONED
+  PREMIUM_SHIPPING_FEE
+}
+
+enum PayoutStatus {
+  PENDING
+  AUTHORIZED
+  SUBMITTED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PayoutProvider {
+  WOMPI
+  MOCK
+  /// Ops pays in Wompi dashboard after Financial Core authorizes (MVP).
+  MANUAL
+}
+
+enum FeeEntitlementStatus {
+  ACTIVE
+  USED
+  REFUNDED
+  EXPIRED
+}
+
+enum BankAccountType {
+  AHORROS
+  CORRIENTE
+}
+
+enum ShippingMethod {
+  PREMIUM_BOGOTA
+  CARRIER
+}
+
+enum ShipmentStatus {
+  METHOD_SELECTED
+  AWAITING_PICKUP
+  INSPECTION
+  IN_TRANSIT
+  DELIVERED
+  FAILED
+  RETURNED
+}
+
+enum InspectionResult {
+  PENDING
+  PASSED
+  FAILED
+}
+
+/// In-app / email notification kinds (Phase 12). Settlement types ship first.
+enum NotificationType {
+  BUYER_RECEIVED_CONFIRM
+  BUYER_CONFIRM_REMINDER
 }
 
 // Models
@@ -73,6 +192,18 @@ model Profile {
   reviewedListings       Listing[]                @relation("ReviewerListings")
   identityVerifications  IdentityVerification[]   @relation("SellerIdentity")
   identityReviews        IdentityVerification[]   @relation("IdentityReviewer")
+  blocksCreated          UserBlock[]              @relation("BlocksCreated")
+  blocksReceived         UserBlock[]              @relation("BlocksReceived")
+  conversationReports    ConversationReport[]     @relation("ConversationReports")
+  reviewReports          ReviewReport[]           @relation("ReviewReports")
+  ordersAsBuyer          Order[]                  @relation("OrderBuyer")
+  ordersAsSeller         Order[]                  @relation("OrderSeller")
+  payments               Payment[]
+  sellerBankAccounts     SellerBankAccount[]
+  feeEntitlements        FeeEntitlement[]         @relation("FeeEntitlementBuyer")
+  payouts                Payout[]
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
 
   @@map("profiles")
 }
@@ -104,15 +235,28 @@ model IdentityVerification {
 }
 
 model IphoneModel {
-  id          String            @id @default(cuid())
-  name        String            @unique
-  slug        String            @unique
-  modelNumber String?
-  releaseYear Int?
-  createdAt   DateTime          @default(now())
-  listings    Listing[]
-  modelColors IphoneModelColor[]
+  id            String             @id @default(cuid())
+  name          String             @unique
+  slug          String             @unique
+  modelNumber   String?
+  /// Independent line: numbered iPhone, SE, or Air. SE is never a 13/14 variant.
+  productLine   IphoneProductLine
+  /// Generation within the product line (SE 2/3, numbered 12–17, Air 1).
+  generation    Int
+  variantType   IphoneVariantType
+  releaseYear   Int?
+  /// Stable catalog order (1 = oldest in scope). Higher = newer for pickers.
+  sortOrder     Int
+  createdAt     DateTime           @default(now())
+  listings      Listing[]
+  modelColors   IphoneModelColor[]
+  modelStorages IphoneModelStorage[]
+  recommendedPrices RecommendedPrice[]
 
+  @@unique([productLine, generation, variantType])
+  @@index([productLine, generation])
+  @@index([sortOrder])
+  @@index([releaseYear])
   @@map("iphone_models")
 }
 
@@ -141,12 +285,54 @@ model IphoneModelColor {
   @@map("iphone_model_colors")
 }
 
+/// Allowed storage capacities per iPhone model (listing wizard filter).
+model IphoneModelStorage {
+  id              String        @id @default(cuid())
+  iphoneModelId   String
+  iphoneModel     IphoneModel   @relation(fields: [iphoneModelId], references: [id], onDelete: Cascade)
+  iphoneStorageId String
+  iphoneStorage   IphoneStorage @relation(fields: [iphoneStorageId], references: [id], onDelete: Cascade)
+
+  @@unique([iphoneModelId, iphoneStorageId])
+  @@index([iphoneModelId])
+  @@index([iphoneStorageId])
+  @@map("iphone_model_storages")
+}
+
 model IphoneStorage {
-  id        String    @id @default(cuid())
-  valueGb   Int       @unique
-  createdAt DateTime  @default(now())
-  listings  Listing[]
+  id            String               @id @default(cuid())
+  valueGb       Int                  @unique
+  createdAt     DateTime             @default(now())
+  listings      Listing[]
+  modelStorages IphoneModelStorage[]
+  recommendedPrices RecommendedPrice[]
+
   @@map("iphone_storages")
+}
+
+/// Admin-maintained pricing guide for sellers (model + storage + condition → COP).
+/// Guidance only — never forces listing price. Phase 13 CRUD; Phase 5 seller display.
+model RecommendedPrice {
+  id              String        @id @default(cuid())
+  iphoneModelId   String
+  iphoneModel     IphoneModel   @relation(fields: [iphoneModelId], references: [id], onDelete: Cascade)
+  iphoneStorageId String
+  iphoneStorage   IphoneStorage @relation(fields: [iphoneStorageId], references: [id], onDelete: Cascade)
+  condition       Condition
+  /// Reference sale price in integer COP pesos.
+  priceCop        Int
+  minPriceCop     Int?
+  maxPriceCop     Int?
+  notes           String?
+  effectiveFrom   DateTime?
+  effectiveTo     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([iphoneModelId, iphoneStorageId, condition])
+  @@index([iphoneModelId])
+  @@index([condition])
+  @@map("recommended_prices")
 }
 
 model Listing {
@@ -199,7 +385,9 @@ model Listing {
   images              ListingImage[]
   favorites           Favorite[]
   messages            Message[]
+  conversationReports ConversationReport[]
   possessionChallenge DevicePossessionChallenge?
+  orders              Order[]
 
   @@index([status])
   @@index([sellerId])
@@ -244,21 +432,368 @@ model Message {
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 
+  @@index([receiverId, isRead])
+  @@index([listingId, createdAt])
+  @@index([senderId, listingId])
   @@map("messages")
 }
-model Review {
-  id             String   @id @default(cuid())
-  orderId        String?  // Will link to Order later
-  reviewerId     String
-  reviewer       Profile  @relation("ReviewWritten", fields: [reviewerId], references: [id])
-  reviewedUserId String
-  reviewedUser   Profile  @relation("ReviewReceived", fields: [reviewedUserId], references: [id])
-  rating         Int      // 1-5
-  comment        String?
-  createdAt      DateTime @default(now())
 
+/// One-way block: blocker cannot be messaged by (and should not message) blocked.
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   Profile  @relation("BlocksCreated", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   Profile  @relation("BlocksReceived", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("user_blocks")
+}
+
+/// Report a listing-scoped conversation for moderation.
+model ConversationReport {
+  id         String   @id @default(cuid())
+  reporterId String
+  reporter   Profile  @relation("ConversationReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  reason     String
+  createdAt  DateTime @default(now())
+
+  @@index([listingId])
+  @@index([reporterId])
+  @@map("conversation_reports")
+}
+
+/// Order-tied marketplace rating (Phase 11). One review per participant per order.
+model Review {
+  id             String    @id @default(cuid())
+  orderId        String
+  order          Order     @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  reviewerId     String
+  reviewer       Profile   @relation("ReviewWritten", fields: [reviewerId], references: [id])
+  reviewedUserId String
+  reviewedUser   Profile   @relation("ReviewReceived", fields: [reviewedUserId], references: [id])
+  rating         Int // 1-5
+  comment        String?
+  /// Soft-hide for moderation; excluded from public averages.
+  hiddenAt       DateTime?
+  hiddenById     String?
+  createdAt      DateTime  @default(now())
+
+  reports        ReviewReport[]
+
+  @@unique([orderId, reviewerId])
+  @@index([orderId])
+  @@index([reviewedUserId, createdAt])
   @@map("reviews")
 }
+
+/// Report an abusive marketplace review for staff moderation.
+model ReviewReport {
+  id           String    @id @default(cuid())
+  reviewId     String
+  review       Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  reporterId   String
+  reporter     Profile   @relation("ReviewReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  reason       String
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+
+  @@index([reviewId])
+  @@index([reporterId])
+  @@index([resolvedAt])
+  @@map("review_reports")
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  listingId      String
+  listing        Listing     @relation(fields: [listingId], references: [id])
+  buyerId        String
+  buyer          Profile     @relation("OrderBuyer", fields: [buyerId], references: [id])
+  sellerId       String
+  seller         Profile     @relation("OrderSeller", fields: [sellerId], references: [id])
+  status         OrderStatus @default(AWAITING_PAYMENT)
+
+  /// Snapshots at reserve time (COP, integer pesos).
+  equipmentPrice Int
+  platformFee    Int
+  totalPrice     Int
+  currency       String      @default("COP")
+
+  /// Marketplace fee rate in basis points (1000 = 10%, 800 = 8% loyalty).
+  feeRateBps              Int      @default(1000)
+  /// Projected Wompi collection cost (2.75% + IVA) on buyer total.
+  wompiCollectionPesos    Int      @default(0)
+  /// Projected Wompi payout cost (0.45% + IVA) on seller amount.
+  wompiPayoutPesos        Int      @default(0)
+  /// Remainder of fee pool after Wompi costs.
+  truephoneRevenuePesos   Int      @default(0)
+  /// Amount obligated to seller on hold / dispersed at payout.
+  sellerAmountPesos       Int      @default(0)
+  /// Premium Bogotá logistics fee deducted from seller (0 for Carrier).
+  premiumShippingFeePesos Int      @default(0)
+  /// Reserved for post-MVP seller marketplace fee (always 0 in MVP).
+  sellerFeePesos          Int      @default(0)
+
+  /// Financial Core settlement timestamps (PAID = hold active).
+  fundsHeldAt                DateTime?
+  payoutAuthorizedAt         DateTime?
+  payoutCompletedAt          DateTime?
+  buyerConfirmedAt           DateTime?
+  /// Set when Shipping marks delivered; silence until then → auto-release.
+  buyerConfirmDeadlineAt     DateTime?
+  payoutFrozen               Boolean   @default(false)
+  sellerFulfillmentAbandonedAt DateTime?
+
+  cancelReason   String?
+  cancelledAt    DateTime?
+  cancelledById  String?
+  completedAt    DateTime?
+  paidAt         DateTime?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  reviews        Review[]
+  payments       Payment[]
+  ledgerEntries  LedgerEntry[]
+  payouts        Payout[]
+  shipment       Shipment?
+  feeEntitlementSource FeeEntitlement? @relation("FeeEntitlementSourceOrder")
+  feeEntitlementUsed   FeeEntitlement? @relation("FeeEntitlementUsedOrder")
+  notifications  Notification[]
+
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
+  @@index([listingId])
+  @@index([status])
+  @@index([buyerConfirmDeadlineAt])
+  @@map("orders")
+}
+
+/// Device fulfillment (Phase 10c). One shipment per order. Does not authorize money.
+model Shipment {
+  id        String         @id @default(cuid())
+  orderId   String         @unique
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  method    ShippingMethod
+  status    ShipmentStatus @default(METHOD_SELECTED)
+
+  /// Carrier path (Servientrega / Envía / other).
+  carrierName   String?
+  trackingCode  String?
+  evidenceUrl   String?
+
+  /// Premium Bogotá: fee snapshot at method selection (always 20000 when Premium).
+  premiumFeeCop Int @default(0)
+
+  methodSelectedAt DateTime  @default(now())
+  trackingUploadedAt DateTime?
+  pickupScheduledAt  DateTime?
+  inspectionAt       DateTime?
+  inTransitAt        DateTime?
+  deliveredAt        DateTime?
+  failedAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inspection ShipmentInspection?
+
+  @@index([status])
+  @@index([method])
+  @@map("shipments")
+}
+
+/// Premium Bogotá inspection checklist (Phase 10c).
+model ShipmentInspection {
+  id         String           @id @default(cuid())
+  shipmentId String           @unique
+  shipment   Shipment         @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  result     InspectionResult @default(PENDING)
+
+  imeiMatch       Boolean?
+  serialMatch     Boolean?
+  storageMatch    Boolean?
+  colorMatch      Boolean?
+  cosmeticNotes   String?
+  accessoriesOk   Boolean?
+  batteryHealthPct Int?
+  notes           String?
+
+  inspectedById String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("shipment_inspections")
+}
+
+/// Append-only money facts. Financial Core is the only writer.
+model LedgerEntry {
+  id        String          @id @default(cuid())
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentId String?
+  payoutId  String?
+  payout    Payout?         @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  type      LedgerEntryType
+  /// Signed COP pesos: positive = inflow to TruePhone/Cuenta obligation; see metadata for semantics.
+  amountPesos Int
+  currency  String          @default("COP")
+  memo      String?
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([type, createdAt])
+  @@index([payoutId])
+  @@map("ledger_entries")
+}
+
+/// Seller bank destination for Pagos a Terceros (MVP bank only).
+model SellerBankAccount {
+  id            String          @id @default(cuid())
+  profileId     String
+  profile       Profile         @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  legalIdType   String
+  legalId       String
+  bankCode      String
+  bankName      String?
+  accountType   BankAccountType
+  accountNumber String
+  holderName    String
+  email         String
+  isDefault     Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  payouts       Payout[]
+
+  @@index([profileId])
+  @@map("seller_bank_accounts")
+}
+
+/// Dispersion from Wompi Cuenta → seller bank (Financial Core only).
+model Payout {
+  id                   String         @id @default(cuid())
+  orderId              String
+  order                Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  sellerId             String
+  seller               Profile        @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  sellerBankAccountId  String?
+  sellerBankAccount    SellerBankAccount? @relation(fields: [sellerBankAccountId], references: [id], onDelete: SetNull)
+  provider             PayoutProvider
+  status               PayoutStatus   @default(PENDING)
+  amountPesos          Int
+  currency             String         @default("COP")
+  idempotencyKey       String         @unique
+  providerPayoutId     String?
+  providerLoteId       String?
+  failureCode          String?
+  failureMessage       String?
+  authorizedAt         DateTime?
+  submittedAt          DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  ledgerEntries        LedgerEntry[]
+
+  @@index([orderId, createdAt])
+  @@index([sellerId, createdAt])
+  @@index([status])
+  @@map("payouts")
+}
+
+/// One-time 8% marketplace fee after seller cancel / no-ship.
+model FeeEntitlement {
+  id             String               @id @default(cuid())
+  buyerId        String
+  buyer          Profile              @relation("FeeEntitlementBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  sourceOrderId  String               @unique
+  sourceOrder    Order                @relation("FeeEntitlementSourceOrder", fields: [sourceOrderId], references: [id], onDelete: Restrict)
+  status         FeeEntitlementStatus @default(ACTIVE)
+  /// Always 800 (8%) for MVP loyalty path.
+  feeRateBps     Int                  @default(800)
+  usedAt         DateTime?
+  usedOnOrderId  String?              @unique
+  usedOnOrder    Order?               @relation("FeeEntitlementUsedOrder", fields: [usedOnOrderId], references: [id], onDelete: SetNull)
+  refundChosenAt DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([buyerId, status])
+  @@map("fee_entitlements")
+}
+
+/// Buyer checkout for Compra Garantizada (equipment + marketplace fee).
+model Payment {
+  id                 String          @id @default(cuid())
+  orderId            String
+  order              Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  buyerId            String
+  buyer              Profile         @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+
+  provider           PaymentProvider
+  status             PaymentStatus   @default(PENDING)
+
+  /// Amount charged to the buyer in COP pesos (= order.totalPrice).
+  amount             Int
+  currency           String          @default("COP")
+  equipmentPrice     Int
+  platformFee        Int
+
+  /// Stable merchant reference sent to the provider.
+  reference          String          @unique
+  providerPaymentId  String?
+  providerCheckoutId String?
+  checkoutUrl        String?
+
+  failureCode        String?
+  failureMessage     String?
+
+  paidAt             DateTime?
+  refundedAt         DateTime?
+  refundAmount       Int?
+
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  webhookEvents      PaymentWebhookEvent[]
+
+  @@index([orderId, createdAt])
+  @@index([buyerId, createdAt])
+  @@index([status])
+  @@index([providerCheckoutId])
+  @@index([providerPaymentId])
+  @@map("payments")
+}
+
+/// Idempotent store of provider webhook deliveries.
+model PaymentWebhookEvent {
+  id               String          @id @default(cuid())
+  provider         PaymentProvider
+  eventType        String
+  /// Unique key for idempotency (e.g. checksum + timestamp).
+  externalEventKey String
+  payload          Json
+  paymentId        String?
+  payment          Payment?        @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  processedAt      DateTime?
+  processingError  String?
+  createdAt        DateTime        @default(now())
+
+  @@unique([provider, externalEventKey])
+  @@index([paymentId])
+  @@map("payment_webhook_events")
+}
+
 model Favorite {
   id        String   @id @default(cuid())
   userId    String
@@ -270,4 +805,42 @@ model Favorite {
 
   @@unique([userId, listingId])
   @@map("favorites")
+}
+
+/// In-app notification row (Phase 12). Email delivery is tracked on the same row.
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  user        Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  title       String
+  body        String
+  /// Relative app path (e.g. /compras/{orderId}).
+  href        String?
+  orderId     String?
+  order       Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  readAt      DateTime?
+  emailSentAt DateTime?
+  /// Idempotency key (e.g. buyer-received:{orderId}).
+  dedupeKey   String           @unique
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([orderId])
+  @@map("notifications")
+}
+
+/// Per-user channel preferences for notifications (defaults = all on).
+model NotificationPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailEnabled      Boolean  @default(true)
+  emailOrderUpdates Boolean  @default(true)
+  inAppEnabled      Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("notification_preferences")
 }

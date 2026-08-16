@@ -64,11 +64,12 @@ export async function submitListingForReview(input: unknown) {
 
 Use `src/app/api/**/route.ts` for:
 
-| Endpoint type         | Example                     |
-| --------------------- | --------------------------- |
-| Payment webhooks      | Stripe / Wompi callbacks    |
-| External integrations | Identity vendor webhooks    |
-| Public machine APIs   | Future mobile / partner API |
+| Endpoint type         | Example                            |
+| --------------------- | ---------------------------------- |
+| Payment webhooks      | `POST /api/payments/wompi/webhook` |
+| Mock checkout (dev)   | `GET /api/payments/mock/checkout`  |
+| External integrations | Identity vendor webhooks           |
+| Public machine APIs   | Future mobile / partner API        |
 
 Do **not** create Route Handlers for ordinary form posts from the Next.js UI.
 

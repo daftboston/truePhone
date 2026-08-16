@@ -1,3 +1,9 @@
+/**
+ * @file badge.tsx
+ * @description shadcn-style Badge with CVA status/trust variants.
+ * @dependencies class-variance-authority, react, @/lib/utils
+ */
+
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
@@ -29,6 +35,15 @@ export interface BadgeProps
     React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
+/**
+ * Badge
+ *
+ * Compact status label used for trust, success, warning, and outline chips.
+ *
+ * @param props - BadgeProps including variant and standard div attributes.
+ * @returns Styled badge div.
+ * @calledBy TrustBadge, listing condition labels, queues
+ */
 function Badge({ className, variant, ...props }: BadgeProps) {
   return (
     <div className={cn(badgeVariants({ variant }), className)} {...props} />

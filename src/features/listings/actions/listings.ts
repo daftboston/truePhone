@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file listings.ts
+ * @description Server actions for listings (listings.ts).
+ * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/lib/listings
+ */
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -11,6 +17,7 @@ import {
   generatePossessionCode,
   hashImei,
   imeiLast4,
+  resolveListingCarrier,
   updateListingDetailsSchema,
   updateListingSecuritySchema,
 } from "@/features/listings/schemas/listing";
@@ -22,6 +29,7 @@ import {
   getCatalog,
   getOwnedListing,
   isColorAllowedForModel,
+  isStorageAllowedForModel,
   requireVerifiedSeller,
 } from "@/lib/listings";
 import { prisma } from "@/lib/db";
@@ -31,10 +39,28 @@ const LISTING_BUCKET = "listing-images";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+/**
+ * checkboxValue
+ *
+ * Supports listings by implementing checkboxValue.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 function checkboxValue(formData: FormData, name: string) {
   return formData.get(name) === "on" || formData.get(name) === "true";
 }
 
+/**
+ * uploadListingImage
+ *
+ * Supports listings by implementing uploadListingImage.
+ *
+ * @param args - Function arguments.
+ * @returns Function result.
+ * @calledBy listings UI and related modules
+ */
 async function uploadListingImage(
   authUserId: string,
   listingId: string,
@@ -74,6 +100,16 @@ async function uploadListingImage(
   return { url: publicUrl };
 }
 
+/**
+ * createListingAction
+ *
+ * Server action: create listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function createListingAction(
   _prev: ListingActionState,
   formData: FormData,
@@ -124,6 +160,15 @@ export async function createListingAction(
     };
   }
 
+  const storageAllowed = await isStorageAllowedForModel(model.id, storage.id);
+  if (!storageAllowed) {
+    return {
+      ok: false,
+      error:
+        "Ese almacenamiento no está disponible para el modelo seleccionado.",
+    };
+  }
+
   const fees = computeFees(parsed.data.price);
   const idSuffix = crypto.randomUUID().slice(0, 8);
   const title = buildListingTitle({
@@ -169,6 +214,16 @@ export async function createListingAction(
   redirect(`/vender/${listing.id}/fotos`);
 }
 
+/**
+ * updateListingDetailsAction
+ *
+ * Server action: update listing details for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function updateListingDetailsAction(
   listingId: string,
   _prev: ListingActionState,
@@ -225,6 +280,15 @@ export async function updateListingDetailsAction(
     };
   }
 
+  const storageAllowed = await isStorageAllowedForModel(model.id, storage.id);
+  if (!storageAllowed) {
+    return {
+      ok: false,
+      error:
+        "Ese almacenamiento no está disponible para el modelo seleccionado.",
+    };
+  }
+
   const fees = computeFees(parsed.data.price);
   const title = buildListingTitle({
     modelName: model.name,
@@ -256,6 +320,16 @@ export async function updateListingDetailsAction(
   redirect(`/vender/${listing.id}/fotos`);
 }
 
+/**
+ * uploadListingGalleryAction
+ *
+ * Server action: upload listing gallery for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function uploadListingGalleryAction(
   listingId: string,
   _prev: ListingActionState,
@@ -303,6 +377,16 @@ export async function uploadListingGalleryAction(
   return { ok: true, message: "Foto agregada." };
 }
 
+/**
+ * continueFromPhotosAction
+ *
+ * Server action: continue from photos for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function continueFromPhotosAction(listingId: string) {
   const seller = await requireVerifiedSeller();
   if (!seller.ok) {
@@ -327,6 +411,16 @@ export async function continueFromPhotosAction(listingId: string) {
   redirect(`/vender/${listingId}/seguridad`);
 }
 
+/**
+ * updateListingSecurityAction
+ *
+ * Server action: update listing security for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function updateListingSecurityAction(
   listingId: string,
   _prev: ListingActionState,
@@ -389,7 +483,7 @@ export async function updateListingSecurityAction(
       imeiLast4: imeiLast4(parsed.data.imei),
       activationLocked: false,
       unlocked: parsed.data.unlocked === "true",
-      carrier: parsed.data.carrier || null,
+      carrier: resolveListingCarrier(parsed.data.unlocked, parsed.data.carrier),
     },
   });
 
@@ -397,6 +491,16 @@ export async function updateListingSecurityAction(
   redirect(`/vender/${listing.id}/posesion`);
 }
 
+/**
+ * uploadPossessionPhotoAction
+ *
+ * Server action: upload possession photo for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function uploadPossessionPhotoAction(
   listingId: string,
   _prev: ListingActionState,
@@ -459,6 +563,16 @@ export async function uploadPossessionPhotoAction(
   redirect(`/vender/${listing.id}/revisar`);
 }
 
+/**
+ * submitListingForReviewAction
+ *
+ * Server action: submit listing for review for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function submitListingForReviewAction(
   listingId: string,
 ): Promise<ListingActionState> {
@@ -496,15 +610,84 @@ export async function submitListingForReviewAction(
     }),
     prisma.listing.update({
       where: { id: listing.id },
-      data: { status: "PENDING_REVIEW" },
+      data: {
+        status: "PENDING_REVIEW",
+        rejectionReason: null,
+        reviewerNotes: null,
+        reviewedAt: null,
+        approvedAt: null,
+        reviewerId: null,
+      },
     }),
   ]);
 
   revalidatePath("/vender");
   revalidatePath(`/vender/${listing.id}`);
+  revalidatePath("/revision");
+  revalidatePath("/revision/anuncios");
   redirect(`/vender/${listing.id}/enviado`);
 }
 
+/**
+ * reopenRejectedListingAction
+ *
+ * Server action: reopen rejected listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
+export async function reopenRejectedListingAction(
+  listingId: string,
+): Promise<ListingActionState> {
+  const seller = await requireVerifiedSeller();
+  if (!seller.ok) {
+    return { ok: false, error: seller.error };
+  }
+
+  const listing = await getOwnedListing(listingId, seller.current.profile.id);
+  if (!listing) {
+    return { ok: false, error: "Anuncio no encontrado." };
+  }
+  if (listing.status !== "REJECTED") {
+    return {
+      ok: false,
+      error: "Solo puedes editar anuncios rechazados.",
+    };
+  }
+
+  await prisma.listing.update({
+    where: { id: listing.id },
+    data: {
+      status: "DRAFT",
+      // Keep rejectionReason visible until the next successful submit.
+    },
+  });
+
+  revalidatePath("/vender");
+  revalidatePath(`/vender/${listing.id}`);
+  revalidatePath(`/vender/${listing.id}/dispositivo`);
+  revalidatePath("/revision");
+  revalidatePath("/revision/anuncios");
+
+  return {
+    ok: true,
+    listingId: listing.id,
+    message: "Puedes editar el anuncio.",
+  };
+}
+
+/**
+ * deleteListingGalleryImageAction
+ *
+ * Server action: delete listing gallery image for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function deleteListingGalleryImageAction(
   listingId: string,
   imageId: string,
@@ -531,6 +714,16 @@ export async function deleteListingGalleryImageAction(
   return { ok: true, message: "Foto eliminada." };
 }
 
+/**
+ * deleteDraftListingAction
+ *
+ * Server action: delete draft listing for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function deleteDraftListingAction(listingId: string) {
   const seller = await requireVerifiedSeller();
   if (!seller.ok) {
@@ -551,6 +744,16 @@ export async function deleteDraftListingAction(listingId: string) {
   redirect("/vender");
 }
 
+/**
+ * loadCatalogAction
+ *
+ * Server action: load catalog for authenticated listings flows.
+ *
+ * @param _prev - Previous form state from useActionState when applicable.
+ * @param formDataOrArgs - FormData or typed action arguments.
+ * @returns Action state on errors; may redirect on success.
+ * @calledBy listings components
+ */
 export async function loadCatalogAction() {
   return getCatalog();
 }

@@ -1,46 +1,39 @@
 "use client";
 
+/**
+ * @file bottom-nav.tsx
+ * @description Mobile-only primary navigation bar fixed to the viewport bottom.
+ * @dependencies next/link, next/navigation, lucide-react, @/lib/utils
+ */
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  ClipboardCheck,
-  Home,
-  Search,
-  PlusCircle,
-  ShoppingBag,
-  UserRound,
-} from "lucide-react";
+import { Home, Search, PlusCircle, UserRound } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-const baseItems = [
+const items = [
   { href: "/", label: "Inicio", icon: Home },
-  { href: "/buscar", label: "Buscar", icon: Search },
+  { href: "/explorar", label: "Explorar", icon: Search },
   { href: "/vender", label: "Vender", icon: PlusCircle },
-  { href: "/compras", label: "Compras", icon: ShoppingBag },
   { href: "/perfil", label: "Perfil", icon: UserRound },
 ] as const;
 
 type BottomNavProps = {
   className?: string;
-  showReview?: boolean;
 };
 
-export function BottomNav({ className, showReview = false }: BottomNavProps) {
+/**
+ * BottomNav
+ *
+ * Highlights the active route among Inicio, Explorar, Vender, and Perfil.
+ *
+ * @param props.className - Optional nav className.
+ * @returns Fixed bottom nav for md:hidden viewports.
+ * @calledBy AppShell
+ */
+export function BottomNav({ className }: BottomNavProps) {
   const pathname = usePathname();
-  const items = showReview
-    ? [
-        baseItems[0],
-        baseItems[1],
-        baseItems[2],
-        {
-          href: "/revision",
-          label: "Revisión",
-          icon: ClipboardCheck,
-        } as const,
-        baseItems[4],
-      ]
-    : baseItems;
 
   return (
     <nav
@@ -50,13 +43,14 @@ export function BottomNav({ className, showReview = false }: BottomNavProps) {
       )}
       aria-label="Navegación principal"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-5">
+      <ul className="mx-auto grid max-w-lg grid-cols-4">
         {items.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/"
               ? pathname === "/"
-              : href === "/revision"
-                ? pathname.startsWith("/revision")
+              : href === "/explorar"
+                ? pathname.startsWith("/explorar") ||
+                  pathname.startsWith("/buscar")
                 : pathname.startsWith(href);
 
           return (

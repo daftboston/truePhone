@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file identity-review-actions.tsx
+ * @description IdentityReviewActions component for the verification feature.tsx.
+ * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/input
+ */
+
 import { useActionState } from "react";
 
 import {
@@ -21,6 +27,15 @@ type IdentityReviewActionsProps = {
   docsAvailable: boolean;
 };
 
+/**
+ * IdentityReviewActions
+ *
+ * Renders the Identity Review Actions UI for verification.
+ *
+ * @param props - IdentityReviewActions props.
+ * @returns IdentityReviewActions React element.
+ * @calledBy verification pages and parent components
+ */
 export function IdentityReviewActions({
   verificationId,
   documentLast4,
@@ -114,6 +129,15 @@ export function IdentityReviewActions({
   );
 }
 
+/**
+ * DocThumb
+ *
+ * Renders the Doc Thumb UI for verification.
+ *
+ * @param props - DocThumb props.
+ * @returns DocThumb React element.
+ * @calledBy verification pages and parent components
+ */
 function DocThumb({ href, label }: { href: string | null; label: string }) {
   if (!href) {
     return (

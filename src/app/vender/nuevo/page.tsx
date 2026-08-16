@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Start a new listing draft in the sell wizard.
+ * @dependencies Listing create form / wizard step
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -7,11 +13,19 @@ import { ListingWizardShell } from "@/features/listings/components/listing-wizar
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getCatalog } from "@/lib/listings";
+import { getSellerPriceGuideMap } from "@/lib/recommended-prices";
 
 export const metadata: Metadata = {
   title: "Nuevo anuncio",
 };
 
+/**
+ * NewListingPage
+ *
+ * Entry step to create a new seller listing draft.
+ *
+ * @returns New listing wizard page.
+ */
 export default async function NewListingPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/vender/nuevo");
@@ -19,7 +33,10 @@ export default async function NewListingPage() {
     redirect("/vender");
   }
 
-  const catalog = await getCatalog();
+  const [catalog, priceGuideByCombo] = await Promise.all([
+    getCatalog(),
+    getSellerPriceGuideMap(),
+  ]);
   if (
     catalog.models.length === 0 ||
     catalog.colors.length === 0 ||
@@ -39,13 +56,15 @@ export default async function NewListingPage() {
   }
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell step={1} title="Datos del dispositivo">
         <DeviceDetailsForm
           models={catalog.models}
           colors={catalog.colors}
           storages={catalog.storages}
           colorIdsByModelId={catalog.colorIdsByModelId}
+          storageIdsByModelId={catalog.storageIdsByModelId}
+          priceGuideByCombo={priceGuideByCombo}
         />
       </ListingWizardShell>
     </AppShell>

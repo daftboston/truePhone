@@ -1,3 +1,7 @@
+-- @file listing-images-bucket.sql
+-- @description Creates public listing-images storage bucket and seller-scoped RLS for gallery/possession photos.
+-- @dependencies PostgreSQL 15+, Supabase Storage
+
 -- Public gallery + possession photos for listings (Phase 5)
 -- Run once in the Supabase SQL editor
 

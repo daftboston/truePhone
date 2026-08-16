@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Verification step: review captured documents before submit.
+ * @dependencies Verification review/submit components
+ */
+
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -11,6 +17,13 @@ export const metadata: Metadata = {
   title: "Revisar verificación",
 };
 
+/**
+ * ReviewVerificationPage
+ *
+ * Lets the user confirm verification assets and submit for review.
+ *
+ * @returns Verification review step.
+ */
 export default async function ReviewVerificationPage() {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/verificacion/revisar");

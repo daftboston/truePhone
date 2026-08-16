@@ -1,8 +1,13 @@
+/**
+ * @file page.tsx
+ * @description Queue of listings awaiting manual review.
+ * @dependencies ReviewQueueRow and listing review loaders
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { ReviewQueueRow } from "@/components/review-queue-row";
 import { Button } from "@/components/ui/button";
@@ -24,6 +29,13 @@ type PageProps = {
   searchParams: Promise<{ tab?: string }>;
 };
 
+/**
+ * ListingReviewQueuePage
+ *
+ * Lists listings pending reviewer decision.
+ *
+ * @returns Listing review queue.
+ */
 export default async function ListingReviewQueuePage({
   searchParams,
 }: PageProps) {
@@ -32,7 +44,7 @@ export default async function ListingReviewQueuePage({
 
   if (current.profile.role !== "REVIEWER" && current.profile.role !== "ADMIN") {
     return (
-      <AppShell mainClassName="max-w-lg justify-center">
+      <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
           description="Solo revisores y administradores pueden ver esta cola."
@@ -42,7 +54,7 @@ export default async function ListingReviewQueuePage({
             </Button>
           }
         />
-      </AppShell>
+      </div>
     );
   }
 
@@ -54,7 +66,7 @@ export default async function ListingReviewQueuePage({
   ]);
 
   return (
-    <AppShell mainClassName="max-w-lg gap-6">
+    <div className="space-y-6">
       <div className="space-y-2">
         <h1 className="text-foreground text-xl font-semibold tracking-tight">
           Cola de anuncios
@@ -104,6 +116,6 @@ export default async function ListingReviewQueuePage({
           })}
         </div>
       )}
-    </AppShell>
+    </div>
   );
 }

@@ -1,9 +1,24 @@
+/**
+ * @file loading-skeleton.tsx
+ * @description Pulsing placeholder blocks for loading UI states.
+ * @dependencies @/lib/utils
+ */
+
 import { cn } from "@/lib/utils";
 
 type LoadingSkeletonProps = {
   className?: string;
 };
 
+/**
+ * LoadingSkeleton
+ *
+ * Renders a generic animated pulse block for loading placeholders.
+ *
+ * @param props.className - Size and shape overrides.
+ * @returns Decorative div with aria-hidden.
+ * @calledBy ListingCardSkeleton and page-level loading UI
+ */
 export function LoadingSkeleton({ className }: LoadingSkeletonProps) {
   return (
     <div
@@ -13,6 +28,15 @@ export function LoadingSkeleton({ className }: LoadingSkeletonProps) {
   );
 }
 
+/**
+ * ListingCardSkeleton
+ *
+ * Listing-card shaped skeleton (image + two text bars).
+ *
+ * @param props.className - Wrapper className.
+ * @returns Busy skeleton matching ListingCard layout.
+ * @calledBy Marketplace grids while listings load
+ */
 export function ListingCardSkeleton({ className }: LoadingSkeletonProps) {
   return (
     <div className={cn("space-y-3", className)} aria-busy="true">

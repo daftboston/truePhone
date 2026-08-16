@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: security / Find My / account checks.
+ * @dependencies Security form and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Seguridad del equipo",
 };
 
+/**
+ * ListingSecurityPage
+ *
+ * Captures security-related disclosures before listing submission.
+ *
+ * @returns Security wizard step.
+ */
 export default async function ListingSecurityPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();
@@ -26,14 +39,15 @@ export default async function ListingSecurityPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={3}
         title="IMEI y Activation Lock"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <SecurityForm
           listingId={listing.id}

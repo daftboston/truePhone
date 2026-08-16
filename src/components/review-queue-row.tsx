@@ -1,3 +1,9 @@
+/**
+ * @file review-queue-row.tsx
+ * @description Linked row for admin/reviewer listing queues with thumbnail and status.
+ * @dependencies next/image, next/link, @/lib/utils
+ */
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -13,6 +19,21 @@ type ReviewQueueRowProps = {
   className?: string;
 };
 
+/**
+ * ReviewQueueRow
+ *
+ * Summarizes a listing awaiting review as a navigable queue row.
+ *
+ * @param props.href - Detail page path for the listing review.
+ * @param props.title - Listing title.
+ * @param props.sellerName - Seller display name.
+ * @param props.submittedAt - Human-readable submission time.
+ * @param props.imageUrl - Optional thumbnail URL.
+ * @param props.statusLabel - Optional status text.
+ * @param props.className - Optional className.
+ * @returns Linked queue row.
+ * @calledBy ListingReviewQueuePage and related review lists
+ */
 export function ReviewQueueRow({
   href,
   title,

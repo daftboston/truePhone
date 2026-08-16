@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Sell wizard step: possession / ownership proof.
+ * @dependencies Possession form and listing ownership helpers
+ */
+
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
@@ -16,6 +22,13 @@ export const metadata: Metadata = {
   title: "Prueba de posesión",
 };
 
+/**
+ * ListingPossessionPage
+ *
+ * Collects possession evidence required before review submission.
+ *
+ * @returns Possession wizard step.
+ */
 export default async function ListingPossessionPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();
@@ -26,18 +39,19 @@ export default async function ListingPossessionPage({ params }: PageProps) {
 
   const listing = await getOwnedListing(listingId, current.profile.id);
   if (!listing) notFound();
-  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}/enviado`);
+  if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
   const challenge =
     listing.possessionChallenge ??
     (await ensurePossessionChallenge(listing.id));
 
   return (
-    <AppShell mainClassName="max-w-lg">
+    <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
         step={4}
         title="Prueba de posesión"
         listingId={listing.id}
+        rejectionReason={listing.rejectionReason}
       >
         <PossessionForm
           listingId={listing.id}

@@ -1,3 +1,9 @@
+/**
+ * @file button.tsx
+ * @description shadcn-style Button with CVA variants, sizes, loading, and asChild Slot.
+ * @dependencies react, @radix-ui/react-slot, class-variance-authority, @/lib/utils
+ */
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -48,6 +54,15 @@ export interface ButtonProps
   loading?: boolean;
 }
 
+/**
+ * Button
+ *
+ * Primary design-system button; supports variants, sizes, loading spinner, and Slot.
+ *
+ * @param props - ButtonProps including variant, size, fullWidth, loading, asChild.
+ * @returns Styled button or slotted child element.
+ * @calledBy Forms, CTAs, and interactive surfaces across the app
+ */
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {

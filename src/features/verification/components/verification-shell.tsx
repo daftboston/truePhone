@@ -1,3 +1,9 @@
+/**
+ * @file verification-shell.tsx
+ * @description VerificationShell component for the verification feature.tsx.
+ * @dependencies next/link, @/components/step-progress-header, @/components/ui/button, @/features/verification/types, @/lib/utils
+ */
+
 import Link from "next/link";
 
 import { StepProgressHeader } from "@/components/step-progress-header";
@@ -12,6 +18,15 @@ type VerificationShellProps = {
   className?: string;
 };
 
+/**
+ * VerificationShell
+ *
+ * Renders the Verification Shell UI for verification.
+ *
+ * @param props - VerificationShell props.
+ * @returns VerificationShell React element.
+ * @calledBy verification pages and parent components
+ */
 export function VerificationShell({
   step,
   title,

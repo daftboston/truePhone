@@ -1,3 +1,9 @@
+/**
+ * @file page.tsx
+ * @description Confirmation page after a listing is submitted for review.
+ * @dependencies Listing status helpers
+ */
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -19,6 +25,13 @@ export const metadata: Metadata = {
   title: "Anuncio enviado",
 };
 
+/**
+ * ListingSubmittedPage
+ *
+ * Confirms the listing was sent to TruePhone reviewers.
+ *
+ * @returns Submission success page.
+ */
 export default async function ListingSubmittedPage({ params }: PageProps) {
   const { listingId } = await params;
   const current = await getCurrentProfile();
@@ -34,6 +47,12 @@ export default async function ListingSubmittedPage({ params }: PageProps) {
     redirect(`/vender/${listing.id}/revisar`);
   }
 
+  // After submit, only PENDING_REVIEW/SUBMITTED stay on this confirmation.
+  // Published / rejected / etc. go to the seller summary hub.
+  if (listing.status !== "PENDING_REVIEW" && listing.status !== "SUBMITTED") {
+    redirect(`/vender/${listing.id}`);
+  }
+
   return (
     <AppShell mainClassName="max-w-lg justify-center gap-4">
       <EmptyState
@@ -41,7 +60,7 @@ export default async function ListingSubmittedPage({ params }: PageProps) {
         description="Un revisor de TruePhone validará las fotos, el IMEI y la prueba de posesión antes de publicarlo."
         action={
           <Button asChild>
-            <Link href="/vender">Volver a mis anuncios</Link>
+            <Link href={`/vender/${listing.id}`}>Ver estado del anuncio</Link>
           </Button>
         }
       />

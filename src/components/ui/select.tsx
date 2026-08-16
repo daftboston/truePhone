@@ -1,7 +1,21 @@
+/**
+ * @file select.tsx
+ * @description Native select styled to match Input height and focus ring.
+ * @dependencies react, @/lib/utils
+ */
+
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Select
+ *
+ * Forwarded native select for simple dropdown fields.
+ *
+ * @returns Styled HTML select.
+ * @calledBy Listing and profile forms
+ */
 const Select = React.forwardRef<
   HTMLSelectElement,
   React.ComponentProps<"select">

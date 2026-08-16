@@ -1,5 +1,11 @@
 "use server";
 
+/**
+ * @file auth.ts
+ * @description Server actions for email/password auth, Google OAuth, recovery, and logout.
+ * @dependencies next/navigation, auth schemas/types, ensureProfile, Supabase server client
+ */
+
 import { redirect } from "next/navigation";
 
 import {
@@ -17,6 +23,15 @@ import { ensureProfile } from "@/lib/auth/profile";
 import { getRequestOrigin } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
+/**
+ * fieldErrorsFromZod
+ *
+ * Flattens Zod issues into a field-name → messages map for form UI.
+ *
+ * @param error - Zod validation error from safeParse.
+ * @returns Record of field keys to error message arrays.
+ * @calledBy loginAction, registerAction, recoverAction, updatePasswordAction, resendConfirmationAction
+ */
 function fieldErrorsFromZod(
   error: import("zod").ZodError,
 ): Record<string, string[]> {
@@ -30,6 +45,16 @@ function fieldErrorsFromZod(
   return fieldErrors;
 }
 
+/**
+ * loginAction
+ *
+ * Signs in with email/password, ensures a Profile row, then redirects.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - email, password, optional next.
+ * @returns AuthActionState on validation or auth errors; redirects on success.
+ * @calledBy LoginForm
+ */
 export async function loginAction(
   _prev: AuthActionState,
   formData: FormData,
@@ -58,6 +83,7 @@ export async function loginAction(
     return { ok: false, error: authErrorMessage(error?.message) };
   }
 
+  // Mirror auth user into application profiles table
   await ensureProfile({
     authUserId: data.user.id,
     fullName:
@@ -69,6 +95,16 @@ export async function loginAction(
   redirect(safeNextPath(parsed.data.next));
 }
 
+/**
+ * registerAction
+ *
+ * Registers a user via Supabase Auth and creates their Profile.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - fullName, email, password, confirmPassword.
+ * @returns AuthActionState on validation/auth errors or when email confirmation is required; redirects when session exists.
+ * @calledBy RegisterForm
+ */
 export async function registerAction(
   _prev: AuthActionState,
   formData: FormData,
@@ -103,6 +139,7 @@ export async function registerAction(
     return { ok: false, error: authErrorMessage(error.message) };
   }
 
+  // Mirror auth user into application profiles table
   if (data.user) {
     await ensureProfile({
       authUserId: data.user.id,
@@ -122,6 +159,16 @@ export async function registerAction(
   };
 }
 
+/**
+ * recoverAction
+ *
+ * Sends a password-reset email without revealing whether the account exists.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - email.
+ * @returns AuthActionState with a generic success message or validation/auth error.
+ * @calledBy RecoverForm
+ */
 export async function recoverAction(
   _prev: AuthActionState,
   formData: FormData,
@@ -159,6 +206,16 @@ export async function recoverAction(
   };
 }
 
+/**
+ * updatePasswordAction
+ *
+ * Sets a new password for the recovery-session user, then redirects to profile.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - password, confirmPassword.
+ * @returns AuthActionState on errors; redirects to `/perfil` on success.
+ * @calledBy UpdatePasswordForm
+ */
 export async function updatePasswordAction(
   _prev: AuthActionState,
   formData: FormData,
@@ -199,6 +256,15 @@ export async function updatePasswordAction(
   redirect("/perfil");
 }
 
+/**
+ * signInWithGoogleAction
+ *
+ * Starts Google OAuth and redirects to the provider URL.
+ *
+ * @param next - Optional post-login path passed through the auth callback.
+ * @returns Error object when OAuth URL cannot be created; otherwise redirects.
+ * @calledBy GoogleSignInButton
+ */
 export async function signInWithGoogleAction(next?: string) {
   const origin = await getRequestOrigin();
   const supabase = await createClient();
@@ -216,12 +282,30 @@ export async function signInWithGoogleAction(next?: string) {
   redirect(data.url);
 }
 
+/**
+ * logoutAction
+ *
+ * Signs out the current Supabase session and returns to the home page.
+ *
+ * @returns Never resolves successfully; always redirects to `/`.
+ * @calledBy LogoutButton
+ */
 export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/");
 }
 
+/**
+ * resendConfirmationAction
+ *
+ * Resends the signup confirmation email without revealing account existence.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - email.
+ * @returns AuthActionState with generic success or validation/auth error.
+ * @calledBy LoginForm (when unconfirmed-email error is shown)
+ */
 export async function resendConfirmationAction(
   _prev: AuthActionState,
   formData: FormData,

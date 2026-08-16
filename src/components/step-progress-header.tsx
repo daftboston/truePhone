@@ -1,3 +1,9 @@
+/**
+ * @file step-progress-header.tsx
+ * @description Multi-step flow header with progress bar and step title.
+ * @dependencies @/lib/utils
+ */
+
 import { cn } from "@/lib/utils";
 
 type StepProgressHeaderProps = {
@@ -8,6 +14,19 @@ type StepProgressHeaderProps = {
   className?: string;
 };
 
+/**
+ * StepProgressHeader
+ *
+ * Shows step index, percent complete, and the current step title.
+ *
+ * @param props.step - Current 1-based step index.
+ * @param props.totalSteps - Total steps in the flow.
+ * @param props.title - Step heading.
+ * @param props.eyebrow - Optional uppercase label above the title.
+ * @param props.className - Wrapper className.
+ * @returns Header with progressbar semantics.
+ * @calledBy Sell listing wizard and verification flow pages
+ */
 export function StepProgressHeader({
   step,
   totalSteps,

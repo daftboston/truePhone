@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * @file google-sign-in-button.tsx
+ * @description Client button that starts Google OAuth via signInWithGoogleAction.
+ * @dependencies react, signInWithGoogleAction, Button
+ */
+
 import { useState, useTransition } from "react";
 
 import { signInWithGoogleAction } from "@/features/auth/actions/auth";
@@ -9,6 +15,15 @@ type GoogleSignInButtonProps = {
   next?: string;
 };
 
+/**
+ * isNextRedirectError
+ *
+ * Detects Next.js redirect throws so they are not shown as UI errors.
+ *
+ * @param error - Caught exception from the OAuth action.
+ * @returns True when the digest indicates a NEXT_REDIRECT.
+ * @calledBy GoogleSignInButton
+ */
 function isNextRedirectError(error: unknown): boolean {
   return (
     typeof error === "object" &&
@@ -19,6 +34,15 @@ function isNextRedirectError(error: unknown): boolean {
   );
 }
 
+/**
+ * GoogleSignInButton
+ *
+ * Triggers Google OAuth and surfaces non-redirect failures inline.
+ *
+ * @param props.next - Optional post-login path forwarded to the auth callback.
+ * @returns Outline button with optional error alert.
+ * @calledBy LoginForm, RegisterForm
+ */
 export function GoogleSignInButton({ next }: GoogleSignInButtonProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +63,7 @@ export function GoogleSignInButton({ next }: GoogleSignInButtonProps) {
                 setError(result.error);
               }
             } catch (err) {
+              // Redirect throws are expected on success — ignore them
               if (!isNextRedirectError(err)) {
                 setError("No pudimos conectar con Google. Intenta de nuevo.");
               }

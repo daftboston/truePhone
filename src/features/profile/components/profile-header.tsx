@@ -1,3 +1,9 @@
+/**
+ * @file profile-header.tsx
+ * @description Public/account profile header with avatar, badges, and seller stats.
+ * @dependencies TrustBadge, Avatar, Badge, profile types, @/lib/utils
+ */
+
 import { TrustBadge } from "@/components/trust-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +30,15 @@ type ProfileHeaderProps = {
   className?: string;
 };
 
+/**
+ * initials
+ *
+ * Derives up to two uppercase initials from a display name.
+ *
+ * @param name - Full name or null.
+ * @returns Initials string, or `"?"` when name is empty.
+ * @calledBy ProfileHeader
+ */
 function initials(name: string | null) {
   if (!name) return "?";
   return name
@@ -34,6 +49,15 @@ function initials(name: string | null) {
     .toUpperCase();
 }
 
+/**
+ * ProfileHeader
+ *
+ * Renders identity, trust badges, bio, and seller metrics for a profile.
+ *
+ * @param props - Profile display fields and seller aggregates.
+ * @returns Profile header section.
+ * @calledBy profile and public `/u/[username]` pages
+ */
 export function ProfileHeader({
   fullName,
   username,

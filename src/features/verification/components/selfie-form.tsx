@@ -1,13 +1,28 @@
 "use client";
 
+/**
+ * @file selfie-form.tsx
+ * @description SelfieForm component for the verification feature.tsx.
+ * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/file-input
+ */
+
 import { useActionState } from "react";
 
 import { saveSelfieAction } from "@/features/verification/actions/identity";
 import type { VerificationActionState } from "@/features/verification/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FileInput } from "@/components/ui/file-input";
 import { Label } from "@/components/ui/label";
 
+/**
+ * SelfieForm
+ *
+ * Renders the Selfie Form UI for verification.
+ *
+ * @param props - SelfieForm props.
+ * @returns SelfieForm React element.
+ * @calledBy verification pages and parent components
+ */
 export function SelfieForm() {
   const [state, formAction, pending] = useActionState<
     VerificationActionState,
@@ -30,14 +45,13 @@ export function SelfieForm() {
 
       <div className="space-y-2">
         <Label htmlFor="selfieImage">Selfie</Label>
-        <Input
+        <FileInput
           id="selfieImage"
           name="selfieImage"
-          type="file"
           accept="image/jpeg,image/png,image/webp"
           capture="user"
           required
-          className="cursor-pointer pt-2"
+          buttonLabel="Elegir foto"
         />
       </div>
 
