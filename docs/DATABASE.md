@@ -27,6 +27,7 @@ When schema and this doc disagree, update both in the same change.
 # Migration Policy
 
 - Prefer `prisma migrate` for shared / production schema changes
+- Vercel `npm run build` runs `prisma migrate deploy` against `DIRECT_URL` so preview/production stay in sync
 - `prisma db push` is acceptable for early local prototyping only
 - Always run `prisma generate` after schema changes
 - Never commit `.env`
