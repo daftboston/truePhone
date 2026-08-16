@@ -324,8 +324,8 @@ Features
 
 - Reviewer dashboard / cola de revisión
 - Tabs: Pendiente / En revisión / Aprobados / Rechazados / Todos
-  - **Pendiente:** `PENDING_REVIEW` without assigned `reviewerId`
-  - **En revisión:** `PENDING_REVIEW` with `reviewerId` (claimed on open)
+  - **Pendiente:** `SUBMITTED` or `PENDING_REVIEW` without assigned `reviewerId`
+  - **En revisión:** `PENDING_REVIEW` with `reviewerId` (claimed on open; `SUBMITTED` is promoted)
   - **Aprobados / Rechazados:** history for tracking and corrections
   - **Todos:** active queue + history
 - Approve / reject listing (approve → `PUBLISHED`; reject → `REJECTED` + seller-facing reason)

@@ -3,7 +3,7 @@
 /**
  * @file account-nav.tsx
  * @description Sidebar navigation for the authenticated account area (Mi TruePhone).
- * @dependencies next/link, lucide-react, LogoutButton, @/lib/utils
+ * @dependencies next/link, lucide-react, LogoutButton, account-nav-active, @/lib/utils
  */
 
 import Link from "next/link";
@@ -31,14 +31,15 @@ import {
 } from "lucide-react";
 
 import { LogoutButton } from "@/features/auth/components/logout-button";
+import {
+  isAccountNavItemActive,
+  type AccountNavActiveItem,
+} from "@/features/profile/lib/account-nav-active";
 import { cn } from "@/lib/utils";
 
-type NavItem = {
-  href?: string;
+type NavItem = AccountNavActiveItem & {
   label: string;
   icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  soon?: boolean;
-  exact?: boolean;
   badge?: number;
 };
 
@@ -105,6 +106,7 @@ function buildGroups(
           href: verificationHref,
           label: "Verificación",
           icon: ShieldCheck,
+          match: "verification",
         },
         { href: "/ventas", label: "Ventas", icon: Package },
         { href: "/pagos", label: "Pagos", icon: Wallet },
@@ -175,26 +177,6 @@ function buildGroups(
 }
 
 /**
- * isActive
- *
- * Determines whether a nav item matches the current pathname.
- *
- * @param pathname - Current Next.js pathname.
- * @param item - Nav item to test.
- * @returns True when the item should show as the current page.
- * @calledBy AccountNav
- */
-function isActive(pathname: string, item: NavItem) {
-  if (!item.href || item.soon) return false;
-  if (item.exact) return pathname === item.href;
-  // Mis anuncios: only the list page, not wizard/detail routes.
-  if (item.href === "/vender") {
-    return pathname === "/vender";
-  }
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
-}
-
-/**
  * formatBadge
  *
  * Caps unread badge display at "9+".
@@ -257,7 +239,7 @@ export function AccountNav({
           <ul className="space-y-0.5">
             {group.items.map((item) => {
               const Icon = item.icon;
-              const active = isActive(pathname, item);
+              const active = isAccountNavItemActive(pathname, item);
 
               if (item.soon || !item.href) {
                 return (

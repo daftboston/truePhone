@@ -117,11 +117,11 @@ export function verificationStatusLabel(status: string) {
 /**
  * nextVerificationPath
  *
- * Supports verification by implementing nextVerificationPath.
+ * Returns the next incomplete identity-verification wizard step.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy verification UI and related modules
+ * @param draft - Current identity verification row, if any.
+ * @returns Path under `/verificacion`.
+ * @calledBy verificationNavHref, verification pages
  */
 export function nextVerificationPath(draft: IdentityVerification | null) {
   if (!draft || !draft.privacyAcceptedAt) return "/verificacion";
@@ -131,4 +131,30 @@ export function nextVerificationPath(draft: IdentityVerification | null) {
   if (!draft.backImageUrl) return "/verificacion/cedula-reverso";
   if (!draft.selfieImageUrl) return "/verificacion/selfie";
   return "/verificacion/revisar";
+}
+
+/**
+ * verificationNavHref
+ *
+ * Sidebar destination for Verificación. Never returns `/vender` — that
+ * made Mis anuncios and Verificación both look selected.
+ *
+ * @param input.verifikStatus - Profile identity status.
+ * @param input.verification - Latest identity verification row, if any.
+ * @returns A `/verificacion` path.
+ * @calledBy AuthenticatedSidebarShell, ProfilePage
+ */
+export function verificationNavHref(input: {
+  verifikStatus: string;
+  verification?: IdentityVerification | null;
+}) {
+  if (isSellerIdentityVerified(input.verifikStatus)) {
+    return "/verificacion";
+  }
+  if (input.verifikStatus === "pending") {
+    return "/verificacion/enviada";
+  }
+  return input.verification
+    ? nextVerificationPath(input.verification)
+    : "/verificacion";
 }

@@ -9,10 +9,13 @@ import type { ListingStatus, Prisma } from "@prisma/client";
 import type { ListingReviewTab } from "@/features/listings/schemas/review";
 import { prisma } from "@/lib/db";
 
-const ACTIVE_QUEUE: ListingStatus[] = ["PENDING_REVIEW"];
+// SUBMITTED is a brief hop before PENDING_REVIEW. Include it so a
+// resubmitted listing never disappears from the reviewer hub/queue.
+const ACTIVE_QUEUE: ListingStatus[] = ["SUBMITTED", "PENDING_REVIEW"];
 const APPROVED_STATUSES: ListingStatus[] = ["PUBLISHED", "APPROVED"];
 const REJECTED_STATUSES: ListingStatus[] = ["REJECTED"];
 const REVIEW_HISTORY: ListingStatus[] = [
+  "SUBMITTED",
   "PENDING_REVIEW",
   "PUBLISHED",
   "APPROVED",
@@ -106,7 +109,7 @@ export function reviewStatusLabel(listing: {
   status: string;
   reviewerId: string | null;
 }) {
-  if (listing.status === "PENDING_REVIEW") {
+  if (listing.status === "PENDING_REVIEW" || listing.status === "SUBMITTED") {
     return listing.reviewerId ? "En revisión" : "Pendiente";
   }
   if (listing.status === "PUBLISHED" || listing.status === "APPROVED") {
@@ -116,6 +119,31 @@ export function reviewStatusLabel(listing: {
     return "Rechazado";
   }
   return listing.status;
+}
+
+/**
+ * reviewQueueTabForListing
+ *
+ * Maps a listing to the reviewer queue tab it belongs in.
+ *
+ * @param listing - Status and assigned reviewer.
+ * @returns Queue tab id, or null when the listing is not in review history.
+ * @calledBy listings-review tests
+ */
+export function reviewQueueTabForListing(listing: {
+  status: string;
+  reviewerId: string | null;
+}): ListingReviewTab | null {
+  if (listing.status === "SUBMITTED" || listing.status === "PENDING_REVIEW") {
+    return listing.reviewerId ? "en_revision" : "pendiente";
+  }
+  if (listing.status === "PUBLISHED" || listing.status === "APPROVED") {
+    return "aprobados";
+  }
+  if (listing.status === "REJECTED") {
+    return "rechazados";
+  }
+  return null;
 }
 
 /**
@@ -293,6 +321,7 @@ export function sellerDisplayName(seller: {
  */
 export function isEditableReviewStatus(status: string) {
   return (
+    status === "SUBMITTED" ||
     status === "PENDING_REVIEW" ||
     status === "PUBLISHED" ||
     status === "APPROVED" ||

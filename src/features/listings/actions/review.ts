@@ -52,6 +52,7 @@ async function requireReviewer() {
  * @calledBy listings UI and related modules
  */
 function revalidateListingReview(listingId: string) {
+  revalidatePath("/revision");
   revalidatePath("/revision/anuncios");
   revalidatePath(`/revision/anuncios/${listingId}`);
   revalidatePath("/vender");
@@ -89,14 +90,20 @@ export async function claimListingForReviewAction(listingId: string) {
   const listing = await prisma.listing.findFirst({
     where: { id: listingId, deletedAt: null },
   });
-  if (!listing || listing.status !== "PENDING_REVIEW") {
+  if (
+    !listing ||
+    (listing.status !== "PENDING_REVIEW" && listing.status !== "SUBMITTED")
+  ) {
     return { ok: false as const, error: "Este anuncio no está en la cola." };
   }
 
-  if (!listing.reviewerId) {
+  if (!listing.reviewerId || listing.status === "SUBMITTED") {
     await prisma.listing.update({
       where: { id: listingId },
-      data: { reviewerId: gate.current.profile.id },
+      data: {
+        status: "PENDING_REVIEW",
+        reviewerId: listing.reviewerId ?? gate.current.profile.id,
+      },
     });
     revalidateListingReview(listingId);
   }

@@ -8,10 +8,7 @@ import { headers } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
 import { AccountNav } from "@/features/profile/components/account-nav";
-import {
-  isSellerIdentityVerified,
-  nextVerificationPath,
-} from "@/features/verification/types";
+import { verificationNavHref } from "@/features/verification/types";
 import { getLatestIdentityVerification } from "@/lib/auth/identity";
 import {
   canAccessReviewPortal,
@@ -50,15 +47,10 @@ export async function AuthenticatedSidebarShell({
       countUnreadNotifications(profile.id),
     ],
   );
-  const verified = isSellerIdentityVerified(profile.verifikStatus);
-
-  const verificationHref = verified
-    ? "/vender"
-    : profile.verifikStatus === "pending"
-      ? "/verificacion/enviada"
-      : verification
-        ? nextVerificationPath(verification)
-        : "/verificacion";
+  const verificationHref = verificationNavHref({
+    verifikStatus: profile.verifikStatus,
+    verification,
+  });
 
   return (
     <AppShell mainClassName="gap-6 md:gap-8">

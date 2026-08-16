@@ -604,6 +604,8 @@ export async function submitListingForReviewAction(
 
   revalidatePath("/vender");
   revalidatePath(`/vender/${listing.id}`);
+  revalidatePath("/revision");
+  revalidatePath("/revision/anuncios");
   redirect(`/vender/${listing.id}/enviado`);
 }
 
@@ -647,6 +649,8 @@ export async function reopenRejectedListingAction(
   revalidatePath("/vender");
   revalidatePath(`/vender/${listing.id}`);
   revalidatePath(`/vender/${listing.id}/dispositivo`);
+  revalidatePath("/revision");
+  revalidatePath("/revision/anuncios");
 
   return {
     ok: true,

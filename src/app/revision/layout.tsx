@@ -6,6 +6,8 @@
 
 import { AuthenticatedSidebarShell } from "@/features/profile/components/authenticated-sidebar-shell";
 
+export const dynamic = "force-dynamic";
+
 /**
  * RevisionLayout
  *

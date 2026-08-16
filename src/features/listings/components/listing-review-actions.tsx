@@ -46,7 +46,7 @@ export function ListingReviewActions({
   const [checked, setChecked] = useState<Record<number, boolean>>({});
   const isApproved = status === "PUBLISHED" || status === "APPROVED";
   const isRejected = status === "REJECTED";
-  const isPending = status === "PENDING_REVIEW";
+  const isPending = status === "PENDING_REVIEW" || status === "SUBMITTED";
 
   const [notesState, notesAction, notesPending] = useActionState<
     ListingActionState,

@@ -15,7 +15,7 @@ import { ShareProfileButton } from "@/features/profile/components/share-profile-
 import { publicProfilePath } from "@/features/profile/types";
 import {
   isSellerIdentityVerified,
-  nextVerificationPath,
+  verificationNavHref,
   verificationStatusLabel,
 } from "@/features/verification/types";
 import { getLatestIdentityVerification } from "@/lib/auth/identity";
@@ -43,13 +43,10 @@ export default async function ProfilePage() {
   const sharePath = publicProfilePath(profile.username);
   const verification = await getLatestIdentityVerification(profile.id);
   const verified = isSellerIdentityVerified(profile.verifikStatus);
-  const verificationHref = verified
-    ? "/vender"
-    : profile.verifikStatus === "pending"
-      ? "/verificacion/enviada"
-      : verification
-        ? nextVerificationPath(verification)
-        : "/verificacion";
+  const verificationHref = verificationNavHref({
+    verifikStatus: profile.verifikStatus,
+    verification,
+  });
 
   return (
     <>
@@ -90,7 +87,7 @@ export default async function ProfilePage() {
           <Button asChild size="sm" variant={verified ? "outline" : "default"}>
             <Link href={verificationHref}>
               {verified
-                ? "Listo para vender"
+                ? "Ver estado"
                 : profile.verifikStatus === "pending"
                   ? "Ver estado"
                   : "Verificar"}

@@ -72,7 +72,10 @@ export default async function ListingReviewDetailPage({ params }: PageProps) {
   let listing = await getListingForReview(listingId);
   if (!listing) notFound();
 
-  if (listing.status === "PENDING_REVIEW" && !listing.reviewerId) {
+  if (
+    listing.status === "SUBMITTED" ||
+    (listing.status === "PENDING_REVIEW" && !listing.reviewerId)
+  ) {
     await claimListingForReviewAction(listing.id);
     listing = (await getListingForReview(listingId)) ?? listing;
   }

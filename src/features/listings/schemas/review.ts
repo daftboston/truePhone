@@ -67,6 +67,7 @@ export const LISTING_QUALITY_CHECKLIST = [
 
 /** EDITABLE_REVIEW_STATUSES — validates input for related EDITABLE_REVIEW_STATUSES flows. */
 export const EDITABLE_REVIEW_STATUSES = [
+  "SUBMITTED",
   "PENDING_REVIEW",
   "PUBLISHED",
   "APPROVED",
