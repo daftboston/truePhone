@@ -40,6 +40,12 @@ export {
   authorizeCancelMoney,
   authorizeRefundAfterSellerAbandon,
 } from "@/lib/financial-core/cancel";
+export { cancelOpenPayouts } from "@/lib/financial-core/open-payouts";
+export {
+  canCancelPaidOrder,
+  manualPayoutCompletionBlocker,
+  PAID_ORDER_CANCEL_BLOCKED_ERROR,
+} from "@/lib/financial-core/settlement-guards";
 export {
   onBuyerMarkedReceived,
   confirmOrderByBuyer,

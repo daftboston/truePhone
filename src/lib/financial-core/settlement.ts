@@ -2,12 +2,13 @@
  * @file settlement.ts
  * @description Financial Core settlement: buyer receipt starts the 24h confirm
  * window, early confirm / report, and seller payout authorization.
- * @dependencies prisma, ledger, payout provider adapter
+ * @dependencies prisma, ledger, settlement-guards, payout provider adapter
  */
 
 import { Prisma } from "@prisma/client";
 
 import { appendLedgerEntry } from "@/lib/financial-core/ledger";
+import { manualPayoutCompletionBlocker } from "@/lib/financial-core/settlement-guards";
 import { prisma } from "@/lib/db";
 import { resolvePayoutProvider } from "@/lib/payments/payouts/resolve-provider";
 
@@ -543,6 +544,7 @@ export async function confirmManualPayoutCompleted(input: {
           order: {
             select: {
               id: true,
+              status: true,
               sellerId: true,
               listingId: true,
               sellerAmountPesos: true,
@@ -564,17 +566,25 @@ export async function confirmManualPayoutCompleted(input: {
           "Solo se pueden marcar como pagadas liquidaciones autorizadas.",
         );
       }
-      if (payout.order.payoutFrozen) {
-        throw new FinancialCoreError(
-          "El pago está congelado (disputa o reclamo). No se puede marcar como pagado.",
-        );
+
+      const blocked = manualPayoutCompletionBlocker(payout.order);
+      if (blocked) {
+        throw new FinancialCoreError(blocked);
       }
 
       const now = new Date();
       const reference = input.providerReference?.trim() || null;
 
-      await tx.payout.update({
-        where: { id: payout.id },
+      const moved = await tx.payout.updateMany({
+        where: {
+          id: payout.id,
+          status: { in: ["AUTHORIZED", "SUBMITTED"] },
+          order: {
+            status: "PAID",
+            payoutFrozen: false,
+            payoutCompletedAt: null,
+          },
+        },
         data: {
           status: "COMPLETED",
           provider: "MANUAL",
@@ -585,6 +595,11 @@ export async function confirmManualPayoutCompleted(input: {
           failureMessage: null,
         },
       });
+      if (moved.count !== 1) {
+        throw new FinancialCoreError(
+          "La liquidación ya no está autorizada (el pedido pudo cancelarse).",
+        );
+      }
 
       await appendLedgerEntry(tx, {
         orderId: payout.orderId,

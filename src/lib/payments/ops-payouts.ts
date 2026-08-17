@@ -4,7 +4,18 @@
  * @dependencies prisma
  */
 
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/db";
+
+/**
+ * Only AUTHORIZED payouts on unfrozen PAID orders. Cancelled / completed
+ * orders must not appear in the ops dispersion queue.
+ */
+export const authorizedManualPayoutWhere = {
+  status: "AUTHORIZED",
+  order: { status: "PAID", payoutFrozen: false },
+} satisfies Prisma.PayoutWhereInput;
 
 /**
  * countAuthorizedPayouts
@@ -16,7 +27,7 @@ import { prisma } from "@/lib/db";
  */
 export async function countAuthorizedPayouts() {
   return prisma.payout.count({
-    where: { status: "AUTHORIZED" },
+    where: authorizedManualPayoutWhere,
   });
 }
 
@@ -31,7 +42,7 @@ export async function countAuthorizedPayouts() {
  */
 export async function listAuthorizedPayouts(limit = 50) {
   return prisma.payout.findMany({
-    where: { status: "AUTHORIZED" },
+    where: authorizedManualPayoutWhere,
     orderBy: { authorizedAt: "asc" },
     take: limit,
     include: {

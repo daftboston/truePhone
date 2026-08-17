@@ -1,7 +1,7 @@
 /**
  * @file order-detail-view.tsx
  * @description OrderDetailView component for the orders feature.tsx.
- * @dependencies next/link, @/components/price-display, @/components/ui/badge, @/components/ui/button, @/features/orders/components/order-status-actions
+ * @dependencies next/link, price-display, order actions, financial-core settlement-guards
  */
 
 import Link from "next/link";
@@ -14,6 +14,7 @@ import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { PayOrderButton } from "@/features/payments/components/pay-order-button";
 import { OrderReviewsSection } from "@/features/reviews/components/order-reviews-section";
 import { OrderShippingPanel } from "@/features/shipping/components/order-shipping-panel";
+import { canCancelPaidOrder } from "@/lib/financial-core/settlement-guards";
 import {
   formatOrderMoney,
   orderStatusLabel,
@@ -126,7 +127,8 @@ export function OrderDetailView({
   const other = isBuyer ? order.seller : order.buyer;
   const otherLabel = isBuyer ? "Vendedor" : "Comprador";
   const canCancel =
-    order.status === "AWAITING_PAYMENT" || order.status === "PAID";
+    order.status === "AWAITING_PAYMENT" ||
+    (order.status === "PAID" && canCancelPaidOrder(order));
   const canPay = isBuyer && order.status === "AWAITING_PAYMENT";
   const feePercent = Math.round(order.feeRateBps / 100);
   const listingHref =

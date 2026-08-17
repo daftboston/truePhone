@@ -8,9 +8,11 @@ import { Prisma, type OrderStatus } from "@prisma/client";
 
 import {
   authorizeCancelMoney,
+  canCancelPaidOrder,
   computeOrderFees,
   feeRateBpsFromKind,
   feeRateFromKind,
+  PAID_ORDER_CANCEL_BLOCKED_ERROR,
   releaseFeeEntitlementForOrder,
   reserveFeeEntitlement,
   resolveFeeKindForBuyer,
@@ -380,13 +382,22 @@ export async function cancelOrder(input: {
     await prisma.$transaction(async (tx) => {
       const order = await tx.order.findFirst({ where: { id: orderId } });
       if (!order) throw new OrderError("Pedido no encontrado.");
+      if (order.status !== "AWAITING_PAYMENT" && order.status !== "PAID") {
+        throw new OrderError("Este pedido ya no se puede cancelar.");
+      }
+      if (order.status === "PAID" && !canCancelPaidOrder(order)) {
+        throw new OrderError(PAID_ORDER_CANCEL_BLOCKED_ERROR);
+      }
 
       if (money.mode === "pre_payment") {
         await releaseFeeEntitlementForOrder(tx, orderId);
       }
 
-      await tx.order.update({
-        where: { id: orderId },
+      const cancelled = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          status: { in: ["AWAITING_PAYMENT", "PAID"] },
+        },
         data: {
           status: "CANCELLED",
           cancelledAt: now,
@@ -394,6 +405,9 @@ export async function cancelOrder(input: {
           cancelReason: reason?.trim() || null,
         },
       });
+      if (cancelled.count !== 1) {
+        throw new OrderError("Este pedido ya no se puede cancelar.");
+      }
 
       await tx.listing.updateMany({
         where: { id: order.listingId, status: "RESERVED" },
