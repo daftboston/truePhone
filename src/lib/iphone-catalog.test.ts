@@ -9,6 +9,7 @@ import { describe, it } from "node:test";
 
 import {
   formatStorageLabel,
+  getIphoneFaceStyle,
   groupModelsBySeries,
   matchModelsForSearch,
   type CatalogModel,
@@ -269,6 +270,59 @@ describe("matchModelsForSearch", () => {
     assert.deepEqual(
       matchModelsForSearch(models, "16e").map((model) => model.slug),
       ["iphone-16e"],
+    );
+  });
+});
+
+describe("getIphoneFaceStyle", () => {
+  it("uses a home button for SE, notch for 12–13 and 14/16e, island otherwise", () => {
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE_SE",
+        generation: 3,
+        variantType: "STANDARD",
+      }),
+      "home",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 13,
+        variantType: "PRO_MAX",
+      }),
+      "notch",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 14,
+        variantType: "STANDARD",
+      }),
+      "notch",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 16,
+        variantType: "E",
+      }),
+      "notch",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 17,
+        variantType: "PRO_MAX",
+      }),
+      "island",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE_AIR",
+        generation: 1,
+        variantType: "AIR",
+      }),
+      "island",
     );
   });
 });
