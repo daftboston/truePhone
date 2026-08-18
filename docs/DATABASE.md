@@ -123,6 +123,8 @@ Numbered models (12–17, including `e` variants), the SE line, and iPhone Air a
 
 Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts`. Apply them with `prisma/seed.ts` (`npm run db:seed` and `npm run build` / Vercel deploy). Browse also backfills missing slugs via `ensureIphoneCatalog` so `/explorar` does not stay on the original 13-model seed.
 
+Explorar product shots (front/back hover flip) are static files in `public/catalog/` named `{slug}-front.webp` and `{slug}-back.webp`. See `public/catalog/README.md`. Seller listing photos stay in the Supabase `listing-images` bucket.
+
 **`IphoneModelColor`** joins models to their allowed colors so `/vender` only offers colors that belong to the selected model.
 
 **`IphoneModelStorage`** joins models to their allowed capacities (GB) the same way. Listings and recommended prices must use a storage that exists for that model.

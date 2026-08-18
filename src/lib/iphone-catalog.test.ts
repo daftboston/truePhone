@@ -1,6 +1,6 @@
 /**
  * @file iphone-catalog.test.ts
- * @description Guards the 28-model catalog, product-line grouping, typeahead matching, and seed backfill detection.
+ * @description Guards the 28-model catalog, product-line grouping, typeahead matching, seed backfill, and catalog image filenames.
  * @dependencies node:test, node:assert/strict, iphone-catalog, iphone-catalog-data
  */
 
@@ -19,6 +19,7 @@ import {
   IPHONE_CATALOG_MODELS,
 } from "@/lib/iphone-catalog-data";
 import { missingCatalogSlugs } from "@/lib/iphone-catalog-sync";
+import { catalogImageFilename } from "@/lib/iphone-catalog-images";
 
 const REQUIRED_SLUGS = [
   "iphone-se-2",
@@ -377,5 +378,25 @@ describe("missingCatalogSlugs", () => {
       missingCatalogSlugs(IPHONE_CATALOG_MODELS.map((model) => model.slug)),
       [],
     );
+  });
+});
+
+describe("catalogImageFilename", () => {
+  it("uses slug-front and slug-back in public/catalog", () => {
+    assert.equal(
+      catalogImageFilename("iphone-17-pro-max", "front"),
+      "iphone-17-pro-max-front.webp",
+    );
+    assert.equal(
+      catalogImageFilename("iphone-air", "back", "png"),
+      "iphone-air-back.png",
+    );
+  });
+
+  it("covers every canonical model slug", () => {
+    for (const slug of REQUIRED_SLUGS) {
+      assert.equal(catalogImageFilename(slug, "front"), `${slug}-front.webp`);
+      assert.equal(catalogImageFilename(slug, "back"), `${slug}-back.webp`);
+    }
   });
 });
