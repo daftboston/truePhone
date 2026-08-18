@@ -1,13 +1,31 @@
 /**
  * @file listings.ts
  * @description Seller listing ownership, catalog, and possession challenge helpers.
- * @dependencies @/lib/auth/session, @/lib/db
+ * @dependencies @/lib/auth/session, @/lib/db, @/lib/iphone-catalog-sync
  */
 
 import { prisma } from "@/lib/db";
 import { generatePossessionCode } from "@/features/listings/schemas/listing";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { ensureIphoneCatalog } from "@/lib/iphone-catalog-sync";
+
+/**
+ * backfillIphoneCatalog
+ *
+ * Best-effort write of missing canonical models so browse/sell pickers stay complete.
+ * Failures are logged and ignored so a read-only or locked DB cannot take down pages.
+ *
+ * @returns Resolves after a successful sync or a logged failure.
+ * @calledBy listIphoneModels, getCatalog
+ */
+async function backfillIphoneCatalog() {
+  try {
+    await ensureIphoneCatalog(prisma);
+  } catch (error) {
+    console.error("Failed to backfill iPhone catalog", error);
+  }
+}
 
 /**
  * requireVerifiedSeller
@@ -119,11 +137,13 @@ export function getSellerDraftResumePath(listing: {
  * listIphoneModels
  *
  * Lists active iPhone models for catalog pickers.
+ * Ensures the canonical 28-model catalog exists before reading.
  *
  * @returns iPhoneModel rows ordered for display.
  * @calledBy AppShell, listing create forms
  */
 export async function listIphoneModels() {
+  await backfillIphoneCatalog();
   return prisma.iphoneModel.findMany({
     orderBy: [{ sortOrder: "desc" }, { name: "asc" }],
   });
@@ -133,11 +153,14 @@ export async function listIphoneModels() {
  * getCatalog
  *
  * Loads models, colors, storages, and per-model color/storage joins for listing forms.
+ * Backfills missing canonical models (iPhone 17, Air, Pro Max, Plus, mini, e) first.
  *
  * @returns Catalog maps used by create/edit listing UI and browse filters.
- * @calledBy Seller listing wizard pages, SearchPage, AdminRecommendedPricesPage
+ * @calledBy Seller listing wizard pages, SearchPage, ExplorePage, AdminRecommendedPricesPage
  */
 export async function getCatalog() {
+  await backfillIphoneCatalog();
+
   const [models, colors, storages, modelColors, modelStorages] =
     await Promise.all([
       prisma.iphoneModel.findMany({

@@ -25,15 +25,15 @@ Also run the SQL files under `supabase/` in the Supabase SQL editor for Storage 
 
 ## Scripts
 
-| Command                | Description              |
-| ---------------------- | ------------------------ |
-| `npm run dev`          | Start development server |
-| `npm run build`        | Production build         |
-| `npm run lint`         | ESLint                   |
-| `npm run typecheck`    | TypeScript check         |
-| `npm run format`       | Prettier write           |
-| `npm run format:check` | Prettier check           |
-| `npm run db:seed`      | Seed iPhone catalog      |
+| Command                | Description                             |
+| ---------------------- | --------------------------------------- |
+| `npm run dev`          | Start development server                |
+| `npm run build`        | Migrate, seed catalog, production build |
+| `npm run lint`         | ESLint                                  |
+| `npm run typecheck`    | TypeScript check                        |
+| `npm run format`       | Prettier write                          |
+| `npm run format:check` | Prettier check                          |
+| `npm run db:seed`      | Seed full 28-model iPhone catalog       |
 
 ## Documentation
 

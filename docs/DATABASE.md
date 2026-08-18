@@ -121,7 +121,7 @@ Numbered models (12–17, including `e` variants), the SE line, and iPhone Air a
 | `releaseYear` | Commercial introduction year                                         |
 | `sortOrder`   | Stable catalog order (1 = oldest in the 2020+ set)                   |
 
-Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts` and are applied by `prisma/seed.ts`.
+Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts`. Apply them with `prisma/seed.ts` (`npm run db:seed` and `npm run build` / Vercel deploy). Browse also backfills missing slugs via `ensureIphoneCatalog` so `/explorar` does not stay on the original 13-model seed.
 
 **`IphoneModelColor`** joins models to their allowed colors so `/vender` only offers colors that belong to the selected model.
 

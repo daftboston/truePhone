@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && prisma migrate deploy && npx tsx prisma/seed.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
@@ -19,6 +19,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/lib/messages-access.test.ts src/lib/payments-provider.test.ts src/lib/reviews.test.ts src/lib/financial-core/fees.test.ts src/lib/financial-core/settlement-guards.test.ts src/lib/shipping/eligibility.test.ts src/lib/order-timeline.test.ts src/features/shipping/schemas/shipping-schemas.test.ts src/features/recommended-prices/schemas/recommended-price.test.ts src/lib/notifications/settlement.test.ts src/lib/payments/ops-disputes.test.ts src/features/disputes/schemas/ops-dispute.test.ts src/lib/iphone-catalog.test.ts src/features/listings/schemas/listing-security.test.ts"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
