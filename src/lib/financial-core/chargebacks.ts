@@ -2,12 +2,13 @@
  * @file chargebacks.ts
  * @description Financial Core chargeback ingestion and ops refund authorization
  * (FINANCIAL_MODEL.md §5.4 / §5.2b). TruePhone absorbs chargeback losses.
- * @dependencies fees, ledger, payments resolve-provider, @/lib/db
+ * @dependencies fees, ledger, open-payouts, payments resolve-provider, @/lib/db
  */
 
 import { Prisma } from "@prisma/client";
 
 import { appendLedgerEntry } from "@/lib/financial-core/ledger";
+import { cancelOpenPayouts } from "@/lib/financial-core/open-payouts";
 import { prisma } from "@/lib/db";
 import { resolvePaymentProvider } from "@/lib/payments/resolve-provider";
 
@@ -32,49 +33,6 @@ export type OpsRefundReason =
   | "MANUAL";
 
 export type OpsListingOutcome = "republish" | "archive";
-
-/**
- * cancelOpenPayouts
- *
- * Cancels AUTHORIZED / PENDING / SUBMITTED payouts so frozen money cannot disperse.
- *
- * @param tx - Prisma transaction client.
- * @param orderId - Order UUID.
- * @param memo - Ledger memo for each cancelled payout.
- * @calledBy recordChargebackReceived, authorizeOpsRefund
- */
-async function cancelOpenPayouts(
-  tx: Prisma.TransactionClient,
-  orderId: string,
-  memo: string,
-) {
-  const open = await tx.payout.findMany({
-    where: {
-      orderId,
-      status: { in: ["PENDING", "AUTHORIZED", "SUBMITTED"] },
-    },
-  });
-
-  for (const payout of open) {
-    await tx.payout.update({
-      where: { id: payout.id },
-      data: {
-        status: "CANCELLED",
-        failureCode: "OPS_FREEZE",
-        failureMessage: memo,
-      },
-    });
-    await appendLedgerEntry(tx, {
-      orderId,
-      payoutId: payout.id,
-      type: "PAYOUT_FAILED",
-      amountPesos: payout.amountPesos,
-      currency: payout.currency,
-      memo,
-      metadata: { cancelledStatus: payout.status },
-    });
-  }
-}
 
 /**
  * recordChargebackReceived

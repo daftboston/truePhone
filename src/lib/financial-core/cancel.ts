@@ -1,7 +1,7 @@
 /**
  * @file cancel.ts
  * @description Financial Core cancel/refund authorization (FINANCIAL_MODEL.md §5.2).
- * @dependencies fees, entitlements, ledger, payments resolve-provider, @/lib/db
+ * @dependencies fees, entitlements, ledger, open-payouts, settlement-guards, payments resolve-provider, @/lib/db
  */
 
 import { Prisma } from "@prisma/client";
@@ -13,6 +13,11 @@ import {
   markFeeEntitlementRefundChosen,
 } from "@/lib/financial-core/entitlements";
 import { appendLedgerEntry } from "@/lib/financial-core/ledger";
+import { cancelOpenPayouts } from "@/lib/financial-core/open-payouts";
+import {
+  canCancelPaidOrder,
+  PAID_ORDER_CANCEL_BLOCKED_ERROR,
+} from "@/lib/financial-core/settlement-guards";
 import { prisma } from "@/lib/db";
 import { resolvePaymentProvider } from "@/lib/payments/resolve-provider";
 
@@ -44,6 +49,7 @@ export type CancelMoneyResult =
  * - Buyer after pay: refund B − WompiCollection
  * - Seller after pay: no auto-refund; create 8% FeeEntitlement
  * - Pre-payment: mode pre_payment only
+ * - After buyer marks received / payout authorized: refuse (settlement owns the money)
  *
  * @param input.orderId - Order UUID.
  * @param input.actorId - Buyer or seller profile UUID.
@@ -72,6 +78,20 @@ export async function authorizeCancelMoney(input: {
   if (order.status === "AWAITING_PAYMENT") {
     return { ok: true, mode: "pre_payment" };
   }
+
+  if (!canCancelPaidOrder(order)) {
+    return { ok: false, error: PAID_ORDER_CANCEL_BLOCKED_ERROR };
+  }
+
+  // Stop any in-flight AUTHORIZED payout before refund / entitlement.
+  await prisma.$transaction(async (tx) => {
+    await cancelOpenPayouts(
+      tx,
+      order.id,
+      "Payout cancelled because the order was cancelled",
+      "ORDER_CANCELLED",
+    );
+  });
 
   const isBuyer = order.buyerId === input.actorId;
 
