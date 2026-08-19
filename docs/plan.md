@@ -4,7 +4,7 @@
 
 Version 1.3
 
-**Engineering status:** Phases **7–11 + 10b–10d closed**. Active line: `mvp/phases-12-13` (Phase 12 settlement reminders + Phase 13 price table / Phase 5 seller guide). See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** settlement reminders + Phase **13** price table are on `main`. Active line: `cursor/explorar-catalog-models-2974` (28-model Explorar catalog). Next after merge: Phase **3/9** public counters. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
