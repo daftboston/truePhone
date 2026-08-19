@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phases **0–11 + 10b–10d closed**. MVP settlement loop landed (manual Wompi payouts). Phase **12** settlement reminders + Phase **13** price table (and Phase **5** seller guide) landed in code — finish/harden on branch `mvp/phases-12-13`, then soft-launch polish. Automated Pagos a Terceros → Phase **24**.  
+**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** settlement reminders + Phase **13** price table (and Phase **5** seller guide) are on `main`. Active work: 28-model Explorar catalog on `cursor/explorar-catalog-models-2974`. Next: Phase **3/9** public counters. Automated Pagos a Terceros → Phase **24**.  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Money:** [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md)  
 **Shipping:** [SHIPPING.md](./SHIPPING.md)  
@@ -14,33 +14,30 @@ Former working name **iPhoneSeguro** is retired. Brand in product and docs is **
 
 ## Branch map (engineering)
 
-| Branch                                        | Role                                                                                                                |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `main`                                        | Production baseline (last merge: listing color filter; **behind** MVP work)                                         |
-| `mvp/phases-12-13`                            | **Active** — closes Phase 12/13 MVP slices on top of settlement already shipped from former `mvp/close-phases-7-11` |
-| `mvp/close-phases-7-11`                       | **Retired name** — history preserved via rename; Phases 7–11 + 10b–10d already shipped on this line                 |
-| `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded by `main` / MVP branches                                            |
-| `origin/cursor/code-documentation-skill-5f7c` | Docs/skill PR branch; not product feature work                                                                      |
+| Branch                                        | Role                                                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `main`                                        | Production baseline — Phases 0–13 MVP slices + chargebacks + settlement guards           |
+| `mvp/phases-12-13`                            | **Merged / retired as the active line** — history kept; equals `main` after PR #3 and #4 |
+| `cursor/explorar-catalog-models-2974`         | **Active** — 28-model Explorar catalog + glyphs; PR into `main`                          |
+| `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded                                          |
+| `origin/cursor/code-documentation-skill-5f7c` | Docs/skill PR branch; not product feature work                                           |
 
 ```text
-main (Jul 19)
+main  ← production (PRs #3 and #4 merged)
   │
-  └── mvp/close-phases-7-11  (renamed →)
-        └── mvp/phases-12-13   ← you are here
-              • 7–11 marketplace loop      DONE (committed)
-              • 10b–10d settlement         DONE (committed)
-              • 12 notifications slice     in working tree
-              • 13 price table + /vender   in working tree
+  └── cursor/explorar-catalog-models-2974   ← you are here
+        • 28-model catalog + glyphs
+        • optional public/catalog photos later
+        └── (after merge) feat/public-activity-counters
 ```
 
 ---
 
 ## Current focus
 
-1. Finish & harden Phase **12** / **13** on `mvp/phases-12-13` (commit, stage smoke, merge toward `main`)
-2. Chargeback / refund ops (`/revision/disputas` + Wompi `VOIDED` ingestion) — landing on this branch
-3. Small polish still open inside earlier phases: public counters (3/9), order party cards
-4. Phase **24** only when manual Wompi dispersion becomes the bottleneck
+1. Ship Explorar 28-model catalog on `cursor/explorar-catalog-models-2974` → `main` (glyphs now; product photos later)
+2. Public activity counters on profiles + order party cards (Phase 3 / 9) from a **new branch off `main`**
+3. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
 
@@ -101,10 +98,9 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-1. Harden & merge Phase 12 + 13 work on `mvp/phases-12-13` → `main`
+1. Merge Explorar 28-model catalog (`cursor/explorar-catalog-models-2974`) → `main`
 2. Public activity counters on profiles + order party cards (Phase 3 / 9)
-3. Chargeback / refund ops (`/revision/disputas`) — in working tree on `mvp/phases-12-13`
-4. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
+3. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)
 

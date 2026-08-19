@@ -1,34 +1,158 @@
 /**
  * @file explore-series-section.tsx
- * @description ExploreSeriesSection component for the listings feature.tsx.
- * @dependencies next/link, lucide-react, @/lib/iphone-catalog
+ * @description Series heading plus centered model cards for the Explorar hub.
+ * @dependencies next/image, next/link, IphoneModelGlyph, catalog helpers
  */
 
+import Image from "next/image";
 import Link from "next/link";
-import { Smartphone } from "lucide-react";
+import type { CSSProperties } from "react";
 
+import { IphoneModelGlyph } from "@/components/iphone-model-glyph";
 import {
   browseModelHref,
   browseSeriesHref,
+  type CatalogModel,
   type ModelSeries,
 } from "@/lib/iphone-catalog";
+import {
+  resolveCatalogModelImages,
+  type CatalogModelImages,
+} from "@/lib/iphone-catalog-images";
+import { cn } from "@/lib/utils";
 
 type ExploreSeriesSectionProps = {
   series: ModelSeries;
 };
 
 /**
+ * ExploreModelMedia
+ *
+ * Renders the card well: product shots with a front/back flip, or the silhouette.
+ *
+ * @param props.model - Catalog model for the fallback glyph.
+ * @param props.images - Resolved public URLs from `public/catalog`.
+ * @returns Centered media for one explore card.
+ * @calledBy ExploreModelCard
+ */
+function ExploreModelMedia({
+  model,
+  images,
+}: {
+  model: CatalogModel;
+  images: CatalogModelImages;
+}) {
+  if (images.front && images.back) {
+    return (
+      <div className="explore-phone-flip">
+        <div className="explore-phone-flip-inner">
+          <div className="explore-phone-face explore-phone-face-front">
+            <Image
+              src={images.front}
+              alt=""
+              fill
+              className="object-contain p-5"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 272px"
+            />
+          </div>
+          <div className="explore-phone-face explore-phone-face-back">
+            <Image
+              src={images.back}
+              alt=""
+              fill
+              className="object-contain p-5"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 272px"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (images.front) {
+    return (
+      <div className="absolute inset-0">
+        <Image
+          src={images.front}
+          alt=""
+          fill
+          className="object-contain p-5"
+          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 272px"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center">
+      <IphoneModelGlyph model={model} />
+    </div>
+  );
+}
+
+/**
+ * ExploreModelCard
+ *
+ * Renders one catalog model as a studio-style picker card.
+ *
+ * @param props.model - Catalog model for the glyph and name.
+ * @param props.index - Stagger index for the entrance animation.
+ * @returns Linked card to filtered browse results.
+ * @calledBy ExploreSeriesSection
+ */
+function ExploreModelCard({
+  model,
+  index,
+}: {
+  model: CatalogModel;
+  index: number;
+}) {
+  const images = resolveCatalogModelImages(model.slug);
+  const canFlip = Boolean(images.front && images.back);
+
+  return (
+    <li
+      className="explore-model-item w-[calc(50%-0.375rem)] max-w-[17rem] min-w-[9.5rem] sm:w-[calc(33.333%-0.67rem)] md:w-[calc(25%-0.75rem)]"
+      style={{ "--explore-stagger": index } as CSSProperties}
+    >
+      <Link
+        href={browseModelHref(model.id)}
+        className={cn(
+          "explore-model-card border-border bg-card group flex h-full flex-col overflow-hidden rounded-2xl border",
+          "focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+          canFlip && "explore-model-card--flip",
+        )}
+      >
+        <div className="explore-phone-stage relative aspect-[3/4]">
+          <ExploreModelMedia model={model} images={images} />
+        </div>
+        <div className="space-y-1 px-3 pt-3 pb-4 text-center">
+          <p className="text-foreground text-sm font-semibold tracking-tight">
+            {model.name}
+          </p>
+          <p className="text-muted-foreground group-hover:text-primary text-xs font-medium transition-colors">
+            Ver anuncios
+          </p>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
+/**
  * ExploreSeriesSection
  *
- * Renders the Explore Series Section UI for listings.
+ * Renders a series label and a centered wrap of model cards.
  *
- * @param props - ExploreSeriesSection props.
- * @returns ExploreSeriesSection React element.
- * @calledBy listings pages and parent components
+ * @param props.series - Grouped models for one product-line family.
+ * @returns Explore series section.
+ * @calledBy ExplorePage
  */
 export function ExploreSeriesSection({ series }: ExploreSeriesSectionProps) {
+  const modelCount = series.models.length;
+
   return (
-    <section className="space-y-5">
+    <section className="space-y-6">
       <div className="space-y-2 text-center">
         <div className="flex items-center gap-3">
           <span className="bg-border h-px flex-1" aria-hidden />
@@ -38,7 +162,9 @@ export function ExploreSeriesSection({ series }: ExploreSeriesSectionProps) {
           <span className="bg-border h-px flex-1" aria-hidden />
         </div>
         <p className="text-muted-foreground text-sm">
-          Elige un modelo para ver anuncios revisados.
+          {modelCount === 1
+            ? "1 modelo revisado"
+            : `${modelCount} modelos revisados`}
         </p>
         <Link
           href={browseSeriesHref(series.key)}
@@ -48,27 +174,9 @@ export function ExploreSeriesSection({ series }: ExploreSeriesSectionProps) {
         </Link>
       </div>
 
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 md:gap-4">
-        {series.models.map((model) => (
-          <li key={model.id}>
-            <Link
-              href={browseModelHref(model.id)}
-              className="border-border bg-card hover:border-primary group flex h-full flex-col overflow-hidden rounded-xl border transition-colors"
-            >
-              <div className="bg-muted text-muted-foreground flex aspect-[4/5] items-center justify-center">
-                <Smartphone
-                  className="size-12 opacity-40 transition-opacity group-hover:opacity-70"
-                  aria-hidden
-                />
-              </div>
-              <div className="space-y-1 p-3 text-center">
-                <p className="text-foreground text-sm font-semibold">
-                  {model.name}
-                </p>
-                <p className="text-muted-foreground text-xs">Ver anuncios</p>
-              </div>
-            </Link>
-          </li>
+      <ul className="flex flex-wrap justify-center gap-3 md:gap-4">
+        {series.models.map((model, index) => (
+          <ExploreModelCard key={model.id} model={model} index={index} />
         ))}
       </ul>
     </section>

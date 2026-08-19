@@ -1,6 +1,6 @@
 /**
  * @file iphone-catalog.ts
- * @description Client-safe iPhone catalog grouping, typeahead matching, and storage labels.
+ * @description Client-safe iPhone catalog grouping, typeahead matching, storage labels, and glyph face styles.
  * @dependencies none
  */
 
@@ -26,6 +26,8 @@ export type ModelSeries = {
   models: CatalogModel[];
 };
 
+export type IphoneFaceStyle = "home" | "notch" | "island";
+
 const VARIANT_SORT: Record<IphoneVariantTypeId, number> = {
   MINI: 1,
   STANDARD: 2,
@@ -41,6 +43,35 @@ const PRODUCT_LINE_RANK: Record<IphoneProductLineId, number> = {
   IPHONE: 1,
   IPHONE_SE: 0,
 };
+
+/**
+ * getIphoneFaceStyle
+ *
+ * Chooses the silhouette face for catalog glyphs (home button, notch, or island).
+ *
+ * @param model.productLine - Independent commercial line.
+ * @param model.generation - Generation within that line.
+ * @param model.variantType - Size/finish variant.
+ * @returns Face style used by IphoneModelGlyph.
+ * @calledBy IphoneModelGlyph, explore model cards
+ */
+export function getIphoneFaceStyle(model: {
+  productLine: IphoneProductLineId;
+  generation: number;
+  variantType: IphoneVariantTypeId;
+}): IphoneFaceStyle {
+  if (model.productLine === "IPHONE_SE") return "home";
+  if (model.productLine === "IPHONE_AIR") return "island";
+  if (model.generation <= 13) return "notch";
+  if (model.generation === 16 && model.variantType === "E") return "notch";
+  if (
+    model.generation === 14 &&
+    (model.variantType === "STANDARD" || model.variantType === "PLUS")
+  ) {
+    return "notch";
+  }
+  return "island";
+}
 
 /**
  * normalizeSearch

@@ -6,8 +6,11 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { EmptyState } from "@/components/empty-state";
+import { Button } from "@/components/ui/button";
 import { ExploreSeriesSection } from "@/features/listings/components/explore-series-section";
 import { ModelSearch } from "@/features/listings/components/model-search";
 import { groupModelsBySeries } from "@/lib/iphone-catalog";
@@ -27,33 +30,53 @@ export const metadata: Metadata = {
  *
  * Renders the catalog browse experience for published iPhone listings.
  *
- * @returns Explore page with filters and listing grid.
+ * @returns Explore page with search, series sections, and model cards.
  */
 export default async function ExplorePage() {
   const catalog = await getCatalog();
   const seriesList = groupModelsBySeries(catalog.models);
+  const modelCount = catalog.models.length;
 
   return (
-    <AppShell mainClassName="gap-10">
+    <AppShell mainClassName="gap-10 md:gap-12">
       <div className="mx-auto max-w-xl space-y-4 text-center">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
           Explorar iPhones
         </h1>
         <p className="text-muted-foreground text-sm md:text-base">
-          Busca por serie o elige un modelo. Solo verás anuncios revisados por
-          TruePhone.
+          Elige un modelo. Solo verás anuncios revisados por TruePhone.
         </p>
+        {modelCount > 0 ? (
+          <div className="flex justify-center">
+            <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
+              <ShieldCheck className="text-trust size-3.5" aria-hidden />
+              {modelCount} modelos · inventario revisado
+            </p>
+          </div>
+        ) : null}
         <ModelSearch
           models={catalog.models}
           placeholder="Ej. iPhone 14, 15 Pro…"
         />
       </div>
 
-      <div className="space-y-12 md:space-y-16">
-        {seriesList.map((series) => (
-          <ExploreSeriesSection key={series.key} series={series} />
-        ))}
-      </div>
+      {seriesList.length === 0 ? (
+        <EmptyState
+          title="Catálogo en preparación"
+          description="Aún no hay modelos cargados. Vuelve en un momento."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/">Volver al inicio</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <div className="space-y-12 md:space-y-16">
+          {seriesList.map((series) => (
+            <ExploreSeriesSection key={series.key} series={series} />
+          ))}
+        </div>
+      )}
 
       <p className="text-muted-foreground text-center text-sm">
         ¿No encuentras tu equipo?{" "}

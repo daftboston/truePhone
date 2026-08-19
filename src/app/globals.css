@@ -224,3 +224,123 @@ html.disable-transitions *::after {
   filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.4))
     drop-shadow(0 3px 8px rgb(0 0 0 / 0.25));
 }
+
+/* Explorar — studio product cards */
+.explore-phone-stage {
+  background:
+    radial-gradient(
+      ellipse 62% 48% at 50% 42%,
+      color-mix(in oklab, var(--foreground) 8%, transparent),
+      transparent 72%
+    ),
+    color-mix(in oklab, var(--muted) 72%, var(--card));
+}
+
+.explore-phone-glyph {
+  color: var(--foreground);
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 0.16))
+    drop-shadow(0 2px 6px rgb(0 0 0 / 0.08));
+  transform-origin: 50% 70%;
+}
+
+.dark .explore-phone-glyph {
+  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.45))
+    drop-shadow(0 3px 8px rgb(0 0 0 / 0.28));
+}
+
+.explore-model-card {
+  transition:
+    transform 280ms ease,
+    border-color 280ms ease,
+    box-shadow 280ms ease;
+}
+
+.explore-model-card .explore-phone-glyph {
+  transition: transform 280ms ease;
+}
+
+.explore-model-card:hover,
+.explore-model-card:focus-visible {
+  border-color: color-mix(in oklab, var(--trust) 45%, var(--border));
+  box-shadow: var(--shadow-card);
+}
+
+.explore-phone-flip {
+  position: absolute;
+  inset: 0;
+  perspective: 1000px;
+}
+
+.explore-phone-flip-inner {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 480ms ease;
+}
+
+.explore-phone-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.explore-phone-face-back {
+  transform: rotateY(180deg);
+}
+
+@keyframes explore-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .explore-model-item {
+    animation: explore-card-enter 0.45s ease-out backwards;
+    animation-delay: calc(var(--explore-stagger, 0) * 45ms);
+  }
+
+  .explore-model-card:hover,
+  .explore-model-card:focus-visible {
+    transform: translateY(-4px);
+  }
+
+  .explore-model-card:hover .explore-phone-glyph,
+  .explore-model-card:focus-visible .explore-phone-glyph {
+    transform: translateY(-6px) scale(1.04);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .explore-model-card--flip:hover .explore-phone-flip-inner,
+  .explore-model-card--flip:focus-visible .explore-phone-flip-inner {
+    transform: rotateY(180deg);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .explore-model-card--flip .explore-phone-face {
+    transition: opacity 200ms ease;
+  }
+
+  .explore-model-card--flip .explore-phone-face-back {
+    transform: none;
+    opacity: 0;
+  }
+
+  .explore-model-card--flip:hover .explore-phone-face-front,
+  .explore-model-card--flip:focus-visible .explore-phone-face-front {
+    opacity: 0;
+  }
+
+  .explore-model-card--flip:hover .explore-phone-face-back,
+  .explore-model-card--flip:focus-visible .explore-phone-face-back {
+    opacity: 1;
+  }
+}

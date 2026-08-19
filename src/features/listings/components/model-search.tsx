@@ -2,11 +2,11 @@
 
 /**
  * @file model-search.tsx
- * @description ModelSearch component for the listings feature.tsx.
+ * @description ModelSearch typeahead for listing browse, with catalog glyphs.
  * @dependencies lucide-react, next/link, next/navigation, react, @/lib/iphone-catalog
  */
 
-import { Search, Smartphone } from "lucide-react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +18,8 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+
+import { IphoneModelGlyph } from "@/components/iphone-model-glyph";
 
 import {
   browseModelHref,
@@ -180,8 +182,11 @@ export function ModelSearch({
                       : "text-foreground hover:bg-muted/70",
                   )}
                 >
-                  <span className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-lg">
-                    <Smartphone className="size-5" aria-hidden />
+                  <span className="bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                    <IphoneModelGlyph
+                      model={model}
+                      className="h-[78%] w-auto"
+                    />
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate font-medium">
