@@ -24,6 +24,7 @@ import {
   requireCurrentProfile,
   roleLabel,
 } from "@/lib/auth/session";
+import { getPublicActivityCounts } from "@/lib/profile-activity";
 
 export const metadata: Metadata = {
   title: "Perfil",
@@ -41,7 +42,10 @@ export default async function ProfilePage() {
 
   const { user, profile } = current;
   const sharePath = publicProfilePath(profile.username);
-  const verification = await getLatestIdentityVerification(profile.id);
+  const [verification, activity] = await Promise.all([
+    getLatestIdentityVerification(profile.id),
+    getPublicActivityCounts(profile.id),
+  ]);
   const verified = isSellerIdentityVerified(profile.verifikStatus);
   const verificationHref = verificationNavHref({
     verifikStatus: profile.verifikStatus,
@@ -72,6 +76,7 @@ export default async function ProfilePage() {
         isTrustedSeller={profile.isTrustedSeller}
         verifikStatus={profile.verifikStatus}
         createdAt={profile.createdAt}
+        activity={activity}
       />
 
       <section className="border-border space-y-3 rounded-xl border p-4">

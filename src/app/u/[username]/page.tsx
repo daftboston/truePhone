@@ -15,6 +15,7 @@ import { ProfileHeader } from "@/features/profile/components/profile-header";
 import { ShareProfileButton } from "@/features/profile/components/share-profile-button";
 import { getAuthUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { getPublicActivityCounts } from "@/lib/profile-activity";
 import { listVisibleReviewsForUser, reviewAuthorName } from "@/lib/reviews";
 
 type PublicProfilePageProps = {
@@ -62,9 +63,10 @@ export default async function PublicProfilePage({
     notFound();
   }
 
-  const [user, reviews] = await Promise.all([
+  const [user, reviews, activity] = await Promise.all([
     getAuthUser(),
     listVisibleReviewsForUser(profile.id, 12),
+    getPublicActivityCounts(profile.id),
   ]);
   const isOwner = user?.id === profile.authUserId;
   const sharePath = `/u/${profile.username}`;
@@ -84,6 +86,7 @@ export default async function PublicProfilePage({
         isTrustedSeller={profile.isTrustedSeller}
         verifikStatus={profile.verifikStatus}
         createdAt={profile.createdAt}
+        activity={activity}
       />
 
       <div className="flex flex-col gap-3 sm:flex-row">

@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** settlement reminders + Phase **13** price table (and Phase **5** seller guide) are on `main`. Active work: 28-model Explorar catalog on `cursor/explorar-catalog-models-2974`. Next: Phase **3/9** public counters. Automated Pagos a Terceros → Phase **24**.  
+**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** / **13** slices and the 28-model Explorar catalog are on `main`. Active work: Phase **3/9** public counters on `feat/public-activity-counters`. Automated Pagos a Terceros → Phase **24**.  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Money:** [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md)  
 **Shipping:** [SHIPPING.md](./SHIPPING.md)  
@@ -16,28 +16,26 @@ Former working name **iPhoneSeguro** is retired. Brand in product and docs is **
 
 | Branch                                        | Role                                                                                     |
 | --------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `main`                                        | Production baseline — Phases 0–13 MVP slices + chargebacks + settlement guards           |
+| `main`                                        | Production baseline — Phases 0–13 MVP slices + Explorar 28-model catalog                 |
 | `mvp/phases-12-13`                            | **Merged / retired as the active line** — history kept; equals `main` after PR #3 and #4 |
-| `cursor/explorar-catalog-models-2974`         | **Active** — 28-model Explorar catalog + glyphs; PR into `main`                          |
+| `cursor/explorar-catalog-models-2974`         | **Merged** (PR #5) — 28-model Explorar catalog + glyphs                                  |
+| `feat/public-activity-counters`               | **Active** — public activity strip + order party cards (Phase 3 / 9)                     |
 | `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded                                          |
 | `origin/cursor/code-documentation-skill-5f7c` | Docs/skill PR branch; not product feature work                                           |
 
 ```text
-main  ← production (PRs #3 and #4 merged)
+main  ← production (PRs #3, #4, #5 merged)
   │
-  └── cursor/explorar-catalog-models-2974   ← you are here
-        • 28-model catalog + glyphs
-        • optional public/catalog photos later
-        └── (after merge) feat/public-activity-counters
+  └── feat/public-activity-counters   ← you are here
+        • public counters + order party cards
 ```
 
 ---
 
 ## Current focus
 
-1. Ship Explorar 28-model catalog on `cursor/explorar-catalog-models-2974` → `main` (glyphs now; product photos later)
-2. Public activity counters on profiles + order party cards (Phase 3 / 9) from a **new branch off `main`**
-3. Phase **24** only when manual Wompi dispersion becomes the bottleneck
+1. Land public activity counters + order party cards (`feat/public-activity-counters` → `main`)
+2. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
 
@@ -62,14 +60,14 @@ Full phase detail: [plan.md](./plan.md)
 | 0 Foundation             | **Complete**                                                                                 |
 | 1 Design System          | **Complete** (core primitives; Dialog/Drawer/Toast/DataTable with later forms)               |
 | 2 Authentication         | **Complete** (V1 email + Google); later: Apple, WhatsApp, Facebook                           |
-| 3 Profiles               | **Complete**; public counters follow-up (total / active / bought)                            |
+| 3 Profiles               | **Complete**; public counters (total / active / bought) landed                               |
 | 4 Seller identity        | **Complete** (manual review pipeline)                                                        |
 | 5 Listing creation       | **Complete** + seller price-guide UI (**landed** with Phase 13)                              |
 | 6 Review Portal          | **Complete**                                                                                 |
 | 7 Marketplace            | **Complete — closed**                                                                        |
 | 8 Messaging              | **Complete — closed** (private DMs)                                                          |
 | 8b Listing Q&A           | Not started — **public** questions on listings (post-MVP)                                    |
-| 9 Orders                 | **Complete — closed**; party cards + public counters still to land on order detail           |
+| 9 Orders                 | **Complete — closed**; party cards + public counters on order detail                         |
 | 10 Payments              | **Closed** for collect (Wompi + mock; fee UI 10%)                                            |
 | 10b Financial Core       | **Closed** — Ledger, hold, fee engine; seller bank + manual Wompi pay; API lotes → Phase 24  |
 | 10c Shipping             | **Closed** — Carrier + Premium Bogotá + buyer received → 24h                                 |
@@ -98,9 +96,8 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-1. Merge Explorar 28-model catalog (`cursor/explorar-catalog-models-2974`) → `main`
-2. Public activity counters on profiles + order party cards (Phase 3 / 9)
-3. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
+1. Public activity counters on profiles + order party cards (Phase 3 / 9) — landing on `feat/public-activity-counters`
+2. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)
 

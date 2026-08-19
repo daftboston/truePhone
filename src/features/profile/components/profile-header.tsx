@@ -1,17 +1,19 @@
 /**
  * @file profile-header.tsx
- * @description Public/account profile header with avatar, badges, and seller stats.
- * @dependencies TrustBadge, Avatar, Badge, profile types, @/lib/utils
+ * @description Public/account profile header with avatar, badges, stats, and activity strip.
+ * @dependencies TrustBadge, Avatar, Badge, PublicActivityStrip, profile types
  */
 
 import { TrustBadge } from "@/components/trust-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PublicActivityStrip } from "@/features/profile/components/public-activity-strip";
 import {
   formatMemberSince,
   formatSellerRating,
   isIdentityVerified,
 } from "@/features/profile/types";
+import type { PublicActivityCounts } from "@/lib/profile-activity";
 import { cn } from "@/lib/utils";
 
 type ProfileHeaderProps = {
@@ -27,6 +29,7 @@ type ProfileHeaderProps = {
   isTrustedSeller: boolean;
   verifikStatus: string;
   createdAt: Date;
+  activity: PublicActivityCounts;
   className?: string;
 };
 
@@ -54,7 +57,7 @@ function initials(name: string | null) {
  *
  * Renders identity, trust badges, bio, and seller metrics for a profile.
  *
- * @param props - Profile display fields and seller aggregates.
+ * @param props - Profile display fields, seller aggregates, and public activity.
  * @returns Profile header section.
  * @calledBy profile and public `/u/[username]` pages
  */
@@ -71,6 +74,7 @@ export function ProfileHeader({
   isTrustedSeller,
   verifikStatus,
   createdAt,
+  activity,
   className,
 }: ProfileHeaderProps) {
   const location = [city, department].filter(Boolean).join(", ");
@@ -106,6 +110,8 @@ export function ProfileHeader({
           </div>
         </div>
       </div>
+
+      <PublicActivityStrip counts={activity} />
 
       {bio ? (
         <p className="text-foreground text-sm leading-relaxed">{bio}</p>

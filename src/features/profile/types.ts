@@ -49,7 +49,7 @@ export function fieldErrorsFromZod(
  *
  * @param date - Profile createdAt timestamp.
  * @returns Localized "mes año" string.
- * @calledBy ProfileHeader
+ * @calledBy ProfileHeader, PartyCard
  */
 export function formatMemberSince(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
@@ -65,7 +65,7 @@ export function formatMemberSince(date: Date) {
  *
  * @param rating - Average seller rating (0 when none).
  * @returns Spanish copy for empty or rated sellers.
- * @calledBy ProfileHeader
+ * @calledBy ProfileHeader, PartyCard
  */
 export function formatSellerRating(rating: number) {
   if (!rating) return "Sin calificaciones";
@@ -93,7 +93,7 @@ export function publicProfilePath(username: string | null | undefined) {
  *
  * @param verifikStatus - Profile verifikStatus string.
  * @returns True when status equals `"verified"`.
- * @calledBy ProfileHeader
+ * @calledBy ProfileHeader, PartyCard
  */
 export function isIdentityVerified(verifikStatus: string) {
   return verifikStatus === "verified";

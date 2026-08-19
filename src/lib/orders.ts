@@ -44,6 +44,9 @@ const orderListInclude = {
       fullName: true,
       username: true,
       avatarUrl: true,
+      sellerRating: true,
+      createdAt: true,
+      verifikStatus: true,
     },
   },
   seller: {
@@ -53,6 +56,9 @@ const orderListInclude = {
       username: true,
       avatarUrl: true,
       city: true,
+      sellerRating: true,
+      createdAt: true,
+      verifikStatus: true,
     },
   },
   payments: {

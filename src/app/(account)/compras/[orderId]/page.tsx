@@ -10,6 +10,7 @@ import { notFound } from "next/navigation";
 import { OrderDetailView } from "@/features/orders/components/order-detail-view";
 import { requireCurrentProfile } from "@/lib/auth/session";
 import { getOrderForParticipant } from "@/lib/orders";
+import { getOrderPartyActivity } from "@/lib/profile-activity";
 
 type PageProps = {
   params: Promise<{ orderId: string }>;
@@ -58,6 +59,11 @@ export default async function BuyerOrderPage({
     notFound();
   }
 
+  const partyActivity = await getOrderPartyActivity({
+    buyerId: order.buyerId,
+    sellerId: order.sellerId,
+  });
+
   return (
     <OrderDetailView
       order={order}
@@ -67,6 +73,8 @@ export default async function BuyerOrderPage({
       backHref="/compras"
       backLabel="← Mis compras"
       paymentNotice={paymentNoticeFromQuery(pago, order.status)}
+      buyerActivity={partyActivity.buyer}
+      sellerActivity={partyActivity.seller}
     />
   );
 }

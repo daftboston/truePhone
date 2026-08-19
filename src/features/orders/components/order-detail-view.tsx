@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { OrderStatusActions } from "@/features/orders/components/order-status-actions";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { PayOrderButton } from "@/features/payments/components/pay-order-button";
+import { PartyCard } from "@/features/profile/components/party-card";
 import { OrderReviewsSection } from "@/features/reviews/components/order-reviews-section";
 import { OrderShippingPanel } from "@/features/shipping/components/order-shipping-panel";
 import { canCancelPaidOrder } from "@/lib/financial-core/settlement-guards";
@@ -20,6 +21,7 @@ import {
   orderStatusLabel,
   type OrderDetail,
 } from "@/lib/orders";
+import type { PublicActivityCounts } from "@/lib/profile-activity";
 import { paymentStatusLabel } from "@/lib/payments";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { canAccessReviewPortal } from "@/lib/auth/session";
@@ -34,29 +36,18 @@ type OrderDetailViewProps = {
   paymentNotice?: string | null;
   /** Seller has no default bank yet — show payout destination reminder. */
   needsBankAccount?: boolean;
+  buyerActivity: PublicActivityCounts;
+  sellerActivity: PublicActivityCounts;
 };
-
-/**
- * partyName
- *
- * Supports orders by implementing partyName.
- *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy orders UI and related modules
- */
-function partyName(party: OrderDetail["buyer"] | OrderDetail["seller"]) {
-  return party.fullName?.trim() || party.username || "Usuario TruePhone";
-}
 
 /**
  * formatWhen
  *
- * Formats a display value for orders UI.
+ * Formats an order timestamp for es-CO display.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy orders UI and related modules
+ * @param date - Instant to format.
+ * @returns Localized date and time string.
+ * @calledBy OrderDetailView
  */
 function formatWhen(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
@@ -110,6 +101,8 @@ function paymentStatusCopy(order: OrderDetail) {
  * @param props.backLabel - Back link label.
  * @param props.paymentNotice - Optional post-checkout status banner.
  * @param props.needsBankAccount - Seller missing default bank destination.
+ * @param props.buyerActivity - Public listing/purchase counters for the buyer.
+ * @param props.sellerActivity - Public listing/purchase counters for the seller.
  * @returns Order detail layout.
  * @calledBy `/compras/[orderId]`, `/ventas/[orderId]`
  */
@@ -122,10 +115,10 @@ export function OrderDetailView({
   backLabel,
   paymentNotice,
   needsBankAccount = false,
+  buyerActivity,
+  sellerActivity,
 }: OrderDetailViewProps) {
   const isBuyer = perspective === "buyer";
-  const other = isBuyer ? order.seller : order.buyer;
-  const otherLabel = isBuyer ? "Vendedor" : "Comprador";
   const canCancel =
     order.status === "AWAITING_PAYMENT" ||
     (order.status === "PAID" && canCancelPaidOrder(order));
@@ -180,6 +173,32 @@ export function OrderDetailView({
         ) : null}
       </div>
 
+      <section
+        className="grid gap-3 sm:grid-cols-2"
+        aria-label="Vendedor y comprador"
+      >
+        <PartyCard
+          roleLabel="Vendedor"
+          fullName={order.seller.fullName}
+          username={order.seller.username}
+          avatarUrl={order.seller.avatarUrl}
+          createdAt={order.seller.createdAt}
+          sellerRating={order.seller.sellerRating}
+          verifikStatus={order.seller.verifikStatus}
+          activity={sellerActivity}
+        />
+        <PartyCard
+          roleLabel="Comprador"
+          fullName={order.buyer.fullName}
+          username={order.buyer.username}
+          avatarUrl={order.buyer.avatarUrl}
+          createdAt={order.buyer.createdAt}
+          sellerRating={order.buyer.sellerRating}
+          verifikStatus={order.buyer.verifikStatus}
+          activity={buyerActivity}
+        />
+      </section>
+
       <section className="border-border space-y-3 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">Resumen</h2>
         <PriceDisplay
@@ -190,10 +209,6 @@ export function OrderDetailView({
           className="[&>p]:text-xl"
         />
         <dl className="text-muted-foreground grid gap-2 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt>{otherLabel}</dt>
-            <dd className="text-foreground font-medium">{partyName(other)}</dd>
-          </div>
           <div className="flex justify-between gap-4">
             <dt>Creado</dt>
             <dd className="text-foreground">{formatWhen(order.createdAt)}</dd>
