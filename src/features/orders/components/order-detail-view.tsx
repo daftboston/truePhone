@@ -9,12 +9,14 @@ import Link from "next/link";
 import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BuyerAbandonChoice } from "@/features/orders/components/buyer-abandon-choice";
 import { OrderStatusActions } from "@/features/orders/components/order-status-actions";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { PayOrderButton } from "@/features/payments/components/pay-order-button";
 import { PartyCard } from "@/features/profile/components/party-card";
 import { OrderReviewsSection } from "@/features/reviews/components/order-reviews-section";
 import { OrderShippingPanel } from "@/features/shipping/components/order-shipping-panel";
+import { buyerCanChooseRefundOrLoyalty } from "@/lib/financial-core/buyer-abandon-choice";
 import { canCancelPaidOrder } from "@/lib/financial-core/settlement-guards";
 import {
   formatOrderMoney,
@@ -76,6 +78,9 @@ function paymentStatusCopy(order: OrderDetail) {
     if (latest?.status === "REFUNDED") {
       return "Reembolsado";
     }
+    if (latest?.status === "SUCCEEDED") {
+      return "Pagado · compensación pendiente";
+    }
     return "Cancelado · sin cobro";
   }
   if (latest?.status === "FAILED") {
@@ -131,6 +136,11 @@ export function OrderDetailView({
         ? null
         : `/vender/${order.listingId}`;
   const isOps = canAccessReviewPortal(currentUserRole ?? "");
+  const showAbandonChoice = buyerCanChooseRefundOrLoyalty({
+    orderStatus: order.status,
+    isBuyer,
+    entitlement: order.feeEntitlementSource,
+  });
   const showBankReminder =
     !isBuyer &&
     needsBankAccount &&
@@ -229,7 +239,20 @@ export function OrderDetailView({
             <Link href={listingHref}>Ver anuncio</Link>
           </Button>
         ) : null}
+        <Button asChild variant="outline" size="sm">
+          <Link
+            href={
+              isBuyer
+                ? `/mensajes/${order.listingId}`
+                : `/mensajes/${order.listingId}?con=${order.buyer.id}`
+            }
+          >
+            {isBuyer ? "Contactar vendedor" : "Contactar comprador"}
+          </Link>
+        </Button>
       </section>
+
+      {showAbandonChoice ? <BuyerAbandonChoice orderId={order.id} /> : null}
 
       {canPay ? (
         <section className="border-border space-y-3 rounded-xl border p-4">

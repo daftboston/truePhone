@@ -56,7 +56,9 @@ export function CedulaFrontForm() {
           name="frontImage"
           accept="image/jpeg,image/png,image/webp"
           required
-          buttonLabel="Elegir foto"
+          buttonLabel="Elegir de la galería"
+          cameraLabel="Tomar foto"
+          captureFacing="environment"
         />
         <p className="text-muted-foreground text-xs">
           Buena luz, sin reflejos. JPG, PNG o WebP · máx. 5 MB.

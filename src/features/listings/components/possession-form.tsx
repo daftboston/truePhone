@@ -77,7 +77,9 @@ export function PossessionForm({
               name="possessionImage"
               accept="image/jpeg,image/png,image/webp"
               required
-              buttonLabel="Elegir foto"
+              buttonLabel="Elegir de la galería"
+              cameraLabel="Tomar foto"
+              captureFacing="environment"
             />
           </div>
 

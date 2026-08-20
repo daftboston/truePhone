@@ -27,7 +27,7 @@ type GuaranteeBannerProps = {
  */
 export function GuaranteeBanner({
   title = "Compra garantizada",
-  description = "Cada iPhone es revisado manualmente antes de publicarse.",
+  description = "TruePhone retiene tu pago. Después de marcar «Ya recibí» tienes 24 horas para confirmar o reportar. Si no reportas, pagamos al vendedor.",
   className,
 }: GuaranteeBannerProps) {
   return (

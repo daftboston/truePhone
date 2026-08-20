@@ -40,6 +40,7 @@ export {
   authorizeCancelMoney,
   authorizeRefundAfterSellerAbandon,
 } from "@/lib/financial-core/cancel";
+export { buyerCanChooseRefundOrLoyalty } from "@/lib/financial-core/buyer-abandon-choice";
 export { cancelOpenPayouts } from "@/lib/financial-core/open-payouts";
 export {
   canCancelPaidOrder,

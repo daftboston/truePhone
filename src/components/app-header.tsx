@@ -7,6 +7,7 @@
 import Link from "next/link";
 
 import { ModelSearch } from "@/features/listings/components/model-search";
+import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ type AppHeaderProps = {
   className?: string;
   isAuthenticated?: boolean;
   catalogModels?: CatalogModel[];
+  unreadNotifications?: number;
   user?: {
     fullName: string | null;
     avatarUrl: string | null;
@@ -49,6 +51,7 @@ function initials(name: string | null | undefined) {
  *
  * @param props.isAuthenticated - Whether a session user is present.
  * @param props.catalogModels - iPhone models for header search.
+ * @param props.unreadNotifications - Unread count for the header bell.
  * @param props.user - Optional profile name and avatar for the account link.
  * @param props.className - Optional header className.
  * @returns Sticky site header.
@@ -58,6 +61,7 @@ export function AppHeader({
   className,
   isAuthenticated = false,
   catalogModels = [],
+  unreadNotifications = 0,
   user = null,
 }: AppHeaderProps) {
   return (
@@ -84,21 +88,24 @@ export function AppHeader({
         </div>
         <ThemeToggle />
         {isAuthenticated ? (
-          <Button variant="ghost" size="icon" asChild aria-label="Tu perfil">
-            <Link href="/perfil">
-              <Avatar className="size-7">
-                {user?.avatarUrl ? (
-                  <AvatarImage
-                    src={user.avatarUrl}
-                    alt={user.fullName ?? "Perfil"}
-                  />
-                ) : null}
-                <AvatarFallback className="text-[10px]">
-                  {initials(user?.fullName)}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-          </Button>
+          <>
+            <NotificationBell unreadCount={unreadNotifications} />
+            <Button variant="ghost" size="icon" asChild aria-label="Tu perfil">
+              <Link href="/perfil">
+                <Avatar className="size-7">
+                  {user?.avatarUrl ? (
+                    <AvatarImage
+                      src={user.avatarUrl}
+                      alt={user.fullName ?? "Perfil"}
+                    />
+                  ) : null}
+                  <AvatarFallback className="text-[10px]">
+                    {initials(user?.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </Button>
+          </>
         ) : (
           <Button variant="ghost" size="sm" asChild>
             <Link href="/login">Entrar</Link>
@@ -137,6 +144,7 @@ export function AppHeader({
           <ThemeToggle />
           {isAuthenticated ? (
             <>
+              <NotificationBell unreadCount={unreadNotifications} />
               <Button variant="ghost" size="sm" asChild className="gap-2 px-2">
                 <Link href="/perfil" aria-label="Tu perfil">
                   <Avatar className="size-7">

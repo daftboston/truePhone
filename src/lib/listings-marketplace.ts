@@ -71,6 +71,8 @@ export type ListPublishedOptions = {
   condition?: Condition;
   minPrice?: number;
   maxPrice?: number;
+  /** Restrict to one seller's shop (public profile). */
+  sellerId?: string;
 };
 
 /**
@@ -113,6 +115,9 @@ function buildPublishedWhere(
     and.push({ iphoneModelId: options.modelId });
   } else if (options.modelIds && options.modelIds.length > 0) {
     and.push({ iphoneModelId: { in: options.modelIds } });
+  }
+  if (options.sellerId) {
+    and.push({ sellerId: options.sellerId });
   }
   if (options.storageId) {
     and.push({ iphoneStorageId: options.storageId });

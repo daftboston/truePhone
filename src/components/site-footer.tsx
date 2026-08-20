@@ -59,16 +59,17 @@ const pillars = [
   {
     title: "Soporte humano",
     description: "Si algo no cuadra, hablas con personas — no solo con un bot.",
-    href: "mailto:hola@truephone.co",
-    linkLabel: "Contactar",
+    href: "/ayuda",
+    linkLabel: "Leer la ayuda",
     icon: MessageCircle,
   },
 ] as const;
 
 const legalLinks = [
-  { href: "/#privacidad", label: "Privacidad" },
-  { href: "/#terminos", label: "Términos" },
-  { href: "/#proteccion", label: "Protección al comprador" },
+  { href: "/ayuda", label: "Ayuda" },
+  { href: "/ayuda#seguridad", label: "Privacidad" },
+  { href: "/ayuda#cuenta", label: "Términos" },
+  { href: "/ayuda#comprar", label: "Protección al comprador" },
   { href: "mailto:hola@truephone.co", label: "Contacto" },
 ] as const;
 

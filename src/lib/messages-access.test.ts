@@ -166,6 +166,28 @@ describe("evaluateListingMessageSendAccess", () => {
     });
     assert.equal(result.ok, false);
   });
+
+  it("allows order parties to message on RESERVED listings", () => {
+    const result = evaluateListingMessageSendAccess({
+      listing: listing({ status: "RESERVED", sellerId: "seller" }),
+      userId: "buyer",
+      otherUserId: "seller",
+      hasExistingThread: false,
+      isOrderParty: true,
+    });
+    assert.equal(result.ok, true);
+  });
+
+  it("blocks strangers on RESERVED listings", () => {
+    const result = evaluateListingMessageSendAccess({
+      listing: listing({ status: "RESERVED", sellerId: "seller" }),
+      userId: "stranger",
+      otherUserId: "seller",
+      hasExistingThread: false,
+      isOrderParty: false,
+    });
+    assert.equal(result.ok, false);
+  });
 });
 
 describe("resolveThreadCounterpart", () => {

@@ -25,8 +25,8 @@ export async function getLatestIdentityVerification(profileId: string) {
 /**
  * getOrCreateDraftVerification
  *
- * Returns an editable DRAFT (or creates one after REJECTED / when none exists).
- * Leaves PENDING, IN_REVIEW, or VERIFIED rows unchanged.
+ * Returns an editable DRAFT, or the latest non-draft row (PENDING / IN_REVIEW /
+ * REJECTED / VERIFIED) so callers can show status instead of wiping history.
  *
  * @param profileId - Profile UUID.
  * @returns IdentityVerification suitable for editing or viewing current status.
@@ -35,22 +35,11 @@ export async function getLatestIdentityVerification(profileId: string) {
 export async function getOrCreateDraftVerification(profileId: string) {
   const latest = await getLatestIdentityVerification(profileId);
 
-  if (latest && (latest.status === "DRAFT" || latest.status === "REJECTED")) {
-    if (latest.status === "REJECTED") {
-      return prisma.identityVerification.create({
-        data: {
-          profileId,
-          status: "DRAFT",
-          provider: "manual",
-        },
-      });
-    }
-    return latest;
-  }
-
   if (
     latest &&
-    (latest.status === "PENDING" ||
+    (latest.status === "DRAFT" ||
+      latest.status === "REJECTED" ||
+      latest.status === "PENDING" ||
       latest.status === "IN_REVIEW" ||
       latest.status === "VERIFIED")
   ) {

@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
 import { AccountNav } from "@/features/profile/components/account-nav";
+import { AccountNavDrawer } from "@/features/profile/components/account-nav-drawer";
 import { verificationNavHref } from "@/features/verification/types";
 import { getLatestIdentityVerification } from "@/lib/auth/identity";
 import {
@@ -55,14 +56,16 @@ export async function AuthenticatedSidebarShell({
   return (
     <AppShell mainClassName="gap-6 md:gap-8">
       <div className="grid gap-8 md:grid-cols-[220px_1fr] md:items-start lg:grid-cols-[240px_1fr]">
-        <AccountNav
-          verificationHref={verificationHref}
-          canReview={canAccessReviewPortal(profile.role)}
-          isAdmin={profile.role === "ADMIN"}
-          unreadMessages={unreadMessages}
-          unreadNotifications={unreadNotifications}
-          className="border-border md:sticky md:top-20 md:rounded-xl md:border md:p-4"
-        />
+        <AccountNavDrawer>
+          <AccountNav
+            verificationHref={verificationHref}
+            canReview={canAccessReviewPortal(profile.role)}
+            isAdmin={profile.role === "ADMIN"}
+            unreadMessages={unreadMessages}
+            unreadNotifications={unreadNotifications}
+            className="border-border md:sticky md:top-20 md:rounded-xl md:border md:p-4"
+          />
+        </AccountNavDrawer>
         <div className="min-w-0 space-y-6 md:space-y-8">{children}</div>
       </div>
     </AppShell>

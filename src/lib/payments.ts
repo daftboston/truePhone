@@ -16,6 +16,10 @@ import {
   recordPaymentHold,
 } from "@/lib/financial-core";
 import { prisma } from "@/lib/db";
+import {
+  notifySellerOrderPaid,
+  safeNotify,
+} from "@/lib/notifications/marketplace";
 import { resolvePaymentProvider } from "@/lib/payments/resolve-provider";
 import {
   verifyWompiEventChecksum,
@@ -378,6 +382,14 @@ export async function markPaymentSucceeded(input: {
         });
       }
     });
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      select: { orderId: true, order: { select: { status: true } } },
+    });
+    if (payment?.order.status === "PAID") {
+      await safeNotify(notifySellerOrderPaid({ orderId: payment.orderId }));
+    }
 
     return { ok: true };
   } catch (error) {

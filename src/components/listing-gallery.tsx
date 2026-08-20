@@ -2,12 +2,12 @@
 
 /**
  * @file listing-gallery.tsx
- * @description Client image gallery with main preview and thumbnail selection.
+ * @description Client image gallery with swipe, main preview, and thumbnail selection.
  * @dependencies next/image, react, @/lib/utils
  */
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState, type PointerEvent } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ type ListingGalleryProps = {
 /**
  * ListingGallery
  *
- * Lets buyers browse listing photos; shows a placeholder when images are empty.
+ * Lets buyers browse listing photos; swipe on the main image on mobile.
  *
  * @param props.images - Gallery images with id and imageUrl.
  * @param props.alt - Alt text for the active image.
@@ -39,7 +39,50 @@ export function ListingGallery({
   className,
 }: ListingGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const pointerStartX = useRef<number | null>(null);
   const active = images[activeIndex] ?? images[0];
+
+  /**
+   * goTo
+   *
+   * Moves the active photo, wrapping at the ends.
+   *
+   * @param nextIndex - Target index.
+   * @calledBy swipe and thumbnail handlers
+   */
+  function goTo(nextIndex: number) {
+    if (images.length === 0) return;
+    const wrapped =
+      ((nextIndex % images.length) + images.length) % images.length;
+    setActiveIndex(wrapped);
+  }
+
+  /**
+   * onPointerDown
+   *
+   * Records the swipe start X.
+   *
+   * @param event - Pointer event on the main image.
+   */
+  function onPointerDown(event: PointerEvent<HTMLDivElement>) {
+    pointerStartX.current = event.clientX;
+  }
+
+  /**
+   * onPointerUp
+   *
+   * Advances or rewinds when the horizontal swipe exceeds 40px.
+   *
+   * @param event - Pointer event on the main image.
+   */
+  function onPointerUp(event: PointerEvent<HTMLDivElement>) {
+    const start = pointerStartX.current;
+    pointerStartX.current = null;
+    if (start == null || images.length < 2) return;
+    const delta = event.clientX - start;
+    if (delta <= -40) goTo(activeIndex + 1);
+    if (delta >= 40) goTo(activeIndex - 1);
+  }
 
   if (!active) {
     return (
@@ -56,15 +99,28 @@ export function ListingGallery({
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="bg-muted relative aspect-[4/5] overflow-hidden rounded-2xl">
+      <div
+        className="bg-muted relative aspect-[4/5] touch-pan-y overflow-hidden rounded-2xl"
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => {
+          pointerStartX.current = null;
+        }}
+      >
         <Image
           src={active.imageUrl}
           alt={`${alt} · foto ${activeIndex + 1}`}
           fill
           priority
-          className="object-cover"
+          draggable={false}
+          className="pointer-events-none object-cover"
           sizes="(max-width: 768px) 100vw, 480px"
         />
+        {images.length > 1 ? (
+          <p className="bg-background/80 text-foreground absolute right-2 bottom-2 rounded-full px-2 py-0.5 text-xs font-medium">
+            {activeIndex + 1} / {images.length}
+          </p>
+        ) : null}
       </div>
       {images.length > 1 ? (
         <ul className="flex gap-2 overflow-x-auto pb-1">

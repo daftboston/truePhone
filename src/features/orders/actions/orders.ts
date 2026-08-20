@@ -16,7 +16,11 @@ import {
   type OrderActionState,
 } from "@/features/orders/schemas/order";
 import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
-import { cancelOrder, createOrderAndReserveListing } from "@/lib/orders";
+import {
+  cancelOrder,
+  chooseRefundAfterSellerAbandon,
+  createOrderAndReserveListing,
+} from "@/lib/orders";
 
 /**
  * revalidateOrderPaths
@@ -146,5 +150,53 @@ export async function cancelOrderAction(
     ok: true,
     message:
       result.message ?? "Pedido cancelado. El anuncio volvió a publicarse.",
+  };
+}
+
+/**
+ * chooseRefundAfterSellerAbandonAction
+ *
+ * Server action: buyer chooses full refund after seller cancel / no-ship.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - Form with orderId.
+ * @returns Action state; revalidates order paths on success.
+ * @calledBy BuyerAbandonChoice
+ */
+export async function chooseRefundAfterSellerAbandonAction(
+  _prev: OrderActionState,
+  formData: FormData,
+): Promise<OrderActionState> {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return {
+      ok: false,
+      error: "Debes iniciar sesión.",
+      loginRequired: true,
+    };
+  }
+
+  const parsed = cancelOrderSchema.pick({ orderId: true }).safeParse({
+    orderId: formData.get("orderId"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "Pedido inválido." };
+  }
+
+  const result = await chooseRefundAfterSellerAbandon({
+    orderId: parsed.data.orderId,
+    buyerId: current.profile.id,
+    siteOrigin: await getRequestOrigin(),
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+
+  revalidateOrderPaths({ orderId: parsed.data.orderId });
+  return {
+    ok: true,
+    message:
+      "Reembolso autorizado. El dinero vuelve por el mismo medio de pago.",
   };
 }

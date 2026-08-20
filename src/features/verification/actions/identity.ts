@@ -24,8 +24,12 @@ import {
   getLatestIdentityVerification,
   getOrCreateDraftVerification,
 } from "@/lib/auth/identity";
-import { getCurrentProfile } from "@/lib/auth/session";
+import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import {
+  notifyIdentityReviewed,
+  safeNotify,
+} from "@/lib/notifications/marketplace";
 import { createClient } from "@/lib/supabase/server";
 
 const IDENTITY_BUCKET = "identity-docs";
@@ -57,6 +61,13 @@ async function requireSellerDraft() {
   }
   if (draft.status === "VERIFIED") {
     return { ok: false as const, error: "Tu identidad ya está verificada." };
+  }
+  if (draft.status === "REJECTED") {
+    return {
+      ok: false as const,
+      error:
+        "Tu verificación fue rechazada. Vuelve a intentarlo desde el inicio.",
+    };
   }
 
   return { ok: true as const, current, draft };
@@ -396,6 +407,15 @@ export async function approveIdentityVerificationAction(
   revalidatePath("/revision/identidad");
   revalidatePath("/vender");
   revalidatePath("/perfil");
+  revalidatePath("/notificaciones");
+  revalidatePath("/", "layout");
+  await safeNotify(
+    notifyIdentityReviewed({
+      verificationId: verification.id,
+      approved: true,
+      siteOrigin: await getRequestOrigin(),
+    }),
+  );
   return { ok: true, message: "Identidad aprobada." };
 }
 
@@ -468,7 +488,63 @@ export async function rejectIdentityVerificationAction(
   revalidatePath("/revision/identidad");
   revalidatePath("/vender");
   revalidatePath("/perfil");
+  revalidatePath("/notificaciones");
+  revalidatePath("/", "layout");
+  await safeNotify(
+    notifyIdentityReviewed({
+      verificationId: verification.id,
+      approved: false,
+      rejectionReason: parsed.data.rejectionReason,
+      siteOrigin: await getRequestOrigin(),
+    }),
+  );
   return { ok: true, message: "Verificación rechazada." };
+}
+
+/**
+ * startIdentityRetryAction
+ *
+ * Opens a new DRAFT after a rejected identity case so the seller can resubmit
+ * without losing the previous rejection reason on the old row.
+ *
+ * @returns Action state; redirects to /verificacion on success.
+ * @calledBy RetryIdentityButton
+ */
+export async function startIdentityRetryAction(): Promise<VerificationActionState> {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return { ok: false, error: "Debes iniciar sesión." };
+  }
+
+  const latest = await getLatestIdentityVerification(current.profile.id);
+  if (!latest || latest.status !== "REJECTED") {
+    return {
+      ok: false,
+      error: "No hay una verificación rechazada para reintentar.",
+    };
+  }
+
+  await prisma.$transaction([
+    prisma.identityVerification.create({
+      data: {
+        profileId: current.profile.id,
+        status: "DRAFT",
+        provider: "manual",
+      },
+    }),
+    prisma.profile.update({
+      where: { id: current.profile.id },
+      data: {
+        verifikStatus: "draft",
+        verifikVerifiedAt: null,
+      },
+    }),
+  ]);
+
+  revalidatePath("/verificacion");
+  revalidatePath("/vender");
+  revalidatePath("/perfil");
+  redirect("/verificacion");
 }
 
 /**

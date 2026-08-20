@@ -8,6 +8,7 @@ import { Prisma, type OrderStatus } from "@prisma/client";
 
 import {
   authorizeCancelMoney,
+  authorizeRefundAfterSellerAbandon,
   canCancelPaidOrder,
   computeOrderFees,
   feeRateBpsFromKind,
@@ -83,6 +84,14 @@ const orderListInclude = {
       },
     },
     orderBy: { createdAt: "asc" as const },
+  },
+  feeEntitlementSource: {
+    select: {
+      id: true,
+      status: true,
+      expiresAt: true,
+      feeRateBps: true,
+    },
   },
 } satisfies Prisma.OrderInclude;
 
@@ -436,6 +445,27 @@ export async function cancelOrder(input: {
     }
     throw error;
   }
+}
+
+/**
+ * chooseRefundAfterSellerAbandon
+ *
+ * Buyer opts for a full refund instead of the one-time 8% replacement purchase.
+ *
+ * @param input.orderId - Source order UUID.
+ * @param input.buyerId - Buyer profile UUID.
+ * @param input.siteOrigin - Origin for payment provider resolution.
+ * @returns Success or Spanish error from Financial Core.
+ * @calledBy chooseRefundAfterSellerAbandonAction
+ */
+export async function chooseRefundAfterSellerAbandon(input: {
+  orderId: string;
+  buyerId: string;
+  siteOrigin: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const money = await authorizeRefundAfterSellerAbandon(input);
+  if (!money.ok) return { ok: false, error: money.error };
+  return { ok: true };
 }
 
 /**

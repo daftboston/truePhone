@@ -38,7 +38,9 @@ export function CedulaBackForm() {
           name="backImage"
           accept="image/jpeg,image/png,image/webp"
           required
-          buttonLabel="Elegir foto"
+          buttonLabel="Elegir de la galería"
+          cameraLabel="Tomar foto"
+          captureFacing="environment"
         />
         <p className="text-muted-foreground text-xs">
           Asegúrate de que el código de barras o QR se vea completo.

@@ -25,6 +25,22 @@ export const LISTING_STEPS = [
   { id: "revisar", title: "Revisar", pathSuffix: "revisar" },
 ] as const;
 
+/** PRD minimum gallery photos (front/back/sides/screen/battery/IMEI). */
+export const MIN_LISTING_GALLERY_PHOTOS = 8;
+
+export const LISTING_PHOTO_SHOT_LIST = [
+  "Frente",
+  "Reverso",
+  "Lado izquierdo",
+  "Lado derecho",
+  "Parte superior",
+  "Parte inferior",
+  "Pantalla encendida",
+  "Salud de batería (Ajustes)",
+  "IMEI (Ajustes → General → Información)",
+  "Accesorios",
+] as const;
+
 /**
  * fieldErrorsFromZod
  *

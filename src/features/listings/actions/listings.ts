@@ -23,6 +23,7 @@ import {
 } from "@/features/listings/schemas/listing";
 import {
   fieldErrorsFromZod,
+  MIN_LISTING_GALLERY_PHOTOS,
   type ListingActionState,
 } from "@/features/listings/types";
 import {
@@ -401,10 +402,10 @@ export async function continueFromPhotosAction(listingId: string) {
   const galleryCount = listing.images.filter(
     (i) => i.imageType === "gallery",
   ).length;
-  if (galleryCount < 1) {
+  if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
     return {
       ok: false as const,
-      error: "Agrega al menos una foto del dispositivo.",
+      error: `Agrega al menos ${MIN_LISTING_GALLERY_PHOTOS} fotos del dispositivo.`,
     };
   }
 
@@ -589,8 +590,11 @@ export async function submitListingForReviewAction(
   const galleryCount = listing.images.filter(
     (i) => i.imageType === "gallery",
   ).length;
-  if (galleryCount < 1) {
-    return { ok: false, error: "Agrega al menos una foto del dispositivo." };
+  if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
+    return {
+      ok: false,
+      error: `Agrega al menos ${MIN_LISTING_GALLERY_PHOTOS} fotos del dispositivo.`,
+    };
   }
   if (!listing.imeiHash) {
     return { ok: false, error: "Completa el IMEI y la seguridad del equipo." };

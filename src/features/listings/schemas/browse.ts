@@ -128,9 +128,9 @@ export function buildBrowseHref(
   return qs ? `/buscar?${qs}` : "/buscar";
 }
 
-/** Browse requires a model or series; otherwise redirect to the explore hub. */
+/** Browse requires a model, series, or free-text query. */
 export function hasBrowseScope(query: BrowseQuery) {
-  return Boolean(query.modelId || query.seriesKey);
+  return Boolean(query.modelId || query.seriesKey || query.q);
 }
 
 /**

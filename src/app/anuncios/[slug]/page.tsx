@@ -17,11 +17,10 @@ import { SellerCard } from "@/components/seller-card";
 import { TrustBadge } from "@/components/trust-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FavoriteButton } from "@/features/listings/components/favorite-button";
+import { ListingPurchaseActions } from "@/features/listings/components/listing-purchase-actions";
 import { RecordRecentlyViewed } from "@/features/listings/components/record-recently-viewed";
-import { ShareListingButton } from "@/features/listings/components/share-listing-button";
-import { CreateOrderButton } from "@/features/orders/components/create-order-button";
 import { conditionLabels } from "@/features/listings/schemas/listing";
+import { formatSellerRating } from "@/features/profile/types";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getAuthUser, getCurrentProfile } from "@/lib/auth/session";
 import { isListingFavorited } from "@/lib/favorites";
@@ -110,8 +109,12 @@ export default async function PublicListingPage({ params }: PageProps) {
     .join(", ");
   const sellerSubtitle = [
     sellerLocation ? `Vendedor en ${sellerLocation}` : null,
+    formatSellerRating(listing.seller.sellerRating),
     listing.seller.totalSales > 0
       ? `${listing.seller.totalSales} venta${listing.seller.totalSales === 1 ? "" : "s"}`
+      : null,
+    listing.seller.totalReviews > 0
+      ? `${listing.seller.totalReviews} reseña${listing.seller.totalReviews === 1 ? "" : "s"}`
       : null,
   ]
     .filter(Boolean)
@@ -131,7 +134,7 @@ export default async function PublicListingPage({ params }: PageProps) {
   const isOwnListing = current?.profile.id === listing.sellerId;
 
   return (
-    <AppShell className="pb-24 md:pb-0" mainClassName="gap-8 md:gap-10">
+    <AppShell className="pb-40 md:pb-0" mainClassName="gap-8 md:gap-10">
       <RecordRecentlyViewed slug={listing.slug} title={listing.title} />
       <div className="space-y-2">
         <Button asChild variant="outline" size="sm">
@@ -153,7 +156,7 @@ export default async function PublicListingPage({ params }: PageProps) {
               <Badge variant="secondary">
                 {conditionLabels[listing.condition]}
               </Badge>
-              <TrustBadge />
+              <TrustBadge label="Revisado" />
               {listing.batteryHealth != null ? (
                 <Badge variant="outline">
                   Batería {listing.batteryHealth}%
@@ -193,67 +196,19 @@ export default async function PublicListingPage({ params }: PageProps) {
             />
           )}
 
-          <div className="space-y-2">
-            {isOwnListing ? (
-              <Button fullWidth asChild variant="outline">
-                <Link href={`/vender/${listing.id}`}>Ver en mis anuncios</Link>
-              </Button>
-            ) : user ? (
-              <>
-                {pendingOrder ? (
-                  <Button fullWidth asChild>
-                    <Link href={`/compras/${pendingOrder.id}`}>
-                      Ver mi pedido
-                    </Link>
-                  </Button>
-                ) : (
-                  <CreateOrderButton
-                    listingId={listing.id}
-                    loginHref={loginHref}
-                    fullWidth
-                    showSettlementDisclosure
-                  />
-                )}
-                <Button fullWidth asChild variant="outline">
-                  <Link href={`/mensajes/${listing.id}`}>
-                    Contactar vendedor
-                  </Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button fullWidth asChild>
-                  <Link href={loginHref}>Iniciar sesión para comprar</Link>
-                </Button>
-                <Button fullWidth asChild variant="outline">
-                  <Link href={messageLoginHref}>
-                    Iniciar sesión para contactar
-                  </Link>
-                </Button>
-              </>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <FavoriteButton
-                listingId={listing.id}
-                initialFavorited={favorited}
-                loginHref={loginHref}
-                fullWidth
-              />
-              <ShareListingButton
-                path={publicListingPath(listing.slug)}
-                title={listing.title}
-                fullWidth
-              />
-            </div>
-            {!isOwnListing && !user ? (
-              <p className="text-muted-foreground text-center text-xs">
-                Al comprar, el anuncio se reserva y pagas Compra Garantizada
-                (precio del equipo + protección 10%). Tras marcar «Ya recibí»
-                tienes 24 horas para confirmar o reportar; si no reportas,
-                TruePhone paga al vendedor.
-              </p>
-            ) : null}
-          </div>
+          <ListingPurchaseActions
+            className="hidden md:block"
+            listingId={listing.id}
+            listingTitle={listing.title}
+            publicPath={publicListingPath(listing.slug)}
+            loginHref={loginHref}
+            messageHref={`/mensajes/${listing.id}`}
+            messageLoginHref={messageLoginHref}
+            isOwnListing={isOwnListing}
+            isAuthenticated={Boolean(user)}
+            pendingOrderId={pendingOrder?.id ?? null}
+            favorited={favorited}
+          />
         </div>
       </div>
 
@@ -346,6 +301,22 @@ export default async function PublicListingPage({ params }: PageProps) {
           </div>
         </section>
       ) : null}
+
+      <div className="bg-background/95 border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 md:hidden">
+        <ListingPurchaseActions
+          compact
+          listingId={listing.id}
+          listingTitle={listing.title}
+          publicPath={publicListingPath(listing.slug)}
+          loginHref={loginHref}
+          messageHref={`/mensajes/${listing.id}`}
+          messageLoginHref={messageLoginHref}
+          isOwnListing={isOwnListing}
+          isAuthenticated={Boolean(user)}
+          pendingOrderId={pendingOrder?.id ?? null}
+          favorited={favorited}
+        />
+      </div>
     </AppShell>
   );
 }

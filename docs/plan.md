@@ -4,7 +4,7 @@
 
 Version 1.3
 
-**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** / **13** slices and Explorar 28-model catalog are on `main`. Active line: `feat/public-activity-counters` (Phase 3/9 public counters + order party cards). See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Buyer 8% vs refund after seller cancel is on the order page. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
@@ -584,7 +584,7 @@ Features
 
 Result: Users stay informed.
 
-Status: **Settlement slice landed** (in-app + email on buyer «Ya recibí»; hourly cron reminders within 6h of deadline; `/notificaciones` activity center + preferences). Push and non-settlement event types remain future work.
+Status: **Landed** (in-app + email on buyer «Ya recibí»; hourly cron reminders within 6h of deadline; `/notificaciones` activity center + preferences; listing/identity/sale/message/shipping/payout types; header unread bell). Push remains future work.
 
 ---
 
@@ -739,7 +739,7 @@ Sellers in Colombia often create listings on the phone they are selling. Phase 5
 
 Result: Excellent mobile web UX, including camera capture for sell + KYC photos.
 
-Status: Not started as a dedicated polish pass (baseline responsive exists from earlier phases). **Tomar foto** is specified here; implement when Phase 19 is the active line.
+Status: **Landed** as a dedicated polish pass: **Tomar foto** vs galería on sell / posesión / cédula / selfie; account nav drawer; mobile filter sheet; listing gallery swipe. Native apps stay Phase **24**.
 
 ---
 
@@ -786,14 +786,14 @@ Result: Operational visibility.
 Tasks
 
 - Privacy / Terms / Cookie policies
-- **Support center / FAQ page** (canonical `/ayuda` or `/faq` — see below)
+- **Support center / FAQ page** — **thin slice shipped** at `/ayuda` (clusters below). Full legal pages still open.
 - Email templates / legal pages
 - Production database / storage / domains
 - Final QA / load testing
 
 ### FAQ page (canonical)
 
-**Already planned here** (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Ship a dedicated FAQ page before public launch marketing.
+**Thin FAQ shipped** at `/ayuda` (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Full privacy/terms pages remain launch work.
 
 Suggested FAQ clusters (Spanish copy; English only in docs):
 

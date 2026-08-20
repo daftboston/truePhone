@@ -27,6 +27,12 @@ import {
   freezePayout,
 } from "@/lib/financial-core/settlement";
 import {
+  notifyBuyerShippingMethodChosen,
+  notifyBuyerTrackingUploaded,
+  safeNotify,
+} from "@/lib/notifications/marketplace";
+import { shippingMethodLabel } from "@/lib/shipping";
+import {
   markOrderReceivedByBuyer,
   recordPremiumInspection,
   selectShippingMethod,
@@ -49,6 +55,58 @@ function revalidateShippingPaths(orderId: string) {
   revalidatePath(`/compras/${orderId}`);
   revalidatePath(`/ventas/${orderId}`);
   revalidatePath("/revision");
+  revalidatePath("/notificaciones");
+  revalidatePath("/", "layout");
+}
+
+/**
+ * notifyBuyerOfShipment
+ *
+ * Loads the shipment after a seller method/tracking mutation and notifies the buyer.
+ *
+ * @param orderId - Paid order UUID.
+ * @param kind - method | tracking
+ * @calledBy select and tracking shipping actions
+ */
+async function notifyBuyerOfShipment(
+  orderId: string,
+  kind: "method" | "tracking",
+) {
+  const shipment = await prisma.shipment.findFirst({
+    where: { orderId },
+    select: {
+      id: true,
+      method: true,
+      carrierName: true,
+      trackingCode: true,
+    },
+  });
+  if (!shipment) return;
+
+  const origin = await getRequestOrigin();
+  if (kind === "method") {
+    await safeNotify(
+      notifyBuyerShippingMethodChosen({
+        orderId,
+        shipmentId: shipment.id,
+        methodLabel: shippingMethodLabel(shipment.method),
+        siteOrigin: origin,
+      }),
+    );
+    return;
+  }
+
+  if (shipment.trackingCode && shipment.carrierName) {
+    await safeNotify(
+      notifyBuyerTrackingUploaded({
+        orderId,
+        shipmentId: shipment.id,
+        carrierName: shipment.carrierName,
+        trackingCode: shipment.trackingCode,
+        siteOrigin: origin,
+      }),
+    );
+  }
 }
 
 /**
@@ -61,8 +119,6 @@ function revalidateShippingPaths(orderId: string) {
  */
 function revalidateAfterBuyerReceived(orderId: string) {
   revalidateShippingPaths(orderId);
-  revalidatePath("/notificaciones");
-  revalidatePath("/", "layout");
 }
 
 /**
@@ -104,6 +160,7 @@ export async function selectShippingMethodAction(
   if (!result.ok) return { ok: false, error: result.error };
 
   revalidateShippingPaths(parsed.data.orderId);
+  await notifyBuyerOfShipment(parsed.data.orderId, "method");
   return { ok: true, message: result.message };
 }
 
@@ -230,6 +287,7 @@ export async function uploadCarrierTrackingAction(
   if (!result.ok) return { ok: false, error: result.error };
 
   revalidateShippingPaths(parsed.data.orderId);
+  await notifyBuyerOfShipment(parsed.data.orderId, "tracking");
   return { ok: true, message: result.message };
 }
 

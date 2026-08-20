@@ -52,6 +52,11 @@ export default async function MessagesInboxPage() {
               <Link href="/explorar">Explorar iPhones</Link>
             </Button>
           }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda">Preguntas frecuentes</Link>
+            </Button>
+          }
         />
       ) : (
         <ConversationList

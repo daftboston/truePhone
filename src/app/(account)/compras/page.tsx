@@ -49,6 +49,11 @@ export default async function PurchasesPage() {
               <Link href="/explorar">Explorar</Link>
             </Button>
           }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda#comprar">Cómo comprar</Link>
+            </Button>
+          }
         />
       ) : (
         <ul className="space-y-3">

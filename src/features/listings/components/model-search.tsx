@@ -84,6 +84,12 @@ export function ModelSearch({
       goToModel(results[0].id);
       return;
     }
+    const trimmed = query.trim();
+    if (trimmed) {
+      setOpen(false);
+      router.push(`/buscar?q=${encodeURIComponent(trimmed)}`);
+      return;
+    }
     router.push("/explorar");
   }
 
@@ -157,11 +163,11 @@ export function ModelSearch({
             <li className="text-muted-foreground px-3 py-3 text-sm">
               No encontramos ese modelo.{" "}
               <Link
-                href="/explorar"
+                href={`/buscar?q=${encodeURIComponent(deferredQuery.trim())}`}
                 className="text-foreground font-medium underline-offset-2 hover:underline"
                 onClick={() => setOpen(false)}
               >
-                Ver catálogo
+                Buscar anuncios
               </Link>
             </li>
           ) : (

@@ -12,6 +12,7 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { PrivacyAcceptForm } from "@/features/verification/components/privacy-accept-form";
+import { RetryIdentityButton } from "@/features/verification/components/retry-identity-button";
 import { VerificationShell } from "@/features/verification/components/verification-shell";
 import { nextVerificationPath } from "@/features/verification/types";
 import { getOrCreateDraftVerification } from "@/lib/auth/identity";
@@ -53,6 +54,21 @@ export default async function VerificationStartPage() {
 
   if (draft.status === "PENDING" || draft.status === "IN_REVIEW") {
     redirect("/verificacion/enviada");
+  }
+
+  if (draft.status === "REJECTED") {
+    return (
+      <AppShell mainClassName="max-w-lg justify-center">
+        <EmptyState
+          title="No pudimos verificar tu identidad"
+          description={
+            draft.rejectionReason?.trim() ||
+            "Un revisor rechazó tus documentos. Vuelve a enviar fotos más claras."
+          }
+          action={<RetryIdentityButton />}
+        />
+      </AppShell>
+    );
   }
 
   if (draft.privacyAcceptedAt && draft.status === "DRAFT") {

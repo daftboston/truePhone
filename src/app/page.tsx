@@ -17,6 +17,7 @@ import { HomeHero } from "@/components/home-hero";
 import { HomeTrustStrip } from "@/components/home-trust-strip";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { RecentlyViewedSection } from "@/features/listings/components/recently-viewed-section";
 import { conditionLabels } from "@/features/listings/schemas/listing";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import {
@@ -80,10 +81,17 @@ export default async function HomePage() {
                 <Link href="/explorar">Explorar modelos</Link>
               </Button>
             }
+            secondaryAction={
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/ayuda">Preguntas frecuentes</Link>
+              </Button>
+            }
           />
         ) : (
           <HomeFeaturedRotator listings={slides} />
         )}
+
+        <RecentlyViewedSection />
       </AppShell>
       <SiteFooter />
     </>

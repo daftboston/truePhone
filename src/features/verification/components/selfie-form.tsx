@@ -49,9 +49,10 @@ export function SelfieForm() {
           id="selfieImage"
           name="selfieImage"
           accept="image/jpeg,image/png,image/webp"
-          capture="user"
           required
-          buttonLabel="Elegir foto"
+          buttonLabel="Elegir de la galería"
+          cameraLabel="Tomar foto"
+          captureFacing="user"
         />
       </div>
 

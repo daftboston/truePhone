@@ -55,6 +55,11 @@ export default async function FavoritesPage() {
               <Link href="/explorar">Explorar iPhones</Link>
             </Button>
           }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda">Preguntas frecuentes</Link>
+            </Button>
+          }
         />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 md:gap-4">

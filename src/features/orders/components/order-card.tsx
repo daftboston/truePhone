@@ -8,6 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
+import { buyerCanChooseRefundOrLoyalty } from "@/lib/financial-core/buyer-abandon-choice";
 import {
   formatOrderMoney,
   orderStatusLabel,
@@ -53,6 +54,11 @@ export function OrderCard({
   const imageUrl = order.listing.images[0]?.imageUrl;
   const other = perspective === "buyer" ? order.seller : order.buyer;
   const otherLabel = perspective === "buyer" ? "Vendedor" : "Comprador";
+  const needsChoice = buyerCanChooseRefundOrLoyalty({
+    orderStatus: order.status,
+    isBuyer: perspective === "buyer",
+    entitlement: order.feeEntitlementSource,
+  });
 
   return (
     <Link
@@ -86,6 +92,11 @@ export function OrderCard({
         <p className="text-foreground text-sm font-medium">
           {formatOrderMoney(order.totalPrice, order.currency)}
         </p>
+        {needsChoice ? (
+          <p className="text-trust text-xs font-medium">
+            Elige reembolso o compra al 8%
+          </p>
+        ) : null}
       </div>
     </Link>
   );

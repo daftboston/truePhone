@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** / **13** slices and the 28-model Explorar catalog are on `main`. Active work: Phase **3/9** public counters on `feat/public-activity-counters`. Automated Pagos a Terceros → Phase **24**.  
+**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications, Phase **19** mobile web, UX polish, thin FAQ (`/ayuda`), and buyer 8% vs refund after seller cancel land with `feat/public-activity-counters`. Automated Pagos a Terceros → Phase **24**.  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Money:** [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md)  
 **Shipping:** [SHIPPING.md](./SHIPPING.md)  
@@ -14,28 +14,31 @@ Former working name **iPhoneSeguro** is retired. Brand in product and docs is **
 
 ## Branch map (engineering)
 
-| Branch                                        | Role                                                                                     |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `main`                                        | Production baseline — Phases 0–13 MVP slices + Explorar 28-model catalog                 |
-| `mvp/phases-12-13`                            | **Merged / retired as the active line** — history kept; equals `main` after PR #3 and #4 |
-| `cursor/explorar-catalog-models-2974`         | **Merged** (PR #5) — 28-model Explorar catalog + glyphs                                  |
-| `feat/public-activity-counters`               | **Active** — public activity strip + order party cards (Phase 3 / 9)                     |
-| `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded                                          |
-| `origin/cursor/code-documentation-skill-5f7c` | Docs/skill PR branch; not product feature work                                           |
+| Branch                                        | Role                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `main`                                        | Production baseline — Phases 0–13 MVP slices + Explorar 28-model catalog                  |
+| `mvp/phases-12-13`                            | **Merged / retired as the active line** — history kept; equals `main` after PR #3 and #4  |
+| `cursor/explorar-catalog-models-2974`         | **Merged** (PR #5) — 28-model Explorar catalog + glyphs                                   |
+| `feat/public-activity-counters`               | **Active** — public counters, Phase 12, Phase 19, UX polish, `/ayuda`, buyer 8% vs refund |
+| `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded                                           |
+| `origin/cursor/code-documentation-skill-5f7c` | Docs/skill PR branch; not product feature work                                            |
 
 ```text
 main  ← production (PRs #3, #4, #5 merged)
   │
   └── feat/public-activity-counters   ← you are here
         • public counters + order party cards
+        • Phase 12 marketplace notifications
+        • UX polish + Phase 19 mobile web
 ```
 
 ---
 
 ## Current focus
 
-1. Land public activity counters + order party cards (`feat/public-activity-counters` → `main`)
-2. Phase **24** only when manual Wompi dispersion becomes the bottleneck
+1. Merge `feat/public-activity-counters` to `main` and deploy Prisma `20260819220000_notification_types_phase_12`
+2. Phase **8b** public listing Q&A
+3. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
 
@@ -47,7 +50,7 @@ main  ← production (PRs #3, #4, #5 merged)
 | Admin / reviewer analytics                         | Phase **15** (+ Phase **13** dashboards)      | Ops only — no buyer/seller analytics app           |
 | Mobile web polish                                  | Phase **19**                                  | Native apps stay Phase **24**                      |
 | Camera from the phone (listing / posesión / KYC)   | Phase **19**                                  | Mobile web **Tomar foto**; native camera is **24** |
-| FAQ page                                           | Phase **23**                                  | Canonical help/FAQ before launch                   |
+| FAQ page                                           | Phase **23**                                  | Thin `/ayuda` shipped; legal pages still open      |
 
 Full phase detail: [plan.md](./plan.md)
 
@@ -73,11 +76,11 @@ Full phase detail: [plan.md](./plan.md)
 | 10c Shipping             | **Closed** — Carrier + Premium Bogotá + buyer received → 24h                                 |
 | 10d Order lifecycle      | **Closed** — 24h disclosed; confirm UX; cron auto-release; seller-complete killed            |
 | 11 Reviews               | **Complete — closed**                                                                        |
-| 12 Notifications         | **Settlement slice landed** — received confirm + deadline reminders; activity center         |
+| 12 Notifications         | **Closed** for in-app/email marketplace events + settlement reminders; push later            |
 | 13 Admin                 | **Price table landed** (`RecommendedPrice` + `/revision/precios`); full dashboard still open |
 | 15 Analytics             | Not started — **admin / reviewer / ops only**                                                |
-| 19 Mobile                | Not started as polish pass — responsive baseline exists; **Tomar foto** is in this phase     |
-| 23 Launch / FAQ          | Not started — FAQ page in launch prep                                                        |
+| 19 Mobile                | **Landed** — Tomar foto, account drawer, filter sheet, gallery swipe                         |
+| 23 Launch / FAQ          | **Thin FAQ shipped** (`/ayuda`); privacy/terms/legal pages still open                        |
 | 24 Auto payouts / native | Not started — Pagos a Terceros API + native apps (post-MVP)                                  |
 
 ---
@@ -88,7 +91,7 @@ MVP = Phases **0–11** plus **10b–10d**, shipping per [SHIPPING.md](./SHIPPIN
 
 MVP seller payouts: Financial Core **authorizes** → ops pays **manually in Wompi** → ops marks completed in TruePhone. Automated Pagos a Terceros API is **Phase 24**.
 
-**Not MVP (but planned):** Phase 8b public Q&A, Phase 15 ops analytics, Phase 19 mobile polish pass, Phase 23 FAQ page, Apple / WhatsApp / Facebook auth. Public profile counters are a small Phase 3/9 polish and can land earlier.
+**Not MVP (but planned):** Phase 8b public Q&A, Phase 15 ops analytics, remaining Phase 23 legal pages, Apple / WhatsApp / Facebook auth.
 
 Do not treat Figma frames as a product checklist. Figma informs colors, type, and component appearance only.
 
@@ -96,12 +99,13 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-1. Public activity counters on profiles + order party cards (Phase 3 / 9) — landing on `feat/public-activity-counters`
-2. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
+1. Merge `feat/public-activity-counters` to `main` (includes FAQ + buyer abandon choice)
+2. Public listing Q&A (Phase 8b)
+3. Admin / reviewer analytics (Phase 15)
+4. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)
 
-1. FAQ page (Phase 23 can start early for support load)
-2. Mobile polish (Phase 19: responsive + **Tomar foto** on sell / posesión / cédula / selfie) + Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap)
-3. Public listing Q&A (Phase 8b)
-4. Admin / reviewer analytics (Phase 15)
+1. Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap)
+2. Phase 8b public Q&A (if not already started)
+3. Admin / reviewer analytics (Phase 15)

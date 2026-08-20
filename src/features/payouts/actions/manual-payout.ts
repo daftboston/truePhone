@@ -9,7 +9,12 @@
 import { revalidatePath } from "next/cache";
 
 import { confirmManualPayoutCompleted } from "@/lib/financial-core";
-import { getCurrentProfile } from "@/lib/auth/session";
+import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
+import {
+  notifySellerPayoutSent,
+  safeNotify,
+} from "@/lib/notifications/marketplace";
 
 export type ManualPayoutActionState =
   { ok: true; message: string } | { ok: false; error: string } | null;
@@ -58,6 +63,21 @@ export async function markManualPayoutCompletedAction(
   revalidatePath("/revision");
   revalidatePath("/ventas");
   revalidatePath("/compras");
+  revalidatePath("/notificaciones");
+  revalidatePath("/", "layout");
+
+  const payout = await prisma.payout.findUnique({
+    where: { id: payoutId },
+    select: { orderId: true },
+  });
+  if (payout) {
+    await safeNotify(
+      notifySellerPayoutSent({
+        orderId: payout.orderId,
+        siteOrigin: await getRequestOrigin(),
+      }),
+    );
+  }
 
   return {
     ok: true,

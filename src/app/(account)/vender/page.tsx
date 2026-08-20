@@ -46,9 +46,11 @@ export default async function SellPage() {
     const continuePath =
       status === "pending"
         ? "/verificacion/enviada"
-        : verification
-          ? nextVerificationPath(verification)
-          : "/verificacion";
+        : status === "rejected"
+          ? "/verificacion"
+          : verification
+            ? nextVerificationPath(verification)
+            : "/verificacion";
 
     return (
       <>
@@ -104,6 +106,11 @@ export default async function SellPage() {
           action={
             <Button asChild>
               <Link href="/vender/nuevo">Crear anuncio</Link>
+            </Button>
+          }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda#vender">Cómo vender</Link>
             </Button>
           }
         />

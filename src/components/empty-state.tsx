@@ -10,6 +10,8 @@ type EmptyStateProps = {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  /** Optional second CTA, typically a FAQ / ayuda link. */
+  secondaryAction?: React.ReactNode;
   className?: string;
 };
 
@@ -21,6 +23,7 @@ type EmptyStateProps = {
  * @param props.title - Primary empty message.
  * @param props.description - Optional supporting copy.
  * @param props.action - Optional button or link node.
+ * @param props.secondaryAction - Optional second CTA (FAQ, clear filters).
  * @param props.className - Wrapper className.
  * @returns Centered empty-state block.
  * @calledBy HomePage, FavoritesPage, inbox and queue pages
@@ -29,6 +32,7 @@ export function EmptyState({
   title,
   description,
   action,
+  secondaryAction,
   className,
 }: EmptyStateProps) {
   return (
@@ -43,6 +47,7 @@ export function EmptyState({
         <p className="text-muted-foreground max-w-sm text-sm">{description}</p>
       )}
       {action}
+      {secondaryAction}
     </div>
   );
 }

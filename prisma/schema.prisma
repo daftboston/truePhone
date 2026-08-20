@@ -155,10 +155,19 @@ enum InspectionResult {
   FAILED
 }
 
-/// In-app / email notification kinds (Phase 12). Settlement types ship first.
+/// In-app / email notification kinds (Phase 12).
 enum NotificationType {
   BUYER_RECEIVED_CONFIRM
   BUYER_CONFIRM_REMINDER
+  LISTING_APPROVED
+  LISTING_REJECTED
+  IDENTITY_APPROVED
+  IDENTITY_REJECTED
+  ORDER_PAID
+  NEW_MESSAGE
+  SHIPPING_METHOD_CHOSEN
+  TRACKING_UPLOADED
+  PAYOUT_SENT
 }
 
 // Models

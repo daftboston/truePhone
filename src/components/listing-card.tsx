@@ -74,7 +74,7 @@ export function ListingCard({
         )}
         {verified && (
           <div className="absolute top-2 left-2">
-            <TrustBadge />
+            <TrustBadge label="Revisado" />
           </div>
         )}
       </div>

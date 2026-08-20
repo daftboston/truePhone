@@ -46,7 +46,7 @@ export default async function NotificationsPage() {
             Notificaciones
           </h1>
           <p className="text-muted-foreground text-sm">
-            Avisos de pedidos y recordatorios de confirmación (24 horas).
+            Avisos de anuncios, mensajes, envíos y confirmación (24 horas).
             {unread > 0 ? ` Tienes ${unread} sin leer.` : null}
           </p>
         </div>
@@ -56,7 +56,7 @@ export default async function NotificationsPage() {
       {notifications.length === 0 ? (
         <EmptyState
           title="Sin notificaciones todavía"
-          description="Cuando marques «Ya recibí el iPhone», te avisaremos aquí y por correo para confirmar o reportar un problema dentro de 24 horas."
+          description="Cuando alguien compre, te escriba o un revisor decida sobre tu anuncio, el aviso aparecerá aquí. También te recordamos confirmar el iPhone después de «Ya recibí»."
           action={
             <Button asChild variant="outline">
               <Link href="/compras">Ver compras</Link>

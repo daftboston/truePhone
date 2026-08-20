@@ -124,7 +124,7 @@ export function HomeFeaturedRotator({
           </h2>
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{slide.conditionLabel}</Badge>
-            <TrustBadge />
+            <TrustBadge label="Revisado" />
           </div>
         </div>
         <PriceDisplay

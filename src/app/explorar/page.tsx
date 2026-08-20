@@ -69,6 +69,11 @@ export default async function ExplorePage() {
               <Link href="/">Volver al inicio</Link>
             </Button>
           }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda">Preguntas frecuentes</Link>
+            </Button>
+          }
         />
       ) : (
         <div className="space-y-12 md:space-y-16">

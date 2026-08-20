@@ -18,7 +18,7 @@ import {
   sendMessageSchema,
   type MessageActionState,
 } from "@/features/messages/schemas/message";
-import { getCurrentProfile } from "@/lib/auth/session";
+import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import {
   areMessagingBlocked,
@@ -28,6 +28,7 @@ import {
   getListingForThread,
   markThreadRead,
 } from "@/lib/messages";
+import { notifyNewMessage, safeNotify } from "@/lib/notifications/marketplace";
 
 /**
  * revalidateMessagingPaths
@@ -134,6 +135,16 @@ export async function sendMessageAction(
   });
 
   revalidateMessagingPaths(listingId);
+  revalidatePath("/notificaciones");
+  await safeNotify(
+    notifyNewMessage({
+      messageId: message.id,
+      listingId,
+      receiverId,
+      preview: content,
+      siteOrigin: await getRequestOrigin(),
+    }),
+  );
   return {
     ok: true,
     message: "Mensaje enviado.",

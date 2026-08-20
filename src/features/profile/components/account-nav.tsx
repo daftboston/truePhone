@@ -16,6 +16,7 @@ import {
   ClipboardList,
   CreditCard,
   Heart,
+  HelpCircle,
   MapPin,
   MessageSquare,
   Package,
@@ -170,6 +171,7 @@ function buildGroups(
     items: [
       { href: "/perfil", label: "Resumen", icon: UserRound, exact: true },
       { href: "/perfil/editar", label: "Editar perfil", icon: Pencil },
+      { href: "/ayuda", label: "Ayuda", icon: HelpCircle },
     ],
   });
 

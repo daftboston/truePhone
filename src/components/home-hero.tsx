@@ -34,7 +34,7 @@ const SLIDES = [
   {
     id: "catalog",
     headline: "Tu Próximo iPhone\nEstá Aquí",
-    support: "Miles de iPhones usados listos para un nuevo dueño.",
+    support: "iPhones usados revisados, listos para un nuevo dueño.",
     ctaLabel: "Explorar Catálogo",
     ctaHref: "/explorar",
     showVerifiedCheck: false,

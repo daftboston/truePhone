@@ -14,6 +14,8 @@ import { ListingCard } from "@/components/listing-card";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { BrowseFilters } from "@/features/listings/components/browse-filters";
+import { BrowseFiltersSheet } from "@/features/listings/components/browse-filters-sheet";
+import { SearchBar } from "@/components/search-bar";
 import {
   BROWSE_PAGE_SIZE,
   buildBrowseHref,
@@ -22,7 +24,6 @@ import {
   priceBandBounds,
 } from "@/features/listings/schemas/browse";
 import { conditionLabels } from "@/features/listings/schemas/listing";
-import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getModelSeriesKey } from "@/lib/iphone-catalog";
 import { getCatalog } from "@/lib/listings";
 import {
@@ -80,13 +81,17 @@ export default async function SearchPage({ searchParams }: PageProps) {
         (model) =>
           getModelSeriesKey(model).key === getModelSeriesKey(selectedModel).key,
       )
-    : seriesModels;
+    : seriesModels.length > 0
+      ? seriesModels
+      : catalog.models;
 
   const heading = selectedModel
     ? selectedModel.name
     : seriesModels[0]
       ? getModelSeriesKey(seriesModels[0]).label
-      : "Anuncios";
+      : query.q
+        ? `Resultados para “${query.q}”`
+        : "Anuncios";
 
   const sidebarStorageIds = new Set(
     sidebarModels.flatMap(
@@ -154,13 +159,26 @@ export default async function SearchPage({ searchParams }: PageProps) {
         </p>
       </div>
 
+      <SearchBar
+        defaultValue={query.q}
+        placeholder="Buscar por modelo, color o título…"
+        hiddenFields={{
+          ...(query.modelId ? { model: query.modelId } : {}),
+          ...(query.seriesKey && !query.modelId
+            ? { series: query.seriesKey }
+            : {}),
+        }}
+      />
+
       <div className="grid gap-6 md:grid-cols-[200px_1fr] md:items-start lg:grid-cols-[220px_1fr]">
-        <BrowseFilters
-          query={{ ...query, page }}
-          models={sidebarModels}
-          storages={sidebarStorages}
-          className="border-border max-h-[calc(100vh-7rem)] overflow-y-auto md:sticky md:top-20 md:rounded-xl md:border md:p-3"
-        />
+        <BrowseFiltersSheet>
+          <BrowseFilters
+            query={{ ...query, page }}
+            models={sidebarModels}
+            storages={sidebarStorages}
+            className="border-border max-h-[calc(100vh-7rem)] overflow-y-auto md:sticky md:top-20 md:rounded-xl md:border md:p-3"
+          />
+        </BrowseFiltersSheet>
 
         <div className="space-y-4">
           <div className="text-muted-foreground flex items-center justify-between gap-3 text-sm">
@@ -181,12 +199,16 @@ export default async function SearchPage({ searchParams }: PageProps) {
               title={
                 hasActiveFilters
                   ? "No hay anuncios con estos filtros"
-                  : "Aún no hay anuncios de este modelo"
+                  : query.q && !query.modelId && !query.seriesKey
+                    ? "No hay anuncios para esa búsqueda"
+                    : "Aún no hay anuncios de este modelo"
               }
               description={
                 hasActiveFilters
                   ? "Prueba otra combinación o limpia los filtros."
-                  : "Cuando un revisor apruebe un anuncio, aparecerá aquí."
+                  : query.q && !query.modelId && !query.seriesKey
+                    ? "Prueba otro término o explora el catálogo por modelo."
+                    : "Cuando un revisor apruebe un anuncio, aparecerá aquí."
               }
               action={
                 hasActiveFilters ? (
@@ -198,6 +220,11 @@ export default async function SearchPage({ searchParams }: PageProps) {
                     <Link href="/explorar">Ver otros modelos</Link>
                   </Button>
                 )
+              }
+              secondaryAction={
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/ayuda">Preguntas frecuentes</Link>
+                </Button>
               }
             />
           ) : (
@@ -212,9 +239,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
                     price={listing.finalPrice ?? listing.price}
                     batteryHealth={listing.batteryHealth ?? undefined}
                     conditionLabel={conditionLabels[listing.condition]}
-                    verified={isSellerIdentityVerified(
-                      listing.seller.verifikStatus,
-                    )}
+                    verified
                   />
                 ))}
               </div>

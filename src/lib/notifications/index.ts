@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Public barrel for TruePhone notifications (Phase 12 settlement slice).
+ * @description Public barrel for TruePhone notifications (Phase 12).
  * @dependencies notifications modules
  */
 
@@ -33,3 +33,13 @@ export {
   notifyBuyerReceivedConfirm,
   processSettlementReminders,
 } from "@/lib/notifications/settlement";
+export {
+  notifyBuyerShippingMethodChosen,
+  notifyBuyerTrackingUploaded,
+  notifyIdentityReviewed,
+  notifyListingReviewed,
+  notifyNewMessage,
+  notifySellerOrderPaid,
+  notifySellerPayoutSent,
+  safeNotify,
+} from "@/lib/notifications/marketplace";

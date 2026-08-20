@@ -14,7 +14,11 @@ import {
   deleteListingGalleryImageAction,
   uploadListingGalleryAction,
 } from "@/features/listings/actions/listings";
-import type { ListingActionState } from "@/features/listings/types";
+import {
+  LISTING_PHOTO_SHOT_LIST,
+  MIN_LISTING_GALLERY_PHOTOS,
+  type ListingActionState,
+} from "@/features/listings/types";
 import { Button } from "@/components/ui/button";
 import { FileInput } from "@/components/ui/file-input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +51,30 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
 
   return (
     <div className="space-y-5">
+      <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4">
+        <p className="text-foreground text-sm font-medium">
+          Mínimo {MIN_LISTING_GALLERY_PHOTOS} fotos · {images.length} subidas
+        </p>
+        <p className="text-muted-foreground text-xs">
+          Incluye el iPhone por todos los lados, la pantalla encendida, la salud
+          de batería y el IMEI. Fotografía el iPhone que estás vendiendo.
+        </p>
+        <ol className="text-muted-foreground grid list-decimal gap-1 pl-4 text-xs sm:grid-cols-2">
+          {LISTING_PHOTO_SHOT_LIST.map((shot, index) => (
+            <li
+              key={shot}
+              className={
+                index < images.length
+                  ? "text-foreground font-medium"
+                  : undefined
+              }
+            >
+              {shot}
+            </li>
+          ))}
+        </ol>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
         <form action={formAction} className="space-y-3">
           <div className="space-y-2">
@@ -56,7 +84,9 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
               name="image"
               accept="image/jpeg,image/png,image/webp"
               required
-              buttonLabel="Elegir foto"
+              buttonLabel="Elegir de la galería"
+              cameraLabel="Tomar foto"
+              captureFacing="environment"
             />
           </div>
           {state?.ok === false ? (
@@ -120,7 +150,7 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
-            Aún no hay fotos. Agrega al menos una imagen clara del iPhone.
+            Aún no hay fotos. Empieza por el frente y el reverso con buena luz.
           </p>
         )}
       </div>
