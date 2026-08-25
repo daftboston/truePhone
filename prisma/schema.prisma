@@ -426,6 +426,7 @@ model ListingImage {
   displayOrder Int      @default(0)
   createdAt    DateTime @default(now())
 
+  @@unique([listingId, imageType, displayOrder])
   @@map("listing_images")
 }
 

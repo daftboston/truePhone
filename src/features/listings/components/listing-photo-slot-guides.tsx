@@ -403,7 +403,7 @@ type ListingPhotoSlotGuideProps = {
  * @param props.slotId - Slot id from LISTING_PHOTO_SLOTS.
  * @param props.className - Optional class on the root SVG.
  * @returns Angle-specific guide illustration.
- * @calledBy GalleryUploadForm empty slots
+ * @calledBy GalleryUploadForm, ListingPhotoSlotCard
  */
 export function ListingPhotoSlotGuide({
   slotId,

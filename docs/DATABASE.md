@@ -139,6 +139,13 @@ Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flag
 
 Ordered images per listing (`imageType`: `gallery` | `possession`).
 
+Gallery `displayOrder` is a stable slot index, not a packed list:
+
+- `0–7` map 1:1 to the eight guided sell-wizard angles (`LISTING_PHOTO_SLOTS`: Frente, Reverso, sides, bottom, screen, battery, IMEI).
+- `8–11` are optional extra photos.
+- Deleting a guided photo leaves a gap so neighboring angles do not slide into the empty slot.
+- Unique on `(listingId, imageType, displayOrder)` so each slot holds at most one image.
+
 ## DevicePossessionChallenge
 
 One-time possession code + photo proving the seller has the physical device (Phase 5).

@@ -3,12 +3,18 @@
 /**
  * @file listings.ts
  * @description Server actions for listings (listings.ts).
- * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/lib/listings
+ * @dependencies next/cache, next/navigation, @prisma/client, listing schemas/types/photo-slots, @/lib/listings
  */
 
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import {
+  FIRST_EXTRA_DISPLAY_ORDER,
+  isGuidedGalleryComplete,
+  parseGallerySlotIndex,
+} from "@/features/listings/photo-slots";
 import {
   buildListingSlug,
   buildListingTitle,
@@ -324,14 +330,31 @@ export async function updateListingDetailsAction(
 }
 
 /**
+ * listingGalleryImages
+ *
+ * Returns gallery photos for a listing (excludes possession shots).
+ *
+ * @param listing - Owned listing with images.
+ * @returns Gallery ListingImage rows.
+ * @calledBy uploadListingGalleryAction, continueFromPhotosAction, submitListingForReviewAction
+ */
+function listingGalleryImages(
+  listing: NonNullable<Awaited<ReturnType<typeof getOwnedListing>>>,
+) {
+  return listing.images.filter((image) => image.imageType === "gallery");
+}
+
+/**
  * uploadListingGalleryAction
  *
- * Server action: upload listing gallery for authenticated listings flows.
+ * Uploads a gallery photo into a specific slot. Replaces the photo already
+ * stored at that displayOrder, or creates one when the slot is empty.
  *
+ * @param listingId - Draft listing id.
  * @param _prev - Previous form state from useActionState when applicable.
- * @param formDataOrArgs - FormData or typed action arguments.
- * @returns Action state on errors; may redirect on success.
- * @calledBy listings components
+ * @param formData - `image` file and `slotIndex` (0–11).
+ * @returns Action state on errors; revalidates the fotos step on success.
+ * @calledBy GalleryUploadForm
  */
 export async function uploadListingGalleryAction(
   listingId: string,
@@ -353,10 +376,16 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: "Selecciona una foto." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount >= MAX_LISTING_GALLERY_PHOTOS) {
+  const slotIndex = parseGallerySlotIndex(formData.get("slotIndex"));
+  if (slotIndex == null) {
+    return { ok: false, error: "Elige un ángulo de la lista." };
+  }
+
+  const gallery = listingGalleryImages(listing);
+  const existing = gallery.find((image) => image.displayOrder === slotIndex);
+
+  // Replacing an existing slot does not consume an extra photo of the cap.
+  if (!existing && gallery.length >= MAX_LISTING_GALLERY_PHOTOS) {
     return {
       ok: false,
       error: `Máximo ${MAX_LISTING_GALLERY_PHOTOS} fotos. Elimina una para reemplazarla.`,
@@ -373,17 +402,40 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: upload.error };
   }
 
-  await prisma.listingImage.create({
-    data: {
-      listingId: listing.id,
-      imageUrl: upload.url,
-      imageType: "gallery",
-      displayOrder: galleryCount,
-    },
-  });
+  try {
+    if (existing) {
+      await prisma.listingImage.update({
+        where: { id: existing.id },
+        data: { imageUrl: upload.url },
+      });
+    } else {
+      await prisma.listingImage.create({
+        data: {
+          listingId: listing.id,
+          imageUrl: upload.url,
+          imageType: "gallery",
+          displayOrder: slotIndex,
+        },
+      });
+    }
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return {
+        ok: false,
+        error: "Esa foto ya se está subiendo. Inténtalo de nuevo.",
+      };
+    }
+    throw error;
+  }
 
   revalidatePath(`/vender/${listing.id}/fotos`);
-  return { ok: true, message: "Foto agregada." };
+  return {
+    ok: true,
+    message: existing ? "Foto actualizada." : "Foto agregada.",
+  };
 }
 
 /**
@@ -407,10 +459,8 @@ export async function continueFromPhotosAction(listingId: string) {
     return { ok: false as const, error: "Anuncio no encontrado." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
+  const gallery = listingGalleryImages(listing);
+  if (!isGuidedGalleryComplete(gallery)) {
     return {
       ok: false as const,
       error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
@@ -595,10 +645,8 @@ export async function submitListingForReviewAction(
     return { ok: false, error: "Solo puedes enviar borradores." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
+  const gallery = listingGalleryImages(listing);
+  if (!isGuidedGalleryComplete(gallery)) {
     return {
       ok: false,
       error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
@@ -693,12 +741,13 @@ export async function reopenRejectedListingAction(
 /**
  * deleteListingGalleryImageAction
  *
- * Server action: delete listing gallery image for authenticated listings flows.
+ * Deletes a gallery image. Guided slots keep their displayOrder so neighboring
+ * angles do not slide into the empty hole. Extra photos compact back to 8+.
  *
- * @param _prev - Previous form state from useActionState when applicable.
- * @param formDataOrArgs - FormData or typed action arguments.
- * @returns Action state on errors; may redirect on success.
- * @calledBy listings components
+ * @param listingId - Draft listing id.
+ * @param imageId - ListingImage id to remove.
+ * @returns Action state; revalidates the fotos step on success.
+ * @calledBy GalleryUploadForm
  */
 export async function deleteListingGalleryImageAction(
   listingId: string,
@@ -723,20 +772,28 @@ export async function deleteListingGalleryImageAction(
 
   await prisma.listingImage.delete({ where: { id: image.id } });
 
-  // Keep displayOrder contiguous so guided slots map 1:1 to images.
-  const remaining = await prisma.listingImage.findMany({
-    where: { listingId: listing.id, imageType: "gallery" },
-    orderBy: { displayOrder: "asc" },
-    select: { id: true },
-  });
-  await Promise.all(
-    remaining.map((item, index) =>
-      prisma.listingImage.update({
-        where: { id: item.id },
-        data: { displayOrder: index },
-      }),
-    ),
-  );
+  // Compact extras only so guided slot indexes stay stable.
+  if (image.displayOrder >= FIRST_EXTRA_DISPLAY_ORDER) {
+    const remainingExtras = await prisma.listingImage.findMany({
+      where: {
+        listingId: listing.id,
+        imageType: "gallery",
+        displayOrder: { gte: FIRST_EXTRA_DISPLAY_ORDER },
+      },
+      orderBy: { displayOrder: "asc" },
+      select: { id: true },
+    });
+    if (remainingExtras.length > 0) {
+      await prisma.$transaction(
+        remainingExtras.map((item, index) =>
+          prisma.listingImage.update({
+            where: { id: item.id },
+            data: { displayOrder: FIRST_EXTRA_DISPLAY_ORDER + index },
+          }),
+        ),
+      );
+    }
+  }
 
   revalidatePath(`/vender/${listing.id}/fotos`);
   return { ok: true, message: "Foto eliminada." };

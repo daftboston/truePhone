@@ -74,6 +74,7 @@ export const LISTING_PHOTO_SLOTS = [
 ] as const;
 
 export type ListingPhotoSlotId = (typeof LISTING_PHOTO_SLOTS)[number]["id"];
+export type ListingPhotoSlot = (typeof LISTING_PHOTO_SLOTS)[number];
 
 /** Sellers must fill every guided slot before continuing. */
 export const MIN_LISTING_GALLERY_PHOTOS = LISTING_PHOTO_SLOTS.length;

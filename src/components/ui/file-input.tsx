@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
   /** Visible gallery button copy. Defaults to "Elegir archivo". */
   buttonLabel?: string;
+  /** Accessible name for the gallery button when it needs extra context. */
+  buttonAriaLabel?: string;
   /** Text when no file is selected. */
   emptyLabel?: string;
   /**
@@ -22,6 +24,8 @@ type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
    * system camera (`capture`). Hidden from `md` breakpoints.
    */
   cameraLabel?: string;
+  /** Accessible name for the camera button when it needs extra context. */
+  cameraAriaLabel?: string;
   /** Camera facing mode used by Tomar foto. */
   captureFacing?: "user" | "environment";
   /**
@@ -36,6 +40,13 @@ type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
   onFileReady?: (file: File) => void;
   /** Hide the selected-file name (useful when upload starts immediately). */
   hideFileName?: boolean;
+  /** Button size. `sm` is for tight surfaces such as photo slots. */
+  buttonSize?: "default" | "sm";
+  /**
+   * `row` (default) sits beside other form controls. `stack` is full-width
+   * stacked actions for a single photo slot (Tomar foto first on mobile).
+   */
+  layout?: "row" | "stack";
 };
 
 /**
@@ -62,12 +73,16 @@ function setInputFile(target: HTMLInputElement, file: File) {
  * Server Actions do not hit the default 1 MB body limit.
  *
  * @param props.buttonLabel - Visible gallery picker button text.
+ * @param props.buttonAriaLabel - Optional accessible name for the gallery button.
  * @param props.emptyLabel - Status text before a file is chosen.
  * @param props.cameraLabel - Mobile camera button; omit to hide Tomar foto.
+ * @param props.cameraAriaLabel - Optional accessible name for the camera button.
  * @param props.captureFacing - `environment` (rear) or `user` (selfie).
  * @param props.compressImages - When false, skips client JPEG compression.
  * @param props.onFileReady - Optional callback after the file is ready to upload.
  * @param props.hideFileName - When true, omits the filename status text.
+ * @param props.buttonSize - Button size; `sm` fits inside listing photo slots.
+ * @param props.layout - `row` for forms, `stack` for per-slot actions.
  * @returns Accessible file control with Spanish chrome.
  * @calledBy Listing photo/possession forms and identity verification uploads
  */
@@ -76,12 +91,16 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     {
       className,
       buttonLabel = "Elegir archivo",
+      buttonAriaLabel,
       emptyLabel = "Ningún archivo seleccionado",
       cameraLabel,
+      cameraAriaLabel,
       captureFacing = "environment",
       compressImages = true,
       onFileReady,
       hideFileName = false,
+      buttonSize = "default",
+      layout = "row",
       onChange,
       onInvalid,
       ...props
@@ -150,9 +169,18 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     }
 
     const showCamera = Boolean(cameraLabel);
+    const stacked = layout === "stack";
+    const busy = preparing || Boolean(props.disabled);
 
     return (
-      <div className={cn("flex flex-wrap items-center gap-3", className)}>
+      <div
+        className={cn(
+          stacked
+            ? "flex w-full flex-col gap-2"
+            : "flex flex-wrap items-center gap-3",
+          className,
+        )}
+      >
         <input
           {...props}
           ref={setRefs}
@@ -205,23 +233,51 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
             }}
           />
         ) : null}
+        {showCamera && stacked ? (
+          <Button
+            type="button"
+            variant="outline"
+            size={buttonSize}
+            fullWidth
+            aria-label={cameraAriaLabel}
+            className={cn(
+              "whitespace-normal md:hidden",
+              buttonSize === "sm" && "h-auto min-h-9 py-1.5 leading-tight",
+            )}
+            disabled={busy}
+            onClick={() => cameraRef.current?.click()}
+          >
+            {preparing ? "Preparando…" : cameraLabel}
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="outline"
-          disabled={preparing || props.disabled}
+          size={buttonSize}
+          fullWidth={stacked}
+          aria-label={buttonAriaLabel}
+          className={cn(
+            stacked && "whitespace-normal",
+            buttonSize === "sm" &&
+              stacked &&
+              "h-auto min-h-9 py-1.5 leading-tight",
+          )}
+          disabled={busy}
           onClick={() => innerRef.current?.click()}
         >
           {preparing ? "Preparando…" : buttonLabel}
         </Button>
-        {showCamera ? (
+        {showCamera && !stacked ? (
           <Button
             type="button"
             variant="outline"
+            size={buttonSize}
+            aria-label={cameraAriaLabel}
             className="md:hidden"
-            disabled={preparing || props.disabled}
+            disabled={busy}
             onClick={() => cameraRef.current?.click()}
           >
-            {cameraLabel}
+            {preparing ? "Preparando…" : cameraLabel}
           </Button>
         ) : null}
         {hideFileName ? null : (
