@@ -4,6 +4,7 @@
  * @file listings.ts
  * @description Server actions for listings (listings.ts).
  * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/lib/listings
+ * @changelog 2026-08-25 — Gallery uploads target a displayOrder slot and replace in place.
  */
 
 import { revalidatePath } from "next/cache";
@@ -23,6 +24,11 @@ import {
 } from "@/features/listings/schemas/listing";
 import {
   fieldErrorsFromZod,
+  galleryImageAtOrder,
+  isGuidedGalleryComplete,
+  isGuidedSlotIndex,
+  isValidGalleryDisplayOrder,
+  LISTING_EXTRA_PHOTO_START,
   MAX_LISTING_GALLERY_PHOTOS,
   MIN_LISTING_GALLERY_PHOTOS,
   type ListingActionState,
@@ -326,16 +332,19 @@ export async function updateListingDetailsAction(
 /**
  * uploadListingGalleryAction
  *
- * Server action: upload listing gallery for authenticated listings flows.
+ * Uploads a gallery photo into a specific slot index. Guided slots (0–7) map
+ * 1:1 to Frente…IMEI; 8+ are optional extras. An existing image at that
+ * displayOrder is replaced in place so other angles do not shift.
  *
- * @param _prev - Previous form state from useActionState when applicable.
- * @param formDataOrArgs - FormData or typed action arguments.
- * @returns Action state on errors; may redirect on success.
- * @calledBy listings components
+ * @param listingId - Draft listing id.
+ * @param displayOrder - Target slot index (0..MAX_LISTING_GALLERY_PHOTOS-1).
+ * @param formData - Multipart body with the `image` file.
+ * @returns Action state; ok when the slot is filled or replaced.
+ * @calledBy GalleryUploadForm
  */
 export async function uploadListingGalleryAction(
   listingId: string,
-  _prev: ListingActionState,
+  displayOrder: number,
   formData: FormData,
 ): Promise<ListingActionState> {
   const seller = await requireVerifiedSeller();
@@ -348,18 +357,32 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: "Solo puedes editar borradores." };
   }
 
+  if (!isValidGalleryDisplayOrder(displayOrder)) {
+    return { ok: false, error: "Ese espacio de foto no es válido." };
+  }
+
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Selecciona una foto." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount >= MAX_LISTING_GALLERY_PHOTOS) {
+  const gallery = listing.images.filter(
+    (image) => image.imageType === "gallery",
+  );
+  const existing = galleryImageAtOrder(gallery, displayOrder);
+
+  if (!existing && gallery.length >= MAX_LISTING_GALLERY_PHOTOS) {
     return {
       ok: false,
       error: `Máximo ${MAX_LISTING_GALLERY_PHOTOS} fotos. Elimina una para reemplazarla.`,
+    };
+  }
+
+  // Extras are optional detail shots — only after every guided angle exists.
+  if (!isGuidedSlotIndex(displayOrder) && !isGuidedGalleryComplete(gallery)) {
+    return {
+      ok: false,
+      error: `Completa las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas antes de agregar extras.`,
     };
   }
 
@@ -373,12 +396,21 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: upload.error };
   }
 
+  if (existing) {
+    await prisma.listingImage.update({
+      where: { id: existing.id },
+      data: { imageUrl: upload.url },
+    });
+    revalidatePath(`/vender/${listing.id}/fotos`);
+    return { ok: true, message: "Foto actualizada." };
+  }
+
   await prisma.listingImage.create({
     data: {
       listingId: listing.id,
       imageUrl: upload.url,
       imageType: "gallery",
-      displayOrder: galleryCount,
+      displayOrder,
     },
   });
 
@@ -407,10 +439,10 @@ export async function continueFromPhotosAction(listingId: string) {
     return { ok: false as const, error: "Anuncio no encontrado." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
+  const gallery = listing.images.filter(
+    (image) => image.imageType === "gallery",
+  );
+  if (!isGuidedGalleryComplete(gallery)) {
     return {
       ok: false as const,
       error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
@@ -595,10 +627,10 @@ export async function submitListingForReviewAction(
     return { ok: false, error: "Solo puedes enviar borradores." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
+  const gallery = listing.images.filter(
+    (image) => image.imageType === "gallery",
+  );
+  if (!isGuidedGalleryComplete(gallery)) {
     return {
       ok: false,
       error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
@@ -723,20 +755,27 @@ export async function deleteListingGalleryImageAction(
 
   await prisma.listingImage.delete({ where: { id: image.id } });
 
-  // Keep displayOrder contiguous so guided slots map 1:1 to images.
-  const remaining = await prisma.listingImage.findMany({
-    where: { listingId: listing.id, imageType: "gallery" },
-    orderBy: { displayOrder: "asc" },
-    select: { id: true },
-  });
-  await Promise.all(
-    remaining.map((item, index) =>
-      prisma.listingImage.update({
-        where: { id: item.id },
-        data: { displayOrder: index },
-      }),
-    ),
-  );
+  // Guided slots keep their indexes so deleting Frente does not slide Reverso
+  // into that hole. Extra photos (8+) are compacted so the next extra is next.
+  if (image.displayOrder >= LISTING_EXTRA_PHOTO_START) {
+    const extras = await prisma.listingImage.findMany({
+      where: {
+        listingId: listing.id,
+        imageType: "gallery",
+        displayOrder: { gte: LISTING_EXTRA_PHOTO_START },
+      },
+      orderBy: { displayOrder: "asc" },
+      select: { id: true },
+    });
+    await Promise.all(
+      extras.map((item, index) =>
+        prisma.listingImage.update({
+          where: { id: item.id },
+          data: { displayOrder: LISTING_EXTRA_PHOTO_START + index },
+        }),
+      ),
+    );
+  }
 
   revalidatePath(`/vender/${listing.id}/fotos`);
   return { ok: true, message: "Foto eliminada." };

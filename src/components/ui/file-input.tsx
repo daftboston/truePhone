@@ -4,6 +4,7 @@
  * @file file-input.tsx
  * @description Spanish file picker that hides native "Choose File" browser chrome.
  * @dependencies react, @/components/ui/button, @/lib/images/compress-image, @/lib/utils
+ * @changelog 2026-08-25 — Added stack layout and sm buttons for per-slot listing photos.
  */
 
 import * as React from "react";
@@ -15,6 +16,8 @@ import { cn } from "@/lib/utils";
 type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
   /** Visible gallery button copy. Defaults to "Elegir archivo". */
   buttonLabel?: string;
+  /** Accessible name for the gallery button when the visible label is reused. */
+  buttonAriaLabel?: string;
   /** Text when no file is selected. */
   emptyLabel?: string;
   /**
@@ -22,6 +25,8 @@ type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
    * system camera (`capture`). Hidden from `md` breakpoints.
    */
   cameraLabel?: string;
+  /** Accessible name for the camera button when the visible label is reused. */
+  cameraAriaLabel?: string;
   /** Camera facing mode used by Tomar foto. */
   captureFacing?: "user" | "environment";
   /**
@@ -36,6 +41,13 @@ type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
   onFileReady?: (file: File) => void;
   /** Hide the selected-file name (useful when upload starts immediately). */
   hideFileName?: boolean;
+  /**
+   * `stack` places gallery and camera buttons in a full-width column so they
+   * fit under a listing photo slot. `row` is the default form layout.
+   */
+  layout?: "row" | "stack";
+  /** Visual size of the gallery/camera buttons. */
+  buttonSize?: "default" | "sm";
 };
 
 /**
@@ -62,12 +74,16 @@ function setInputFile(target: HTMLInputElement, file: File) {
  * Server Actions do not hit the default 1 MB body limit.
  *
  * @param props.buttonLabel - Visible gallery picker button text.
+ * @param props.buttonAriaLabel - Optional aria-label for the gallery button.
  * @param props.emptyLabel - Status text before a file is chosen.
  * @param props.cameraLabel - Mobile camera button; omit to hide Tomar foto.
+ * @param props.cameraAriaLabel - Optional aria-label for the camera button.
  * @param props.captureFacing - `environment` (rear) or `user` (selfie).
  * @param props.compressImages - When false, skips client JPEG compression.
  * @param props.onFileReady - Optional callback after the file is ready to upload.
  * @param props.hideFileName - When true, omits the filename status text.
+ * @param props.layout - `row` (default) or `stack` for per-slot controls.
+ * @param props.buttonSize - `default` or `sm` button height.
  * @returns Accessible file control with Spanish chrome.
  * @calledBy Listing photo/possession forms and identity verification uploads
  */
@@ -76,12 +92,16 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     {
       className,
       buttonLabel = "Elegir archivo",
+      buttonAriaLabel,
       emptyLabel = "Ningún archivo seleccionado",
       cameraLabel,
+      cameraAriaLabel,
       captureFacing = "environment",
       compressImages = true,
       onFileReady,
       hideFileName = false,
+      layout = "row",
+      buttonSize = "default",
       onChange,
       onInvalid,
       ...props
@@ -150,9 +170,17 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
     }
 
     const showCamera = Boolean(cameraLabel);
+    const stacked = layout === "stack";
 
     return (
-      <div className={cn("flex flex-wrap items-center gap-3", className)}>
+      <div
+        className={cn(
+          stacked
+            ? "flex w-full flex-col gap-1.5"
+            : "flex flex-wrap items-center gap-3",
+          className,
+        )}
+      >
         <input
           {...props}
           ref={setRefs}
@@ -208,6 +236,14 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
         <Button
           type="button"
           variant="outline"
+          size={buttonSize}
+          fullWidth={stacked}
+          aria-label={buttonAriaLabel}
+          className={
+            stacked
+              ? "h-auto min-h-9 px-2 text-center leading-tight whitespace-normal"
+              : undefined
+          }
           disabled={preparing || props.disabled}
           onClick={() => innerRef.current?.click()}
         >
@@ -217,7 +253,14 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
           <Button
             type="button"
             variant="outline"
-            className="md:hidden"
+            size={buttonSize}
+            fullWidth={stacked}
+            aria-label={cameraAriaLabel}
+            className={cn(
+              "md:hidden",
+              stacked &&
+                "h-auto min-h-9 px-2 text-center leading-tight whitespace-normal",
+            )}
             disabled={preparing || props.disabled}
             onClick={() => cameraRef.current?.click()}
           >
