@@ -1,7 +1,8 @@
 /**
  * @file order-detail-view.tsx
- * @description OrderDetailView component for the orders feature.tsx.
+ * @description OrderDetailView component for the orders feature.
  * @dependencies next/link, price-display, order actions, financial-core settlement-guards
+ * @changelog 2026-08-24 — Sellers on PAID no longer get canCancel (support UI instead).
  */
 
 import Link from "next/link";
@@ -124,9 +125,10 @@ export function OrderDetailView({
   sellerActivity,
 }: OrderDetailViewProps) {
   const isBuyer = perspective === "buyer";
+  // Sellers on paid orders must contact support (no self-cancel); unpaid still can.
   const canCancel =
     order.status === "AWAITING_PAYMENT" ||
-    (order.status === "PAID" && canCancelPaidOrder(order));
+    (isBuyer && order.status === "PAID" && canCancelPaidOrder(order));
   const canPay = isBuyer && order.status === "AWAITING_PAYMENT";
   const feePercent = Math.round(order.feeRateBps / 100);
   const listingHref =

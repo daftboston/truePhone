@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# editor / agent tooling
+.cursor/
+
 # env files
 .env
 .env*.local

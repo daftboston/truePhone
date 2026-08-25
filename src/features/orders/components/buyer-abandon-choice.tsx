@@ -46,12 +46,13 @@ export function BuyerAbandonChoice({ orderId }: BuyerAbandonChoiceProps) {
   return (
     <section className="border-border space-y-3 rounded-xl border p-4">
       <h2 className="text-foreground text-sm font-semibold">
-        El vendedor canceló
+        Lamentamos que el vendedor haya cancelado
       </h2>
-      <p className="text-muted-foreground text-sm">
-        Tu pago sigue en custodia. Elige reembolso o una compra de reemplazo con
-        8% de comisión (una sola vez). El reembolso sigue disponible hasta que
-        uses esa compensación.
+      <p className="text-muted-foreground text-sm leading-relaxed">
+        Tu dinero sigue en custodia de TruePhone. Puedes pedir reembolso, o
+        buscar otro iPhone con{" "}
+        <span className="text-foreground font-medium">8% de protección</span>{" "}
+        (en lugar del 10% habitual), una sola vez.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button asChild>
@@ -68,9 +69,9 @@ export function BuyerAbandonChoice({ orderId }: BuyerAbandonChoiceProps) {
         ) : (
           <form action={action} className="flex flex-1 flex-col gap-2">
             <input type="hidden" name="orderId" value={orderId} />
-            <p className="text-muted-foreground text-xs">
-              Confirmas el reembolso del total de este pedido. No podrás usar la
-              comisión del 8% en una compra de reemplazo.
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Al confirmar, autorizas el reembolso de este pedido. La oferta del
+              8% desaparece: no podrás usarla en una compra de reemplazo.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button type="submit" variant="destructive" disabled={pending}>

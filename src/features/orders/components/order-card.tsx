@@ -94,7 +94,7 @@ export function OrderCard({
         </p>
         {needsChoice ? (
           <p className="text-trust text-xs font-medium">
-            Elige reembolso o compra al 8%
+            El vendedor canceló · reembolso o 8% de ayuda
           </p>
         ) : null}
       </div>

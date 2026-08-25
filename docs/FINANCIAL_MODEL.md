@@ -50,7 +50,7 @@ That 10% **includes**:
 
 ### Loyalty fee after seller cancel / no-ship
 
-If the **seller cancels after payment** or does not send the phone: do **not** auto-refund. Buyer chooses **one-time 8%** on a replacement purchase (help find another phone) **or** a **refund**. See §5.2.
+If the **seller cancels after payment** or does not send the phone: paid cancels go through **support / ops** (not seller self-cancel). Do **not** auto-refund. Buyer chooses **one-time 8%** on a replacement purchase (help find another phone) **or** a **refund**. Listing returns to **`PENDING_REVIEW`**. See §5.2.
 
 ## 2.2 Seller receipt (happy path)
 
@@ -283,16 +283,16 @@ UX ownership: Phase **10d** (purchase + order UI) + Phase **12** (push/email rem
 
 ## 5.2 Cancels after payment
 
-| Who cancels | After `PaymentApproved`                              | Money outcome                                                                                                                                                                                                                         |
-| ----------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Buyer**   | Yes                                                  | Buyer **absorbs Wompi collection fees**. Refund = `B − WompiCollection` (integer pesos). TruePhone does not refund the processing cost Wompi already took. Listing returns to marketplace per order rules.                            |
-| **Seller**  | Yes (or seller does not ship / abandons fulfillment) | **Do not auto-refund immediately.** Offer the buyer a **choice**: (A) **stay on TruePhone** — help find another phone with a **one-time 8%** marketplace fee on that replacement purchase, **or** (B) **full refund**. Buyer decides. |
+| Who cancels | After `PaymentApproved`                              | Money outcome                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Buyer**   | Yes                                                  | Buyer **absorbs Wompi collection fees**. Refund = `B − WompiCollection` (integer pesos). TruePhone does not refund the processing cost Wompi already took. Listing returns to marketplace per order rules.                                                                                                                                                                                                                                                                                |
+| **Seller**  | Yes (or seller does not ship / abandons fulfillment) | **Do not auto-refund immediately.** Sellers **cannot** self-cancel a paid order in-app — they contact support (`hola@truephone.co`); **REVIEWER/ADMIN** cancel as seller-abandon in `/revision/cancelaciones`. Offer the buyer a **choice**: (A) **stay on TruePhone** — help find another phone with a **one-time 8%** marketplace fee on that replacement purchase, **or** (B) **full refund**. Buyer decides. Paid seller-abandon count may surface on the public profile when &gt; 0. |
 
 Seller cancel / no-ship after payment is a trust failure. Retention path (8%) is preferred in UX copy, but **refund must always remain available**.
 
 ### Loyalty 8% — what it means (mechanics) (LOCKED)
 
-Triggered only when the **seller cancels after payment** or **fails to send** the phone (fulfillment abandoned).
+Triggered only when the **seller cancels after payment** or **fails to send** the phone (fulfillment abandoned), via **ops seller-abandon** (not seller self-cancel). On that cancel path the listing returns to **`PENDING_REVIEW`** (not auto-`PUBLISHED`); ops/review must approve again before it is public.
 
 1. TruePhone does **not** force an immediate refund.
 2. Buyer is offered:

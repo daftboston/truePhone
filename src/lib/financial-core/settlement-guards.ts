@@ -41,6 +41,44 @@ export const PAID_ORDER_CANCEL_BLOCKED_ERROR =
   "Ya no puedes cancelar este pedido. Si el iPhone no coincide, reporta un problema para congelar el pago al vendedor.";
 
 /**
+ * Spanish error when a seller tries to self-cancel a PAID order.
+ * Paid seller-abandon goes through support / ops (not in-app self-cancel).
+ */
+export const SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR =
+  "Tras el pago no puedes cancelar el pedido desde la app. Contacta a soporte (hola@truephone.co); cancelar después del pago se registra en tu perfil y puede afectar la confianza de compradores.";
+
+/**
+ * sellerPaidSelfCancelBlocker
+ *
+ * Returns a Spanish error when the seller must not self-cancel a PAID order.
+ * Null when cancel may proceed (unpaid, buyer actor, or ops seller-abandon).
+ *
+ * @param input.orderStatus - Current order status.
+ * @param input.actorId - Profile UUID attempting cancel.
+ * @param input.sellerId - Order seller profile UUID.
+ * @param input.asOpsSellerAbandon - When true, ops is cancelling as seller abandon (caller gates REVIEWER/ADMIN).
+ * @returns Error message or null.
+ * @calledBy authorizeCancelMoney, cancelOrder
+ */
+export function sellerPaidSelfCancelBlocker(input: {
+  orderStatus: string;
+  actorId: string;
+  sellerId: string;
+  asOpsSellerAbandon?: boolean;
+}): string | null {
+  if (input.asOpsSellerAbandon) {
+    return null;
+  }
+  if (input.orderStatus !== "PAID") {
+    return null;
+  }
+  if (input.actorId !== input.sellerId) {
+    return null;
+  }
+  return SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR;
+}
+
+/**
  * manualPayoutCompletionBlocker
  *
  * Returns a Spanish error when ops must not mark a manual payout completed.

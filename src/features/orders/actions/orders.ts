@@ -13,9 +13,15 @@ import {
   cancelOrderSchema,
   createOrderSchema,
   fieldErrorsFromZod,
+  opsCancelSellerAbandonSchema,
   type OrderActionState,
 } from "@/features/orders/schemas/order";
-import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
+import {
+  canAccessReviewPortal,
+  getCurrentProfile,
+  getRequestOrigin,
+} from "@/lib/auth/session";
+import { prisma } from "@/lib/db";
 import {
   cancelOrder,
   chooseRefundAfterSellerAbandon,
@@ -39,6 +45,9 @@ function revalidateOrderPaths(input: {
   revalidatePath("/compras");
   revalidatePath("/ventas");
   revalidatePath("/vender");
+  revalidatePath("/revision/cancelaciones");
+  revalidatePath("/revision/anuncios");
+  revalidatePath("/revision");
   if (input.orderId) {
     revalidatePath(`/compras/${input.orderId}`);
     revalidatePath(`/ventas/${input.orderId}`);
@@ -50,6 +59,35 @@ function revalidateOrderPaths(input: {
     revalidatePath(`/anuncios/${input.listingSlug}`);
   }
   revalidatePath("/", "layout");
+}
+
+/**
+ * revalidateForOrderId
+ *
+ * Revalidates order hubs and the public listing page for an order.
+ *
+ * @param orderId - Order UUID.
+ * @param listingId - Optional listing id when already known.
+ * @param listingSlug - Optional public slug when already known.
+ */
+async function revalidateForOrderId(
+  orderId: string,
+  listingId?: string,
+  listingSlug?: string | null,
+) {
+  if (listingId !== undefined || listingSlug !== undefined) {
+    revalidateOrderPaths({ orderId, listingId, listingSlug });
+    return;
+  }
+  const row = await prisma.order.findFirst({
+    where: { id: orderId },
+    select: { listingId: true, listing: { select: { slug: true } } },
+  });
+  revalidateOrderPaths({
+    orderId,
+    listingId: row?.listingId,
+    listingSlug: row?.listing.slug ?? null,
+  });
 }
 
 /**
@@ -95,6 +133,7 @@ export async function createOrderAction(
   revalidateOrderPaths({
     orderId: result.orderId,
     listingId: parsed.data.listingId,
+    listingSlug: result.listingSlug,
   });
   redirect(`/compras/${result.orderId}`);
 }
@@ -145,7 +184,11 @@ export async function cancelOrderAction(
     return { ok: false, error: result.error };
   }
 
-  revalidateOrderPaths({ orderId: parsed.data.orderId });
+  await revalidateForOrderId(
+    parsed.data.orderId,
+    result.listingId,
+    result.listingSlug,
+  );
   return {
     ok: true,
     message:
@@ -193,10 +236,78 @@ export async function chooseRefundAfterSellerAbandonAction(
     return { ok: false, error: result.error };
   }
 
-  revalidateOrderPaths({ orderId: parsed.data.orderId });
+  await revalidateForOrderId(parsed.data.orderId);
   return {
     ok: true,
     message:
       "Reembolso autorizado. El dinero vuelve por el mismo medio de pago.",
+  };
+}
+
+/**
+ * opsCancelPaidOrderAsSellerAbandonAction
+ *
+ * REVIEWER/ADMIN cancels a PAID order as seller abandon: creates 8% entitlement,
+ * no auto-refund, listing → PENDING_REVIEW. Sellers cannot call this themselves.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - orderId + required reason.
+ * @returns Action state; revalidates buyer/seller/revision paths on success.
+ * @calledBy OpsSellerAbandonCancelForm
+ */
+export async function opsCancelPaidOrderAsSellerAbandonAction(
+  _prev: OrderActionState,
+  formData: FormData,
+): Promise<OrderActionState> {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return {
+      ok: false,
+      error: "Debes iniciar sesión.",
+      loginRequired: true,
+    };
+  }
+  if (!canAccessReviewPortal(current.profile.role)) {
+    return {
+      ok: false,
+      error:
+        "Solo revisores y administradores pueden cancelar como abandono del vendedor.",
+    };
+  }
+
+  const parsed = opsCancelSellerAbandonSchema.safeParse({
+    orderId: formData.get("orderId"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Revisa el formulario.",
+      fieldErrors: fieldErrorsFromZod(parsed.error),
+    };
+  }
+
+  const result = await cancelOrder({
+    orderId: parsed.data.orderId,
+    actorId: current.profile.id,
+    reason: parsed.data.reason,
+    siteOrigin: await getRequestOrigin(),
+    asOpsSellerAbandon: true,
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+
+  await revalidateForOrderId(
+    parsed.data.orderId,
+    result.listingId,
+    result.listingSlug,
+  );
+  return {
+    ok: true,
+    message:
+      result.message ??
+      "Cancelación registrada. El comprador puede elegir reembolso o 8%; el anuncio vuelve a revisión.",
   };
 }

@@ -61,7 +61,7 @@ function initials(name: string | null) {
  * @param props.createdAt - Profile join date.
  * @param props.sellerRating - Average rating.
  * @param props.verifikStatus - Identity verification status.
- * @param props.activity - Public listing/purchase counters.
+ * @param props.activity - Public listing/purchase counters (incl. paid cancels).
  * @returns Bordered party card.
  * @calledBy OrderDetailView
  */

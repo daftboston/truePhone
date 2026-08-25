@@ -13,6 +13,7 @@ import {
   Bell,
   ChevronRight,
   ClipboardCheck,
+  Ban,
   ClipboardList,
   CreditCard,
   Heart,
@@ -137,6 +138,11 @@ function buildGroups(
         href: "/revision/resenas",
         label: "Reseñas",
         icon: Star,
+      },
+      {
+        href: "/revision/cancelaciones",
+        label: "Cancelaciones",
+        icon: Ban,
       },
     ];
 

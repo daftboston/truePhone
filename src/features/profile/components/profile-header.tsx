@@ -57,7 +57,8 @@ function initials(name: string | null) {
  *
  * Renders identity, trust badges, bio, and seller metrics for a profile.
  *
- * @param props - Profile display fields, seller aggregates, and public activity.
+ * @param props - Profile display fields, seller aggregates, and public activity
+ *   (including paid seller-cancel count when > 0).
  * @returns Profile header section.
  * @calledBy profile and public `/u/[username]` pages
  */

@@ -67,4 +67,15 @@ describe("buyerCanChooseRefundOrLoyalty", () => {
       false,
     );
   });
+
+  it("requires cancelled order status for refund choice UI guard", () => {
+    assert.equal(
+      buyerCanChooseRefundOrLoyalty({
+        orderStatus: "PAID",
+        isBuyer: true,
+        entitlement: { status: "ACTIVE", expiresAt: null },
+      }),
+      false,
+    );
+  });
 });

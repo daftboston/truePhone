@@ -57,7 +57,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Qué pasa si el vendedor cancela después de que pagué?",
         answer:
-          "No se reembolsa solo. En el pedido eliges: reembolso, o una compra de reemplazo con 8% de comisión una sola vez. El reembolso siempre está disponible mientras no uses esa compensación.",
+          "No se reembolsa solo. En el pedido eliges: reembolso, o una compra de reemplazo con 8% de comisión una sola vez. El reembolso siempre está disponible mientras no uses esa compensación. El anuncio del vendedor no vuelve solo al mercado: pasa otra vez por revisión de TruePhone.",
       },
     ],
   },
@@ -68,12 +68,17 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Qué necesito para publicar?",
         answer:
-          "Verificar identidad con cédula y selfie, completar el anuncio (modelo, estado, IMEI, al menos 8 fotos) y enviar prueba de posesión. Un revisor de TruePhone aprueba o rechaza antes de que el anuncio sea público.",
+          "Verificar identidad con cédula y selfie, completar el anuncio (modelo, estado, IMEI, 6 fotos guiadas) y enviar prueba de posesión. Un revisor de TruePhone aprueba o rechaza antes de que el anuncio sea público.",
       },
       {
         question: "¿TruePhone me dice a qué precio vender?",
         answer:
           "Mostramos un rango recomendado según el modelo y el estado. Tú eliges el precio del equipo. La comisión la paga el comprador, no se descuenta de tu venta (salvo el envío Premium Bogotá, si lo eliges).",
+      },
+      {
+        question: "¿Qué pasa con mi anuncio si cancelo una venta ya pagada?",
+        answer:
+          "Las cancelaciones tras el pago las gestiona soporte TruePhone (no desde el botón del pedido). El anuncio no se publica de nuevo automáticamente: vuelve a la cola de revisión. Las cancelaciones tras pago pueden verse en tu perfil y afectar la confianza de compradores.",
       },
     ],
   },

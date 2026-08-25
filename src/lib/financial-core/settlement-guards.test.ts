@@ -10,6 +10,8 @@ import { describe, it } from "node:test";
 import {
   canCancelPaidOrder,
   manualPayoutCompletionBlocker,
+  sellerPaidSelfCancelBlocker,
+  SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR,
 } from "@/lib/financial-core/settlement-guards";
 import { authorizedManualPayoutWhere } from "@/lib/payments/ops-payouts";
 
@@ -62,6 +64,56 @@ describe("canCancelPaidOrder", () => {
         payoutCompletedAt: new Date("2026-08-17T12:00:00.000Z"),
       }),
       false,
+    );
+  });
+});
+
+describe("sellerPaidSelfCancelBlocker", () => {
+  const sellerId = "seller-1";
+  const buyerId = "buyer-1";
+
+  it("blocks seller self-cancel on PAID orders", () => {
+    assert.equal(
+      sellerPaidSelfCancelBlocker({
+        orderStatus: "PAID",
+        actorId: sellerId,
+        sellerId,
+      }),
+      SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR,
+    );
+  });
+
+  it("allows seller cancel on unpaid (AWAITING_PAYMENT) orders", () => {
+    assert.equal(
+      sellerPaidSelfCancelBlocker({
+        orderStatus: "AWAITING_PAYMENT",
+        actorId: sellerId,
+        sellerId,
+      }),
+      null,
+    );
+  });
+
+  it("allows buyer cancel on PAID orders", () => {
+    assert.equal(
+      sellerPaidSelfCancelBlocker({
+        orderStatus: "PAID",
+        actorId: buyerId,
+        sellerId,
+      }),
+      null,
+    );
+  });
+
+  it("allows ops seller-abandon cancel on PAID orders", () => {
+    assert.equal(
+      sellerPaidSelfCancelBlocker({
+        orderStatus: "PAID",
+        actorId: "ops-reviewer",
+        sellerId,
+        asOpsSellerAbandon: true,
+      }),
+      null,
     );
   });
 });

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   BadgeCheck,
+  Ban,
   ChevronRight,
   ClipboardList,
   CreditCard,
@@ -32,6 +33,7 @@ import { countPaymentsByStatus } from "@/lib/payments";
 import { countOpsDisputeQueue } from "@/lib/payments/ops-disputes";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
+import { countPaidOrdersForOpsSellerAbandon } from "@/lib/orders/ops-seller-abandon";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +136,7 @@ export default async function ReviewHubPage() {
     disputeQueueCount,
     recommendedPriceCount,
     reviewReportsOpen,
+    sellerAbandonCancelCount,
   ] = await Promise.all([
     countListingsForReview(),
     countPendingIdentityVerifications(),
@@ -142,6 +145,7 @@ export default async function ReviewHubPage() {
     isAdmin ? countOpsDisputeQueue() : Promise.resolve(0),
     isAdmin ? countRecommendedPrices() : Promise.resolve(0),
     countOpenReviewReports(),
+    countPaidOrdersForOpsSellerAbandon(),
   ]);
 
   const firstName =
@@ -208,6 +212,15 @@ export default async function ReviewHubPage() {
             count={reviewReportsOpen}
             icon={reviewReportsOpen > 0 ? MessageSquareWarning : Star}
             emphasized={reviewReportsOpen > 0}
+          />
+
+          <QueueCard
+            href="/revision/cancelaciones"
+            title="Cancelaciones (abandono)"
+            description="Cancelar pedidos pagados como abandono del vendedor (8% o reembolso)."
+            count={sellerAbandonCancelCount}
+            icon={Ban}
+            emphasized={sellerAbandonCancelCount > 0}
           />
         </div>
       </section>

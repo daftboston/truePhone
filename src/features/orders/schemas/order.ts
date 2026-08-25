@@ -22,6 +22,19 @@ export const cancelOrderSchema = z.object({
     .nullable(),
 });
 
+/**
+ * opsCancelSellerAbandonSchema — REVIEWER/ADMIN cancel of a PAID order as seller abandon.
+ * Reason is required for the ops audit trail.
+ */
+export const opsCancelSellerAbandonSchema = z.object({
+  orderId: z.string().min(1, "Pedido inválido."),
+  reason: z
+    .string()
+    .trim()
+    .min(5, "Escribe un motivo breve (mín. 5 caracteres).")
+    .max(500, "El motivo es demasiado largo."),
+});
+
 export type OrderActionState =
   | {
       ok: true;

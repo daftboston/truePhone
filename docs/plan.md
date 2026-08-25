@@ -495,7 +495,7 @@ Features
 - Hold after `PaymentApproved`
 - Fee engine: 10% / 8% snapshots; Wompi 2.75%+IVA and 0.45%+IVA cost lines; **no** IVA on TruePhone’s % fee
 - Buyer confirm + **24h auto-release** after buyer marks received
-- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship** → buyer chooses **one-time 8% replacement purchase** OR **refund** (not auto-refund)
+- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship after pay** → seller contacts support; **REVIEWER/ADMIN** cancel as seller-abandon (`/revision/cancelaciones`); listing → `PENDING_REVIEW`; buyer chooses **one-time 8% replacement** OR **refund** (not auto-refund)
 - Battery policy (≤1% not refundable; >1% return full refund or keep)
 - Chargebacks / failed payouts: TruePhone absorbs (Ledger + ops)
 - Payouts: **Wompi Cuenta → seller bank account**; **MVP dispersion is manual in Wompi** (ops supervision after Financial Core authorizes)
