@@ -461,6 +461,8 @@ Compression
 
 Multiple uploads
 
+Listing gallery uses the shared `FileInput` on **each photo slot** (Elegir de la galería + Tomar foto) so a seller can fill or replace one angle without a shared picker at the bottom of the step.
+
 ---
 
 ## SearchBar

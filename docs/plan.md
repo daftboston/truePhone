@@ -721,7 +721,7 @@ Sellers in Colombia often create listings on the phone they are selling. Phase 5
 
 **How to implement (acceptance)**
 
-- Two visible Spanish actions on each photo step: **Elegir de la galería** and **Tomar foto**. Never a single control that sometimes opens the camera.
+- Two visible Spanish actions on **each photo slot**: **Elegir de la galería** and **Tomar foto**. Never a single control that sometimes opens the camera.
 - Hide native browser chrome (**Choose File** / **no file selected**). Copy stays Spanish (`lang="es"`).
 - On iOS/Android Safari/Chrome, **Tomar foto** must open the system camera (HTML `capture` on a dedicated input is enough if both actions exist).
 - Gallery must always remain available. Do not force camera-only.

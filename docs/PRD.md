@@ -872,7 +872,7 @@ Seller enters:
 
 Photos
 
-Guided slots (all 8 required — continuous fill order):
+Guided slots (all 8 required):
 
 1. Front
 2. Back
@@ -883,7 +883,7 @@ Guided slots (all 8 required — continuous fill order):
 7. Battery Health Screen
 8. IMEI (Settings → General → About)
 
-Upload UX: highlight the next empty slot; each gallery/camera pick uploads immediately (no second confirm tap). Empty slots show guide illustrations.
+Upload UX: each slot has its own **Elegir de la galería** and **Tomar foto** actions so the seller can fill or replace that angle in place. Highlight the next empty slot. Each pick/capture uploads immediately (no second confirm tap). Empty slots show guide illustrations. Deleting a guided photo leaves that slot empty without shifting other angles.
 
 Required count:
 

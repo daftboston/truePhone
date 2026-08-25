@@ -137,7 +137,7 @@ Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flag
 
 ## ListingImage
 
-Ordered images per listing (`imageType`: `gallery` | `possession`).
+Ordered images per listing (`imageType`: `gallery` | `possession`). Gallery `displayOrder` **0–7** maps 1:1 to the eight guided slots (Frente → IMEI). Deleting a guided photo leaves a gap so other angles do not shift. Indexes **8–11** are optional extras.
 
 ## DevicePossessionChallenge
 
