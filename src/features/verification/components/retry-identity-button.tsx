@@ -7,6 +7,7 @@
  */
 
 import { useState, useTransition } from "react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 import { startIdentityRetryAction } from "@/features/verification/actions/identity";
 import { Button } from "@/components/ui/button";
@@ -32,9 +33,13 @@ export function RetryIdentityButton() {
         onClick={() => {
           setError(null);
           startTransition(async () => {
-            const result = await startIdentityRetryAction();
-            if (result && result.ok === false) {
-              setError(result.error);
+            try {
+              const result = await startIdentityRetryAction();
+              if (result && result.ok === false) {
+                setError(result.error);
+              }
+            } catch (error) {
+              if (isRedirectError(error)) throw error;
             }
           });
         }}

@@ -4,12 +4,19 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
   : "127.0.0.1";
 
+/**
+ * Listing gallery / possession / identity photo uploads. Clients compress to
+ * ~900 KB first (see src/lib/images/compress-image.ts); this ceiling only
+ * catches originals that skipped compression. Kept at 4 MB because Vercel caps
+ * function request bodies near 4.5 MB — a higher value would surface as a
+ * platform 413 instead of our Spanish error.
+ * Restart `next dev` after changing this — Turbopack does not always hot-reload it.
+ */
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  // Listing gallery / possession uploads allow up to 5 MB (see listings actions).
   experimental: {
     serverActions: {
-      bodySizeLimit: "5mb",
+      bodySizeLimit: "4mb",
     },
   },
   images: {

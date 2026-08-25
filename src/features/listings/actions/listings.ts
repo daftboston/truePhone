@@ -23,6 +23,7 @@ import {
 } from "@/features/listings/schemas/listing";
 import {
   fieldErrorsFromZod,
+  MAX_LISTING_GALLERY_PHOTOS,
   MIN_LISTING_GALLERY_PHOTOS,
   type ListingActionState,
 } from "@/features/listings/types";
@@ -37,7 +38,8 @@ import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 
 const LISTING_BUCKET = "listing-images";
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/** Matches next.config.ts experimental.serverActions.bodySizeLimit. */
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 /**
@@ -72,7 +74,7 @@ async function uploadListingImage(
     return { error: "Usa una imagen JPG, PNG o WebP." };
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return { error: "La imagen debe pesar máximo 5 MB." };
+    return { error: "La imagen debe pesar máximo 4 MB." };
   }
 
   const extension = file.type.split("/")[1] ?? "jpg";
@@ -351,6 +353,16 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: "Selecciona una foto." };
   }
 
+  const galleryCount = listing.images.filter(
+    (i) => i.imageType === "gallery",
+  ).length;
+  if (galleryCount >= MAX_LISTING_GALLERY_PHOTOS) {
+    return {
+      ok: false,
+      error: `Máximo ${MAX_LISTING_GALLERY_PHOTOS} fotos. Elimina una para reemplazarla.`,
+    };
+  }
+
   const upload = await uploadListingImage(
     seller.current.user.id,
     listing.id,
@@ -361,16 +373,12 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: upload.error };
   }
 
-  const nextOrder = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-
   await prisma.listingImage.create({
     data: {
       listingId: listing.id,
       imageUrl: upload.url,
       imageType: "gallery",
-      displayOrder: nextOrder,
+      displayOrder: galleryCount,
     },
   });
 
@@ -405,7 +413,7 @@ export async function continueFromPhotosAction(listingId: string) {
   if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
     return {
       ok: false as const,
-      error: `Agrega al menos ${MIN_LISTING_GALLERY_PHOTOS} fotos del dispositivo.`,
+      error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
     };
   }
 
@@ -593,7 +601,7 @@ export async function submitListingForReviewAction(
   if (galleryCount < MIN_LISTING_GALLERY_PHOTOS) {
     return {
       ok: false,
-      error: `Agrega al menos ${MIN_LISTING_GALLERY_PHOTOS} fotos del dispositivo.`,
+      error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
     };
   }
   if (!listing.imeiHash) {
@@ -714,6 +722,22 @@ export async function deleteListingGalleryImageAction(
   }
 
   await prisma.listingImage.delete({ where: { id: image.id } });
+
+  // Keep displayOrder contiguous so guided slots map 1:1 to images.
+  const remaining = await prisma.listingImage.findMany({
+    where: { listingId: listing.id, imageType: "gallery" },
+    orderBy: { displayOrder: "asc" },
+    select: { id: true },
+  });
+  await Promise.all(
+    remaining.map((item, index) =>
+      prisma.listingImage.update({
+        where: { id: item.id },
+        data: { displayOrder: index },
+      }),
+    ),
+  );
+
   revalidatePath(`/vender/${listing.id}/fotos`);
   return { ok: true, message: "Foto eliminada." };
 }

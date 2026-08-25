@@ -7,6 +7,7 @@
  */
 
 import { useState, useTransition } from "react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 import { acceptPrivacyAction } from "@/features/verification/actions/identity";
 import { Button } from "@/components/ui/button";
@@ -66,8 +67,8 @@ export function PrivacyAcceptForm() {
               if (result && result.ok === false) {
                 setError(result.error);
               }
-            } catch {
-              // redirect() throws; ignore navigation errors
+            } catch (error) {
+              if (isRedirectError(error)) throw error;
             }
           });
         }}

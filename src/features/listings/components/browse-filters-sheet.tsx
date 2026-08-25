@@ -19,6 +19,8 @@ type BrowseFiltersSheetProps = {
  * BrowseFiltersSheet
  *
  * Collapses browse filters into a «Filtros» sheet on small screens.
+ * Callers pass a `key` derived from the active search params so applying a
+ * filter remounts the sheet closed instead of leaving it open over results.
  *
  * @param props.children - BrowseFilters aside.
  * @returns Mobile sheet + desktop sidebar.

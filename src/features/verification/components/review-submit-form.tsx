@@ -7,6 +7,7 @@
  */
 
 import { useState, useTransition } from "react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 import { submitIdentityVerificationAction } from "@/features/verification/actions/identity";
 import { Button } from "@/components/ui/button";
@@ -82,8 +83,8 @@ export function ReviewSubmitForm({
               if (result && result.ok === false) {
                 setError(result.error);
               }
-            } catch {
-              // redirect
+            } catch (error) {
+              if (isRedirectError(error)) throw error;
             }
           });
         }}

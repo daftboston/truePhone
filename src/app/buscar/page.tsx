@@ -171,7 +171,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       />
 
       <div className="grid gap-6 md:grid-cols-[200px_1fr] md:items-start lg:grid-cols-[220px_1fr]">
-        <BrowseFiltersSheet>
+        <BrowseFiltersSheet key={JSON.stringify({ ...query, page })}>
           <BrowseFilters
             query={{ ...query, page }}
             models={sidebarModels}

@@ -61,7 +61,7 @@ export function CedulaFrontForm() {
           captureFacing="environment"
         />
         <p className="text-muted-foreground text-xs">
-          Buena luz, sin reflejos. JPG, PNG o WebP · máx. 5 MB.
+          Buena luz, sin reflejos. JPG, PNG o WebP · máx. 4 MB.
         </p>
       </div>
 

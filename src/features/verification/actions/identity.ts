@@ -33,7 +33,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 const IDENTITY_BUCKET = "identity-docs";
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/** Matches next.config.ts experimental.serverActions.bodySizeLimit. */
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 /**
@@ -91,7 +92,7 @@ async function uploadIdentityImage(
     return { error: "Usa una imagen JPG, PNG o WebP." };
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return { error: "La imagen debe pesar máximo 5 MB." };
+    return { error: "La imagen debe pesar máximo 4 MB." };
   }
 
   const extension = file.type.split("/")[1] ?? "jpg";

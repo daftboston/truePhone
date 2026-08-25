@@ -872,37 +872,26 @@ Seller enters:
 
 Photos
 
-Required:
+Guided slots (all 8 required — continuous fill order):
 
-Front
+1. Front
+2. Back
+3. Left Side
+4. Right Side
+5. Bottom (charging port)
+6. Screen On
+7. Battery Health Screen
+8. IMEI (Settings → General → About)
 
-Back
+Upload UX: highlight the next empty slot; each gallery/camera pick uploads immediately (no second confirm tap). Empty slots show guide illustrations.
 
-Left Side
+Required count:
 
-Right Side
+8 photos (all guided slots)
 
-Top
+Optional extras:
 
-Bottom
-
-Screen On
-
-Battery Health Screen
-
-Settings Screen
-
-IMEI Verification Screen (if applicable)
-
-Original Accessories (optional)
-
-Minimum:
-
-8 photos
-
-Recommended:
-
-12+
+Up to 12 photos total (4 beyond the guided slots) for detail shots, wear, or original accessories. Extras never block submit.
 
 ---
 
