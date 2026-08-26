@@ -69,8 +69,8 @@ function SlotCaptureControls({
       id={inputId}
       name={`image-${inputId}`}
       accept="image/jpeg,image/png,image/webp"
-      buttonLabel="Elegir de la galería"
-      buttonAriaLabel={`Elegir de la galería: ${title}`}
+      buttonLabel="Elegir"
+      buttonAriaLabel={`Elegir foto de la galería: ${title}`}
       cameraLabel="Tomar foto"
       cameraAriaLabel={`Tomar foto: ${title}`}
       captureFacing="environment"
