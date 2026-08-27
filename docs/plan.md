@@ -4,7 +4,7 @@
 
 Version 1.3
 
-**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Buyer 8% vs refund after seller cancel is on the order page. See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
@@ -495,7 +495,7 @@ Features
 - Hold after `PaymentApproved`
 - Fee engine: 10% / 8% snapshots; Wompi 2.75%+IVA and 0.45%+IVA cost lines; **no** IVA on TruePhone’s % fee
 - Buyer confirm + **24h auto-release** after buyer marks received
-- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship after pay** → seller contacts support; **REVIEWER/ADMIN** cancel as seller-abandon (`/revision/cancelaciones`); listing → `PENDING_REVIEW`; buyer chooses **one-time 8% replacement** OR **refund** (not auto-refund)
+- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship after pay** → seller submits an in-app order-support request; **REVIEWER/ADMIN** decide only submitted cases (`/revision/soporte-pedidos`); accepted cancellation archives the listing and privately records the incident; buyer chooses **one-time 8% replacement** OR **refund** (not auto-refund)
 - Battery policy (≤1% not refundable; >1% return full refund or keep)
 - Chargebacks / failed payouts: TruePhone absorbs (Ledger + ops)
 - Payouts: **Wompi Cuenta → seller bank account**; **MVP dispersion is manual in Wompi** (ops supervision after Financial Core authorizes)

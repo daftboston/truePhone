@@ -45,7 +45,7 @@ export const PAID_ORDER_CANCEL_BLOCKED_ERROR =
  * Paid seller-abandon goes through support / ops (not in-app self-cancel).
  */
 export const SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR =
-  "Tras el pago no puedes cancelar el pedido desde la app. Contacta a soporte (hola@truephone.co); cancelar después del pago se registra en tu perfil y puede afectar la confianza de compradores.";
+  "Tras el pago no puedes cancelar el pedido de inmediato. Abre «Contactar soporte» en la venta para enviar una solicitud al equipo.";
 
 /**
  * sellerPaidSelfCancelBlocker

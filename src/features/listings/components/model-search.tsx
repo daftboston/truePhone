@@ -33,6 +33,7 @@ type ModelSearchProps = {
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
+  compensationId?: string;
 };
 
 /**
@@ -49,6 +50,7 @@ export function ModelSearch({
   placeholder = "Buscar iPhone…",
   className,
   autoFocus = false,
+  compensationId,
 }: ModelSearchProps) {
   const router = useRouter();
   const listId = useId();
@@ -61,6 +63,10 @@ export function ModelSearch({
   const showResults = open && deferredQuery.trim().length > 0;
   const safeActiveIndex =
     results.length === 0 ? 0 : Math.min(activeIndex, results.length - 1);
+  const withCompensation = (href: string) =>
+    compensationId
+      ? `${href}${href.includes("?") ? "&" : "?"}compensacion=${encodeURIComponent(compensationId)}`
+      : href;
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -75,7 +81,7 @@ export function ModelSearch({
   function goToModel(modelId: string) {
     setOpen(false);
     setQuery("");
-    router.push(browseModelHref(modelId));
+    router.push(withCompensation(browseModelHref(modelId)));
   }
 
   function onSubmit(event: FormEvent) {
@@ -87,10 +93,10 @@ export function ModelSearch({
     const trimmed = query.trim();
     if (trimmed) {
       setOpen(false);
-      router.push(`/buscar?q=${encodeURIComponent(trimmed)}`);
+      router.push(withCompensation(`/buscar?q=${encodeURIComponent(trimmed)}`));
       return;
     }
-    router.push("/explorar");
+    router.push(withCompensation("/explorar"));
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -163,7 +169,9 @@ export function ModelSearch({
             <li className="text-muted-foreground px-3 py-3 text-sm">
               No encontramos ese modelo.{" "}
               <Link
-                href={`/buscar?q=${encodeURIComponent(deferredQuery.trim())}`}
+                href={withCompensation(
+                  `/buscar?q=${encodeURIComponent(deferredQuery.trim())}`,
+                )}
                 className="text-foreground font-medium underline-offset-2 hover:underline"
                 onClick={() => setOpen(false)}
               >

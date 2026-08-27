@@ -145,6 +145,7 @@ enum ShipmentStatus {
   INSPECTION
   IN_TRANSIT
   DELIVERED
+  CANCELLED
   FAILED
   RETURNED
 }
@@ -168,75 +169,103 @@ enum NotificationType {
   SHIPPING_METHOD_CHOSEN
   TRACKING_UPLOADED
   PAYOUT_SENT
+  ORDER_SUPPORT_REPLY
+  ORDER_SUPPORT_STATUS
+  SELLER_CANCELLATION_ACCEPTED
+  BUYER_REMEDY_AVAILABLE
+  REFUND_COMPLETED
+  FULFILLMENT_ESCALATED
+}
+
+/// Seller-created workflow category for paid-order assistance.
+enum OrderSupportCaseType {
+  SELLER_CANCELLATION
+  FULFILLMENT_EXCEPTION
+  GENERAL_SUPPORT
+}
+
+/// Auditable lifecycle for a seller/staff order-support conversation.
+enum OrderSupportCaseStatus {
+  PENDING
+  IN_REVIEW
+  NEEDS_SELLER_RESPONSE
+  ESCALATED
+  APPROVED
+  REJECTED
+  RESOLVED
+  WITHDRAWN
 }
 
 // Models
 model Profile {
-  id                  String      @id @default(cuid())
-  authUserId          String      @unique @map("auth_user_id")
-  role                UserRole    @default(BUYER)
-  fullName            String?
-  username            String?     @unique
-  avatarUrl           String?
-  phone               String?
-  city                String?
-  department          String?
-  bio                 String?
-  sellerRating        Float       @default(0)
-  totalSales          Int         @default(0)
-  totalReviews        Int         @default(0)
-  isTrustedSeller     Boolean     @default(false)
-  trustedSellerSince  DateTime?
-  verifikStatus       String      @default("not_submitted")
-  verifikVerifiedAt   DateTime?
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  id                 String    @id @default(cuid())
+  authUserId         String    @unique @map("auth_user_id")
+  role               UserRole  @default(BUYER)
+  fullName           String?
+  username           String?   @unique
+  avatarUrl          String?
+  phone              String?
+  city               String?
+  department         String?
+  bio                String?
+  sellerRating       Float     @default(0)
+  totalSales         Int       @default(0)
+  totalReviews       Int       @default(0)
+  isTrustedSeller    Boolean   @default(false)
+  trustedSellerSince DateTime?
+  verifikStatus      String    @default("not_submitted")
+  verifikVerifiedAt  DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  listings               Listing[]
-  reviewsWritten         Review[]                 @relation("ReviewWritten")
-  reviewsReceived        Review[]                 @relation("ReviewReceived")
-  favorites              Favorite[]
-  sentMessages           Message[]                @relation("SentMessages")
-  receivedMessages       Message[]                @relation("ReceivedMessages")
-  reviewedListings       Listing[]                @relation("ReviewerListings")
-  identityVerifications  IdentityVerification[]   @relation("SellerIdentity")
-  identityReviews        IdentityVerification[]   @relation("IdentityReviewer")
-  blocksCreated          UserBlock[]              @relation("BlocksCreated")
-  blocksReceived         UserBlock[]              @relation("BlocksReceived")
-  conversationReports    ConversationReport[]     @relation("ConversationReports")
-  reviewReports          ReviewReport[]           @relation("ReviewReports")
-  ordersAsBuyer          Order[]                  @relation("OrderBuyer")
-  ordersAsSeller         Order[]                  @relation("OrderSeller")
-  payments               Payment[]
-  sellerBankAccounts     SellerBankAccount[]
-  feeEntitlements        FeeEntitlement[]         @relation("FeeEntitlementBuyer")
-  payouts                Payout[]
-  notifications          Notification[]
-  notificationPreference NotificationPreference?
+  listings                  Listing[]
+  reviewsWritten            Review[]                @relation("ReviewWritten")
+  reviewsReceived           Review[]                @relation("ReviewReceived")
+  favorites                 Favorite[]
+  sentMessages              Message[]               @relation("SentMessages")
+  receivedMessages          Message[]               @relation("ReceivedMessages")
+  reviewedListings          Listing[]               @relation("ReviewerListings")
+  identityVerifications     IdentityVerification[]  @relation("SellerIdentity")
+  identityReviews           IdentityVerification[]  @relation("IdentityReviewer")
+  blocksCreated             UserBlock[]             @relation("BlocksCreated")
+  blocksReceived            UserBlock[]             @relation("BlocksReceived")
+  conversationReports       ConversationReport[]    @relation("ConversationReports")
+  reviewReports             ReviewReport[]          @relation("ReviewReports")
+  ordersAsBuyer             Order[]                 @relation("OrderBuyer")
+  ordersAsSeller            Order[]                 @relation("OrderSeller")
+  payments                  Payment[]
+  sellerBankAccounts        SellerBankAccount[]
+  feeEntitlements           FeeEntitlement[]        @relation("FeeEntitlementBuyer")
+  payouts                   Payout[]
+  notifications             Notification[]
+  notificationPreference    NotificationPreference?
+  orderSupportCasesAsSeller OrderSupportCase[]      @relation("OrderSupportSeller")
+  assignedOrderSupportCases OrderSupportCase[]      @relation("OrderSupportAssignee")
+  orderSupportMessages      OrderSupportMessage[]   @relation("OrderSupportMessageSender")
 
   @@map("profiles")
 }
 
 model IdentityVerification {
-  id                   String                      @id @default(cuid())
-  profileId            String
-  profile              Profile                     @relation("SellerIdentity", fields: [profileId], references: [id])
-  status               IdentityVerificationStatus  @default(DRAFT)
-  documentType         String                      @default("cedula")
-  documentNumberLast4  String?
-  documentNumberHash   String?
-  frontImageUrl        String?
-  backImageUrl         String?
-  selfieImageUrl       String?
-  privacyAcceptedAt    DateTime?
-  submittedAt          DateTime?
-  reviewedAt           DateTime?
-  reviewerId           String?
-  reviewer             Profile?                    @relation("IdentityReviewer", fields: [reviewerId], references: [id])
-  rejectionReason      String?
-  provider             String                      @default("manual")
-  createdAt            DateTime                    @default(now())
-  updatedAt            DateTime                    @updatedAt
+  id                  String                     @id @default(cuid())
+  profileId           String
+  profile             Profile                    @relation("SellerIdentity", fields: [profileId], references: [id])
+  status              IdentityVerificationStatus @default(DRAFT)
+  documentType        String                     @default("cedula")
+  documentNumberLast4 String?
+  documentNumberHash  String?
+  frontImageUrl       String?
+  backImageUrl        String?
+  selfieImageUrl      String?
+  privacyAcceptedAt   DateTime?
+  submittedAt         DateTime?
+  reviewedAt          DateTime?
+  reviewerId          String?
+  reviewer            Profile?                   @relation("IdentityReviewer", fields: [reviewerId], references: [id])
+  rejectionReason     String?
+  provider            String                     @default("manual")
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
 
   @@index([profileId])
   @@index([status])
@@ -244,22 +273,22 @@ model IdentityVerification {
 }
 
 model IphoneModel {
-  id            String             @id @default(cuid())
-  name          String             @unique
-  slug          String             @unique
-  modelNumber   String?
+  id                String               @id @default(cuid())
+  name              String               @unique
+  slug              String               @unique
+  modelNumber       String?
   /// Independent line: numbered iPhone, SE, or Air. SE is never a 13/14 variant.
-  productLine   IphoneProductLine
+  productLine       IphoneProductLine
   /// Generation within the product line (SE 2/3, numbered 12–17, Air 1).
-  generation    Int
-  variantType   IphoneVariantType
-  releaseYear   Int?
+  generation        Int
+  variantType       IphoneVariantType
+  releaseYear       Int?
   /// Stable catalog order (1 = oldest in scope). Higher = newer for pickers.
-  sortOrder     Int
-  createdAt     DateTime           @default(now())
-  listings      Listing[]
-  modelColors   IphoneModelColor[]
-  modelStorages IphoneModelStorage[]
+  sortOrder         Int
+  createdAt         DateTime             @default(now())
+  listings          Listing[]
+  modelColors       IphoneModelColor[]
+  modelStorages     IphoneModelStorage[]
   recommendedPrices RecommendedPrice[]
 
   @@unique([productLine, generation, variantType])
@@ -270,10 +299,10 @@ model IphoneModel {
 }
 
 model IphoneColor {
-  id          String            @id @default(cuid())
-  name        String            @unique
+  id          String             @id @default(cuid())
+  name        String             @unique
   hex         String?
-  createdAt   DateTime          @default(now())
+  createdAt   DateTime           @default(now())
   listings    Listing[]
   modelColors IphoneModelColor[]
 
@@ -309,11 +338,11 @@ model IphoneModelStorage {
 }
 
 model IphoneStorage {
-  id            String               @id @default(cuid())
-  valueGb       Int                  @unique
-  createdAt     DateTime             @default(now())
-  listings      Listing[]
-  modelStorages IphoneModelStorage[]
+  id                String               @id @default(cuid())
+  valueGb           Int                  @unique
+  createdAt         DateTime             @default(now())
+  listings          Listing[]
+  modelStorages     IphoneModelStorage[]
   recommendedPrices RecommendedPrice[]
 
   @@map("iphone_storages")
@@ -345,51 +374,51 @@ model RecommendedPrice {
 }
 
 model Listing {
-  id                  String         @id @default(cuid())
-  sellerId            String
-  seller              Profile        @relation(fields: [sellerId], references: [id])
-  reviewerId          String?
-  reviewer            Profile?       @relation("ReviewerListings", fields: [reviewerId], references: [id])
+  id         String   @id @default(cuid())
+  sellerId   String
+  seller     Profile  @relation(fields: [sellerId], references: [id])
+  reviewerId String?
+  reviewer   Profile? @relation("ReviewerListings", fields: [reviewerId], references: [id])
 
-  iphoneModelId       String
-  iphoneModel         IphoneModel    @relation(fields: [iphoneModelId], references: [id])
-  iphoneColorId       String
-  iphoneColor         IphoneColor    @relation(fields: [iphoneColorId], references: [id])
-  iphoneStorageId     String
-  iphoneStorage       IphoneStorage  @relation(fields: [iphoneStorageId], references: [id])
+  iphoneModelId   String
+  iphoneModel     IphoneModel   @relation(fields: [iphoneModelId], references: [id])
+  iphoneColorId   String
+  iphoneColor     IphoneColor   @relation(fields: [iphoneColorId], references: [id])
+  iphoneStorageId String
+  iphoneStorage   IphoneStorage @relation(fields: [iphoneStorageId], references: [id])
 
-  title               String
-  slug                String         @unique
-  description         String?
-  condition           Condition
-  batteryHealth       Int?
+  title         String
+  slug          String    @unique
+  description   String?
+  condition     Condition
+  batteryHealth Int?
 
-  price               Int
-  platformFee         Int?
-  finalPrice          Int?
+  price       Int
+  platformFee Int?
+  finalPrice  Int?
 
-  imeiLast4           String?
-  imeiHash            String?        @unique
-  activationLocked    Boolean        @default(false)
-  unlocked            Boolean        @default(true)
-  carrier             String?
+  imeiLast4        String?
+  imeiHash         String? @unique
+  activationLocked Boolean @default(false)
+  unlocked         Boolean @default(true)
+  carrier          String?
 
-  hasBox              Boolean        @default(false)
-  hasCharger          Boolean        @default(false)
-  hasReceipt          Boolean        @default(false)
+  hasBox     Boolean @default(false)
+  hasCharger Boolean @default(false)
+  hasReceipt Boolean @default(false)
 
-  status              ListingStatus  @default(DRAFT)
-  reviewerNotes       String?
-  rejectionReason     String?
-  reviewedAt          DateTime?
-  approvedAt          DateTime?
+  status          ListingStatus @default(DRAFT)
+  reviewerNotes   String?
+  rejectionReason String?
+  reviewedAt      DateTime?
+  approvedAt      DateTime?
 
-  searchVector        Unsupported("tsvector")?
-  views               Int            @default(0)
-  deletedAt           DateTime?
+  searchVector Unsupported("tsvector")?
+  views        Int                      @default(0)
+  deletedAt    DateTime?
 
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   images              ListingImage[]
   favorites           Favorite[]
@@ -430,16 +459,16 @@ model ListingImage {
 }
 
 model Message {
-  id          String   @id @default(cuid())
-  listingId   String
-  listing     Listing  @relation(fields: [listingId], references: [id])
-  senderId    String
-  sender      Profile  @relation("SentMessages", fields: [senderId], references: [id])
-  receiverId  String
-  receiver    Profile  @relation("ReceivedMessages", fields: [receiverId], references: [id])
-  content     String
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id])
+  senderId   String
+  sender     Profile  @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   Profile  @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@index([receiverId, isRead])
   @@index([listingId, createdAt])
@@ -492,7 +521,7 @@ model Review {
   hiddenById     String?
   createdAt      DateTime  @default(now())
 
-  reports        ReviewReport[]
+  reports ReviewReport[]
 
   @@unique([orderId, reviewerId])
   @@index([orderId])
@@ -519,63 +548,64 @@ model ReviewReport {
 }
 
 model Order {
-  id             String      @id @default(cuid())
-  listingId      String
-  listing        Listing     @relation(fields: [listingId], references: [id])
-  buyerId        String
-  buyer          Profile     @relation("OrderBuyer", fields: [buyerId], references: [id])
-  sellerId       String
-  seller         Profile     @relation("OrderSeller", fields: [sellerId], references: [id])
-  status         OrderStatus @default(AWAITING_PAYMENT)
+  id        String      @id @default(cuid())
+  listingId String
+  listing   Listing     @relation(fields: [listingId], references: [id])
+  buyerId   String
+  buyer     Profile     @relation("OrderBuyer", fields: [buyerId], references: [id])
+  sellerId  String
+  seller    Profile     @relation("OrderSeller", fields: [sellerId], references: [id])
+  status    OrderStatus @default(AWAITING_PAYMENT)
 
   /// Snapshots at reserve time (COP, integer pesos).
   equipmentPrice Int
   platformFee    Int
   totalPrice     Int
-  currency       String      @default("COP")
+  currency       String @default("COP")
 
   /// Marketplace fee rate in basis points (1000 = 10%, 800 = 8% loyalty).
-  feeRateBps              Int      @default(1000)
+  feeRateBps              Int @default(1000)
   /// Projected Wompi collection cost (2.75% + IVA) on buyer total.
-  wompiCollectionPesos    Int      @default(0)
+  wompiCollectionPesos    Int @default(0)
   /// Projected Wompi payout cost (0.45% + IVA) on seller amount.
-  wompiPayoutPesos        Int      @default(0)
+  wompiPayoutPesos        Int @default(0)
   /// Remainder of fee pool after Wompi costs.
-  truephoneRevenuePesos   Int      @default(0)
+  truephoneRevenuePesos   Int @default(0)
   /// Amount obligated to seller on hold / dispersed at payout.
-  sellerAmountPesos       Int      @default(0)
+  sellerAmountPesos       Int @default(0)
   /// Premium Bogotá logistics fee deducted from seller (0 for Carrier).
-  premiumShippingFeePesos Int      @default(0)
+  premiumShippingFeePesos Int @default(0)
   /// Reserved for post-MVP seller marketplace fee (always 0 in MVP).
-  sellerFeePesos          Int      @default(0)
+  sellerFeePesos          Int @default(0)
 
   /// Financial Core settlement timestamps (PAID = hold active).
-  fundsHeldAt                DateTime?
-  payoutAuthorizedAt         DateTime?
-  payoutCompletedAt          DateTime?
-  buyerConfirmedAt           DateTime?
+  fundsHeldAt                  DateTime?
+  payoutAuthorizedAt           DateTime?
+  payoutCompletedAt            DateTime?
+  buyerConfirmedAt             DateTime?
   /// Set when Shipping marks delivered; silence until then → auto-release.
-  buyerConfirmDeadlineAt     DateTime?
-  payoutFrozen               Boolean   @default(false)
+  buyerConfirmDeadlineAt       DateTime?
+  payoutFrozen                 Boolean   @default(false)
   sellerFulfillmentAbandonedAt DateTime?
 
-  cancelReason   String?
-  cancelledAt    DateTime?
-  cancelledById  String?
-  completedAt    DateTime?
-  paidAt         DateTime?
+  cancelReason  String?
+  cancelledAt   DateTime?
+  cancelledById String?
+  completedAt   DateTime?
+  paidAt        DateTime?
 
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  reviews        Review[]
-  payments       Payment[]
-  ledgerEntries  LedgerEntry[]
-  payouts        Payout[]
-  shipment       Shipment?
-  feeEntitlementSource FeeEntitlement? @relation("FeeEntitlementSourceOrder")
-  feeEntitlementUsed   FeeEntitlement? @relation("FeeEntitlementUsedOrder")
-  notifications  Notification[]
+  reviews              Review[]
+  payments             Payment[]
+  ledgerEntries        LedgerEntry[]
+  payouts              Payout[]
+  shipment             Shipment?
+  feeEntitlementSource FeeEntitlement?    @relation("FeeEntitlementSourceOrder")
+  feeEntitlementUsed   FeeEntitlement?    @relation("FeeEntitlementUsedOrder")
+  notifications        Notification[]
+  supportCases         OrderSupportCase[]
 
   @@index([buyerId, createdAt])
   @@index([sellerId, createdAt])
@@ -585,23 +615,66 @@ model Order {
   @@map("orders")
 }
 
+/// Seller-initiated, order-scoped support workflow reviewed by trusted staff.
+model OrderSupportCase {
+  id              String                 @id @default(cuid())
+  orderId         String
+  order           Order                  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  sellerId        String
+  seller          Profile                @relation("OrderSupportSeller", fields: [sellerId], references: [id], onDelete: Restrict)
+  type            OrderSupportCaseType
+  status          OrderSupportCaseStatus @default(PENDING)
+  initialReason   String
+  assignedStaffId String?
+  assignedStaff   Profile?               @relation("OrderSupportAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  decisionNote    String?
+  reviewedAt      DateTime?
+  resolvedAt      DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  messages OrderSupportMessage[]
+
+  @@index([status, createdAt])
+  @@index([type, status, createdAt])
+  @@index([orderId, status])
+  @@index([assignedStaffId, status])
+  @@map("order_support_cases")
+}
+
+/// Seller/staff message or private internal note within an order-support case.
+model OrderSupportMessage {
+  id         String           @id @default(cuid())
+  caseId     String
+  case       OrderSupportCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  senderId   String
+  sender     Profile          @relation("OrderSupportMessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+  body       String
+  isInternal Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([caseId, createdAt])
+  @@index([senderId, createdAt])
+  @@map("order_support_messages")
+}
+
 /// Device fulfillment (Phase 10c). One shipment per order. Does not authorize money.
 model Shipment {
-  id        String         @id @default(cuid())
-  orderId   String         @unique
-  order     Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  method    ShippingMethod
-  status    ShipmentStatus @default(METHOD_SELECTED)
+  id      String         @id @default(cuid())
+  orderId String         @unique
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  method  ShippingMethod
+  status  ShipmentStatus @default(METHOD_SELECTED)
 
   /// Carrier path (Servientrega / Envía / other).
-  carrierName   String?
-  trackingCode  String?
-  evidenceUrl   String?
+  carrierName  String?
+  trackingCode String?
+  evidenceUrl  String?
 
   /// Premium Bogotá: fee snapshot at method selection (always 20000 when Premium).
   premiumFeeCop Int @default(0)
 
-  methodSelectedAt DateTime  @default(now())
+  methodSelectedAt   DateTime  @default(now())
   trackingUploadedAt DateTime?
   pickupScheduledAt  DateTime?
   inspectionAt       DateTime?
@@ -626,14 +699,14 @@ model ShipmentInspection {
   shipment   Shipment         @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
   result     InspectionResult @default(PENDING)
 
-  imeiMatch       Boolean?
-  serialMatch     Boolean?
-  storageMatch    Boolean?
-  colorMatch      Boolean?
-  cosmeticNotes   String?
-  accessoriesOk   Boolean?
+  imeiMatch        Boolean?
+  serialMatch      Boolean?
+  storageMatch     Boolean?
+  colorMatch       Boolean?
+  cosmeticNotes    String?
+  accessoriesOk    Boolean?
   batteryHealthPct Int?
-  notes           String?
+  notes            String?
 
   inspectedById String?
   createdAt     DateTime @default(now())
@@ -644,19 +717,19 @@ model ShipmentInspection {
 
 /// Append-only money facts. Financial Core is the only writer.
 model LedgerEntry {
-  id        String          @id @default(cuid())
-  orderId   String
-  order     Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  paymentId String?
-  payoutId  String?
-  payout    Payout?         @relation(fields: [payoutId], references: [id], onDelete: SetNull)
-  type      LedgerEntryType
+  id          String          @id @default(cuid())
+  orderId     String
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  paymentId   String?
+  payoutId    String?
+  payout      Payout?         @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+  type        LedgerEntryType
   /// Signed COP pesos: positive = inflow to TruePhone/Cuenta obligation; see metadata for semantics.
   amountPesos Int
-  currency  String          @default("COP")
-  memo      String?
-  metadata  Json?
-  createdAt DateTime        @default(now())
+  currency    String          @default("COP")
+  memo        String?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
 
   @@index([orderId, createdAt])
   @@index([type, createdAt])
@@ -681,7 +754,7 @@ model SellerBankAccount {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  payouts       Payout[]
+  payouts Payout[]
 
   @@index([profileId])
   @@map("seller_bank_accounts")
@@ -689,29 +762,29 @@ model SellerBankAccount {
 
 /// Dispersion from Wompi Cuenta → seller bank (Financial Core only).
 model Payout {
-  id                   String         @id @default(cuid())
-  orderId              String
-  order                Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  sellerId             String
-  seller               Profile        @relation(fields: [sellerId], references: [id], onDelete: Restrict)
-  sellerBankAccountId  String?
-  sellerBankAccount    SellerBankAccount? @relation(fields: [sellerBankAccountId], references: [id], onDelete: SetNull)
-  provider             PayoutProvider
-  status               PayoutStatus   @default(PENDING)
-  amountPesos          Int
-  currency             String         @default("COP")
-  idempotencyKey       String         @unique
-  providerPayoutId     String?
-  providerLoteId       String?
-  failureCode          String?
-  failureMessage       String?
-  authorizedAt         DateTime?
-  submittedAt          DateTime?
-  completedAt          DateTime?
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  id                  String             @id @default(cuid())
+  orderId             String
+  order               Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  sellerId            String
+  seller              Profile            @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  sellerBankAccountId String?
+  sellerBankAccount   SellerBankAccount? @relation(fields: [sellerBankAccountId], references: [id], onDelete: SetNull)
+  provider            PayoutProvider
+  status              PayoutStatus       @default(PENDING)
+  amountPesos         Int
+  currency            String             @default("COP")
+  idempotencyKey      String             @unique
+  providerPayoutId    String?
+  providerLoteId      String?
+  failureCode         String?
+  failureMessage      String?
+  authorizedAt        DateTime?
+  submittedAt         DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
-  ledgerEntries        LedgerEntry[]
+  ledgerEntries LedgerEntry[]
 
   @@index([orderId, createdAt])
   @@index([sellerId, createdAt])
@@ -743,38 +816,38 @@ model FeeEntitlement {
 
 /// Buyer checkout for Compra Garantizada (equipment + marketplace fee).
 model Payment {
-  id                 String          @id @default(cuid())
-  orderId            String
-  order              Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  buyerId            String
-  buyer              Profile         @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+  id      String  @id @default(cuid())
+  orderId String
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  buyerId String
+  buyer   Profile @relation(fields: [buyerId], references: [id], onDelete: Restrict)
 
-  provider           PaymentProvider
-  status             PaymentStatus   @default(PENDING)
+  provider PaymentProvider
+  status   PaymentStatus   @default(PENDING)
 
   /// Amount charged to the buyer in COP pesos (= order.totalPrice).
-  amount             Int
-  currency           String          @default("COP")
-  equipmentPrice     Int
-  platformFee        Int
+  amount         Int
+  currency       String @default("COP")
+  equipmentPrice Int
+  platformFee    Int
 
   /// Stable merchant reference sent to the provider.
-  reference          String          @unique
+  reference          String  @unique
   providerPaymentId  String?
   providerCheckoutId String?
   checkoutUrl        String?
 
-  failureCode        String?
-  failureMessage     String?
+  failureCode    String?
+  failureMessage String?
 
-  paidAt             DateTime?
-  refundedAt         DateTime?
-  refundAmount       Int?
+  paidAt       DateTime?
+  refundedAt   DateTime?
+  refundAmount Int?
 
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  webhookEvents      PaymentWebhookEvent[]
+  webhookEvents PaymentWebhookEvent[]
 
   @@index([orderId, createdAt])
   @@index([buyerId, createdAt])
@@ -804,11 +877,11 @@ model PaymentWebhookEvent {
 }
 
 model Favorite {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   userId    String
-  user      Profile  @relation(fields: [userId], references: [id])
+  user      Profile @relation(fields: [userId], references: [id])
   listingId String
-  listing   Listing  @relation(fields: [listingId], references: [id])
+  listing   Listing @relation(fields: [listingId], references: [id])
 
   createdAt DateTime @default(now())
 

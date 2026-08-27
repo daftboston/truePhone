@@ -59,6 +59,14 @@ Bogotá sellers may **switch Premium ↔ Carrier** until the chosen path is comm
 On **Premium → Carrier**: clear `premiumShippingFeePesos` (set to `0`), recalc `sellerAmountPesos` / Wompi projections, remove or abandon the pending inspection row, and append a reversing `PREMIUM_SHIPPING_FEE` ledger note (cancel the $20,000 deduction).  
 On **Carrier → Premium**: apply the $20,000 fee snapshot + ledger line as on first Premium select.
 
+### Order support by custody stage (locked)
+
+- **Before commitment:** a paid seller may submit **No puedo completar la venta**. It is a request; only REVIEWER/ADMIN approval invokes Financial Core cancellation. Approval sets an existing shipment to `CANCELLED` and archives the listing.
+- **After commitment, before buyer receipt:** cancellation is replaced by **Tengo un problema con el envío**. Carrier tracking, Premium pickup, or Premium inspection means custody may exist, so creating the case freezes payout. Staff may continue fulfillment; ADMIN alone may unfreeze, convert to cancellation when the device never entered buyer custody, or escalate refund/dispute handling.
+- **After buyer receipt:** the seller has general support only. Device and delivery claims use the buyer’s existing **Reportar un problema** flow.
+
+Support cases never authorize money by themselves. Financial Core remains the only owner of Ledger, refund, entitlement, and payout mutations.
+
 ### Premium fee
 
 - Amount: **20,000 COP** (fixed for MVP).

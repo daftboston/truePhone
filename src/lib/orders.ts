@@ -481,19 +481,25 @@ export async function cancelOrder(input: {
         throw new OrderError("Este pedido ya no se puede cancelar.");
       }
 
-      // Buyer / unpaid cancel: listing is public again.
-      // Seller abandon (ops): back to review — do not auto-republish.
+      // Buyer / unpaid cancel republishes; approved seller abandon permanently archives.
       if (money.mode === "seller_abandon_entitlement") {
-        await tx.listing.updateMany({
+        const archived = await tx.listing.updateMany({
           where: { id: order.listingId, status: "RESERVED" },
           data: {
-            status: "PENDING_REVIEW",
-            rejectionReason: null,
-            reviewerNotes: null,
-            reviewedAt: null,
-            approvedAt: null,
-            reviewerId: null,
+            status: "ARCHIVED",
           },
+        });
+        if (archived.count !== 1) {
+          throw new OrderError(
+            "El anuncio cambió mientras se aprobaba la cancelación. La solicitud requiere revisión manual.",
+          );
+        }
+        await tx.shipment.updateMany({
+          where: {
+            orderId: order.id,
+            status: { notIn: ["CANCELLED", "DELIVERED", "RETURNED"] },
+          },
+          data: { status: "CANCELLED" },
         });
       } else {
         await tx.listing.updateMany({
@@ -509,7 +515,7 @@ export async function cancelOrder(input: {
         listingId,
         listingSlug,
         message:
-          "Cancelación del vendedor registrada. El anuncio vuelve a revisión (no se publica solo). El comprador puede elegir reembolso o una compra de reemplazo con 8% de comisión (una sola vez).",
+          "Cancelación del vendedor registrada. El anuncio quedó archivado. El comprador puede elegir reembolso o una compra de reemplazo con 8% de protección (una sola vez).",
       };
     }
 
@@ -628,7 +634,7 @@ export function buildOrderTimeline(
   if (order.status === "CANCELLED" && order.cancelledAt) {
     events.push({
       id: "cancelled",
-      label: "Pedido cancelado · anuncio publicado de nuevo",
+      label: "Pedido cancelado",
       at: order.cancelledAt,
       done: true,
     });

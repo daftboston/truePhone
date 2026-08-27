@@ -57,7 +57,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Qué pasa si el vendedor cancela después de que pagué?",
         answer:
-          "No se reembolsa solo. En el pedido eliges: reembolso, o una compra de reemplazo con 8% de comisión una sola vez. El reembolso siempre está disponible mientras no uses esa compensación. El anuncio del vendedor no vuelve solo al mercado: pasa otra vez por revisión de TruePhone.",
+          "Soporte revisa primero la solicitud del vendedor. Si la acepta, te avisamos en TruePhone y en el pedido eliges: reembolso, o una compra de reemplazo con 8% de protección una sola vez. El reembolso sigue disponible mientras no uses esa compensación. El anuncio queda archivado y no vuelve al mercado.",
       },
     ],
   },
@@ -78,7 +78,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Qué pasa con mi anuncio si cancelo una venta ya pagada?",
         answer:
-          "Las cancelaciones tras el pago las gestiona soporte TruePhone (no desde el botón del pedido). El anuncio no se publica de nuevo automáticamente: vuelve a la cola de revisión. Las cancelaciones tras pago pueden verse en tu perfil y afectar la confianza de compradores.",
+          "Abre «Contactar soporte» en la venta y envía una solicitud con el motivo. No cancela de inmediato: REVIEWER/ADMIN puede responder, pedir información o decidir. Si la acepta, el pedido se cancela y el anuncio queda archivado. El incidente permanece privado para operaciones; no aparece como contador público ni permite una reseña del pedido cancelado.",
       },
     ],
   },

@@ -56,7 +56,9 @@ export function BuyerAbandonChoice({ orderId }: BuyerAbandonChoiceProps) {
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button asChild>
-          <Link href="/explorar">Buscar otro iPhone al 8%</Link>
+          <Link href={`/explorar?compensacion=${orderId}`}>
+            Buscar otro iPhone al 8%
+          </Link>
         </Button>
         {!confirmRefund ? (
           <Button

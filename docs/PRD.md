@@ -293,6 +293,8 @@ This all-in fee covers Wompi collection, Wompi payout (from Wompi Cuenta), and T
 
 **Loyalty / seller no-ship:** if the **seller cancels after payment** or does not send the phone, do **not** auto-refund immediately. Offer the buyer a **choice**: (A) help find another phone with a **one-time 8%** fee on that replacement purchase, or (B) **full refund**. The 8% is **only for that one replacement buy**, not ongoing.
 
+Paid sellers cannot cancel immediately. They open an in-app, order-scoped support request; REVIEWER/ADMIN discuss and decide only submitted cases. Before shipping commitment the request may be accepted as seller cancellation. After tracking or Premium custody/inspection, the workflow becomes a fulfillment exception with ADMIN-controlled financial outcomes. Accepted cancellation preserves the order and support evidence, archives the listing permanently, and does not permit a cancelled-order review. The incident is private operations data: it is never a public cancellation count or profile label.
+
 Shipping / logistics:
 
 - **Premium Bogotá:** seller pays **$20,000 COP** (deducted at payout); TruePhone pickup + inspect + deliver.

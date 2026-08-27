@@ -13,20 +13,17 @@ import {
   cancelOrderSchema,
   createOrderSchema,
   fieldErrorsFromZod,
-  opsCancelSellerAbandonSchema,
   type OrderActionState,
 } from "@/features/orders/schemas/order";
-import {
-  canAccessReviewPortal,
-  getCurrentProfile,
-  getRequestOrigin,
-} from "@/lib/auth/session";
+import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import {
   cancelOrder,
   chooseRefundAfterSellerAbandon,
   createOrderAndReserveListing,
 } from "@/lib/orders";
+import { safeNotify } from "@/lib/notifications/marketplace";
+import { notifyBuyerRefundCompleted } from "@/lib/notifications/order-support";
 
 /**
  * revalidateOrderPaths
@@ -45,7 +42,7 @@ function revalidateOrderPaths(input: {
   revalidatePath("/compras");
   revalidatePath("/ventas");
   revalidatePath("/vender");
-  revalidatePath("/revision/cancelaciones");
+  revalidatePath("/revision/soporte-pedidos");
   revalidatePath("/revision/anuncios");
   revalidatePath("/revision");
   if (input.orderId) {
@@ -226,10 +223,11 @@ export async function chooseRefundAfterSellerAbandonAction(
     return { ok: false, error: "Pedido inválido." };
   }
 
+  const siteOrigin = await getRequestOrigin();
   const result = await chooseRefundAfterSellerAbandon({
     orderId: parsed.data.orderId,
     buyerId: current.profile.id,
-    siteOrigin: await getRequestOrigin(),
+    siteOrigin,
   });
 
   if (!result.ok) {
@@ -237,77 +235,15 @@ export async function chooseRefundAfterSellerAbandonAction(
   }
 
   await revalidateForOrderId(parsed.data.orderId);
-  return {
-    ok: true,
-    message:
-      "Reembolso autorizado. El dinero vuelve por el mismo medio de pago.",
-  };
-}
-
-/**
- * opsCancelPaidOrderAsSellerAbandonAction
- *
- * REVIEWER/ADMIN cancels a PAID order as seller abandon: creates 8% entitlement,
- * no auto-refund, listing → PENDING_REVIEW. Sellers cannot call this themselves.
- *
- * @param _prev - Previous form state from useActionState.
- * @param formData - orderId + required reason.
- * @returns Action state; revalidates buyer/seller/revision paths on success.
- * @calledBy OpsSellerAbandonCancelForm
- */
-export async function opsCancelPaidOrderAsSellerAbandonAction(
-  _prev: OrderActionState,
-  formData: FormData,
-): Promise<OrderActionState> {
-  const current = await getCurrentProfile();
-  if (!current) {
-    return {
-      ok: false,
-      error: "Debes iniciar sesión.",
-      loginRequired: true,
-    };
-  }
-  if (!canAccessReviewPortal(current.profile.role)) {
-    return {
-      ok: false,
-      error:
-        "Solo revisores y administradores pueden cancelar como abandono del vendedor.",
-    };
-  }
-
-  const parsed = opsCancelSellerAbandonSchema.safeParse({
-    orderId: formData.get("orderId"),
-    reason: formData.get("reason"),
-  });
-  if (!parsed.success) {
-    return {
-      ok: false,
-      error: "Revisa el formulario.",
-      fieldErrors: fieldErrorsFromZod(parsed.error),
-    };
-  }
-
-  const result = await cancelOrder({
-    orderId: parsed.data.orderId,
-    actorId: current.profile.id,
-    reason: parsed.data.reason,
-    siteOrigin: await getRequestOrigin(),
-    asOpsSellerAbandon: true,
-  });
-
-  if (!result.ok) {
-    return { ok: false, error: result.error };
-  }
-
-  await revalidateForOrderId(
-    parsed.data.orderId,
-    result.listingId,
-    result.listingSlug,
+  await safeNotify(
+    notifyBuyerRefundCompleted({
+      orderId: parsed.data.orderId,
+      siteOrigin,
+    }),
   );
   return {
     ok: true,
     message:
-      result.message ??
-      "Cancelación registrada. El comprador puede elegir reembolso o 8%; el anuncio vuelve a revisión.",
+      "Reembolso autorizado. El dinero vuelve por el mismo medio de pago.",
   };
 }

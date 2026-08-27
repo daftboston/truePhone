@@ -50,6 +50,33 @@ export async function findActiveFeeEntitlement(buyerId: string, tx?: Tx) {
 }
 
 /**
+ * findActiveFeeEntitlementForSource
+ *
+ * Validates that a compensation deep link belongs to the signed-in buyer and remains active.
+ *
+ * @param buyerId - Buyer profile UUID.
+ * @param sourceOrderId - Cancelled source order from the deep link.
+ * @param tx - Optional transaction client.
+ * @returns Matching ACTIVE entitlement or null.
+ * @calledBy explore, browse, and listing-detail compensation banners
+ */
+export async function findActiveFeeEntitlementForSource(
+  buyerId: string,
+  sourceOrderId: string,
+  tx?: Tx,
+) {
+  const db = tx ?? prisma;
+  return db.feeEntitlement.findFirst({
+    where: {
+      buyerId,
+      sourceOrderId,
+      status: "ACTIVE",
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
+  });
+}
+
+/**
  * resolveFeeKindForBuyer
  *
  * Chooses default vs loyalty fee kind based on an active entitlement.

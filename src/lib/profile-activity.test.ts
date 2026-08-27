@@ -8,7 +8,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  formatPaidSellerCancelLabel,
   formatPublicActivityLabel,
   summarizePublicActivity,
 } from "@/lib/profile-activity";
@@ -23,7 +22,6 @@ describe("summarizePublicActivity", () => {
       total: 3,
       active: 1,
       bought: 2,
-      paidSellerCancelCount: 0,
     });
   });
 
@@ -36,17 +34,7 @@ describe("summarizePublicActivity", () => {
       total: 3,
       active: 0,
       bought: 0,
-      paidSellerCancelCount: 0,
     });
-  });
-
-  it("passes through paidSellerCancelCount when provided", () => {
-    const counts = summarizePublicActivity({
-      listingStatuses: ["PUBLISHED"],
-      bought: 0,
-      paidSellerCancelCount: 2,
-    });
-    assert.equal(counts.paidSellerCancelCount, 2);
   });
 });
 
@@ -57,20 +45,8 @@ describe("formatPublicActivityLabel", () => {
         total: 3,
         active: 0,
         bought: 1,
-        paidSellerCancelCount: 0,
       }),
       "Anuncios: 3 en total, 0 activos, 1 comprado",
     );
-  });
-});
-
-describe("formatPaidSellerCancelLabel", () => {
-  it("returns null when count is zero or negative", () => {
-    assert.equal(formatPaidSellerCancelLabel(0), null);
-    assert.equal(formatPaidSellerCancelLabel(-1), null);
-  });
-
-  it("matches the Spanish paid seller-cancel trust copy", () => {
-    assert.equal(formatPaidSellerCancelLabel(2), "Cancelaciones tras pago: 2");
   });
 });

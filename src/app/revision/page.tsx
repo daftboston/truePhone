@@ -9,10 +9,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   BadgeCheck,
-  Ban,
   ChevronRight,
   ClipboardList,
   CreditCard,
+  LifeBuoy,
   MessageSquareWarning,
   ShieldAlert,
   Star,
@@ -33,7 +33,7 @@ import { countPaymentsByStatus } from "@/lib/payments";
 import { countOpsDisputeQueue } from "@/lib/payments/ops-disputes";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
-import { countPaidOrdersForOpsSellerAbandon } from "@/lib/orders/ops-seller-abandon";
+import { countActionableOrderSupportCases } from "@/lib/orders/order-support-service";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -136,7 +136,7 @@ export default async function ReviewHubPage() {
     disputeQueueCount,
     recommendedPriceCount,
     reviewReportsOpen,
-    sellerAbandonCancelCount,
+    orderSupportCount,
   ] = await Promise.all([
     countListingsForReview(),
     countPendingIdentityVerifications(),
@@ -145,7 +145,7 @@ export default async function ReviewHubPage() {
     isAdmin ? countOpsDisputeQueue() : Promise.resolve(0),
     isAdmin ? countRecommendedPrices() : Promise.resolve(0),
     countOpenReviewReports(),
-    countPaidOrdersForOpsSellerAbandon(),
+    countActionableOrderSupportCases(),
   ]);
 
   const firstName =
@@ -157,6 +157,7 @@ export default async function ReviewHubPage() {
     listingCounts.pendiente +
     listingCounts.enRevision +
     identityPending +
+    orderSupportCount +
     reviewReportsOpen;
 
   return (
@@ -215,12 +216,12 @@ export default async function ReviewHubPage() {
           />
 
           <QueueCard
-            href="/revision/cancelaciones"
-            title="Cancelaciones (abandono)"
-            description="Cancelar pedidos pagados como abandono del vendedor (8% o reembolso)."
-            count={sellerAbandonCancelCount}
-            icon={Ban}
-            emphasized={sellerAbandonCancelCount > 0}
+            href="/revision/soporte-pedidos?tab=pendientes"
+            title="Soporte de pedidos"
+            description="Solicitudes de cancelación, problemas de envío y preguntas de vendedores."
+            count={orderSupportCount}
+            icon={LifeBuoy}
+            emphasized={orderSupportCount > 0}
           />
         </div>
       </section>

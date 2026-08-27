@@ -13,8 +13,15 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { ExploreSeriesSection } from "@/features/listings/components/explore-series-section";
 import { ModelSearch } from "@/features/listings/components/model-search";
+import { CompensationBanner } from "@/features/orders/components/compensation-banner";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { findActiveFeeEntitlementForSource } from "@/lib/financial-core/entitlements";
 import { groupModelsBySeries } from "@/lib/iphone-catalog";
 import { getCatalog } from "@/lib/listings";
+
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 /** Catalog is live DB data; skip build-time prerender (CI has no Postgres). */
 export const dynamic = "force-dynamic";
@@ -32,13 +39,30 @@ export const metadata: Metadata = {
  *
  * @returns Explore page with search, series sections, and model cards.
  */
-export default async function ExplorePage() {
-  const catalog = await getCatalog();
+export default async function ExplorePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const requestedCompensation =
+    typeof params.compensacion === "string" ? params.compensacion : "";
+  const [catalog, current] = await Promise.all([
+    getCatalog(),
+    requestedCompensation ? getCurrentProfile() : Promise.resolve(null),
+  ]);
+  const compensation =
+    current && requestedCompensation
+      ? await findActiveFeeEntitlementForSource(
+          current.profile.id,
+          requestedCompensation,
+        )
+      : null;
   const seriesList = groupModelsBySeries(catalog.models);
   const modelCount = catalog.models.length;
 
   return (
     <AppShell mainClassName="gap-10 md:gap-12">
+      {compensation ? (
+        <CompensationBanner sourceOrderId={compensation.sourceOrderId} />
+      ) : null}
+
       <div className="mx-auto max-w-xl space-y-4 text-center">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
           Explorar iPhones
@@ -57,6 +81,7 @@ export default async function ExplorePage() {
         <ModelSearch
           models={catalog.models}
           placeholder="Ej. iPhone 14, 15 Pro…"
+          compensationId={compensation?.sourceOrderId}
         />
       </div>
 
@@ -78,7 +103,11 @@ export default async function ExplorePage() {
       ) : (
         <div className="space-y-12 md:space-y-16">
           {seriesList.map((series) => (
-            <ExploreSeriesSection key={series.key} series={series} />
+            <ExploreSeriesSection
+              key={series.key}
+              series={series}
+              compensationId={compensation?.sourceOrderId}
+            />
           ))}
         </div>
       )}

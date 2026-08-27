@@ -11,6 +11,7 @@ import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BuyerAbandonChoice } from "@/features/orders/components/buyer-abandon-choice";
+import { OrderSupportPanel } from "@/features/orders/components/order-support-panel";
 import { OrderStatusActions } from "@/features/orders/components/order-status-actions";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { PayOrderButton } from "@/features/payments/components/pay-order-button";
@@ -24,6 +25,8 @@ import {
   orderStatusLabel,
   type OrderDetail,
 } from "@/lib/orders";
+import { classifyOrderSupportOptions } from "@/lib/orders/order-support";
+import type { SellerOrderSupportCase } from "@/lib/orders/order-support-service";
 import type { PublicActivityCounts } from "@/lib/profile-activity";
 import { paymentStatusLabel } from "@/lib/payments";
 import { publicListingPath } from "@/lib/listings-marketplace";
@@ -41,6 +44,7 @@ type OrderDetailViewProps = {
   needsBankAccount?: boolean;
   buyerActivity: PublicActivityCounts;
   sellerActivity: PublicActivityCounts;
+  supportCases?: SellerOrderSupportCase[];
 };
 
 /**
@@ -109,6 +113,7 @@ function paymentStatusCopy(order: OrderDetail) {
  * @param props.needsBankAccount - Seller missing default bank destination.
  * @param props.buyerActivity - Public listing/purchase counters for the buyer.
  * @param props.sellerActivity - Public listing/purchase counters for the seller.
+ * @param props.supportCases - Seller-safe order support history.
  * @returns Order detail layout.
  * @calledBy `/compras/[orderId]`, `/ventas/[orderId]`
  */
@@ -123,6 +128,7 @@ export function OrderDetailView({
   needsBankAccount = false,
   buyerActivity,
   sellerActivity,
+  supportCases = [],
 }: OrderDetailViewProps) {
   const isBuyer = perspective === "buyer";
   // Sellers on paid orders must contact support (no self-cancel); unpaid still can.
@@ -295,6 +301,14 @@ export function OrderDetailView({
         currency={order.currency}
       />
 
+      {!isBuyer && (order.status === "PAID" || supportCases.length > 0) ? (
+        <OrderSupportPanel
+          orderId={order.id}
+          classification={classifyOrderSupportOptions(order)}
+          cases={supportCases}
+        />
+      ) : null}
+
       <section className="border-border space-y-3 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">Recibo</h2>
         <p className="text-muted-foreground text-xs">
@@ -367,7 +381,6 @@ export function OrderDetailView({
         orderId={order.id}
         canCancel={canCancel}
         isPaid={order.status === "PAID"}
-        isSeller={!isBuyer}
       />
 
       <OrderReviewsSection
