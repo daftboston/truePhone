@@ -388,10 +388,11 @@ Table: `notification_preferences`.
 
 # Planned schema (not yet in Prisma)
 
-Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`):
+Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`, `docs/plan.md`):
 
 - **AuditLog** — reviewer and admin actions
 - **Dispute** — first-class dispute entity (MVP freeze is `Order.payoutFrozen` + Ledger; ops UI at `/revision/disputas`)
+- **Listing view events / counts** — Phase **15** (ops instrumentation): durable per-listing view tracking (event log and/or aggregated `viewCount`). Phase **24** reuses the same data for a private seller “views per listing” surface. Do not expose view counts on public profiles or order party cards.
 
 ---
 
