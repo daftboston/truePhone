@@ -48,6 +48,7 @@ export {
   manualPayoutCompletionBlocker,
   PAID_ORDER_CANCEL_BLOCKED_ERROR,
   sellerPaidSelfCancelBlocker,
+  shouldReleaseSupportCasePayoutFreeze,
   SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR,
 } from "@/lib/financial-core/settlement-guards";
 export {

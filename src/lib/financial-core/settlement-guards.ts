@@ -1,6 +1,7 @@
 /**
  * @file settlement-guards.ts
- * @description Pure Financial Core guards so cancel/refund cannot race with seller payout.
+ * @description Pure Financial Core guards so cancel/refund cannot race with seller payout,
+ * and support-case unfreeze cannot drop a chargeback or buyer-dispute freeze.
  * @dependencies none
  */
 
@@ -101,4 +102,32 @@ export function manualPayoutCompletionBlocker(
     return "El pago está congelado (disputa o reclamo). No se puede marcar como pagado.";
   }
   return null;
+}
+
+/**
+ * shouldReleaseSupportCasePayoutFreeze
+ *
+ * True only when this fulfillment-exception case is the sole freeze source.
+ * A chargeback or another DISPUTE_OPENED (buyer problem, ops freeze) must keep
+ * payoutFrozen so closing the shipping case cannot pay the seller.
+ *
+ * @param input.payoutFrozen - Current Order.payoutFrozen flag.
+ * @param input.freezeRecordedForThisCase - Ledger has DISPUTE_OPENED for this case.
+ * @param input.hasChargebackReceived - CHARGEBACK_RECEIVED exists on the order.
+ * @param input.hasOtherDisputeOpened - A DISPUTE_OPENED not owned by this case.
+ * @returns Whether Financial Core may clear payoutFrozen for this case.
+ * @calledBy releaseFulfillmentExceptionFreeze
+ */
+export function shouldReleaseSupportCasePayoutFreeze(input: {
+  payoutFrozen: boolean;
+  freezeRecordedForThisCase: boolean;
+  hasChargebackReceived: boolean;
+  hasOtherDisputeOpened: boolean;
+}): boolean {
+  return (
+    input.payoutFrozen &&
+    input.freezeRecordedForThisCase &&
+    !input.hasChargebackReceived &&
+    !input.hasOtherDisputeOpened
+  );
 }

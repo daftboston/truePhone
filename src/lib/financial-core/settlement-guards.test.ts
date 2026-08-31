@@ -1,6 +1,6 @@
 /**
  * @file settlement-guards.test.ts
- * @description Unit tests for PAID-order cancel cutoff, manual payout completion, and ops queue filter.
+ * @description Unit tests for PAID-order cancel cutoff, manual payout completion, support-case unfreeze, and ops queue filter.
  * @dependencies node:test, settlement-guards, ops-payouts
  */
 
@@ -11,6 +11,7 @@ import {
   canCancelPaidOrder,
   manualPayoutCompletionBlocker,
   sellerPaidSelfCancelBlocker,
+  shouldReleaseSupportCasePayoutFreeze,
   SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR,
 } from "@/lib/financial-core/settlement-guards";
 import { authorizedManualPayoutWhere } from "@/lib/payments/ops-payouts";
@@ -156,6 +157,59 @@ describe("manualPayoutCompletionBlocker", () => {
         payoutCompletedAt: new Date("2026-08-17T12:00:00.000Z"),
       }),
       null,
+    );
+  });
+});
+
+describe("shouldReleaseSupportCasePayoutFreeze", () => {
+  const ownedOnly = {
+    payoutFrozen: true,
+    freezeRecordedForThisCase: true,
+    hasChargebackReceived: false,
+    hasOtherDisputeOpened: false,
+  };
+
+  it("releases when this case is the only freeze source", () => {
+    assert.equal(shouldReleaseSupportCasePayoutFreeze(ownedOnly), true);
+  });
+
+  it("keeps the freeze when a chargeback was recorded", () => {
+    assert.equal(
+      shouldReleaseSupportCasePayoutFreeze({
+        ...ownedOnly,
+        hasChargebackReceived: true,
+      }),
+      false,
+    );
+  });
+
+  it("keeps the freeze when a buyer problem or other dispute is open", () => {
+    assert.equal(
+      shouldReleaseSupportCasePayoutFreeze({
+        ...ownedOnly,
+        hasOtherDisputeOpened: true,
+      }),
+      false,
+    );
+  });
+
+  it("does not unfreeze a freeze this case did not create", () => {
+    assert.equal(
+      shouldReleaseSupportCasePayoutFreeze({
+        ...ownedOnly,
+        freezeRecordedForThisCase: false,
+      }),
+      false,
+    );
+  });
+
+  it("is a no-op when payout is already unfrozen", () => {
+    assert.equal(
+      shouldReleaseSupportCasePayoutFreeze({
+        ...ownedOnly,
+        payoutFrozen: false,
+      }),
+      false,
     );
   });
 });
