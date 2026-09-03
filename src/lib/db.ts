@@ -17,11 +17,18 @@ const globalForPrisma = globalThis as unknown as {
  * createPrismaClient
  *
  * Builds a PrismaClient using the Postgres driver adapter.
+ * Preview accepts the isolated Supabase project's managed certificate chain;
+ * production keeps the driver's strict certificate verification.
  *
  * @returns A new PrismaClient instance.
  */
 function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: getDatabaseUrl() });
+  const adapter = new PrismaPg({
+    connectionString: getDatabaseUrl(),
+    ...(process.env.VERCEL_ENV === "preview"
+      ? { ssl: { rejectUnauthorized: false } }
+      : {}),
+  });
   return new PrismaClient({ adapter });
 }
 

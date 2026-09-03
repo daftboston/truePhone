@@ -57,7 +57,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Qué pasa si el vendedor cancela después de que pagué?",
         answer:
-          "No se reembolsa solo. En el pedido eliges: reembolso, o una compra de reemplazo con 8% de comisión una sola vez. El reembolso siempre está disponible mientras no uses esa compensación.",
+          "Soporte revisa primero la solicitud del vendedor. Si la acepta, te avisamos en TruePhone y en el pedido eliges: reembolso, o una compra de reemplazo con 8% de protección una sola vez. El reembolso sigue disponible mientras no uses esa compensación. El anuncio queda archivado y no vuelve al mercado.",
       },
     ],
   },
@@ -68,12 +68,17 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Qué necesito para publicar?",
         answer:
-          "Verificar identidad con cédula y selfie, completar el anuncio (modelo, estado, IMEI, al menos 8 fotos) y enviar prueba de posesión. Un revisor de TruePhone aprueba o rechaza antes de que el anuncio sea público.",
+          "Verificar identidad con cédula y selfie, completar el anuncio (modelo, estado, IMEI, 6 fotos guiadas) y enviar prueba de posesión. Un revisor de TruePhone aprueba o rechaza antes de que el anuncio sea público.",
       },
       {
         question: "¿TruePhone me dice a qué precio vender?",
         answer:
           "Mostramos un rango recomendado según el modelo y el estado. Tú eliges el precio del equipo. La comisión la paga el comprador, no se descuenta de tu venta (salvo el envío Premium Bogotá, si lo eliges).",
+      },
+      {
+        question: "¿Qué pasa con mi anuncio si cancelo una venta ya pagada?",
+        answer:
+          "Abre «Contactar soporte» en la venta y envía una solicitud con el motivo. No cancela de inmediato: REVIEWER/ADMIN puede responder, pedir información o decidir. Si la acepta, el pedido se cancela y el anuncio queda archivado. El incidente permanece privado para operaciones; no aparece como contador público ni permite una reseña del pedido cancelado.",
       },
     ],
   },

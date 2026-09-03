@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 
 type ExploreSeriesSectionProps = {
   series: ModelSeries;
+  compensationId?: string;
 };
 
 /**
@@ -103,9 +104,11 @@ function ExploreModelMedia({
 function ExploreModelCard({
   model,
   index,
+  compensationId,
 }: {
   model: CatalogModel;
   index: number;
+  compensationId?: string;
 }) {
   const images = resolveCatalogModelImages(model.slug);
   const canFlip = Boolean(images.front && images.back);
@@ -116,7 +119,7 @@ function ExploreModelCard({
       style={{ "--explore-stagger": index } as CSSProperties}
     >
       <Link
-        href={browseModelHref(model.id)}
+        href={`${browseModelHref(model.id)}${compensationId ? `&compensacion=${encodeURIComponent(compensationId)}` : ""}`}
         className={cn(
           "explore-model-card border-border bg-card group flex h-full flex-col overflow-hidden rounded-2xl border",
           "focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
@@ -148,7 +151,10 @@ function ExploreModelCard({
  * @returns Explore series section.
  * @calledBy ExplorePage
  */
-export function ExploreSeriesSection({ series }: ExploreSeriesSectionProps) {
+export function ExploreSeriesSection({
+  series,
+  compensationId,
+}: ExploreSeriesSectionProps) {
   const modelCount = series.models.length;
 
   return (
@@ -167,7 +173,7 @@ export function ExploreSeriesSection({ series }: ExploreSeriesSectionProps) {
             : `${modelCount} modelos revisados`}
         </p>
         <Link
-          href={browseSeriesHref(series.key)}
+          href={`${browseSeriesHref(series.key)}${compensationId ? `&compensacion=${encodeURIComponent(compensationId)}` : ""}`}
           className="text-primary inline-flex text-sm font-medium underline-offset-4 hover:underline"
         >
           Ver {series.label}
@@ -176,7 +182,12 @@ export function ExploreSeriesSection({ series }: ExploreSeriesSectionProps) {
 
       <ul className="flex flex-wrap justify-center gap-3 md:gap-4">
         {series.models.map((model, index) => (
-          <ExploreModelCard key={model.id} model={model} index={index} />
+          <ExploreModelCard
+            key={model.id}
+            model={model}
+            index={index}
+            compensationId={compensationId}
+          />
         ))}
       </ul>
     </section>

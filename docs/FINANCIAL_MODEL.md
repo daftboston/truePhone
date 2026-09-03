@@ -50,7 +50,7 @@ That 10% **includes**:
 
 ### Loyalty fee after seller cancel / no-ship
 
-If the **seller cancels after payment** or does not send the phone: do **not** auto-refund. Buyer chooses **one-time 8%** on a replacement purchase (help find another phone) **or** a **refund**. See §5.2.
+If the **seller cancels after payment** or does not send the phone: paid cancels go through the in-app **order-support request / staff approval** seam (not seller self-cancel). Do **not** auto-refund. Buyer chooses **one-time 8%** on a replacement purchase (help find another phone) **or** a **refund**. An accepted cancellation archives the listing permanently. See §5.2.
 
 ## 2.2 Seller receipt (happy path)
 
@@ -283,23 +283,23 @@ UX ownership: Phase **10d** (purchase + order UI) + Phase **12** (push/email rem
 
 ## 5.2 Cancels after payment
 
-| Who cancels | After `PaymentApproved`                              | Money outcome                                                                                                                                                                                                                         |
-| ----------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Buyer**   | Yes                                                  | Buyer **absorbs Wompi collection fees**. Refund = `B − WompiCollection` (integer pesos). TruePhone does not refund the processing cost Wompi already took. Listing returns to marketplace per order rules.                            |
-| **Seller**  | Yes (or seller does not ship / abandons fulfillment) | **Do not auto-refund immediately.** Offer the buyer a **choice**: (A) **stay on TruePhone** — help find another phone with a **one-time 8%** marketplace fee on that replacement purchase, **or** (B) **full refund**. Buyer decides. |
+| Who cancels | After `PaymentApproved`                              | Money outcome                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ----------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Buyer**   | Yes                                                  | Buyer **absorbs Wompi collection fees**. Refund = `B − WompiCollection` (integer pesos). TruePhone does not refund the processing cost Wompi already took. Listing returns to marketplace per order rules.                                                                                                                                                                                                                                                                                                                                             |
+| **Seller**  | Yes (or seller does not ship / abandons fulfillment) | **Do not auto-refund immediately.** Sellers cannot mutate a paid order directly. They submit an in-app cancellation request before shipping commitment; REVIEWER/ADMIN discuss and decide only submitted cases in `/revision/soporte-pedidos`. Approval invokes Financial Core, archives the listing, and offers the buyer a choice: (A) **stay on TruePhone** with a **one-time 8%** marketplace fee on the replacement purchase, or (B) **full refund**. The support incident is private ops evidence; it is not a public profile counter or review. |
 
 Seller cancel / no-ship after payment is a trust failure. Retention path (8%) is preferred in UX copy, but **refund must always remain available**.
 
 ### Loyalty 8% — what it means (mechanics) (LOCKED)
 
-Triggered only when the **seller cancels after payment** or **fails to send** the phone (fulfillment abandoned).
+Triggered only when staff approves a submitted seller cancellation or no-ship outcome (not seller self-cancel). Approval atomically cancels open payouts, marks seller fulfillment abandoned, cancels any open shipment, sets the order to `CANCELLED`, and sets the listing to `ARCHIVED`. The listing row, photos, order relation, seller request, and staff decision remain for audit, but the listing never returns to the public marketplace.
 
 1. TruePhone does **not** force an immediate refund.
 2. Buyer is offered:
    - **Option A — Continue shopping:** help find another listing; that **one** replacement checkout uses **8%** marketplace fee instead of 10%.
    - **Option B — Refund:** full refund of eligible amounts (per Financial Core / cancel rules).
 3. The **8% applies only to that one replacement purchase** tied to this failed order — **not** to later purchases, and not forever. After that one buy (or if they choose refund and never use it), normal fee is **10%** again.
-4. If they choose A but never complete a replacement purchase within an ops-defined window, entitlement expires and they can still request refund (product default: keep refund available until entitlement used or buyer explicitly closes the case).
+4. The entitlement has no expiry for now. Refund remains available until the entitlement is used or the buyer explicitly chooses refund.
 
 Implement as a single-use `FeeEntitlement` linked to the failed `orderId` (see DATABASE planned schema).
 

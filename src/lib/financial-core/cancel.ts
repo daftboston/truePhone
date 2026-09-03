@@ -17,6 +17,7 @@ import { cancelOpenPayouts } from "@/lib/financial-core/open-payouts";
 import {
   canCancelPaidOrder,
   PAID_ORDER_CANCEL_BLOCKED_ERROR,
+  sellerPaidSelfCancelBlocker,
 } from "@/lib/financial-core/settlement-guards";
 import { prisma } from "@/lib/db";
 import { resolvePaymentProvider } from "@/lib/payments/resolve-provider";
@@ -47,14 +48,15 @@ export type CancelMoneyResult =
  *
  * Financial Core cancel money rules (docs/FINANCIAL_MODEL.md §5.2).
  * - Buyer after pay: refund B − WompiCollection
- * - Seller after pay: no auto-refund; create 8% FeeEntitlement
- * - Pre-payment: mode pre_payment only
+ * - Seller after pay: self-cancel blocked; ops seller-abandon creates 8% FeeEntitlement
+ * - Pre-payment: mode pre_payment only (buyer or seller)
  * - After buyer marks received / payout authorized: refuse (settlement owns the money)
  *
  * @param input.orderId - Order UUID.
- * @param input.actorId - Buyer or seller profile UUID.
+ * @param input.actorId - Buyer, seller, or ops profile UUID.
  * @param input.siteOrigin - Origin for payment provider resolution.
  * @param input.reason - Optional cancel/refund reason.
+ * @param input.asOpsSellerAbandon - When true, run paid seller-abandon money path (caller must gate REVIEWER/ADMIN).
  * @returns CancelMoneyResult.
  * @calledBy cancelOrder / order cancel actions
  */
@@ -63,16 +65,36 @@ export async function authorizeCancelMoney(input: {
   actorId: string;
   siteOrigin: string;
   reason?: string | null;
+  asOpsSellerAbandon?: boolean;
 }): Promise<CancelMoneyResult> {
   const order = await prisma.order.findFirst({ where: { id: input.orderId } });
   if (!order) {
     return { ok: false, error: "Pedido no encontrado." };
   }
-  if (order.buyerId !== input.actorId && order.sellerId !== input.actorId) {
+
+  const asOpsSellerAbandon = Boolean(input.asOpsSellerAbandon);
+  const isBuyer = order.buyerId === input.actorId;
+
+  if (
+    order.buyerId !== input.actorId &&
+    order.sellerId !== input.actorId &&
+    !asOpsSellerAbandon
+  ) {
     return { ok: false, error: "No tienes acceso a este pedido." };
   }
   if (order.status !== "AWAITING_PAYMENT" && order.status !== "PAID") {
     return { ok: false, error: "Solo puedes cancelar un pedido activo." };
+  }
+
+  // Sellers cannot self-cancel PAID orders; unpaid self-cancel still allowed.
+  const sellerPaidBlock = sellerPaidSelfCancelBlocker({
+    orderStatus: order.status,
+    actorId: input.actorId,
+    sellerId: order.sellerId,
+    asOpsSellerAbandon,
+  });
+  if (sellerPaidBlock) {
+    return { ok: false, error: sellerPaidBlock };
   }
 
   if (order.status === "AWAITING_PAYMENT") {
@@ -93,9 +115,8 @@ export async function authorizeCancelMoney(input: {
     );
   });
 
-  const isBuyer = order.buyerId === input.actorId;
-
-  if (isBuyer) {
+  // Buyer self-cancel refund (ops seller-abandon never takes this branch).
+  if (isBuyer && !asOpsSellerAbandon) {
     const refundPesos = buyerCancelRefundPesos({
       buyerTotal: order.totalPrice,
       wompiCollectionPesos: order.wompiCollectionPesos,
@@ -186,7 +207,19 @@ export async function authorizeCancelMoney(input: {
     return { ok: true, mode: "buyer_refund", refundPesos };
   }
 
-  // Seller cancel / no-ship after payment — no auto-refund.
+  // Ops seller-abandon / no-ship after payment — no auto-refund.
+  if (!asOpsSellerAbandon) {
+    return {
+      ok: false,
+      error:
+        sellerPaidSelfCancelBlocker({
+          orderStatus: order.status,
+          actorId: input.actorId,
+          sellerId: order.sellerId,
+        }) ?? "No puedes cancelar este pedido.",
+    };
+  }
+
   try {
     const entitlement = await prisma.$transaction(async (tx) => {
       await tx.order.update({
@@ -246,11 +279,27 @@ export async function authorizeRefundAfterSellerAbandon(input: {
       error: "Solo el comprador puede solicitar este reembolso.",
     };
   }
+  if (order.status !== "CANCELLED") {
+    return {
+      ok: false,
+      error:
+        "Este pedido aún no está cancelado. Recarga la página e intenta de nuevo.",
+    };
+  }
 
   const entitlement = await prisma.feeEntitlement.findUnique({
     where: { sourceOrderId: order.id },
   });
-  if (!entitlement || entitlement.status !== "ACTIVE") {
+  if (!entitlement) {
+    return {
+      ok: false,
+      error: "No hay una compensación activa para este pedido.",
+    };
+  }
+  if (entitlement.status === "REFUNDED") {
+    return { ok: true, mode: "buyer_refund", refundPesos: order.totalPrice };
+  }
+  if (entitlement.status !== "ACTIVE") {
     return {
       ok: false,
       error: "No hay una compensación activa para este pedido.",
@@ -265,6 +314,16 @@ export async function authorizeRefundAfterSellerAbandon(input: {
     return { ok: false, error: "No hay un pago exitoso para reembolsar." };
   }
 
+  const claimed = await prisma.$transaction(async (tx) =>
+    markFeeEntitlementRefundChosen(tx, entitlement.id),
+  );
+  if (!claimed) {
+    return {
+      ok: false,
+      error: "La compensación del 8% ya no está disponible.",
+    };
+  }
+
   const refundPesos = order.totalPrice;
   const { provider } = resolvePaymentProvider(input.siteOrigin);
   if (payment.providerPaymentId) {
@@ -276,18 +335,50 @@ export async function authorizeRefundAfterSellerAbandon(input: {
     if (!refund.ok && payment.provider !== "WOMPI") {
       return { ok: false, error: refund.error };
     }
+    if (!refund.ok && payment.provider === "WOMPI") {
+      await prisma.$transaction(async (tx) => {
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: {
+            status: "REFUNDED",
+            refundedAt: new Date(),
+            refundAmount: refundPesos,
+            failureMessage: `Reembolso manual requerido: ${refund.error}`,
+          },
+        });
+        await appendLedgerEntry(tx, {
+          orderId: order.id,
+          paymentId: payment.id,
+          type: "REFUND_APPROVED",
+          amountPesos: refundPesos,
+          currency: order.currency,
+          memo: "Buyer chose refund after seller abandon",
+          metadata: {
+            feeEntitlementId: entitlement.id,
+            providerNote: refund.error,
+          },
+        });
+        await appendLedgerEntry(tx, {
+          orderId: order.id,
+          paymentId: payment.id,
+          type: "REFUND_COMPLETED",
+          amountPesos: refundPesos,
+          currency: order.currency,
+          memo: "Refund recorded (manual reconcile may be needed)",
+        });
+      });
+      return { ok: true, mode: "buyer_refund", refundPesos };
+    }
   }
 
   await prisma.$transaction(async (tx) => {
-    await markFeeEntitlementRefundChosen(tx, entitlement.id);
     await tx.payment.update({
       where: { id: payment.id },
       data: {
         status: "REFUNDED",
         refundedAt: new Date(),
         refundAmount: refundPesos,
-        failureMessage:
-          payment.provider === "WOMPI" ? payment.failureMessage : null,
+        failureMessage: null,
       },
     });
     await appendLedgerEntry(tx, {

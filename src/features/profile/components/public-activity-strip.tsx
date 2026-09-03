@@ -1,6 +1,6 @@
 /**
  * @file public-activity-strip.tsx
- * @description One-line public listing/purchase counters (Swappa-style trust strip).
+ * @description Public listing and completed-purchase counters.
  * @dependencies @/lib/profile-activity, @/lib/utils
  */
 
@@ -18,11 +18,12 @@ type PublicActivityStripProps = {
 /**
  * PublicActivityStrip
  *
- * Renders the public activity sentence. Does not show private funnels.
+ * Renders the public activity sentence.
+ * Does not show private funnels.
  *
  * @param props.counts - Total / active / bought counters.
- * @param props.className - Optional text wrapper class.
- * @returns Localized activity line.
+ * @param props.className - Optional text wrapper class (e.g. text-xs on party cards).
+ * @returns Localized activity lines.
  * @calledBy ProfileHeader, PartyCard
  */
 export function PublicActivityStrip({

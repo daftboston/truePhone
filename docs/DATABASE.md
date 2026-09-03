@@ -56,6 +56,10 @@ Guests are unauthenticated users (no enum value).
 | `REJECTED`       | Review failed (may return to draft after edits)                    |
 | `ARCHIVED`       | Soft-retired from active marketplace                               |
 
+**Seller hub (Anuncios activos / Archivados):** Active shows `DRAFT`, `SUBMITTED`, `PENDING_REVIEW`, `APPROVED`, `PUBLISHED`, `REJECTED`, and `RESERVED`. Archivados shows `ARCHIVED` and `SOLD`. Soft-deleted drafts (`deletedAt` set) are hidden from both.
+
+**Seller archive vs system archive:** A seller may archive only a `PUBLISHED` listing (`status = ARCHIVED`, `deletedAt` stays null). Relist restores `PUBLISHED` immediately when no related order ever reached payment (`PAID` / `COMPLETED` or `fundsHeldAt` set). That blocks relist after seller-abandon cancellation or chargeback. Unpaid checkout cancels do not block relist. Draft discard still sets `deletedAt` and is not listed under Archivados.
+
 **V1 review → publish:** reviewer approve sets `status = PUBLISHED` (and `approvedAt`) in one step. Do not require a separate `APPROVED` hop before public browse. The `APPROVED` enum value remains for history tabs / reopen edge cases that may still see old rows.
 
 Listings must not skip forward states in product workflows. Public browse only shows `PUBLISHED` (and optionally `RESERVED` with clear UI once Orders exist).
@@ -78,9 +82,19 @@ Listings must not skip forward states in product workflows. Public browse only s
 
 ## NotificationType
 
-`BUYER_RECEIVED_CONFIRM` | `BUYER_CONFIRM_REMINDER`
+Settlement, marketplace, and order-support events. Order-support additions:
 
-Settlement-critical types first (Phase 12). Additional event types can extend the enum later.
+`ORDER_SUPPORT_REPLY` | `ORDER_SUPPORT_STATUS` | `SELLER_CANCELLATION_ACCEPTED` | `BUYER_REMEDY_AVAILABLE` | `REFUND_COMPLETED` | `FULFILLMENT_ESCALATED`
+
+## OrderSupportCaseType
+
+`SELLER_CANCELLATION` | `FULFILLMENT_EXCEPTION` | `GENERAL_SUPPORT`
+
+## OrderSupportCaseStatus
+
+`PENDING` | `IN_REVIEW` | `NEEDS_SELLER_RESPONSE` | `ESCALATED` | `APPROVED` | `REJECTED` | `RESOLVED` | `WITHDRAWN`
+
+Terminal states are `APPROVED`, `REJECTED`, `RESOLVED`, and `WITHDRAWN`. An approved seller-cancellation case is private operations evidence; it is never a public profile counter or buyer review.
 
 ---
 
@@ -233,6 +247,26 @@ Purchase / reserve / payment lifecycle (Phases 9–10b).
 
 Table: `orders`.
 
+## OrderSupportCase / OrderSupportMessage
+
+Seller-created support workflow for a paid order. This domain is separate from listing-scoped `Message`, because staff need workflow state, assignment, internal notes, and durable decision evidence.
+
+| Field                       | Notes                                                                    |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `orderId` / `sellerId`      | The affected order and its seller; both are re-checked on every mutation |
+| `type`                      | Cancellation, fulfillment exception, or general support                  |
+| `status`                    | Queue lifecycle from `PENDING` to a terminal decision                    |
+| `initialReason`             | Required seller explanation                                              |
+| `assignedStaffId`           | REVIEWER/ADMIN currently responsible                                     |
+| `decisionNote`              | Required staff rationale for terminal decisions                          |
+| `reviewedAt` / `resolvedAt` | First review and terminal timestamps                                     |
+
+Messages belong to one case and one sender. `isInternal = true` is visible only to REVIEWER/ADMIN and is never included in the seller transcript.
+
+Active seller-cancellation cases are unique per order through a partial unique database index. Resolved history remains available for audit. Queue indexes cover status/time, type/status/time, order/status, and assignee/status.
+
+Table: `order_support_cases`, `order_support_messages`.
+
 ## Payment
 
 Compra Garantizada checkout (Phase 10). Buyer is charged `amount` = order `totalPrice` (includes snapshotted marketplace fee).
@@ -291,14 +325,14 @@ Table: `fee_entitlements`.
 
 Device fulfillment (Phase 10c). One shipment per paid order. Shipping never authorizes payouts/refunds.
 
-| Field                          | Notes                                                                                                           |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `orderId`                      | Unique FK → Order                                                                                               |
-| `method`                       | `PREMIUM_BOGOTA` \| `CARRIER`                                                                                   |
-| `status`                       | `METHOD_SELECTED` \| `AWAITING_PICKUP` \| `INSPECTION` \| `IN_TRANSIT` \| `DELIVERED` \| `FAILED` \| `RETURNED` |
-| `carrierName` / `trackingCode` | Required for Carrier before buyer can mark received; visible to buyer                                           |
-| `premiumFeeCop`                | `20000` when Premium selected; `0` for Carrier                                                                  |
-| `deliveredAt`                  | Buyer receipt ack; Financial Core sets `buyerConfirmDeadlineAt` (+24h)                                          |
+| Field                          | Notes                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `orderId`                      | Unique FK → Order                                                                                                              |
+| `method`                       | `PREMIUM_BOGOTA` \| `CARRIER`                                                                                                  |
+| `status`                       | `METHOD_SELECTED` \| `AWAITING_PICKUP` \| `INSPECTION` \| `IN_TRANSIT` \| `DELIVERED` \| `CANCELLED` \| `FAILED` \| `RETURNED` |
+| `carrierName` / `trackingCode` | Required for Carrier before buyer can mark received; visible to buyer                                                          |
+| `premiumFeeCop`                | `20000` when Premium selected; `0` for Carrier                                                                                 |
+| `deliveredAt`                  | Buyer receipt ack; Financial Core sets `buyerConfirmDeadlineAt` (+24h)                                                         |
 
 Table: `shipments`.
 
@@ -354,10 +388,11 @@ Table: `notification_preferences`.
 
 # Planned schema (not yet in Prisma)
 
-Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`):
+Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`, `docs/plan.md`):
 
 - **AuditLog** — reviewer and admin actions
 - **Dispute** — first-class dispute entity (MVP freeze is `Order.payoutFrozen` + Ledger; ops UI at `/revision/disputas`)
+- **Listing view events / counts** — Phase **15** (ops instrumentation): durable per-listing view tracking (event log and/or aggregated `viewCount`). Phase **24** reuses the same data for a private seller “views per listing” surface. Do not expose view counts on public profiles or order party cards.
 
 ---
 
@@ -369,6 +404,7 @@ Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.
 - Notification: unique `dedupeKey`; indexes `(userId, createdAt)`, `(userId, readAt)`, `orderId`
 - Message / block / report: see **Message**, **UserBlock**, **ConversationReport** above
 - Order: `(buyerId, createdAt)`, `(sellerId, createdAt)`, `listingId`, `status`; partial unique on `listingId` where `AWAITING_PAYMENT` \| `PAID`
+- Order support: queue/status/order/assignee indexes; partial unique active seller cancellation per order
 - Payment: `reference` unique; `(orderId, createdAt)`, `(buyerId, createdAt)`, `status`, provider ids
 - Webhook events: unique `(provider, externalEventKey)`
 - V1 search: Prisma filters + `searchVector` maintenance (trigger or app-side update)

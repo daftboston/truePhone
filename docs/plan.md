@@ -4,12 +4,13 @@
 
 Version 1.3
 
-**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Buyer 8% vs refund after seller cancel is on the order page. See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
 **Business logic source:** this file + `docs/PRD.md` — not Figma  
-**Changelog (v1.3):** Chosen next auth = Apple + WhatsApp + Facebook; profile counters locked to Swappa-style public display (incl. order parties); removed user self-serve analytics (Phase 15 = admin/reviewer only).
+**Changelog (v1.3):** Chosen next auth = Apple + WhatsApp + Facebook; profile counters locked to Swappa-style public display (incl. order parties); removed user self-serve analytics (Phase 15 = admin/reviewer only).  
+**Changelog (v1.3.1):** Seller private listing-view analytics (views per listing) deferred to **Phase 24**; Phase **15** may instrument listing views for ops only.
 
 ---
 
@@ -252,11 +253,14 @@ This is **not** a private analytics dashboard. It is a **public trust strip** on
 
 Do **not** show private funnels (views, conversion, payout math) to other users. Counts come from listings + orders tables, never hand-edited fields. Spanish UI example: `Anuncios: 3 en total, 0 activos, 1 comprado`.
 
+**Seller listing views** (how many times each of _their_ listings was viewed) are **not** part of this public strip. That private seller tool is **Phase 24** (see below); Phase **15** may collect view events for ops dashboards first.
+
 ### Pending follow-up
 
 | Item                                          | Status   | When                   | Notes                                                                  |
 | --------------------------------------------- | -------- | ---------------------- | ---------------------------------------------------------------------- |
 | **Public counters (total / active / bought)** | **Done** | Phase 3 + order detail | Profile pages + order party cards; `PublicActivityStrip` / `PartyCard` |
+| **Seller views-per-listing analytics**        | Planned  | **Phase 24**           | Private seller surface; depends on Phase 15 view instrumentation       |
 
 Result: Professional user identities with transparent public activity stats.
 
@@ -495,7 +499,7 @@ Features
 - Hold after `PaymentApproved`
 - Fee engine: 10% / 8% snapshots; Wompi 2.75%+IVA and 0.45%+IVA cost lines; **no** IVA on TruePhone’s % fee
 - Buyer confirm + **24h auto-release** after buyer marks received
-- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship** → buyer chooses **one-time 8% replacement purchase** OR **refund** (not auto-refund)
+- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship after pay** → seller submits an in-app order-support request; **REVIEWER/ADMIN** decide only submitted cases (`/revision/soporte-pedidos`); accepted cancellation archives the listing and privately records the incident; buyer chooses **one-time 8% replacement** OR **refund** (not auto-refund)
 - Battery policy (≤1% not refundable; >1% return full refund or keep)
 - Chargebacks / failed payouts: TruePhone absorbs (Ledger + ops)
 - Payouts: **Wompi Cuenta → seller bank account**; **MVP dispersion is manual in Wompi** (ops supervision after Financial Core authorizes)
@@ -629,7 +633,7 @@ Result: Faster marketplace discovery (beyond V1 Postgres search).
 
 # Phase 15 — Analytics
 
-**Audience: ADMIN and REVIEWER / ops only.** There is **no** buyer/seller self-serve analytics dashboard. Everyday users get public **activity counters** on profiles and order cards (Phase 3) — not charts or funnels.
+**Audience: ADMIN and REVIEWER / ops only.** There is **no** buyer/seller self-serve analytics dashboard in this phase. Everyday users get public **activity counters** on profiles and order cards (Phase 3) — not charts or funnels. Seller-facing listing performance (views per listing) is **Phase 24**.
 
 Features (ops / admin / reviewer)
 
@@ -639,10 +643,11 @@ Features (ops / admin / reviewer)
 - User / seller growth
 - Search analytics
 - Reviewer queue health (throughput, rejection reasons) — useful on `/revision` and admin dashboards (Phase 13)
+- **Listing view instrumentation** (recommended in this phase): record views per listing (and aggregates useful to ops). This feeds ops intelligence **and** unlocks Phase 24 seller analytics without a second tracking redesign. Views must **not** appear on public profiles or party cards.
 
-Instrumentation for product decisions still follows PRD §54 (events), but surfaces belong to ops — not Mi TruePhone for buyers/sellers.
+Instrumentation for product decisions still follows PRD §54 (events), but Phase 15 **surfaces** belong to ops — not Mi TruePhone for buyers/sellers.
 
-Result: Business / ops intelligence.
+Result: Business / ops intelligence (+ durable listing-view events for later seller tools).
 
 Status: Not started.
 
@@ -816,6 +821,7 @@ Result: Launch-ready platform.
 Future features
 
 - **Automated seller payouts via Wompi Pagos a Terceros API** (`POST /payouts` lotes + payout webhooks). MVP pays sellers **manually in the Wompi dashboard** after Financial Core authorizes — human supervision by design. Automation is feasible (API + keys already stubbed in code) when volume justifies removing the ops step; keep Ledger authorization as the only money gate either way.
+- **Seller listing-view analytics (recommended growth tool):** private seller surface (e.g. ventas / mis anuncios) showing **how many views each of their listings has received** — every listing they own, with clear totals (and optional simple trends later). Not public trust data; only the listing owner (and ops) may see it. Prefer shipping **after Phase 15** has listing-view instrumentation so sellers see real traffic once the marketplace has volume. Keep scope thin at first: views per listing only — not full conversion funnels or competitor benchmarks.
 - Wishlist / price alerts / offers
 - BRE-B seller payouts (MVP is bank-only via Wompi Cuenta)
 - Trade-in programs

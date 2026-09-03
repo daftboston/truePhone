@@ -1,6 +1,6 @@
 /**
  * @file profile-activity.ts
- * @description Public listing/purchase counters for profiles and order party cards.
+ * @description Public listing and completed-purchase counters.
  * @dependencies @prisma/client, @/lib/db
  */
 
@@ -62,7 +62,11 @@ export function summarizePublicActivityFromGroups(input: {
     total += group.count;
     if (group.status === "PUBLISHED") active += group.count;
   }
-  return { total, active, bought: input.bought };
+  return {
+    total,
+    active,
+    bought: input.bought,
+  };
 }
 
 /**
@@ -81,10 +85,10 @@ export function formatPublicActivityLabel(counts: PublicActivityCounts) {
 /**
  * getPublicActivityCounts
  *
- * Loads listing status groups and completed-as-buyer orders for one profile.
+ * Loads listing status groups and completed-as-buyer orders.
  *
  * @param profileId - Profile UUID.
- * @returns Public activity counters.
+ * @returns Public total, active, and bought counters.
  * @calledBy profile pages, getPublicActivityCountsByProfileIds
  */
 export async function getPublicActivityCounts(profileId: string) {

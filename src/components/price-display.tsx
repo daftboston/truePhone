@@ -10,6 +10,7 @@ type PriceDisplayProps = {
   price: number;
   equipmentPrice?: number;
   protectionFee?: number;
+  protectionLabel?: string;
   currency?: string;
   className?: string;
 };
@@ -40,6 +41,7 @@ function formatCop(value: number, currency = "COP") {
  * @param props.price - Total amount to emphasize.
  * @param props.equipmentPrice - Optional equipment portion.
  * @param props.protectionFee - Optional TruePhone protection fee.
+ * @param props.protectionLabel - Optional fee-row label override.
  * @param props.currency - Currency code; defaults to COP.
  * @param props.className - Wrapper className.
  * @returns Price block with optional breakdown list.
@@ -49,6 +51,7 @@ export function PriceDisplay({
   price,
   equipmentPrice,
   protectionFee,
+  protectionLabel = "Protección TruePhone",
   currency = "COP",
   className,
 }: PriceDisplayProps) {
@@ -67,7 +70,7 @@ export function PriceDisplay({
           )}
           {protectionFee != null && (
             <div className="flex justify-between gap-4">
-              <dt>Protección TruePhone</dt>
+              <dt>{protectionLabel}</dt>
               <dd>{formatCop(protectionFee, currency)}</dd>
             </div>
           )}

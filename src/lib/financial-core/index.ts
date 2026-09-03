@@ -35,6 +35,7 @@ export {
   markFeeEntitlementUsed,
   reserveFeeEntitlement,
   releaseFeeEntitlementForOrder,
+  FeeEntitlementConflictError,
 } from "@/lib/financial-core/entitlements";
 export {
   authorizeCancelMoney,
@@ -46,6 +47,8 @@ export {
   canCancelPaidOrder,
   manualPayoutCompletionBlocker,
   PAID_ORDER_CANCEL_BLOCKED_ERROR,
+  sellerPaidSelfCancelBlocker,
+  SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR,
 } from "@/lib/financial-core/settlement-guards";
 export {
   onBuyerMarkedReceived,

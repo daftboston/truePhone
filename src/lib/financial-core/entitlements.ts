@@ -16,6 +16,18 @@ import { prisma } from "@/lib/db";
 type Tx = Prisma.TransactionClient;
 
 /**
+ * FeeEntitlementConflictError
+ *
+ * Thrown when an entitlement transition loses a race (not ACTIVE / not USED).
+ */
+export class FeeEntitlementConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FeeEntitlementConflictError";
+  }
+}
+
+/**
  * findActiveFeeEntitlement
  *
  * Finds the oldest ACTIVE, non-expired fee entitlement for a buyer.
@@ -34,6 +46,33 @@ export async function findActiveFeeEntitlement(buyerId: string, tx?: Tx) {
       OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
     },
     orderBy: { createdAt: "asc" },
+  });
+}
+
+/**
+ * findActiveFeeEntitlementForSource
+ *
+ * Validates that a compensation deep link belongs to the signed-in buyer and remains active.
+ *
+ * @param buyerId - Buyer profile UUID.
+ * @param sourceOrderId - Cancelled source order from the deep link.
+ * @param tx - Optional transaction client.
+ * @returns Matching ACTIVE entitlement or null.
+ * @calledBy explore, browse, and listing-detail compensation banners
+ */
+export async function findActiveFeeEntitlementForSource(
+  buyerId: string,
+  sourceOrderId: string,
+  tx?: Tx,
+) {
+  const db = tx ?? prisma;
+  return db.feeEntitlement.findFirst({
+    where: {
+      buyerId,
+      sourceOrderId,
+      status: "ACTIVE",
+      OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+    },
   });
 }
 
@@ -111,25 +150,31 @@ export async function createLoyaltyEntitlementForSellerCancel(
  * reserveFeeEntitlement
  *
  * Reserve entitlement on a replacement order (before payment).
+ * Uses optimistic ACTIVE guard to prevent refund vs 8% races.
  *
  * @param tx - Prisma transaction client.
  * @param input.entitlementId - Fee entitlement UUID.
  * @param input.usedOnOrderId - Replacement order UUID.
- * @returns Promise when entitlement is marked USED.
+ * @throws FeeEntitlementConflictError when entitlement is no longer ACTIVE.
  * @calledBy Order creation when applying loyalty rate
  */
 export async function reserveFeeEntitlement(
   tx: Tx,
   input: { entitlementId: string; usedOnOrderId: string },
 ) {
-  await tx.feeEntitlement.update({
-    where: { id: input.entitlementId },
+  const reserved = await tx.feeEntitlement.updateMany({
+    where: { id: input.entitlementId, status: "ACTIVE" },
     data: {
       status: "USED",
       usedAt: new Date(),
       usedOnOrderId: input.usedOnOrderId,
     },
   });
+  if (reserved.count !== 1) {
+    throw new FeeEntitlementConflictError(
+      "La compensación del 8% ya no está disponible.",
+    );
+  }
 }
 
 /**
@@ -143,13 +188,8 @@ export async function reserveFeeEntitlement(
  * @calledBy Pre-payment cancel paths
  */
 export async function releaseFeeEntitlementForOrder(tx: Tx, orderId: string) {
-  const entitlement = await tx.feeEntitlement.findFirst({
+  await tx.feeEntitlement.updateMany({
     where: { usedOnOrderId: orderId, status: "USED" },
-  });
-  if (!entitlement) return;
-
-  await tx.feeEntitlement.update({
-    where: { id: entitlement.id },
     data: {
       status: "ACTIVE",
       usedAt: null,
@@ -178,21 +218,23 @@ export async function markFeeEntitlementUsed(
  * markFeeEntitlementRefundChosen
  *
  * Buyer chooses full refund instead of 8% loyalty purchase.
+ * Uses optimistic ACTIVE guard to prevent concurrent replacement orders.
  *
  * @param tx - Prisma transaction client.
  * @param entitlementId - Fee entitlement UUID.
- * @returns Promise when status is REFUNDED.
+ * @returns true when entitlement was ACTIVE and is now REFUNDED.
  * @calledBy Buyer refund-choice after seller abandon
  */
 export async function markFeeEntitlementRefundChosen(
   tx: Tx,
   entitlementId: string,
-) {
-  await tx.feeEntitlement.update({
-    where: { id: entitlementId },
+): Promise<boolean> {
+  const updated = await tx.feeEntitlement.updateMany({
+    where: { id: entitlementId, status: "ACTIVE" },
     data: {
       status: "REFUNDED",
       refundChosenAt: new Date(),
     },
   });
+  return updated.count === 1;
 }

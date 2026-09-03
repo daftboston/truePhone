@@ -19,11 +19,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ListingPurchaseActions } from "@/features/listings/components/listing-purchase-actions";
 import { RecordRecentlyViewed } from "@/features/listings/components/record-recently-viewed";
+import { CompensationBanner } from "@/features/orders/components/compensation-banner";
 import { conditionLabels } from "@/features/listings/schemas/listing";
 import { formatSellerRating } from "@/features/profile/types";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getAuthUser, getCurrentProfile } from "@/lib/auth/session";
 import { isListingFavorited } from "@/lib/favorites";
+import { findActiveFeeEntitlementForSource } from "@/lib/financial-core/entitlements";
+import {
+  computeOrderFees,
+  LOYALTY_FEE_RATE_BPS,
+} from "@/lib/financial-core/fees";
 import { formatStorageLabel } from "@/lib/iphone-catalog";
 import {
   getPublishedListingBySlug,
@@ -36,6 +42,7 @@ import { getActiveOrderForBuyerOnListing } from "@/lib/orders";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({
@@ -77,8 +84,15 @@ export async function generateMetadata({
  *
  * @returns Public listing detail page or notFound.
  */
-export default async function PublicListingPage({ params }: PageProps) {
-  const { slug } = await params;
+export default async function PublicListingPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const [{ slug }, queryParams] = await Promise.all([params, searchParams]);
+  const requestedCompensation =
+    typeof queryParams.compensacion === "string"
+      ? queryParams.compensacion
+      : "";
   const listing = await getPublishedListingBySlug(slug, {
     incrementViews: true,
   });
@@ -96,6 +110,19 @@ export default async function PublicListingPage({ params }: PageProps) {
     current && current.profile.id !== listing.sellerId
       ? await getActiveOrderForBuyerOnListing(listing.id, current.profile.id)
       : null;
+  const compensation =
+    current && requestedCompensation
+      ? await findActiveFeeEntitlementForSource(
+          current.profile.id,
+          requestedCompensation,
+        )
+      : null;
+  const compensationFees = compensation
+    ? computeOrderFees({
+        salePrice: listing.price,
+        feeRateBps: LOYALTY_FEE_RATE_BPS,
+      })
+    : null;
   const related = await listRelatedPublishedListings(listing);
   const gallery = listing.images.filter(
     (image) => image.imageType === "gallery",
@@ -136,6 +163,9 @@ export default async function PublicListingPage({ params }: PageProps) {
   return (
     <AppShell className="pb-40 md:pb-0" mainClassName="gap-8 md:gap-10">
       <RecordRecentlyViewed slug={listing.slug} title={listing.title} />
+      {compensation ? (
+        <CompensationBanner sourceOrderId={compensation.sourceOrderId} />
+      ) : null}
       <div className="space-y-2">
         <Button asChild variant="outline" size="sm">
           <Link href={`/buscar?model=${listing.iphoneModelId}`}>
@@ -171,9 +201,20 @@ export default async function PublicListingPage({ params }: PageProps) {
           </div>
 
           <PriceDisplay
-            price={listing.finalPrice ?? listing.price}
+            price={
+              compensationFees?.buyerTotal ??
+              listing.finalPrice ??
+              listing.price
+            }
             equipmentPrice={listing.price}
-            protectionFee={listing.platformFee ?? undefined}
+            protectionFee={
+              compensationFees?.platformFee ?? listing.platformFee ?? undefined
+            }
+            protectionLabel={
+              compensationFees
+                ? "Protección TruePhone 8% por compensación"
+                : undefined
+            }
           />
 
           <GuaranteeBanner />

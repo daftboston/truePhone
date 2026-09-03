@@ -293,6 +293,8 @@ This all-in fee covers Wompi collection, Wompi payout (from Wompi Cuenta), and T
 
 **Loyalty / seller no-ship:** if the **seller cancels after payment** or does not send the phone, do **not** auto-refund immediately. Offer the buyer a **choice**: (A) help find another phone with a **one-time 8%** fee on that replacement purchase, or (B) **full refund**. The 8% is **only for that one replacement buy**, not ongoing.
 
+Paid sellers cannot cancel immediately. They open an in-app, order-scoped support request; REVIEWER/ADMIN discuss and decide only submitted cases. Before shipping commitment the request may be accepted as seller cancellation. After tracking or Premium custody/inspection, the workflow becomes a fulfillment exception with ADMIN-controlled financial outcomes. Accepted cancellation preserves the order and support evidence, archives the listing permanently, and does not permit a cancelled-order review. The incident is private operations data: it is never a public cancellation count or profile label.
+
 Shipping / logistics:
 
 - **Premium Bogotá:** seller pays **$20,000 COP** (deducted at payout); TruePhone pickup + inspect + deliver.
@@ -587,7 +589,7 @@ A seller is a registered user offering an iPhone for sale.
 - Edit pending listings
 - Upload photos
 - Respond to messages
-- View listing analytics
+- View listing analytics (**Phase 24** — private views per listing; not MVP; Phase 15 instruments views for ops first — see `docs/plan.md`)
 - Receive payments
 - Build reputation
 
@@ -2562,9 +2564,11 @@ Public Q&A question / answer (when Phase 8b ships)
 
 ---
 
-Analytics **surfaces** are for **administrators and reviewers / ops** (dashboards in Phase 13 / 15) — GMV, conversion, approval rates, queue health, growth.
+Analytics **surfaces** for **administrators and reviewers / ops** (dashboards in Phase 13 / 15) — GMV, conversion, approval rates, queue health, growth, and (recommended) listing-view aggregates.
 
-Buyers and sellers do **not** get a private analytics app. They get the public activity strip on profiles and order party cards (`total` / `active` / `bought`) per Phase 3.
+**MVP / near-term:** Buyers and sellers do **not** get a private analytics app. They get the public activity strip on profiles and order party cards (`total` / `active` / `bought`) per Phase 3.
+
+**Phase 24 (post-launch):** Sellers may get a **private** listing-performance view: **how many views each of their listings has received**. This is owner-only (not shown on public profiles or party cards). Prefer shipping after Phase 15 has durable listing-view instrumentation and marketplace traffic is meaningful. See `docs/plan.md` Phase 15 + Phase 24.
 
 Analytics should inform product decisions, not collect unnecessary personal information.
 

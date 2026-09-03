@@ -7,8 +7,9 @@
  */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
+  Archive,
   BadgeCheck,
   Bell,
   ChevronRight,
@@ -17,6 +18,7 @@ import {
   CreditCard,
   Heart,
   HelpCircle,
+  LifeBuoy,
   MapPin,
   MessageSquare,
   Package,
@@ -42,6 +44,8 @@ type NavItem = AccountNavActiveItem & {
   label: string;
   icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   badge?: number;
+  /** When true, show the badge even at 0 (inventory counts). */
+  alwaysShowBadge?: boolean;
 };
 
 type NavGroup = {
@@ -55,6 +59,8 @@ type AccountNavProps = {
   isAdmin?: boolean;
   unreadMessages?: number;
   unreadNotifications?: number;
+  activeListingCount?: number;
+  archivedListingCount?: number;
   className?: string;
 };
 
@@ -68,6 +74,8 @@ type AccountNavProps = {
  * @param isAdmin - When true, adds admin-only ops links (pagos, disputas, precios).
  * @param unreadMessages - Unread count badge for Mensajes.
  * @param unreadNotifications - Unread count badge for Notificaciones.
+ * @param activeListingCount - Badge count for Anuncios activos.
+ * @param archivedListingCount - Badge count for Archivados.
  * @returns Ordered nav groups for AccountNav.
  * @calledBy AccountNav
  */
@@ -77,6 +85,8 @@ function buildGroups(
   isAdmin: boolean,
   unreadMessages: number,
   unreadNotifications: number,
+  activeListingCount: number,
+  archivedListingCount: number,
 ): NavGroup[] {
   const groups: NavGroup[] = [
     {
@@ -102,7 +112,20 @@ function buildGroups(
     {
       title: "Vendiendo",
       items: [
-        { href: "/vender", label: "Mis anuncios", icon: Store },
+        {
+          href: "/vender",
+          label: "Anuncios activos",
+          icon: Store,
+          badge: activeListingCount,
+          alwaysShowBadge: true,
+        },
+        {
+          href: "/vender?vista=archivados",
+          label: "Archivados",
+          icon: Archive,
+          badge: archivedListingCount,
+          alwaysShowBadge: true,
+        },
         {
           href: verificationHref,
           label: "Verificación",
@@ -137,6 +160,11 @@ function buildGroups(
         href: "/revision/resenas",
         label: "Reseñas",
         icon: Star,
+      },
+      {
+        href: "/revision/soporte-pedidos",
+        label: "Soporte de pedidos",
+        icon: LifeBuoy,
       },
     ];
 
@@ -201,6 +229,8 @@ function formatBadge(count: number) {
  * @param props.isAdmin - Adds admin-only ops destinations.
  * @param props.unreadMessages - Badge count on Mensajes.
  * @param props.unreadNotifications - Badge count on Notificaciones.
+ * @param props.activeListingCount - Count badge on Anuncios activos.
+ * @param props.archivedListingCount - Count badge on Archivados.
  * @param props.className - Optional classes on the nav root.
  * @returns Account sidebar navigation.
  * @calledBy AuthenticatedSidebarShell
@@ -211,15 +241,20 @@ export function AccountNav({
   isAdmin = false,
   unreadMessages = 0,
   unreadNotifications = 0,
+  activeListingCount = 0,
+  archivedListingCount = 0,
   className,
 }: AccountNavProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const groups = buildGroups(
     verificationHref,
     canReview,
     isAdmin,
     unreadMessages,
     unreadNotifications,
+    activeListingCount,
+    archivedListingCount,
   );
 
   return (
@@ -241,7 +276,11 @@ export function AccountNav({
           <ul className="space-y-0.5">
             {group.items.map((item) => {
               const Icon = item.icon;
-              const active = isAccountNavItemActive(pathname, item);
+              const active = isAccountNavItemActive(
+                pathname,
+                item,
+                searchParams.toString(),
+              );
 
               if (item.soon || !item.href) {
                 return (
@@ -278,7 +317,8 @@ export function AccountNav({
                     <span className="min-w-0 flex-1 truncate">
                       {item.label}
                     </span>
-                    {item.badge && item.badge > 0 ? (
+                    {(item.alwaysShowBadge && item.badge != null) ||
+                    (item.badge && item.badge > 0) ? (
                       <span
                         className={cn(
                           "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",

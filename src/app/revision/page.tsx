@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ClipboardList,
   CreditCard,
+  LifeBuoy,
   MessageSquareWarning,
   ShieldAlert,
   Star,
@@ -32,6 +33,7 @@ import { countPaymentsByStatus } from "@/lib/payments";
 import { countOpsDisputeQueue } from "@/lib/payments/ops-disputes";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
+import { countActionableOrderSupportCases } from "@/lib/orders/order-support-service";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -134,6 +136,7 @@ export default async function ReviewHubPage() {
     disputeQueueCount,
     recommendedPriceCount,
     reviewReportsOpen,
+    orderSupportCount,
   ] = await Promise.all([
     countListingsForReview(),
     countPendingIdentityVerifications(),
@@ -142,6 +145,7 @@ export default async function ReviewHubPage() {
     isAdmin ? countOpsDisputeQueue() : Promise.resolve(0),
     isAdmin ? countRecommendedPrices() : Promise.resolve(0),
     countOpenReviewReports(),
+    countActionableOrderSupportCases(),
   ]);
 
   const firstName =
@@ -153,6 +157,7 @@ export default async function ReviewHubPage() {
     listingCounts.pendiente +
     listingCounts.enRevision +
     identityPending +
+    orderSupportCount +
     reviewReportsOpen;
 
   return (
@@ -208,6 +213,15 @@ export default async function ReviewHubPage() {
             count={reviewReportsOpen}
             icon={reviewReportsOpen > 0 ? MessageSquareWarning : Star}
             emphasized={reviewReportsOpen > 0}
+          />
+
+          <QueueCard
+            href="/revision/soporte-pedidos?tab=pendientes"
+            title="Soporte de pedidos"
+            description="Solicitudes de cancelación, problemas de envío y preguntas de vendedores."
+            count={orderSupportCount}
+            icon={LifeBuoy}
+            emphasized={orderSupportCount > 0}
           />
         </div>
       </section>

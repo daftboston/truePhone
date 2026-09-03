@@ -11,6 +11,7 @@ import { OrderDetailView } from "@/features/orders/components/order-detail-view"
 import { requireCurrentProfile } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import { getOrderForParticipant } from "@/lib/orders";
+import { listSellerOrderSupportCases } from "@/lib/orders/order-support-service";
 import { getOrderPartyActivity } from "@/lib/profile-activity";
 
 type PageProps = {
@@ -57,12 +58,13 @@ export default async function SellerOrderPage({ params }: PageProps) {
     notFound();
   }
 
-  const [hasBank, partyActivity] = await Promise.all([
+  const [hasBank, partyActivity, supportCases] = await Promise.all([
     sellerHasDefaultBankAccount(current.profile.id),
     getOrderPartyActivity({
       buyerId: order.buyerId,
       sellerId: order.sellerId,
     }),
+    listSellerOrderSupportCases(order.id, current.profile.id),
   ]);
 
   return (
@@ -76,6 +78,7 @@ export default async function SellerOrderPage({ params }: PageProps) {
       needsBankAccount={!hasBank}
       buyerActivity={partyActivity.buyer}
       sellerActivity={partyActivity.seller}
+      supportCases={supportCases}
     />
   );
 }

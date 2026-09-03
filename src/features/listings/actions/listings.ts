@@ -3,7 +3,7 @@
 /**
  * @file listings.ts
  * @description Server actions for listings (listings.ts).
- * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/lib/listings
+ * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/features/listings/lib/seller-listing-hub, @/lib/listings
  * @changelog 2026-08-25 — Gallery uploads target a displayOrder slot and replace in place.
  */
 
@@ -40,6 +40,12 @@ import {
   isStorageAllowedForModel,
   requireVerifiedSeller,
 } from "@/lib/listings";
+import {
+  canArchiveListing,
+  canRelistListing,
+  listingHadPaidOrder,
+} from "@/features/listings/lib/seller-listing-hub";
+import { publicListingPath } from "@/lib/listings-marketplace";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 
@@ -808,6 +814,125 @@ export async function deleteDraftListingAction(listingId: string) {
   });
 
   revalidatePath("/vender");
+  redirect("/vender");
+}
+
+/**
+ * revalidateSellerListingHub
+ *
+ * Refreshes seller hub routes and the public listing page after archive/relist.
+ *
+ * @param listingId - Listing UUID.
+ * @param slug - Public slug when present.
+ * @returns void
+ * @calledBy archiveListingAction, relistListingAction
+ */
+function revalidateSellerListingHub(listingId: string, slug: string | null) {
+  revalidatePath("/vender");
+  revalidatePath("/vender", "layout");
+  revalidatePath(`/vender/${listingId}`);
+  if (slug) {
+    revalidatePath(publicListingPath(slug));
+  }
+}
+
+/**
+ * archiveListingAction
+ *
+ * Seller-archives a published listing. It leaves the marketplace and appears
+ * under Archivados. Relist is allowed later if no paid order exists.
+ *
+ * @param listingId - Listing UUID owned by the current seller.
+ * @returns Error state, or redirects to Archivados on success.
+ * @calledBy SellerListingActions
+ */
+export async function archiveListingAction(listingId: string) {
+  const seller = await requireVerifiedSeller();
+  if (!seller.ok) {
+    return { ok: false as const, error: seller.error };
+  }
+
+  const listing = await getOwnedListing(listingId, seller.current.profile.id);
+  if (!listing || !canArchiveListing(listing.status)) {
+    return {
+      ok: false as const,
+      error: "Solo puedes archivar anuncios publicados.",
+    };
+  }
+
+  await prisma.listing.update({
+    where: { id: listing.id },
+    data: { status: "ARCHIVED" },
+  });
+
+  revalidateSellerListingHub(listing.id, listing.slug);
+  redirect("/vender?vista=archivados");
+}
+
+/**
+ * relistListingAction
+ *
+ * Restores a seller-archived listing to PUBLISHED immediately. Blocked when
+ * any related order reached payment (system archive after sale/cancel).
+ *
+ * @param listingId - Listing UUID owned by the current seller.
+ * @returns Error state, or redirects to Anuncios activos on success.
+ * @calledBy SellerListingActions
+ */
+export async function relistListingAction(listingId: string) {
+  const seller = await requireVerifiedSeller();
+  if (!seller.ok) {
+    return { ok: false as const, error: seller.error };
+  }
+
+  const listing = await getOwnedListing(listingId, seller.current.profile.id);
+  if (!listing) {
+    return { ok: false as const, error: "Anuncio no encontrado." };
+  }
+
+  const paidOrder = await prisma.order.findFirst({
+    where: {
+      listingId: listing.id,
+      OR: [
+        { status: { in: ["PAID", "COMPLETED"] } },
+        { fundsHeldAt: { not: null } },
+      ],
+    },
+    select: { id: true, status: true, fundsHeldAt: true },
+  });
+  const hadPaidOrder = listingHadPaidOrder(paidOrder ? [paidOrder] : []);
+
+  if (!canRelistListing({ status: listing.status, hadPaidOrder })) {
+    return {
+      ok: false as const,
+      error: "Este anuncio no se puede volver a publicar.",
+    };
+  }
+
+  if (listing.imeiHash) {
+    const duplicate = await prisma.listing.findFirst({
+      where: {
+        imeiHash: listing.imeiHash,
+        deletedAt: null,
+        NOT: { id: listing.id },
+        status: { notIn: ["ARCHIVED", "REJECTED"] },
+      },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return {
+        ok: false as const,
+        error: "Ya existe un anuncio con este IMEI en TruePhone.",
+      };
+    }
+  }
+
+  await prisma.listing.update({
+    where: { id: listing.id },
+    data: { status: "PUBLISHED" },
+  });
+
+  revalidateSellerListingHub(listing.id, listing.slug);
   redirect("/vender");
 }
 

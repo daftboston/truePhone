@@ -1,11 +1,17 @@
 /**
  * @file listings.ts
  * @description Seller listing ownership, catalog, and possession challenge helpers.
- * @dependencies @/lib/auth/session, @/lib/db, @/lib/iphone-catalog-sync
+ * @dependencies @/lib/auth/session, @/lib/db, @/lib/iphone-catalog-sync, @/features/listings/lib/seller-listing-hub
  */
+
+import type { ListingStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 import { generatePossessionCode } from "@/features/listings/schemas/listing";
+import {
+  statusesForVista,
+  type SellerListingsQuery,
+} from "@/features/listings/lib/seller-listing-hub";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { ensureIphoneCatalog } from "@/lib/iphone-catalog-sync";
@@ -77,19 +83,61 @@ export async function getOwnedListing(listingId: string, sellerId: string) {
 }
 
 /**
+ * sellerListingsOrderBy
+ *
+ * Maps hub sort keys to a Prisma orderBy clause.
+ *
+ * @param orden - Seller hub sort key.
+ * @returns Prisma listing orderBy.
+ * @calledBy listSellerListings
+ */
+function sellerListingsOrderBy(
+  orden: SellerListingsQuery["orden"],
+): Prisma.ListingOrderByWithRelationInput {
+  switch (orden) {
+    case "created_asc":
+      return { createdAt: "asc" };
+    case "updated_desc":
+      return { updatedAt: "desc" };
+    case "price_asc":
+      return { price: "asc" };
+    case "price_desc":
+      return { price: "desc" };
+    default:
+      return { createdAt: "desc" };
+  }
+}
+
+/**
  * listSellerListings
  *
- * Lists non-deleted listings for a seller, newest first.
+ * Lists non-deleted listings for a seller hub bucket, with optional title
+ * search, status filter, and sort.
  *
  * @param sellerId - Seller profile UUID.
- * @returns Seller listing rows with catalog and images.
- * @calledBy Seller ventas/anuncios dashboard
+ * @param query - Parsed `/vender` hub query.
+ * @returns Seller listing rows with catalog, cover image, and orders.
+ * @calledBy SellPage
  */
-export async function listSellerListings(sellerId: string) {
+export async function listSellerListings(
+  sellerId: string,
+  query: SellerListingsQuery,
+) {
+  const statusFilter: ListingStatus | { in: ListingStatus[] } = query.estado
+    ? query.estado
+    : { in: statusesForVista(query.vista) };
+
   return prisma.listing.findMany({
-    where: { sellerId, deletedAt: null },
+    where: {
+      sellerId,
+      deletedAt: null,
+      status: statusFilter,
+      ...(query.q ? { title: { contains: query.q, mode: "insensitive" } } : {}),
+    },
     include: {
       iphoneModel: true,
+      iphoneColor: true,
+      iphoneStorage: true,
       images: {
         where: { imageType: "gallery" },
         orderBy: { displayOrder: "asc" },
@@ -98,9 +146,41 @@ export async function listSellerListings(sellerId: string) {
       possessionChallenge: {
         select: { photoUrl: true },
       },
+      orders: {
+        select: { id: true, status: true, fundsHeldAt: true },
+        orderBy: { createdAt: "desc" },
+      },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: sellerListingsOrderBy(query.orden),
   });
+}
+
+/**
+ * countSellerListingBuckets
+ *
+ * Counts non-deleted listings in the active and archived seller hub buckets.
+ *
+ * @param sellerId - Seller profile UUID.
+ * @returns Active and archived counts.
+ * @calledBy AuthenticatedSidebarShell
+ */
+export async function countSellerListingBuckets(sellerId: string) {
+  const rows = await prisma.listing.groupBy({
+    by: ["status"],
+    where: { sellerId, deletedAt: null },
+    _count: { _all: true },
+  });
+
+  const activeStatuses = new Set(statusesForVista("activos"));
+  const archivedStatuses = new Set(statusesForVista("archivados"));
+  let active = 0;
+  let archived = 0;
+  for (const row of rows) {
+    if (activeStatuses.has(row.status)) active += row._count._all;
+    if (archivedStatuses.has(row.status)) archived += row._count._all;
+  }
+
+  return { active, archived };
 }
 
 /**

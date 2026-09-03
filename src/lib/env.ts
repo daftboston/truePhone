@@ -36,13 +36,18 @@ export function getSupabaseEnv() {
  * getDatabaseUrl
  *
  * Returns the Prisma/Postgres connection string.
+ * Prefers DATABASE_URL, then Vercel/Supabase integration aliases so Preview
+ * keeps working when only POSTGRES_* is provisioned.
  *
- * @returns DATABASE_URL value.
- * @throws When DATABASE_URL is unset.
+ * @returns Pooled or Prisma Postgres URL.
+ * @throws When no database URL env var is set.
  * @calledBy db.ts createPrismaClient
  */
 export function getDatabaseUrl() {
-  const url = process.env.DATABASE_URL;
+  const url =
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL;
   if (!url) {
     throw new Error("Missing DATABASE_URL");
   }
