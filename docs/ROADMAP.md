@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications, Phase **19** mobile web, UX polish, thin FAQ (`/ayuda`), buyer 8% vs refund, and in-app order-support cancellation are on `main`. Automated Pagos a Terceros → Phase **24**.  
+**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications, Phase **19** mobile web (including eight guided listing photo slots), UX polish, thin FAQ (`/ayuda`), buyer 8% vs refund, and in-app order-support cancellation are on `main`. Automated Pagos a Terceros → Phase **24**.  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Money:** [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md)  
 **Shipping:** [SHIPPING.md](./SHIPPING.md)  
@@ -14,16 +14,16 @@ Former working name **iPhoneSeguro** is retired. Brand in product and docs is **
 
 ## Branch map (engineering)
 
-| Branch                                        | Role                                                                                  |
-| --------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `main`                                        | Production baseline — MVP slices + Explorar catalog + order-support workflow          |
-| `feat/seller-cancel-via-support`              | **Merged** — in-app seller support cases; staff queue at `/revision/soporte-pedidos`  |
-| `feat/public-activity-counters`               | **Merged** — public counters, Phase 12, Phase 19, `/ayuda`, buyer 8% vs refund        |
-| `feat/listing-photo-slots`                    | **Open PR #8** — eight required listing photo slots (rebase onto `main` before merge) |
-| `mvp/phases-12-13`                            | **Merged / retired** — history kept after PRs #3 and #4                               |
-| `cursor/explorar-catalog-models-2974`         | **Merged** (PR #5) — 28-model Explorar catalog + glyphs                               |
-| `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded                                       |
-| `origin/cursor/code-documentation-skill-5f7c` | Draft PR #2; skill already in-repo — do not merge as a product change                 |
+| Branch                                        | Role                                                                                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `main`                                        | Production baseline — MVP slices + Explorar catalog + order-support + eight photo slots |
+| `feat/listing-photo-slots`                    | **Merged** (PR #8) — eight guided listing photos with per-slot Elegir / Tomar foto      |
+| `feat/seller-cancel-via-support`              | **Merged** — in-app seller support cases; staff queue at `/revision/soporte-pedidos`    |
+| `feat/public-activity-counters`               | **Merged** — public counters, Phase 12, Phase 19, `/ayuda`, buyer 8% vs refund          |
+| `mvp/phases-12-13`                            | **Merged / retired** — history kept after PRs #3 and #4                                 |
+| `cursor/explorar-catalog-models-2974`         | **Merged** (PR #5) — 28-model Explorar catalog + glyphs                                 |
+| `cursor/prisma-database-setup`                | Older Cloud agent line (Phases 2–5); superseded                                         |
+| `origin/cursor/code-documentation-skill-5f7c` | Draft PR #2; skill already in-repo — do not merge as a product change                   |
 
 ```text
 main  ← production
@@ -31,16 +31,16 @@ main  ← production
   • Phase 12 marketplace notifications
   • UX polish + Phase 19 mobile web
   • in-app order-support cancellation
+  • eight guided listing photo slots
 ```
 
 ---
 
 ## Current focus
 
-1. Rebase and merge **PR #8** (`feat/listing-photo-slots`) — eight guided listing photos (Phase 19 leftover). Close stacked duplicates **PR #10** (draft) and **PR #11** after #8 lands.
-2. Phase **8b** public listing Q&A
-3. Phase **15** admin/reviewer analytics (ops only)
-4. Phase **24** only when manual Wompi dispersion becomes the bottleneck
+1. Phase **8b** public listing Q&A
+2. Phase **15** admin/reviewer analytics (ops only)
+3. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
 
@@ -102,10 +102,9 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-1. Rebase and merge PR #8 eight listing photo slots (Phase 19 leftover on `feat/listing-photo-slots`)
-2. Public listing Q&A (Phase 8b)
-3. Admin / reviewer analytics (Phase 15)
-4. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
+1. Public listing Q&A (Phase 8b)
+2. Admin / reviewer analytics (Phase 15)
+3. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)
 
