@@ -220,29 +220,14 @@ export async function countPublishedListings(
  * @returns Published listing detail or null.
  * @calledBy Public listing detail page
  */
-export async function getPublishedListingBySlug(
-  slug: string,
-  options?: { incrementViews?: boolean },
-) {
-  const listing = await prisma.listing.findFirst({
+export async function getPublishedListingBySlug(slug: string) {
+  return prisma.listing.findFirst({
     where: {
       ...publishedListingWhere,
       slug,
     },
     include: listingDetailInclude,
   });
-
-  if (!listing) return null;
-
-  if (options?.incrementViews) {
-    await prisma.listing.update({
-      where: { id: listing.id },
-      data: { views: { increment: 1 } },
-    });
-    return { ...listing, views: listing.views + 1 };
-  }
-
-  return listing;
 }
 
 /**

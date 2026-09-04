@@ -11,6 +11,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import {
   Archive,
   BadgeCheck,
+  BarChart3,
   Bell,
   ChevronRight,
   ClipboardCheck,
@@ -165,6 +166,11 @@ function buildGroups(
         href: "/revision/soporte-pedidos",
         label: "Soporte de pedidos",
         icon: LifeBuoy,
+      },
+      {
+        href: "/revision/analitica",
+        label: "Analítica",
+        icon: BarChart3,
       },
     ];
 

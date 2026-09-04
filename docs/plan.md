@@ -4,7 +4,7 @@
 
 Version 1.3
 
-**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics, and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
@@ -260,7 +260,7 @@ Do **not** show private funnels (views, conversion, payout math) to other users.
 | Item                                          | Status   | When                   | Notes                                                                  |
 | --------------------------------------------- | -------- | ---------------------- | ---------------------------------------------------------------------- |
 | **Public counters (total / active / bought)** | **Done** | Phase 3 + order detail | Profile pages + order party cards; `PublicActivityStrip` / `PartyCard` |
-| **Seller views-per-listing analytics**        | Planned  | **Phase 24**           | Private seller surface; depends on Phase 15 view instrumentation       |
+| **Seller views-per-listing analytics**        | Planned  | **Phase 24**           | Private seller surface; Phase 15 view events already exist             |
 
 Result: Professional user identities with transparent public activity stats.
 
@@ -649,7 +649,7 @@ Instrumentation for product decisions still follows PRD §54 (events), but Phase
 
 Result: Business / ops intelligence (+ durable listing-view events for later seller tools).
 
-Status: Not started.
+Status: **Landed** — unique listing views (`ListingViewEvent` + `Listing.views`) on `/anuncios/[slug]`; ops dashboard at `/revision/analitica` (GMV, queues, approval rate, popular models). Views stay off public profiles and party cards. Search analytics wait for Phase 14. Seller views-per-listing remains Phase **24**.
 
 ---
 

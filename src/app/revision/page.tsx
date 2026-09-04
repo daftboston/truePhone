@@ -1,6 +1,6 @@
 /**
  * @file page.tsx
- * @description Reviewer/admin hub linking listing, identity, payments, disputes, review, and Q&A queues.
+ * @description Reviewer/admin hub linking listing, identity, payments, disputes, review, Q&A, and analytics.
  * @dependencies Review portal access checks and queue summaries
  */
 
@@ -9,6 +9,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   BadgeCheck,
+  BarChart3,
   ChevronRight,
   ClipboardList,
   CreditCard,
@@ -35,6 +36,7 @@ import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
 import { countActionableOrderSupportCases } from "@/lib/orders/order-support-service";
 import { countOpenListingQuestionReports } from "@/lib/listing-qa";
+import { countListingViews } from "@/lib/ops-analytics";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -139,6 +141,7 @@ export default async function ReviewHubPage() {
     reviewReportsOpen,
     questionReportsOpen,
     orderSupportCount,
+    listingViewCount,
   ] = await Promise.all([
     countListingsForReview(),
     countPendingIdentityVerifications(),
@@ -149,6 +152,7 @@ export default async function ReviewHubPage() {
     countOpenReviewReports(),
     countOpenListingQuestionReports(),
     countActionableOrderSupportCases(),
+    countListingViews(),
   ]);
 
   const firstName =
@@ -236,6 +240,13 @@ export default async function ReviewHubPage() {
             icon={LifeBuoy}
             emphasized={orderSupportCount > 0}
           />
+          <QueueCard
+            href="/revision/analitica"
+            title="Analítica"
+            description="GMV, salud de colas, vistas de anuncios y modelos populares."
+            count={listingViewCount}
+            icon={BarChart3}
+          />
         </div>
       </section>
 
@@ -257,6 +268,9 @@ export default async function ReviewHubPage() {
             }
           >
             <Link href="/revision/identidad">Ir a cola de identidad</Link>
+          </Button>
+          <Button asChild className="sm:flex-1" variant="outline">
+            <Link href="/revision/analitica">Ver analítica</Link>
           </Button>
         </div>
       </section>

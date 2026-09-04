@@ -2564,11 +2564,11 @@ Public Q&A question / answer (when Phase 8b ships)
 
 ---
 
-Analytics **surfaces** for **administrators and reviewers / ops** (dashboards in Phase 13 / 15) — GMV, conversion, approval rates, queue health, growth, and (recommended) listing-view aggregates.
+Analytics **surfaces** for **administrators and reviewers / ops** live at `/revision/analitica` (Phase **15**) — GMV, conversion from views, approval rates, queue health, growth, popular models, and listing-view aggregates.
 
 **MVP / near-term:** Buyers and sellers do **not** get a private analytics app. They get the public activity strip on profiles and order party cards (`total` / `active` / `bought`) per Phase 3.
 
-**Phase 24 (post-launch):** Sellers may get a **private** listing-performance view: **how many views each of their listings has received**. This is owner-only (not shown on public profiles or party cards). Prefer shipping after Phase 15 has durable listing-view instrumentation and marketplace traffic is meaningful. See `docs/plan.md` Phase 15 + Phase 24.
+**Phase 24 (post-launch):** Sellers may get a **private** listing-performance view: **how many views each of their listings has received**. This is owner-only (not shown on public profiles or party cards). Phase **15** already stores unique-visitor-day events (`ListingViewEvent` + `Listing.views`). See `docs/plan.md` Phase 15 + Phase 24.
 
 Analytics should inform product decisions, not collect unnecessary personal information.
 

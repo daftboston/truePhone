@@ -1,11 +1,12 @@
 /**
  * @file page.tsx
  * @description Public listing detail page for a published anuncio slug.
- * @dependencies Listing gallery, price, seller, order/favorite actions, public Q&A
+ * @dependencies Listing gallery, price, seller, order/favorite actions, public Q&A, listing views
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
@@ -43,6 +44,7 @@ import {
   primaryGalleryUrl,
   publicListingPath,
 } from "@/lib/listings-marketplace";
+import { listingViewRequestMeta, recordListingView } from "@/lib/listing-views";
 import { getActiveOrderForBuyerOnListing } from "@/lib/orders";
 
 type PageProps = {
@@ -98,16 +100,23 @@ export default async function PublicListingPage({
     typeof queryParams.compensacion === "string"
       ? queryParams.compensacion
       : "";
-  const listing = await getPublishedListingBySlug(slug, {
-    incrementViews: true,
-  });
+  const listing = await getPublishedListingBySlug(slug);
 
   if (!listing) notFound();
 
-  const [user, current] = await Promise.all([
+  const [user, current, headerStore] = await Promise.all([
     getAuthUser(),
     getCurrentProfile(),
+    headers(),
   ]);
+  const viewMeta = listingViewRequestMeta(headerStore);
+  await recordListingView({
+    listingId: listing.id,
+    sellerId: listing.sellerId,
+    viewerId: current?.profile.id ?? null,
+    ip: viewMeta.ip,
+    userAgent: viewMeta.userAgent,
+  });
   const favorited = current
     ? await isListingFavorited(current.profile.id, listing.id)
     : false;

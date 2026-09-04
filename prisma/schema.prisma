@@ -236,6 +236,7 @@ model Profile {
   listingQuestionsAsked     ListingQuestion[]       @relation("ListingQuestionsAsked")
   listingQuestionAnswers    ListingQuestionAnswer[] @relation("ListingQuestionAnswers")
   listingQuestionReports    ListingQuestionReport[] @relation("ListingQuestionReports")
+  listingViews              ListingViewEvent[]      @relation("ListingViewViewer")
   ordersAsBuyer             Order[]                 @relation("OrderBuyer")
   ordersAsSeller            Order[]                 @relation("OrderSeller")
   payments                  Payment[]
@@ -419,6 +420,7 @@ model Listing {
   approvedAt      DateTime?
 
   searchVector Unsupported("tsvector")?
+  /// Denormalized unique-visitor-day count from ListingViewEvent (Phase 15).
   views        Int                      @default(0)
   deletedAt    DateTime?
 
@@ -430,12 +432,33 @@ model Listing {
   messages            Message[]
   conversationReports ConversationReport[]
   questions           ListingQuestion[]
+  viewEvents          ListingViewEvent[]
   possessionChallenge DevicePossessionChallenge?
   orders              Order[]
 
   @@index([status])
   @@index([sellerId])
+  @@index([views])
   @@map("listings")
+}
+
+/// Durable listing view for ops analytics (Phase 15). One row per visitor per listing per UTC day.
+model ListingViewEvent {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  viewerId  String?
+  viewer    Profile? @relation("ListingViewViewer", fields: [viewerId], references: [id], onDelete: SetNull)
+  /// `u:{profileId}` or `h:{sha256 prefix}` so guests and members share one unique key.
+  dedupeKey String
+  viewedOn  DateTime @db.Date
+  createdAt DateTime @default(now())
+
+  @@unique([listingId, dedupeKey, viewedOn])
+  @@index([listingId, createdAt])
+  @@index([createdAt])
+  @@index([viewerId])
+  @@map("listing_view_events")
 }
 
 model DevicePossessionChallenge {

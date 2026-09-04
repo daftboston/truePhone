@@ -2,7 +2,7 @@
 
 **Project:** TruePhone  
 **Version:** 1.0  
-**Last Updated:** July 2026
+**Last Updated:** September 2026
 
 ---
 
@@ -36,6 +36,7 @@ Preferred for:
 - Favorites, messages, orders, reviews
 - Public listing Q&A (`askListingQuestionAction`, seller answer, report/hide)
 - Notification preferences
+- Ops analytics is read-only at `/revision/analitica` (no mutation action; listing views are recorded server-side on `/anuncios/[slug]`)
 
 ## Conventions
 

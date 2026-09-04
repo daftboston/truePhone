@@ -2,7 +2,7 @@
 
 **Project:** TruePhone  
 **Version:** 1.0  
-**Last Updated:** August 2026  
+**Last Updated:** September 2026  
 **Source of schema:** `prisma/schema.prisma`
 
 ---
@@ -148,6 +148,22 @@ Explorar product shots (front/back hover flip) are static files in `public/catal
 Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flags, review metadata, and `searchVector` (Postgres `tsvector`) for V1 search. `carrier` is set only when `unlocked = false` and must be a Colombian operator (`Claro`, `Movistar`, `Tigo`, `WOM`, `ETB`).
 
 **Public browse (Phase 7):** only `status = PUBLISHED` and `deletedAt IS NULL`. Helpers live in `src/lib/listings-marketplace.ts` (`listFeaturedListings`, `listPublishedListings`, `getPublishedListingBySlug`).
+
+`Listing.views` is a denormalized unique-visitor-day count from `ListingViewEvent` (Phase **15**). It is **ops-only** — never shown on public profiles or order party cards. Seller private “views per listing” remains Phase **24**.
+
+## ListingViewEvent
+
+Durable listing view log (`listing_view_events`). One row per visitor per listing per UTC day.
+
+| Field       | Notes                                                     |
+| ----------- | --------------------------------------------------------- |
+| `listingId` | FK → `Listing` (cascade)                                  |
+| `viewerId`  | Optional FK → `Profile`; null for guests                  |
+| `dedupeKey` | `u:{profileId}` or `h:{sha256 prefix}` of IP + User-Agent |
+| `viewedOn`  | UTC date; unique with `(listingId, dedupeKey)`            |
+| `createdAt` | First recorded instant for that day                       |
+
+Seller self-views and crawler/preview User-Agents are skipped. Recorded from `/anuncios/[slug]` via `recordListingView`. Ops dashboard: `/revision/analitica`.
 
 ## ListingImage
 
@@ -428,14 +444,14 @@ Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.
 
 - **AuditLog** — reviewer and admin actions
 - **Dispute** — first-class dispute entity (MVP freeze is `Order.payoutFrozen` + Ledger; ops UI at `/revision/disputas`)
-- **Listing view events / counts** — Phase **15** (ops instrumentation): durable per-listing view tracking (event log and/or aggregated `viewCount`). Phase **24** reuses the same data for a private seller “views per listing” surface. Do not expose view counts on public profiles or order party cards.
 
 ---
 
 # Indexes and search
 
 - Unique constraints: `profiles.authUserId`, `listings.slug`, `listings.imeiHash`
-- Listing: `@@index([status])`, `@@index([sellerId])`
+- Listing: `@@index([status])`, `@@index([sellerId])`, `@@index([views])`
+- ListingViewEvent: unique `(listingId, dedupeKey, viewedOn)`; indexes `(listingId, createdAt)`, `createdAt`, `viewerId`
 - RecommendedPrice: unique `(iphoneModelId, iphoneStorageId, condition)`; indexes on `iphoneModelId`, `condition`
 - Notification: unique `dedupeKey`; indexes `(userId, createdAt)`, `(userId, readAt)`, `orderId`
 - Message / block / report: see **Message**, **UserBlock**, **ConversationReport** above
