@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * @file trust-badge.tsx
  * @description Compact verified-seller badge wrapping the design-system Badge.

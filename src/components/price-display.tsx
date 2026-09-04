@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * @file price-display.tsx
  * @description Formats COP prices with optional equipment and protection fee breakdown.

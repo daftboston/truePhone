@@ -21,13 +21,15 @@ When schema and this doc disagree, update both in the same change.
 - **Prisma** ORM (`prisma/` + `prisma.config.ts`)
 - Runtime URL: `DATABASE_URL` (pooler)
 - Migrate / push URL: `DIRECT_URL` (direct)
+- `prisma.config.ts` prefers `DIRECT_URL`, then `POSTGRES_URL_NON_POOLING`, then `DATABASE_URL` / `POSTGRES_*` so Vercel Production still migrates if only the pooled URL is set
 
 ---
 
 # Migration Policy
 
 - Prefer `prisma migrate` for shared / production schema changes
-- Vercel `npm run build` runs `prisma migrate deploy` against `DIRECT_URL` so preview/production stay in sync
+- Vercel `npm run build` runs `prisma migrate deploy` via `prisma.config.ts` so preview/production stay in sync
+- Put `DATABASE_URL` and `DIRECT_URL` on **Production**, not Preview-only — Preview-only secrets make `main` deploys fail while PR previews succeed
 - `prisma db push` is acceptable for early local prototyping only
 - Always run `prisma generate` after schema changes
 - Never commit `.env`

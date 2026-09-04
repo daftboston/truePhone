@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * @file seller-card.tsx
  * @description Compact seller summary with avatar, name, and optional trust badge.
