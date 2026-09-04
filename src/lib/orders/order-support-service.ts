@@ -12,7 +12,7 @@ import {
 
 import {
   freezePayoutInTransaction,
-  unfreezePayoutInTransaction,
+  releaseFulfillmentExceptionFreeze,
 } from "@/lib/financial-core/settlement";
 import { prisma } from "@/lib/db";
 import { classifyOrderSupportOptions } from "@/lib/orders/order-support";
@@ -139,6 +139,8 @@ function supportAvailabilityForType(
  * createOrderSupportCase
  *
  * Creates one eligible seller case and freezes payout atomically for fulfillment exceptions.
+ * The freeze ledger row stores supportCaseId so closing the case cannot drop a
+ * chargeback or buyer-dispute freeze that already existed (or arrives later).
  *
  * @param input - Seller, order, case type, and required initial reason.
  * @returns Created case id or a recoverable Spanish error.
@@ -202,6 +204,7 @@ export async function createOrderSupportCase(input: {
           await freezePayoutInTransaction(tx, {
             orderId: order.id,
             reason: `Seller fulfillment exception · support case ${supportCase.id}`,
+            metadata: { supportCaseId: supportCase.id },
           });
         }
 
@@ -445,6 +448,7 @@ export async function addStaffOrderSupportMessage(input: {
  * transitionOrderSupportCase
  *
  * Applies a non-cancellation staff status transition with assignment and role checks delegated to the action.
+ * Fulfillment unfreeze is gated by Financial Core so a chargeback or buyer dispute stays frozen.
  *
  * @param input - Assigned case, target status, note, and optional payout unfreeze.
  * @returns Case and seller identifiers for revalidation/notification.
@@ -493,8 +497,9 @@ export async function transitionOrderSupportCase(input: {
         select: { updatedAt: true },
       });
       if (input.unfreezePayout) {
-        await unfreezePayoutInTransaction(tx, {
+        await releaseFulfillmentExceptionFreeze(tx, {
           orderId: supportCase.orderId,
+          caseId: supportCase.id,
           memo: `Fulfillment support resolved · case ${supportCase.id}`,
         });
       }
@@ -657,6 +662,8 @@ export async function replyToOrderSupportCaseAsSeller(input: {
  * withdrawOrderSupportCase
  *
  * Withdraws only an untouched pending case and preserves its audit row.
+ * Fulfillment-exception withdraw releases payoutFrozen only when this case is
+ * the sole freeze source.
  *
  * @param input - Case and authenticated seller.
  * @returns Case id or lifecycle error.
@@ -689,8 +696,9 @@ export async function withdrawOrderSupportCase(input: {
         data: { status: "WITHDRAWN", resolvedAt: new Date() },
       });
       if (supportCase.type === "FULFILLMENT_EXCEPTION") {
-        await unfreezePayoutInTransaction(tx, {
+        await releaseFulfillmentExceptionFreeze(tx, {
           orderId: supportCase.orderId,
+          caseId: supportCase.id,
           memo: `Seller withdrew untouched fulfillment exception · support case ${supportCase.id}`,
         });
       }
