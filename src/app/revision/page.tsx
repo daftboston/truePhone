@@ -1,6 +1,6 @@
 /**
  * @file page.tsx
- * @description Reviewer/admin hub linking listing, identity, payments, disputes, and review queues.
+ * @description Reviewer/admin hub linking listing, identity, payments, disputes, review, and Q&A queues.
  * @dependencies Review portal access checks and queue summaries
  */
 
@@ -34,6 +34,7 @@ import { countOpsDisputeQueue } from "@/lib/payments/ops-disputes";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
 import { countActionableOrderSupportCases } from "@/lib/orders/order-support-service";
+import { countOpenListingQuestionReports } from "@/lib/listing-qa";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -136,6 +137,7 @@ export default async function ReviewHubPage() {
     disputeQueueCount,
     recommendedPriceCount,
     reviewReportsOpen,
+    questionReportsOpen,
     orderSupportCount,
   ] = await Promise.all([
     countListingsForReview(),
@@ -145,6 +147,7 @@ export default async function ReviewHubPage() {
     isAdmin ? countOpsDisputeQueue() : Promise.resolve(0),
     isAdmin ? countRecommendedPrices() : Promise.resolve(0),
     countOpenReviewReports(),
+    countOpenListingQuestionReports(),
     countActionableOrderSupportCases(),
   ]);
 
@@ -158,7 +161,8 @@ export default async function ReviewHubPage() {
     listingCounts.enRevision +
     identityPending +
     orderSupportCount +
-    reviewReportsOpen;
+    reviewReportsOpen +
+    questionReportsOpen;
 
   return (
     <div className="space-y-8">
@@ -213,6 +217,15 @@ export default async function ReviewHubPage() {
             count={reviewReportsOpen}
             icon={reviewReportsOpen > 0 ? MessageSquareWarning : Star}
             emphasized={reviewReportsOpen > 0}
+          />
+
+          <QueueCard
+            href="/revision/preguntas"
+            title="Preguntas reportadas"
+            description="Moderación de preguntas y respuestas públicas."
+            count={questionReportsOpen}
+            icon={questionReportsOpen > 0 ? MessageSquareWarning : Star}
+            emphasized={questionReportsOpen > 0}
           />
 
           <QueueCard

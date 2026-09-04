@@ -34,6 +34,7 @@ Preferred for:
 - Submitting device possession proof
 - Reviewer approve / reject
 - Favorites, messages, orders, reviews
+- Public listing Q&A (`askListingQuestionAction`, seller answer, report/hide)
 - Notification preferences
 
 ## Conventions

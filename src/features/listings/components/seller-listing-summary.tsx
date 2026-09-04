@@ -11,6 +11,7 @@ import type { ListingStatus } from "@prisma/client";
 import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SellerListingQaHint } from "@/features/listing-qa/components/seller-listing-qa-hint";
 import { ReopenRejectedListingButton } from "@/features/listings/components/reopen-rejected-listing-button";
 import {
   conditionLabels,
@@ -254,6 +255,15 @@ export async function SellerListingSummary({
           </Button>
         </div>
       </div>
+
+      {listing.status === "PUBLISHED" || listing.status === "RESERVED" ? (
+        <SellerListingQaHint
+          listingId={listing.id}
+          listingSlug={listing.slug}
+          listingStatus={listing.status}
+          sellerId={listing.sellerId}
+        />
+      ) : null}
     </div>
   );
 }

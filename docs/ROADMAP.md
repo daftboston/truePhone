@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications, Phase **19** mobile web (including eight guided listing photo slots), UX polish, thin FAQ (`/ayuda`), buyer 8% vs refund, and in-app order-support cancellation are on `main`. Automated Pagos a Terceros → Phase **24**.  
+**Status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **19** mobile web (including eight guided listing photo slots), UX polish, thin FAQ (`/ayuda`), buyer 8% vs refund, and in-app order-support cancellation are on `main`. Automated Pagos a Terceros → Phase **24**.  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Money:** [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md)  
 **Shipping:** [SHIPPING.md](./SHIPPING.md)  
@@ -38,8 +38,8 @@ main  ← production
 
 ## Current focus
 
-1. Phase **8b** public listing Q&A
-2. Phase **15** admin/reviewer analytics (ops only)
+1. Phase **15** admin/reviewer analytics (ops only)
+2. Phase **23** leftovers — privacy/terms/legal pages (`/ayuda` is live)
 3. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
@@ -48,7 +48,7 @@ main  ← production
 | -------------------------------------------------- | --------------------------------------------- | -------------------------------------------------- |
 | Public counters (listings total / active / bought) | Phase **3** + order party cards (Phase **9**) | Swappa-style public strip — not user analytics     |
 | Extra auth: Apple + WhatsApp + Facebook            | Phase **2** roadmap                           | Chosen next methods                                |
-| Public listing Q&A                                 | Phase **8b**                                  | Post-MVP; distinct from private DMs                |
+| Public listing Q&A                                 | Phase **8b**                                  | **Landed** — distinct from private DMs             |
 | Admin / reviewer analytics                         | Phase **15** (+ Phase **13** dashboards)      | Ops only; instrument listing views here            |
 | Seller views-per-listing analytics                 | Phase **24**                                  | Private seller tool; after Phase 15 view events    |
 | Mobile web polish                                  | Phase **19**                                  | Native apps stay Phase **24**                      |
@@ -72,7 +72,7 @@ Full phase detail: [plan.md](./plan.md)
 | 6 Review Portal     | **Complete**                                                                                 |
 | 7 Marketplace       | **Complete — closed**                                                                        |
 | 8 Messaging         | **Complete — closed** (private DMs)                                                          |
-| 8b Listing Q&A      | Not started — **public** questions on listings (post-MVP)                                    |
+| 8b Listing Q&A      | **Closed** — public Preguntas on listing pages; report queue at `/revision/preguntas`        |
 | 9 Orders            | **Complete — closed**; party cards + public counters on order detail                         |
 | 10 Payments         | **Closed** for collect (Wompi + mock; fee UI 10%)                                            |
 | 10b Financial Core  | **Closed** — Ledger, hold, fee engine; seller bank + manual Wompi pay; API lotes → Phase 24  |
@@ -94,7 +94,7 @@ MVP = Phases **0–11** plus **10b–10d**, shipping per [SHIPPING.md](./SHIPPIN
 
 MVP seller payouts: Financial Core **authorizes** → ops pays **manually in Wompi** → ops marks completed in TruePhone. Automated Pagos a Terceros API is **Phase 24**.
 
-**Not MVP (but planned):** Phase 8b public Q&A, Phase 15 ops analytics, remaining Phase 23 legal pages, Apple / WhatsApp / Facebook auth.
+**Not MVP (but planned):** Phase 15 ops analytics, remaining Phase 23 legal pages, Apple / WhatsApp / Facebook auth. Phase 8b public Q&A has landed.
 
 Do not treat Figma frames as a product checklist. Figma informs colors, type, and component appearance only.
 
@@ -102,14 +102,13 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-1. Public listing Q&A (Phase 8b)
-2. Admin / reviewer analytics (Phase 15)
+1. Admin / reviewer analytics (Phase 15)
+2. Phase 23 leftovers: privacy / terms / legal pages
 3. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)
 
 1. Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap)
-2. Phase 8b public Q&A (if not already started)
-3. Admin / reviewer analytics (Phase 15) — include listing-view event instrumentation
-4. Phase 24: seller private analytics — **views per listing** for each of the seller’s listings (after Phase 15 data exists)
-5. Phase 24: automated Wompi Pagos a Terceros API when manual payouts become the bottleneck
+2. Admin / reviewer analytics (Phase 15) — include listing-view event instrumentation
+3. Phase 24: seller private analytics — **views per listing** for each of the seller’s listings (after Phase 15 data exists)
+4. Phase 24: automated Wompi Pagos a Terceros API when manual payouts become the bottleneck

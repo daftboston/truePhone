@@ -1,6 +1,6 @@
 /**
  * @file schema.prisma
- * @description TruePhone Prisma data model: marketplace profiles, listings, orders, payments, financial core, shipping, and reviews.
+ * @description TruePhone Prisma data model: marketplace profiles, listings, orders, payments, financial core, shipping, reviews, and public listing Q&A.
  * @dependencies PostgreSQL 15+, Prisma Client, Supabase
  */
 
@@ -175,6 +175,8 @@ enum NotificationType {
   BUYER_REMEDY_AVAILABLE
   REFUND_COMPLETED
   FULFILLMENT_ESCALATED
+  LISTING_QUESTION_NEW
+  LISTING_QUESTION_ANSWERED
 }
 
 /// Seller-created workflow category for paid-order assistance.
@@ -231,6 +233,9 @@ model Profile {
   blocksReceived            UserBlock[]             @relation("BlocksReceived")
   conversationReports       ConversationReport[]    @relation("ConversationReports")
   reviewReports             ReviewReport[]          @relation("ReviewReports")
+  listingQuestionsAsked     ListingQuestion[]       @relation("ListingQuestionsAsked")
+  listingQuestionAnswers    ListingQuestionAnswer[] @relation("ListingQuestionAnswers")
+  listingQuestionReports    ListingQuestionReport[] @relation("ListingQuestionReports")
   ordersAsBuyer             Order[]                 @relation("OrderBuyer")
   ordersAsSeller            Order[]                 @relation("OrderSeller")
   payments                  Payment[]
@@ -424,6 +429,7 @@ model Listing {
   favorites           Favorite[]
   messages            Message[]
   conversationReports ConversationReport[]
+  questions           ListingQuestion[]
   possessionChallenge DevicePossessionChallenge?
   orders              Order[]
 
@@ -488,6 +494,68 @@ model UserBlock {
   @@unique([blockerId, blockedId])
   @@index([blockedId])
   @@map("user_blocks")
+}
+
+/// Public question on a published listing (Phase 8b). Distinct from private Message threads.
+model ListingQuestion {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  askerId   String
+  asker     Profile @relation("ListingQuestionsAsked", fields: [askerId], references: [id])
+  body      String
+  /// Soft-hide for staff moderation; omitted from public listing Q&A.
+  hiddenAt   DateTime?
+  hiddenById String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  answer  ListingQuestionAnswer?
+  reports ListingQuestionReport[]
+
+  @@index([listingId, createdAt])
+  @@index([askerId])
+  @@map("listing_questions")
+}
+
+/// Seller's official answer to a public listing question. One answer per question.
+model ListingQuestionAnswer {
+  id         String          @id @default(cuid())
+  questionId String          @unique
+  question   ListingQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  sellerId   String
+  seller     Profile         @relation("ListingQuestionAnswers", fields: [sellerId], references: [id])
+  body       String
+  hiddenAt   DateTime?
+  hiddenById String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  reports ListingQuestionReport[]
+
+  @@index([sellerId])
+  @@map("listing_question_answers")
+}
+
+/// Report a public listing question or answer for staff moderation.
+model ListingQuestionReport {
+  id         String           @id @default(cuid())
+  questionId String?
+  question   ListingQuestion? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerId   String?
+  answer     ListingQuestionAnswer? @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   Profile          @relation("ListingQuestionReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String
+  createdAt  DateTime         @default(now())
+  resolvedAt DateTime?
+  resolvedById String?
+
+  @@index([questionId])
+  @@index([answerId])
+  @@index([reporterId])
+  @@index([resolvedAt])
+  @@map("listing_question_reports")
 }
 
 /// Report a listing-scoped conversation for moderation.

@@ -1,9 +1,10 @@
 /**
  * @file marketplace.ts
- * @description Phase 12 marketplace notifications: listing, identity, sale, chat, shipping, payout.
+ * @description Phase 12 marketplace notifications: listing, identity, sale, chat, shipping, payout, listing Q&A.
  * @dependencies prisma, createNotification
  */
 
+import { listingQaPublicHref } from "@/lib/listing-qa-access";
 import { createNotification } from "@/lib/notifications/create";
 import { prisma } from "@/lib/db";
 
@@ -83,6 +84,28 @@ export function orderPaidDedupeKey(orderId: string) {
  */
 export function newMessageDedupeKey(messageId: string) {
   return `new-message:${messageId}`;
+}
+
+/**
+ * listingQuestionDedupeKey
+ *
+ * @param questionId - ListingQuestion UUID.
+ * @returns Idempotency key.
+ * @calledBy notifySellerNewListingQuestion
+ */
+export function listingQuestionDedupeKey(questionId: string) {
+  return `listing-question:${questionId}`;
+}
+
+/**
+ * listingAnswerDedupeKey
+ *
+ * @param answerId - ListingQuestionAnswer UUID.
+ * @returns Idempotency key.
+ * @calledBy notifyAskerQuestionAnswered
+ */
+export function listingAnswerDedupeKey(answerId: string) {
+  return `listing-answer:${answerId}`;
 }
 
 /**
@@ -476,5 +499,80 @@ export async function notifySellerPayoutSent(input: {
     siteOrigin,
     emailSubject: "TruePhone: pago enviado",
     emailText: `${body}\n\nVer venta: ${siteOrigin.replace(/\/$/, "")}${href}`,
+  });
+}
+
+/**
+ * notifySellerNewListingQuestion
+ *
+ * Tells the listing owner that a public question arrived.
+ *
+ * @param input.questionId - ListingQuestion UUID.
+ * @param input.sellerId - Listing owner profile UUID.
+ * @param input.listingTitle - Listing title for copy.
+ * @param input.listingSlug - Public listing slug.
+ * @param input.preview - Truncated question body.
+ * @param input.siteOrigin - Optional email origin.
+ * @calledBy askListingQuestionAction
+ */
+export async function notifySellerNewListingQuestion(input: {
+  questionId: string;
+  sellerId: string;
+  listingTitle: string;
+  listingSlug: string;
+  preview: string;
+  siteOrigin?: string;
+}) {
+  const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const href = listingQaPublicHref(input.listingSlug);
+  const snippet = input.preview.trim().slice(0, 140);
+  const title = `Nueva pregunta en ${input.listingTitle}`;
+  const body = snippet;
+  return createNotification({
+    userId: input.sellerId,
+    type: "LISTING_QUESTION_NEW",
+    title,
+    body,
+    href,
+    dedupeKey: listingQuestionDedupeKey(input.questionId),
+    siteOrigin,
+    emailSubject: "TruePhone: nueva pregunta en tu anuncio",
+    emailText: `${body}\n\nResponde en TruePhone: ${siteOrigin.replace(/\/$/, "")}${href}`,
+  });
+}
+
+/**
+ * notifyAskerQuestionAnswered
+ *
+ * Tells the asker that the seller posted an official answer.
+ *
+ * @param input.answerId - ListingQuestionAnswer UUID.
+ * @param input.askerId - Question author profile UUID.
+ * @param input.listingTitle - Listing title for copy.
+ * @param input.listingSlug - Public listing slug.
+ * @param input.siteOrigin - Optional email origin.
+ * @calledBy answerListingQuestionAction
+ */
+export async function notifyAskerQuestionAnswered(input: {
+  answerId: string;
+  askerId: string;
+  listingTitle: string;
+  listingSlug: string;
+  siteOrigin?: string;
+}) {
+  const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const href = listingQaPublicHref(input.listingSlug);
+  const title = "El vendedor respondió tu pregunta";
+  const body = `Hay una respuesta oficial en «${input.listingTitle}».`;
+  return createNotification({
+    userId: input.askerId,
+    type: "LISTING_QUESTION_ANSWERED",
+    title,
+    body,
+    href,
+    dedupeKey: listingAnswerDedupeKey(input.answerId),
+    siteOrigin,
+    emailSubject: "TruePhone: respondieron tu pregunta",
+    emailText: `${body}\n\nVer respuesta: ${siteOrigin.replace(/\/$/, "")}${href}`,
   });
 }

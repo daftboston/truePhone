@@ -10,7 +10,9 @@ import { describe, it } from "node:test";
 import {
   identityApprovedDedupeKey,
   identityRejectedDedupeKey,
+  listingAnswerDedupeKey,
   listingApprovedDedupeKey,
+  listingQuestionDedupeKey,
   listingRejectedDedupeKey,
   newMessageDedupeKey,
   orderPaidDedupeKey,
@@ -36,5 +38,7 @@ describe("marketplace notification dedupe keys", () => {
       "tracking-uploaded:shp_1:ABC123",
     );
     assert.equal(payoutSentDedupeKey("ord_1"), "payout-sent:ord_1");
+    assert.equal(listingQuestionDedupeKey("q_1"), "listing-question:q_1");
+    assert.equal(listingAnswerDedupeKey("a_1"), "listing-answer:a_1");
   });
 });

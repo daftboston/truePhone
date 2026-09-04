@@ -1,7 +1,7 @@
 /**
  * @file page.tsx
  * @description Public listing detail page for a published anuncio slug.
- * @dependencies Listing gallery, price, seller, order/favorite actions
+ * @dependencies Listing gallery, price, seller, order/favorite actions, public Q&A
  */
 
 import type { Metadata } from "next";
@@ -17,13 +17,18 @@ import { SellerCard } from "@/components/seller-card";
 import { TrustBadge } from "@/components/trust-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ListingQaSection } from "@/features/listing-qa/components/listing-qa-section";
 import { ListingPurchaseActions } from "@/features/listings/components/listing-purchase-actions";
 import { RecordRecentlyViewed } from "@/features/listings/components/record-recently-viewed";
 import { CompensationBanner } from "@/features/orders/components/compensation-banner";
 import { conditionLabels } from "@/features/listings/schemas/listing";
 import { formatSellerRating } from "@/features/profile/types";
 import { isSellerIdentityVerified } from "@/features/verification/types";
-import { getAuthUser, getCurrentProfile } from "@/lib/auth/session";
+import {
+  canAccessReviewPortal,
+  getAuthUser,
+  getCurrentProfile,
+} from "@/lib/auth/session";
 import { isListingFavorited } from "@/lib/favorites";
 import { findActiveFeeEntitlementForSource } from "@/lib/financial-core/entitlements";
 import {
@@ -154,6 +159,7 @@ export default async function PublicListingPage({
   ].filter(Boolean);
 
   const loginHref = `/login?next=${encodeURIComponent(publicListingPath(listing.slug))}`;
+  const qaLoginHref = `/login?next=${encodeURIComponent(`${publicListingPath(listing.slug)}#preguntas`)}`;
   const messageLoginHref = `/login?next=${encodeURIComponent(`/mensajes/${listing.id}`)}`;
   const sellerHref = listing.seller.username
     ? `/u/${listing.seller.username}`
@@ -320,6 +326,20 @@ export default async function PublicListingPage({
           </p>
         </section>
       ) : null}
+
+      <ListingQaSection
+        listingId={listing.id}
+        listingStatus={listing.status}
+        sellerId={listing.sellerId}
+        viewer={{
+          profileId: current?.profile.id ?? null,
+          isStaff: current
+            ? canAccessReviewPortal(current.profile.role)
+            : false,
+        }}
+        isAuthenticated={Boolean(user)}
+        loginHref={qaLoginHref}
+      />
 
       {related.length > 0 ? (
         <section className="space-y-4">

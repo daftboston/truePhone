@@ -82,9 +82,9 @@ Listings must not skip forward states in product workflows. Public browse only s
 
 ## NotificationType
 
-Settlement, marketplace, and order-support events. Order-support additions:
+Settlement, marketplace, order-support, and listing Q&A events. Phase 8b additions:
 
-`ORDER_SUPPORT_REPLY` | `ORDER_SUPPORT_STATUS` | `SELLER_CANCELLATION_ACCEPTED` | `BUYER_REMEDY_AVAILABLE` | `REFUND_COMPLETED` | `FULFILLMENT_ESCALATED`
+`LISTING_QUESTION_NEW` | `LISTING_QUESTION_ANSWERED`
 
 ## OrderSupportCaseType
 
@@ -160,6 +160,42 @@ One-time possession code + photo proving the seller has the physical device (Pha
 - Linked 1:1 to a listing
 - `code` shown to seller; `photoUrl` after upload
 - Required before submit for review
+
+## ListingQuestion / ListingQuestionAnswer / ListingQuestionReport
+
+Public listing Q&A (Phase **8b**). Separate from private `Message` threads.
+
+**ListingQuestion** (`listing_questions`)
+
+| Field                     | Notes                                    |
+| ------------------------- | ---------------------------------------- |
+| `listingId`               | FK → `Listing` (cascade)                 |
+| `askerId`                 | FK → `Profile` (`ListingQuestionsAsked`) |
+| `body`                    | Plain text question                      |
+| `hiddenAt` / `hiddenById` | Soft-hide after staff moderation         |
+| `createdAt` / `updatedAt` | Timestamps                               |
+
+**ListingQuestionAnswer** (`listing_question_answers`)
+
+| Field                     | Notes                                               |
+| ------------------------- | --------------------------------------------------- |
+| `questionId`              | Unique FK → `ListingQuestion` (one official answer) |
+| `sellerId`                | Listing owner                                       |
+| `body`                    | Plain text answer                                   |
+| `hiddenAt` / `hiddenById` | Soft-hide after staff moderation                    |
+
+**ListingQuestionReport** (`listing_question_reports`)
+
+Report a question **or** an answer (`questionId` XOR `answerId`, enforced in SQL). Staff hide or dismiss (`resolvedAt` / `resolvedById`). Queue: `/revision/preguntas`.
+
+**Rules:**
+
+- Guests may read visible threads; asking requires a signed-in profile who is not the seller
+- Ask only while listing `PUBLISHED`; seller may answer while `PUBLISHED` or `RESERVED`
+- Hidden questions (and their answers) are omitted from public listing pages
+- Do not store Q&A in `messages`
+
+**Indexes:** `(listingId, createdAt)`, `askerId`; unique `questionId` on answers; report indexes on `questionId`, `answerId`, `reporterId`, `resolvedAt`.
 
 ## Message
 

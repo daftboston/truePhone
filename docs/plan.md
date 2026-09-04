@@ -4,7 +4,7 @@
 
 Version 1.3
 
-**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **12** marketplace notifications and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
@@ -442,7 +442,7 @@ Goal: Every **published** listing has a **public** question thread so prospectiv
 
 Result: Transparent pre-purchase answers on every listing.
 
-Status: Not started.
+Status: **Landed** — public Preguntas on `/anuncios/[slug]`; guests read; signed-in non-owners ask; seller posts one official answer; report + `/revision/preguntas`; Phase 12 alerts on new question and answer.
 
 ---
 
