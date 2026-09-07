@@ -1,7 +1,8 @@
 /**
  * @file settlement-guards.ts
  * @description Pure Financial Core guards so cancel/refund cannot race with seller payout,
- * and support-case unfreeze cannot drop a chargeback or buyer-dispute freeze.
+ * buyer problem reports cannot freeze after the 24h window, and support-case
+ * unfreeze cannot drop a chargeback or buyer-dispute freeze.
  * @dependencies none
  */
 
@@ -15,6 +16,14 @@ export type PaidOrderCancelSnapshot = {
 export type ManualPayoutOrderSnapshot = {
   status: string;
   payoutFrozen: boolean;
+  payoutCompletedAt: Date | null;
+};
+
+export type BuyerProblemReportSnapshot = {
+  status: string;
+  buyerConfirmDeadlineAt: Date | null;
+  buyerConfirmedAt: Date | null;
+  payoutAuthorizedAt: Date | null;
   payoutCompletedAt: Date | null;
 };
 
@@ -100,6 +109,50 @@ export function manualPayoutCompletionBlocker(
   }
   if (order.payoutFrozen) {
     return "El pago está congelado (disputa o reclamo). No se puede marcar como pagado.";
+  }
+  return null;
+}
+
+export const BUYER_PROBLEM_REPORT_NOT_RECEIVED_ERROR =
+  "Solo puedes reportar después de confirmar que recibiste el iPhone.";
+
+export const BUYER_PROBLEM_REPORT_AFTER_CONFIRM_ERROR =
+  "Ya confirmaste que el iPhone está correcto. El pago al vendedor sigue su curso.";
+
+export const BUYER_PROBLEM_REPORT_WINDOW_CLOSED_ERROR =
+  "La ventana de 24 horas para reportar un problema ya cerró. TruePhone procesará el pago al vendedor.";
+
+/**
+ * buyerProblemReportBlocker
+ *
+ * Returns a Spanish error when the buyer must not freeze payout via
+ * «Reportar un problema». Null when the 24h confirm window is still open.
+ * After confirm, auto-release, or payout authorization, a self-serve report
+ * would freeze an already-authorized seller payout (FINANCIAL_MODEL.md §5.1).
+ *
+ * @param order - Settlement timestamps on the order.
+ * @param now - Optional clock; defaults to Date.now.
+ * @returns Error message or null.
+ * @calledBy freezePayoutForBuyerProblem, OrderShippingPanel
+ */
+export function buyerProblemReportBlocker(
+  order: BuyerProblemReportSnapshot,
+  now: Date = new Date(),
+): string | null {
+  if (order.status !== "PAID") {
+    return BUYER_PROBLEM_REPORT_NOT_RECEIVED_ERROR;
+  }
+  if (!order.buyerConfirmDeadlineAt) {
+    return BUYER_PROBLEM_REPORT_NOT_RECEIVED_ERROR;
+  }
+  if (order.buyerConfirmedAt) {
+    return BUYER_PROBLEM_REPORT_AFTER_CONFIRM_ERROR;
+  }
+  if (order.payoutAuthorizedAt || order.payoutCompletedAt) {
+    return BUYER_PROBLEM_REPORT_WINDOW_CLOSED_ERROR;
+  }
+  if (order.buyerConfirmDeadlineAt.getTime() <= now.getTime()) {
+    return BUYER_PROBLEM_REPORT_WINDOW_CLOSED_ERROR;
   }
   return null;
 }

@@ -28,6 +28,7 @@ import {
 import type { ShippingActionState } from "@/features/shipping/schemas/shipping";
 import { PREMIUM_SHIPPING_FEE_PESOS } from "@/lib/financial-core/fees";
 import { formatOrderMoney } from "@/lib/format-money";
+import { buyerProblemReportBlocker } from "@/lib/financial-core/settlement-guards";
 import {
   availableShippingMethods,
   canSwitchCarrierToPremium,
@@ -366,12 +367,25 @@ export function OrderShippingPanel({
     shipment &&
     canBuyerMarkReceived(shipment) &&
     !buyerConfirmDeadlineAt;
+  // Hide confirm/report once the 24h window elapsed (server also enforces this).
+  const deadline =
+    buyerConfirmDeadlineAt == null ? null : new Date(buyerConfirmDeadlineAt);
+  const confirmedAt =
+    buyerConfirmedAt == null ? null : new Date(buyerConfirmedAt);
+  const inBuyerReportWindow = !buyerProblemReportBlocker({
+    status: orderStatus,
+    buyerConfirmDeadlineAt: deadline,
+    buyerConfirmedAt: confirmedAt,
+    payoutAuthorizedAt: null,
+    payoutCompletedAt: null,
+  });
   const canConfirm =
     isBuyer &&
     orderStatus === "PAID" &&
-    Boolean(buyerConfirmDeadlineAt) &&
-    !buyerConfirmedAt &&
-    !payoutFrozen;
+    Boolean(deadline) &&
+    !confirmedAt &&
+    !payoutFrozen &&
+    inBuyerReportWindow;
 
   return (
     <section className="border-border space-y-4 rounded-xl border p-4">

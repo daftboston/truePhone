@@ -9,6 +9,7 @@ import { Prisma } from "@prisma/client";
 
 import { appendLedgerEntry } from "@/lib/financial-core/ledger";
 import {
+  buyerProblemReportBlocker,
   manualPayoutCompletionBlocker,
   shouldReleaseSupportCasePayoutFreeze,
 } from "@/lib/financial-core/settlement-guards";
@@ -203,7 +204,7 @@ export async function confirmOrderByBuyer(input: {
  * @param input.reason - Human-readable freeze reason for the ledger.
  * @param input.metadata - Optional ledger metadata (e.g. supportCaseId).
  * @returns True when this call created the freeze; false when it was already frozen.
- * @calledBy freezePayout, createOrderSupportCase
+ * @calledBy freezePayout, freezePayoutForBuyerProblem, createOrderSupportCase
  */
 export async function freezePayoutInTransaction(
   tx: Prisma.TransactionClient,
@@ -338,7 +339,7 @@ export async function releaseFulfillmentExceptionFreeze(
  * @param input.orderId - Order whose payout to freeze.
  * @param input.reason - Human-readable freeze reason.
  * @returns FinancialResult for caller-safe error handling.
- * @calledBy buyer problem reports and ops workflows
+ * @calledBy ops workflows; buyer reports use freezePayoutForBuyerProblem
  */
 export async function freezePayout(input: {
   orderId: string;
@@ -347,6 +348,65 @@ export async function freezePayout(input: {
   try {
     await prisma.$transaction(async (tx) => {
       await freezePayoutInTransaction(tx, input);
+    });
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof FinancialCoreError) {
+      return { ok: false, error: error.message };
+    }
+    throw error;
+  }
+}
+
+/**
+ * freezePayoutForBuyerProblem
+ *
+ * Buyer self-serve freeze during the 24h confirm window only.
+ * Refuses after device confirm, payout authorization, or deadline expiry so a
+ * late report cannot block an already-authorized seller payout.
+ *
+ * @param input.orderId - Order whose payout to freeze.
+ * @param input.buyerId - Must be the order buyer.
+ * @param input.reason - Buyer-written problem description for the ledger.
+ * @returns FinancialResult for caller-safe error handling.
+ * @calledBy reportOrderProblemAction
+ * @consumers freezePayoutInTransaction, buyerProblemReportBlocker
+ */
+export async function freezePayoutForBuyerProblem(input: {
+  orderId: string;
+  buyerId: string;
+  reason: string;
+}): Promise<FinancialResult> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: input.orderId },
+        select: {
+          id: true,
+          buyerId: true,
+          status: true,
+          buyerConfirmDeadlineAt: true,
+          buyerConfirmedAt: true,
+          payoutAuthorizedAt: true,
+          payoutCompletedAt: true,
+        },
+      });
+      if (!order) throw new FinancialCoreError("Pedido no encontrado.");
+      if (order.buyerId !== input.buyerId) {
+        throw new FinancialCoreError(
+          "Solo el comprador puede reportar un problema.",
+        );
+      }
+
+      const blocked = buyerProblemReportBlocker(order);
+      if (blocked) {
+        throw new FinancialCoreError(blocked);
+      }
+
+      await freezePayoutInTransaction(tx, {
+        orderId: order.id,
+        reason: input.reason,
+      });
     });
     return { ok: true };
   } catch (error) {

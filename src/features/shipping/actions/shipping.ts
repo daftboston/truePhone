@@ -24,7 +24,7 @@ import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 import {
   confirmOrderByBuyer,
-  freezePayout,
+  freezePayoutForBuyerProblem,
 } from "@/lib/financial-core/settlement";
 import {
   notifyBuyerShippingMethodChosen,
@@ -440,7 +440,9 @@ export async function confirmOrderReceivedAction(
 /**
  * reportOrderProblemAction
  *
- * Freezes seller payout after the buyer reports a post-receipt problem.
+ * Freezes seller payout after the buyer reports a post-receipt problem
+ * during the 24h confirm window. Financial Core refuses after confirm,
+ * payout authorization, or deadline expiry.
  *
  * @param _prev - Previous form state from useActionState.
  * @param formData - orderId, reason.
@@ -468,26 +470,9 @@ export async function reportOrderProblemAction(
     };
   }
 
-  const order = await prisma.order.findFirst({
-    where: { id: parsed.data.orderId },
-    select: { buyerId: true, buyerConfirmDeadlineAt: true, status: true },
-  });
-  if (!order || order.buyerId !== current.profile.id) {
-    return {
-      ok: false,
-      error: "Solo el comprador puede reportar un problema.",
-    };
-  }
-  if (order.status !== "PAID" || !order.buyerConfirmDeadlineAt) {
-    return {
-      ok: false,
-      error:
-        "Solo puedes reportar después de confirmar que recibiste el iPhone.",
-    };
-  }
-
-  const result = await freezePayout({
+  const result = await freezePayoutForBuyerProblem({
     orderId: parsed.data.orderId,
+    buyerId: current.profile.id,
     reason: parsed.data.reason,
   });
   if (!result.ok) return { ok: false, error: result.error };
