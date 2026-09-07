@@ -1,7 +1,7 @@
 /**
  * @file site-footer.tsx
  * @description Marketing footer with trust pillars, support links, and brand mark.
- * @dependencies next/link, lucide-react, @/lib/utils
+ * @dependencies next/link, lucide-react, @/lib/legal, @/lib/utils
  */
 
 import Link from "next/link";
@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { LEGAL_CONTACT_MAILTO, LEGAL_PATHS } from "@/lib/legal";
 import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
 const pillars = [
@@ -66,11 +67,12 @@ const pillars = [
 ] as const;
 
 const legalLinks = [
-  { href: "/ayuda", label: "Ayuda" },
-  { href: "/ayuda#seguridad", label: "Privacidad" },
-  { href: "/ayuda#cuenta", label: "Términos" },
-  { href: "/ayuda#comprar", label: "Protección al comprador" },
-  { href: "mailto:hola@truephone.co", label: "Contacto" },
+  { href: LEGAL_PATHS.help, label: "Ayuda" },
+  { href: LEGAL_PATHS.privacy, label: "Privacidad" },
+  { href: LEGAL_PATHS.terms, label: "Términos" },
+  { href: LEGAL_PATHS.cookies, label: "Cookies" },
+  { href: `${LEGAL_PATHS.help}#comprar`, label: "Protección al comprador" },
+  { href: LEGAL_CONTACT_MAILTO, label: "Contacto" },
 ] as const;
 
 type SiteFooterProps = {

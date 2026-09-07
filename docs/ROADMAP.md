@@ -1,7 +1,7 @@
 # Roadmap
 
 **Product:** TruePhone  
-**Status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics (`/revision/analitica`), Phase **19** mobile web (including eight guided listing photo slots), UX polish, thin FAQ (`/ayuda`), buyer 8% vs refund, and in-app order-support cancellation are on `main`. Automated Pagos a Terceros → Phase **24**.  
+**Status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics (`/revision/analitica`), Phase **19** mobile web (including eight guided listing photo slots), UX polish, thin FAQ (`/ayuda`), Phase **23** legal pages (`/privacidad`, `/terminos`, `/cookies`), buyer 8% vs refund, and in-app order-support cancellation are on `main`. Automated Pagos a Terceros → Phase **24**.  
 **Business roadmap:** [plan.md](./plan.md) + [PRD.md](./PRD.md)  
 **Money:** [FINANCIAL_MODEL.md](./FINANCIAL_MODEL.md)  
 **Shipping:** [SHIPPING.md](./SHIPPING.md)  
@@ -34,13 +34,14 @@ main  ← production
   • eight guided listing photo slots
   • Phase 8b public listing Q&A
   • Phase 15 ops analytics
+  • Phase 23 legal pages (/privacidad, /terminos, /cookies)
 ```
 
 ---
 
 ## Current focus
 
-1. Phase **23** leftovers — privacy/terms/legal pages (`/ayuda` is live)
+1. Phase **23** leftovers — email templates, production infra, final QA (FAQ + legal pages are live)
 2. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
@@ -54,7 +55,8 @@ main  ← production
 | Seller views-per-listing analytics                 | Phase **24**                                  | Private seller tool; after Phase 15 view events                |
 | Mobile web polish                                  | Phase **19**                                  | Native apps stay Phase **24**                                  |
 | Camera from the phone (listing / posesión / KYC)   | Phase **19**                                  | Mobile web **Tomar foto**; native camera is **24**             |
-| FAQ page                                           | Phase **23**                                  | Thin `/ayuda` shipped; legal pages still open                  |
+| FAQ page                                           | Phase **23**                                  | Thin `/ayuda` shipped                                          |
+| Privacy / terms / cookies                          | Phase **23**                                  | **Landed** — `/privacidad`, `/terminos`, `/cookies`            |
 
 Full phase detail: [plan.md](./plan.md)
 
@@ -62,30 +64,30 @@ Full phase detail: [plan.md](./plan.md)
 
 ## Phase checklist
 
-| Phase               | Status                                                                                       |
-| ------------------- | -------------------------------------------------------------------------------------------- |
-| 0 Foundation        | **Complete**                                                                                 |
-| 1 Design System     | **Complete** (core primitives; Dialog/Drawer/Toast/DataTable with later forms)               |
-| 2 Authentication    | **Complete** (V1 email + Google); later: Apple, WhatsApp, Facebook                           |
-| 3 Profiles          | **Complete**; public counters (total / active / bought) landed                               |
-| 4 Seller identity   | **Complete** (manual review pipeline)                                                        |
-| 5 Listing creation  | **Complete** + seller price-guide UI (**landed** with Phase 13)                              |
-| 6 Review Portal     | **Complete**                                                                                 |
-| 7 Marketplace       | **Complete — closed**                                                                        |
-| 8 Messaging         | **Complete — closed** (private DMs)                                                          |
-| 8b Listing Q&A      | **Closed** — public Preguntas on listing pages; report queue at `/revision/preguntas`        |
-| 9 Orders            | **Complete — closed**; party cards + public counters on order detail                         |
-| 10 Payments         | **Closed** for collect (Wompi + mock; fee UI 10%)                                            |
-| 10b Financial Core  | **Closed** — Ledger, hold, fee engine; seller bank + manual Wompi pay; API lotes → Phase 24  |
-| 10c Shipping        | **Closed** — Carrier + Premium Bogotá + buyer received → 24h                                 |
-| 10d Order lifecycle | **Closed** — 24h disclosed; confirm UX; cron auto-release; seller-complete killed            |
-| 11 Reviews          | **Complete — closed**                                                                        |
-| 12 Notifications    | **Closed** for in-app/email marketplace events + settlement reminders; push later            |
-| 13 Admin            | **Price table landed** (`RecommendedPrice` + `/revision/precios`); full dashboard still open |
-| 15 Analytics        | **Landed** — ops dashboard `/revision/analitica` + unique listing-view events                |
-| 19 Mobile           | **Landed** — Tomar foto, account drawer, filter sheet, gallery swipe                         |
-| 23 Launch / FAQ     | **Thin FAQ shipped** (`/ayuda`); privacy/terms/legal pages still open                        |
-| 24 Post-launch      | Not started — Pagos a Terceros API, native apps, **seller listing-view analytics**, …        |
+| Phase               | Status                                                                                                                                |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 Foundation        | **Complete**                                                                                                                          |
+| 1 Design System     | **Complete** (core primitives; Dialog/Drawer/Toast/DataTable with later forms)                                                        |
+| 2 Authentication    | **Complete** (V1 email + Google); later: Apple, WhatsApp, Facebook                                                                    |
+| 3 Profiles          | **Complete**; public counters (total / active / bought) landed                                                                        |
+| 4 Seller identity   | **Complete** (manual review pipeline)                                                                                                 |
+| 5 Listing creation  | **Complete** + seller price-guide UI (**landed** with Phase 13)                                                                       |
+| 6 Review Portal     | **Complete**                                                                                                                          |
+| 7 Marketplace       | **Complete — closed**                                                                                                                 |
+| 8 Messaging         | **Complete — closed** (private DMs)                                                                                                   |
+| 8b Listing Q&A      | **Closed** — public Preguntas on listing pages; report queue at `/revision/preguntas`                                                 |
+| 9 Orders            | **Complete — closed**; party cards + public counters on order detail                                                                  |
+| 10 Payments         | **Closed** for collect (Wompi + mock; fee UI 10%)                                                                                     |
+| 10b Financial Core  | **Closed** — Ledger, hold, fee engine; seller bank + manual Wompi pay; API lotes → Phase 24                                           |
+| 10c Shipping        | **Closed** — Carrier + Premium Bogotá + buyer received → 24h                                                                          |
+| 10d Order lifecycle | **Closed** — 24h disclosed; confirm UX; cron auto-release; seller-complete killed                                                     |
+| 11 Reviews          | **Complete — closed**                                                                                                                 |
+| 12 Notifications    | **Closed** for in-app/email marketplace events + settlement reminders; push later                                                     |
+| 13 Admin            | **Price table landed** (`RecommendedPrice` + `/revision/precios`); full dashboard still open                                          |
+| 15 Analytics        | **Landed** — ops dashboard `/revision/analitica` + unique listing-view events                                                         |
+| 19 Mobile           | **Landed** — Tomar foto, account drawer, filter sheet, gallery swipe                                                                  |
+| 23 Launch / FAQ     | **FAQ + legal pages landed** (`/ayuda`, `/privacidad`, `/terminos`, `/cookies`); email templates, prod infra, and final QA still open |
+| 24 Post-launch      | Not started — Pagos a Terceros API, native apps, **seller listing-view analytics**, …                                                 |
 
 ---
 
@@ -95,7 +97,7 @@ MVP = Phases **0–11** plus **10b–10d**, shipping per [SHIPPING.md](./SHIPPIN
 
 MVP seller payouts: Financial Core **authorizes** → ops pays **manually in Wompi** → ops marks completed in TruePhone. Automated Pagos a Terceros API is **Phase 24**.
 
-**Not MVP (but planned):** remaining Phase 23 legal pages, Apple / WhatsApp / Facebook auth. Phase 8b public Q&A and Phase 15 ops analytics have landed.
+**Not MVP (but planned):** remaining Phase 23 launch work (email templates, prod infra, final QA), Apple / WhatsApp / Facebook auth. Phase 8b public Q&A, Phase 15 ops analytics, and Phase 23 legal pages have landed.
 
 Do not treat Figma frames as a product checklist. Figma informs colors, type, and component appearance only.
 
@@ -103,7 +105,7 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Near-term sequence
 
-1. Phase 23 leftovers: privacy / terms / legal pages
+1. Phase 23 leftovers: email templates, production infra, final QA
 2. Phase 24: automated Wompi Pagos a Terceros API (optional; MVP is manual)
 
 ## Post-MVP growth sequence (suggested)

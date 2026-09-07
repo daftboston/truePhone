@@ -4,7 +4,7 @@
 
 Version 1.3
 
-**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics, and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics, and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`; privacy / terms / cookies are at `/privacidad`, `/terminos`, and `/cookies`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
@@ -790,15 +790,15 @@ Result: Operational visibility.
 
 Tasks
 
-- Privacy / Terms / Cookie policies
-- **Support center / FAQ page** — **thin slice shipped** at `/ayuda` (clusters below). Full legal pages still open.
-- Email templates / legal pages
+- Privacy / Terms / Cookie policies — **landed** at `/privacidad`, `/terminos`, `/cookies`
+- **Support center / FAQ page** — **thin slice shipped** at `/ayuda` (clusters below)
+- Email templates
 - Production database / storage / domains
 - Final QA / load testing
 
 ### FAQ page (canonical)
 
-**Thin FAQ shipped** at `/ayuda` (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Full privacy/terms pages remain launch work.
+**Thin FAQ shipped** at `/ayuda` (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Privacy, terms, and cookies are live; remaining launch work is email templates, production infra, and final QA.
 
 Suggested FAQ clusters (Spanish copy; English only in docs):
 
@@ -810,9 +810,11 @@ Suggested FAQ clusters (Spanish copy; English only in docs):
 6. **Seguridad** — IMEI, Activation Lock, fraud reporting
 7. **Cuenta** — login methods, verification, deleting account
 
-Link FAQ from footer, Help, and key empty states. Keep answers short; deep policy lives on legal pages.
+Link FAQ from footer, Help, and key empty states. Keep answers short; deep policy lives on `/privacidad`, `/terminos`, and `/cookies`.
 
 Result: Launch-ready platform.
+
+Status: **Legal pages landed** (`/privacidad`, `/terminos`, `/cookies`; footer, signup, KYC, and FAQ wired). Remaining: email templates, production infra, final QA.
 
 ---
 

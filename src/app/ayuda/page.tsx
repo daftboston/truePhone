@@ -80,6 +80,19 @@ export default function AyudaPage() {
                       <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                         {item.answer}
                       </p>
+                      {item.links && item.links.length > 0 ? (
+                        <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                          {item.links.map((link) => (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              className="text-trust font-medium underline-offset-4 hover:underline"
+                            >
+                              {link.label}
+                            </Link>
+                          ))}
+                        </p>
+                      ) : null}
                     </details>
                   </li>
                 ))}

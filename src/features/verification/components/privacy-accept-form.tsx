@@ -3,14 +3,17 @@
 /**
  * @file privacy-accept-form.tsx
  * @description PrivacyAcceptForm component for the verification feature.tsx.
- * @dependencies react, @/features/verification/actions/identity, @/components/ui/button
+ * @dependencies react, next/link, @/features/verification/actions/identity, @/components/ui/button, @/lib/legal
  */
 
 import { useState, useTransition } from "react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
+import Link from "next/link";
+
 import { acceptPrivacyAction } from "@/features/verification/actions/identity";
 import { Button } from "@/components/ui/button";
+import { LEGAL_PATHS } from "@/lib/legal";
 
 /**
  * PrivacyAcceptForm
@@ -47,6 +50,14 @@ export function PrivacyAcceptForm() {
             soporte.
           </li>
         </ul>
+        <p>
+          <Link
+            href={LEGAL_PATHS.privacy}
+            className="text-trust text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Lee la política de privacidad
+          </Link>
+        </p>
       </div>
 
       {error ? (

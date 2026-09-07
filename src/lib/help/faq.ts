@@ -1,12 +1,20 @@
 /**
  * @file faq.ts
- * @description Spanish FAQ clusters for the public /ayuda page (Phase 23 thin slice).
- * @dependencies none
+ * @description Spanish FAQ clusters for the public /ayuda page (Phase 23).
+ * @dependencies @/lib/legal
  */
+
+import { LEGAL_CONTACT_EMAIL, LEGAL_PATHS } from "@/lib/legal";
+
+export type FaqItemLink = {
+  href: string;
+  label: string;
+};
 
 export type FaqItem = {
   question: string;
   answer: string;
+  links?: FaqItemLink[];
 };
 
 export type FaqCluster = {
@@ -18,8 +26,8 @@ export type FaqCluster = {
 /**
  * FAQ_CLUSTERS
  *
- * Canonical help copy for TruePhone. Policy detail still lives in legal pages
- * (not shipped yet); these answers stay short and product-accurate.
+ * Canonical help copy for TruePhone. Answers stay short; policy detail lives
+ * on /privacidad, /terminos, and /cookies.
  *
  * @calledBy AyudaPage
  */
@@ -141,8 +149,12 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       },
       {
         question: "¿Dónde están los términos y la privacidad?",
-        answer:
-          "Las páginas legales completas salen antes del lanzamiento público. Esta ayuda resume cómo funciona TruePhone hoy. Para borrar la cuenta o una duda de datos, escribe a hola@truephone.co.",
+        answer: `Los términos, la privacidad y las cookies están en estas páginas. Esta ayuda resume cómo funciona TruePhone. Para borrar la cuenta o una duda de datos, escribe a ${LEGAL_CONTACT_EMAIL}.`,
+        links: [
+          { href: LEGAL_PATHS.terms, label: "Términos" },
+          { href: LEGAL_PATHS.privacy, label: "Privacidad" },
+          { href: LEGAL_PATHS.cookies, label: "Cookies" },
+        ],
       },
     ],
   },
