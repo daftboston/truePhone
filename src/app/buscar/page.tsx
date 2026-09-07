@@ -7,6 +7,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
@@ -168,7 +169,10 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
       <div className="space-y-2">
         <Button asChild variant="outline" size="sm">
-          <Link href="/explorar">← Explorar modelos</Link>
+          <Link href="/explorar" className="inline-flex items-center gap-1">
+            <ChevronLeft className="size-4" aria-hidden />
+            Explorar modelos
+          </Link>
         </Button>
         <h1 className="text-foreground text-xl font-semibold tracking-tight md:text-2xl">
           {heading}

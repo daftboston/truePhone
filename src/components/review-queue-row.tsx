@@ -1,12 +1,13 @@
 /**
  * @file review-queue-row.tsx
  * @description Linked row for admin/reviewer listing queues with thumbnail and status.
- * @dependencies next/image, next/link, @/lib/utils
+ * @dependencies next/image, next/link, Badge, @/lib/utils
  */
 
 import Image from "next/image";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type ReviewQueueRowProps = {
@@ -16,6 +17,8 @@ type ReviewQueueRowProps = {
   submittedAt: string;
   imageUrl?: string;
   statusLabel?: string;
+  statusVariant?:
+    "secondary" | "outline" | "success" | "warning" | "destructive";
   className?: string;
 };
 
@@ -29,7 +32,8 @@ type ReviewQueueRowProps = {
  * @param props.sellerName - Seller display name.
  * @param props.submittedAt - Human-readable submission time.
  * @param props.imageUrl - Optional thumbnail URL.
- * @param props.statusLabel - Optional status text.
+ * @param props.statusLabel - Optional status text shown as a Badge.
+ * @param props.statusVariant - Badge color; defaults to outline.
  * @param props.className - Optional className.
  * @returns Linked queue row.
  * @calledBy ListingReviewQueuePage and related review lists
@@ -41,24 +45,25 @@ export function ReviewQueueRow({
   submittedAt,
   imageUrl,
   statusLabel,
+  statusVariant = "outline",
   className,
 }: ReviewQueueRowProps) {
   return (
     <Link
       href={href}
       className={cn(
-        "hover:bg-muted/60 border-border flex items-center gap-3 border-b px-1 py-3 transition-colors",
+        "hover:bg-muted/60 border-border flex min-h-20 items-center gap-3 border-b px-2 py-4 transition-colors",
         className,
       )}
     >
-      <div className="bg-muted relative size-14 shrink-0 overflow-hidden rounded-lg">
+      <div className="bg-muted relative size-16 shrink-0 overflow-hidden rounded-lg">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt=""
             fill
             className="object-cover"
-            sizes="56px"
+            sizes="64px"
           />
         ) : null}
       </div>
@@ -69,11 +74,11 @@ export function ReviewQueueRow({
         <p className="text-muted-foreground truncate text-xs">{sellerName}</p>
         <p className="text-muted-foreground text-xs">{submittedAt}</p>
       </div>
-      {statusLabel && (
-        <span className="text-muted-foreground shrink-0 text-xs font-medium">
+      {statusLabel ? (
+        <Badge variant={statusVariant} className="shrink-0">
           {statusLabel}
-        </span>
-      )}
+        </Badge>
+      ) : null}
     </Link>
   );
 }

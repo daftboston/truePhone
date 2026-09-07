@@ -72,9 +72,8 @@ export function IdentityReviewActions({
         </div>
       ) : (
         <p className="text-muted-foreground text-xs">
-          Para ver las fotos, agrega{" "}
-          <code className="text-foreground">SUPABASE_SERVICE_ROLE_KEY</code> al
-          entorno del servidor.
+          Las fotos de identidad no están disponibles ahora. Un administrador
+          debe revisar la configuración de almacenamiento.
         </p>
       )}
 

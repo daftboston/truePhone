@@ -9,6 +9,7 @@ import { describe, it } from "node:test";
 
 import {
   reviewQueueTabForListing,
+  reviewStatusBadgeVariant,
   reviewStatusLabel,
 } from "@/lib/listings-review";
 
@@ -57,6 +58,26 @@ describe("reviewStatusLabel", () => {
     assert.equal(
       reviewStatusLabel({ status: "SUBMITTED", reviewerId: null }),
       "Pendiente",
+    );
+  });
+});
+
+describe("reviewStatusBadgeVariant", () => {
+  it("maps pending and rejected queue labels to Badge variants", () => {
+    assert.equal(
+      reviewStatusBadgeVariant({ status: "SUBMITTED", reviewerId: null }),
+      "warning",
+    );
+    assert.equal(
+      reviewStatusBadgeVariant({
+        status: "PENDING_REVIEW",
+        reviewerId: "rev-1",
+      }),
+      "secondary",
+    );
+    assert.equal(
+      reviewStatusBadgeVariant({ status: "REJECTED", reviewerId: "rev-1" }),
+      "destructive",
     );
   });
 });

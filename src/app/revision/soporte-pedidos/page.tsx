@@ -13,7 +13,10 @@ import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessReviewPortal, getCurrentProfile } from "@/lib/auth/session";
-import { listOrderSupportCasesForStaff } from "@/lib/orders/order-support-service";
+import {
+  listOrderSupportCasesForStaff,
+  orderSupportStatusLabel,
+} from "@/lib/orders/order-support-service";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -164,9 +167,14 @@ export default async function OrderSupportQueuePage({
                       · Pedido {supportCase.orderId.slice(0, 8)}
                     </p>
                   </div>
-                  <Badge variant="outline">
-                    {caseTypeLabel(supportCase.type)}
-                  </Badge>
+                  <div className="flex flex-wrap items-center justify-end gap-1.5">
+                    <Badge variant="outline">
+                      {caseTypeLabel(supportCase.type)}
+                    </Badge>
+                    <Badge variant="secondary">
+                      {orderSupportStatusLabel(supportCase.status)}
+                    </Badge>
+                  </div>
                 </div>
                 <p className="text-foreground mt-3 line-clamp-2 text-sm">
                   {supportCase.initialReason}

@@ -123,6 +123,7 @@ function HeroPhonesImage({
  * HomeHero
  *
  * Auto-advancing hero slides with headline, support copy, CTA, and product imagery.
+ * Auto-advance is disabled when the user prefers reduced motion.
  *
  * @param props.className - Optional section className.
  * @returns Full-bleed hero carousel for the home page.
@@ -140,11 +141,22 @@ export function HomeHero({ className }: HomeHeroProps) {
   }, []);
 
   useEffect(() => {
-    if (paused) return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (paused || media.matches) return;
+
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % SLIDES.length);
     }, 6500);
-    return () => window.clearInterval(timer);
+
+    const stopIfReduced = () => {
+      if (media.matches) window.clearInterval(timer);
+    };
+    media.addEventListener("change", stopIfReduced);
+
+    return () => {
+      window.clearInterval(timer);
+      media.removeEventListener("change", stopIfReduced);
+    };
   }, [paused]);
 
   return (
@@ -219,7 +231,7 @@ export function HomeHero({ className }: HomeHeroProps) {
 
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground absolute top-1/2 left-0.5 z-10 -translate-y-1/2 rounded-full p-1.5 opacity-50 transition-opacity hover:opacity-100 md:left-1"
+          className="text-foreground/80 hover:text-foreground bg-background/80 hover:bg-background absolute top-1/2 left-0.5 z-10 -translate-y-1/2 rounded-full p-1.5 shadow-sm transition-colors md:left-1"
           aria-label="Diapositiva anterior"
           onClick={() => go(index - 1)}
         >
@@ -227,7 +239,7 @@ export function HomeHero({ className }: HomeHeroProps) {
         </button>
         <button
           type="button"
-          className="text-muted-foreground hover:text-foreground absolute top-1/2 right-0.5 z-10 -translate-y-1/2 rounded-full p-1.5 opacity-50 transition-opacity hover:opacity-100 md:right-1"
+          className="text-foreground/80 hover:text-foreground bg-background/80 hover:bg-background absolute top-1/2 right-0.5 z-10 -translate-y-1/2 rounded-full p-1.5 shadow-sm transition-colors md:right-1"
           aria-label="Diapositiva siguiente"
           onClick={() => go(index + 1)}
         >

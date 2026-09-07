@@ -116,7 +116,7 @@ function ExploreModelCard({
   return (
     <li
       className="explore-model-item w-[calc(50%-0.375rem)] max-w-[17rem] min-w-[9.5rem] sm:w-[calc(33.333%-0.67rem)] md:w-[calc(25%-0.75rem)]"
-      style={{ "--explore-stagger": index } as CSSProperties}
+      style={{ "--explore-stagger": String(index) } as CSSProperties}
     >
       <Link
         href={`${browseModelHref(model.id)}${compensationId ? `&compensacion=${encodeURIComponent(compensationId)}` : ""}`}

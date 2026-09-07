@@ -1,10 +1,8 @@
 /**
  * @file iphone-model-glyph.tsx
  * @description Centered catalog iPhone silhouette that matches face and size variant.
- * @dependencies react, @/lib/iphone-catalog, @/lib/utils
+ * @dependencies @/lib/iphone-catalog, @/lib/utils
  */
-
-import { useId } from "react";
 
 import { getIphoneFaceStyle, type CatalogModel } from "@/lib/iphone-catalog";
 import type { IphoneVariantTypeId } from "@/lib/iphone-catalog-data";
@@ -30,6 +28,7 @@ const VARIANT_FRAME_CLASS: Record<IphoneVariantTypeId, string> = {
  *
  * Draws a modern iPhone silhouette (SE home button, notch, or Dynamic Island)
  * scaled to the catalog variant so explore cards look like a product studio.
+ * Fills use CSS variables (no SVG paint ids) so server and client markup match.
  *
  * @param props.model - Product line, generation, and variant for face/size.
  * @param props.className - Optional extra classes on the SVG.
@@ -38,40 +37,18 @@ const VARIANT_FRAME_CLASS: Record<IphoneVariantTypeId, string> = {
  */
 export function IphoneModelGlyph({ model, className }: IphoneModelGlyphProps) {
   const face = getIphoneFaceStyle(model);
-  const paintId = useId().replace(/:/g, "");
 
   return (
     <svg
       viewBox="0 0 120 248"
       fill="none"
-      aria-hidden
+      aria-hidden="true"
       className={cn(
         "explore-phone-glyph overflow-visible",
         VARIANT_FRAME_CLASS[model.variantType],
         className,
       )}
     >
-      <defs>
-        <linearGradient id={`${paintId}-body`} x1="20" y1="8" x2="100" y2="240">
-          <stop
-            offset="0%"
-            stopColor="currentColor"
-            stopOpacity={model.variantType === "AIR" ? 0.72 : 0.88}
-          />
-          <stop offset="100%" stopColor="currentColor" stopOpacity={0.55} />
-        </linearGradient>
-        <linearGradient
-          id={`${paintId}-glass`}
-          x1="28"
-          y1="24"
-          x2="88"
-          y2="220"
-        >
-          <stop offset="0%" stopColor="var(--background)" stopOpacity={0.95} />
-          <stop offset="100%" stopColor="var(--muted)" stopOpacity={0.92} />
-        </linearGradient>
-      </defs>
-
       {/* Volume / mute rails */}
       <rect
         x="4.5"
@@ -104,7 +81,8 @@ export function IphoneModelGlyph({ model, className }: IphoneModelGlyphProps) {
         width="100"
         height="232"
         rx={face === "home" ? 22 : 28}
-        fill={`url(#${paintId}-body)`}
+        fill="currentColor"
+        fillOpacity={model.variantType === "AIR" ? 0.72 : 0.88}
       />
       <rect
         x="16"
@@ -112,7 +90,7 @@ export function IphoneModelGlyph({ model, className }: IphoneModelGlyphProps) {
         width="88"
         height={face === "home" ? 178 : 216}
         rx={face === "home" ? 6 : 20}
-        fill={`url(#${paintId}-glass)`}
+        fill="var(--glyph-glass)"
       />
 
       {face === "home" ? (

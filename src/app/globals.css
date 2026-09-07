@@ -74,6 +74,11 @@ html.disable-transitions *::after {
   --sidebar-accent-foreground: #1e3a8a;
   --sidebar-border: #e4e4e7;
   --sidebar-ring: #2563eb;
+
+  /* Explorar glyph/stage — first color-mix stop is the Lightning CSS fallback */
+  --glyph-glass: color-mix(in oklab, var(--background) 88%, var(--foreground));
+  --phone-stage: color-mix(in oklab, var(--muted) 72%, var(--card));
+  --phone-stage-glow: rgb(0 0 0 / 0.06);
 }
 
 .dark {
@@ -133,6 +138,11 @@ html.disable-transitions *::after {
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #272a33;
   --sidebar-ring: #3b82f6;
+
+  /* Lead with foreground so Lightning's color-mix fallback stays light */
+  --glyph-glass: color-mix(in oklab, var(--foreground) 62%, var(--muted));
+  --phone-stage: color-mix(in oklab, var(--card) 78%, var(--foreground));
+  --phone-stage-glow: rgb(255 255 255 / 0.2);
 }
 
 @theme inline {
@@ -200,6 +210,34 @@ html.disable-transitions *::after {
   box-shadow: var(--shadow-card);
 }
 
+/*
+  TruePhone Liquid Glass — token-based chrome only (header, bottom nav,
+  sticky bars). Background lives here; blur is applied with Tailwind
+  `backdrop-blur-md` because Lightning CSS strips backdrop-filter from
+  custom rules. Never use on listing/explore cards.
+*/
+.tp-glass {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+}
+
+.tp-glass-header {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  border-bottom-color: color-mix(in oklab, var(--border) 50%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-glass,
+  .tp-glass-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--background);
+  }
+}
+
 /* Home hero — wide premium banner (theme tokens) */
 .home-hero-panel {
   background: color-mix(in oklab, var(--background) 78%, var(--muted));
@@ -227,13 +265,12 @@ html.disable-transitions *::after {
 
 /* Explorar — studio product cards */
 .explore-phone-stage {
-  background:
-    radial-gradient(
-      ellipse 62% 48% at 50% 42%,
-      color-mix(in oklab, var(--foreground) 8%, transparent),
-      transparent 72%
-    ),
-    color-mix(in oklab, var(--muted) 72%, var(--card));
+  background-color: var(--phone-stage);
+  background-image: radial-gradient(
+    ellipse 62% 48% at 50% 42%,
+    var(--phone-stage-glow),
+    transparent 72%
+  );
 }
 
 .explore-phone-glyph {
@@ -248,7 +285,8 @@ html.disable-transitions *::after {
     drop-shadow(0 3px 8px rgb(0 0 0 / 0.28));
 }
 
-.explore-model-card {
+.explore-model-card,
+.listing-card {
   transition:
     transform 280ms ease,
     border-color 280ms ease,
@@ -260,7 +298,9 @@ html.disable-transitions *::after {
 }
 
 .explore-model-card:hover,
-.explore-model-card:focus-visible {
+.explore-model-card:focus-visible,
+.listing-card:hover,
+.listing-card:focus-visible {
   border-color: color-mix(in oklab, var(--trust) 45%, var(--border));
   box-shadow: var(--shadow-card);
 }
@@ -307,7 +347,9 @@ html.disable-transitions *::after {
   }
 
   .explore-model-card:hover,
-  .explore-model-card:focus-visible {
+  .explore-model-card:focus-visible,
+  .listing-card:hover,
+  .listing-card:focus-visible {
     transform: translateY(-4px);
   }
 

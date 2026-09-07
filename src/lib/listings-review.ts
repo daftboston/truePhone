@@ -122,6 +122,27 @@ export function reviewStatusLabel(listing: {
 }
 
 /**
+ * reviewStatusBadgeVariant
+ *
+ * Picks a Badge variant that matches queue status meaning.
+ *
+ * @param listing - Listing status and reviewerId fields.
+ * @returns Badge variant for ReviewQueueRow.
+ * @calledBy ListingReviewQueuePage
+ */
+export function reviewStatusBadgeVariant(listing: {
+  status: string;
+  reviewerId: string | null;
+}) {
+  const label = reviewStatusLabel(listing);
+  if (label === "Pendiente") return "warning" as const;
+  if (label === "En revisión") return "secondary" as const;
+  if (label === "Aprobado") return "success" as const;
+  if (label === "Rechazado") return "destructive" as const;
+  return "outline" as const;
+}
+
+/**
  * reviewQueueTabForListing
  *
  * Maps a listing to the reviewer queue tab it belongs in.

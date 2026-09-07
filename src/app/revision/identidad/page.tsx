@@ -36,7 +36,7 @@ export default async function IdentityReviewQueuePage() {
       <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
-          description="Solo revisores y administradores pueden ver esta cola. Usa supabase/promote-reviewer.sql para asignar el rol."
+          description="Solo revisores y administradores pueden ver esta cola."
           action={
             <Button asChild variant="outline">
               <Link href="/">Volver al inicio</Link>

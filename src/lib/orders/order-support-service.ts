@@ -24,6 +24,38 @@ export const ACTIVE_ORDER_SUPPORT_STATUSES: OrderSupportCaseStatus[] = [
   "ESCALATED",
 ];
 
+/**
+ * orderSupportStatusLabel
+ *
+ * Maps support-case status to staff-facing Spanish (not Prisma enum names).
+ *
+ * @param status - Persisted OrderSupportCaseStatus.
+ * @returns Localized status label.
+ * @calledBy OrderSupportCasePage, OrderSupportQueuePage
+ */
+export function orderSupportStatusLabel(status: OrderSupportCaseStatus) {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "IN_REVIEW":
+      return "En revisión";
+    case "NEEDS_SELLER_RESPONSE":
+      return "Esperando vendedor";
+    case "ESCALATED":
+      return "Escalada";
+    case "APPROVED":
+      return "Aprobada";
+    case "REJECTED":
+      return "Rechazada";
+    case "RESOLVED":
+      return "Resuelta";
+    case "WITHDRAWN":
+      return "Retirada";
+    default:
+      return status;
+  }
+}
+
 const sellerCaseInclude = {
   assignedStaff: {
     select: { id: true, fullName: true, username: true, role: true },

@@ -1,6 +1,7 @@
 /**
  * @file page.tsx
  * @description Public listing detail page for a published anuncio slug.
+ *   Buyer copy explains Revisado and Activation Lock in human Spanish.
  * @dependencies Listing gallery, price, seller, order/favorite actions, public Q&A, listing views
  */
 
@@ -81,6 +82,31 @@ export async function generateMetadata({
       "product:price:amount": String(price),
       "product:price:currency": "COP",
     },
+  };
+}
+
+/**
+ * activationLockCopy
+ *
+ * Returns buyer-facing Activation Lock status in human Spanish, not
+ * technical Activado/Desactivado labels.
+ *
+ * @param locked - Listing `activationLocked` flag.
+ * @returns Short status plus one-line explanation.
+ * @calledBy PublicListingPage
+ */
+function activationLockCopy(locked: boolean) {
+  if (locked) {
+    return {
+      status: "Activo",
+      detail:
+        "Sigue vinculado a una cuenta de Apple y no se puede usar hasta que se quite.",
+    };
+  }
+
+  return {
+    status: "Sin bloqueo",
+    detail: "El iPhone no está vinculado a una cuenta de Apple.",
   };
 }
 
@@ -166,6 +192,7 @@ export default async function PublicListingPage({
     listing.hasCharger ? "Cargador" : null,
     listing.hasReceipt ? "Factura" : null,
   ].filter(Boolean);
+  const activationLock = activationLockCopy(listing.activationLocked);
 
   const loginHref = `/login?next=${encodeURIComponent(publicListingPath(listing.slug))}`;
   const qaLoginHref = `/login?next=${encodeURIComponent(`${publicListingPath(listing.slug)}#preguntas`)}`;
@@ -197,16 +224,21 @@ export default async function PublicListingPage({
             <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
               {listing.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">
-                {conditionLabels[listing.condition]}
-              </Badge>
-              <TrustBadge label="Revisado" />
-              {listing.batteryHealth != null ? (
-                <Badge variant="outline">
-                  Batería {listing.batteryHealth}%
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">
+                  {conditionLabels[listing.condition]}
                 </Badge>
-              ) : null}
+                <TrustBadge label="Revisado" />
+                {listing.batteryHealth != null ? (
+                  <Badge variant="outline">
+                    Batería {listing.batteryHealth}%
+                  </Badge>
+                ) : null}
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Un revisor de TruePhone lo aprobó antes de publicarse.
+              </p>
             </div>
             <p className="text-muted-foreground text-sm">
               {listing.iphoneModel.name} ·{" "}
@@ -312,11 +344,16 @@ export default async function PublicListingPage({
               {listing.carrier ? ` · ${listing.carrier}` : ""}
             </dd>
           </div>
-          <div className="flex justify-between gap-4 sm:block sm:space-y-1">
-            <dt>Activation Lock</dt>
-            <dd className="text-foreground font-medium">
-              {listing.activationLocked ? "Activado" : "Desactivado"}
-            </dd>
+          <div className="space-y-1">
+            <div className="flex justify-between gap-4 sm:block sm:space-y-1">
+              <dt>Activation Lock</dt>
+              <dd className="text-foreground font-medium">
+                {activationLock.status}
+              </dd>
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {activationLock.detail}
+            </p>
           </div>
           <div className="flex justify-between gap-4 sm:block sm:space-y-1">
             <dt>Accesorios</dt>
@@ -372,7 +409,8 @@ export default async function PublicListingPage({
         </section>
       ) : null}
 
-      <div className="bg-background/95 border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 md:hidden">
+      {/* Glass sticky buy bar — sits above bottom nav; blur via Tailwind */}
+      <div className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden">
         <ListingPurchaseActions
           compact
           listingId={listing.id}

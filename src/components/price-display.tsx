@@ -47,7 +47,7 @@ function formatCop(value: number, currency = "COP") {
  * @param props.currency - Currency code; defaults to COP.
  * @param props.className - Wrapper className.
  * @returns Price block with optional breakdown list.
- * @calledBy ListingCard, HomeFeaturedRotator, listing detail pages
+ * @calledBy ListingCard, listing detail pages, and home featured grid
  */
 export function PriceDisplay({
   price,

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: "%s · TruePhone",
   },
   description:
-    "El marketplace más confiable para comprar y vender iPhones usados en Colombia.",
+    "Compra y vende iPhones usados en Colombia. Cada anuncio es revisado manualmente antes de publicarse.",
 };
 
 const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme")||"system";var r=t==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.classList.toggle("dark",r==="dark");}catch(e){}})();`;

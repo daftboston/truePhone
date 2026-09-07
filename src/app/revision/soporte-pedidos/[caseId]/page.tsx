@@ -11,9 +11,15 @@ import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderSupportOpsPanel } from "@/features/orders/components/order-support-ops-panel";
+import { listingStatusLabel } from "@/features/listings/schemas/listing";
 import { canAccessReviewPortal, getCurrentProfile } from "@/lib/auth/session";
-import { formatOrderMoney } from "@/lib/orders";
-import { getOrderSupportCaseForStaff } from "@/lib/orders/order-support-service";
+import { formatOrderMoney, orderStatusLabel } from "@/lib/orders";
+import {
+  getOrderSupportCaseForStaff,
+  orderSupportStatusLabel,
+} from "@/lib/orders/order-support-service";
+import { paymentStatusLabel } from "@/lib/payments";
+import { shipmentStatusLabel, shippingMethodLabel } from "@/lib/shipping";
 
 type PageProps = {
   params: Promise<{ caseId: string }>;
@@ -73,7 +79,9 @@ export default async function OrderSupportCasePage({ params }: PageProps) {
           <h1 className="text-foreground text-xl font-semibold tracking-tight md:text-2xl">
             {supportCaseTypeLabel(supportCase.type)}
           </h1>
-          <Badge variant="outline">{supportCase.status}</Badge>
+          <Badge variant="outline">
+            {orderSupportStatusLabel(supportCase.status)}
+          </Badge>
         </div>
         <p className="text-muted-foreground text-sm">
           Caso {supportCase.id} · Pedido {supportCase.orderId}
@@ -96,11 +104,11 @@ export default async function OrderSupportCasePage({ params }: PageProps) {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-3">
               <dt className="text-muted-foreground">Pedido</dt>
-              <dd>{supportCase.order.status}</dd>
+              <dd>{orderStatusLabel(supportCase.order.status)}</dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-muted-foreground">Anuncio</dt>
-              <dd>{supportCase.order.listing.status}</dd>
+              <dd>{listingStatusLabel(supportCase.order.listing.status)}</dd>
             </div>
             <div className="flex justify-between gap-3">
               <dt className="text-muted-foreground">Total comprador</dt>
@@ -150,7 +158,7 @@ export default async function OrderSupportCasePage({ params }: PageProps) {
               <dt className="text-muted-foreground text-xs">Envío</dt>
               <dd>
                 {shipment
-                  ? `${shipment.method} · ${shipment.status}`
+                  ? `${shippingMethodLabel(shipment.method)} · ${shipmentStatusLabel(shipment.status)}`
                   : "Sin método seleccionado"}
               </dd>
             </div>
@@ -158,7 +166,7 @@ export default async function OrderSupportCasePage({ params }: PageProps) {
               <dt className="text-muted-foreground text-xs">Pago</dt>
               <dd>
                 {latestPayment
-                  ? `${latestPayment.provider} · ${latestPayment.status}`
+                  ? `${latestPayment.provider === "MOCK" ? "Prueba" : "Wompi"} · ${paymentStatusLabel(latestPayment.status)}`
                   : "Sin pago"}
               </dd>
             </div>

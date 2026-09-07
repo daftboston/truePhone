@@ -1,6 +1,7 @@
 /**
  * @file app-header.tsx
  * @description Sticky top header with brand, model search, theme toggle, and auth entry.
+ *   Uses token-based Liquid Glass chrome (`tp-glass-header`).
  * @dependencies next/link, ModelSearch, ThemeToggle, ui/avatar, ui/button, @/lib/utils
  */
 
@@ -67,7 +68,7 @@ export function AppHeader({
   return (
     <header
       className={cn(
-        "bg-background/95 border-border sticky top-0 z-40 border-b backdrop-blur",
+        "tp-glass-header border-border sticky top-0 z-40 border-b backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none",
         className,
       )}
     >

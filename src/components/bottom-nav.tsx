@@ -3,6 +3,7 @@
 /**
  * @file bottom-nav.tsx
  * @description Mobile-only primary navigation bar fixed to the viewport bottom.
+ *   Uses token-based Liquid Glass chrome (`tp-glass`).
  * @dependencies next/link, next/navigation, lucide-react, @/lib/utils
  */
 
@@ -38,7 +39,7 @@ export function BottomNav({ className }: BottomNavProps) {
   return (
     <nav
       className={cn(
-        "bg-background border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden",
+        "tp-glass border-border fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden",
         className,
       )}
       aria-label="Navegación principal"

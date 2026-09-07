@@ -17,6 +17,7 @@ import {
   countListingsForReview,
   listListingsForReview,
   parseListingReviewTab,
+  reviewStatusBadgeVariant,
   reviewStatusLabel,
   sellerDisplayName,
 } from "@/lib/listings-review";
@@ -111,6 +112,7 @@ export default async function ListingReviewQueuePage({
                 submittedAt={stamp}
                 imageUrl={thumb}
                 statusLabel={reviewStatusLabel(listing)}
+                statusVariant={reviewStatusBadgeVariant(listing)}
               />
             );
           })}

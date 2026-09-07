@@ -22,6 +22,7 @@ import {
   LifeBuoy,
   MapPin,
   MessageSquare,
+  MessageSquareWarning,
   Package,
   Pencil,
   ShieldAlert,
@@ -161,6 +162,11 @@ function buildGroups(
         href: "/revision/resenas",
         label: "Reseñas",
         icon: Star,
+      },
+      {
+        href: "/revision/preguntas",
+        label: "Preguntas",
+        icon: MessageSquareWarning,
       },
       {
         href: "/revision/soporte-pedidos",

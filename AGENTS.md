@@ -36,6 +36,17 @@ If implementation conflicts with the documentation, ask for clarification instea
 
 ---
 
+## Local QA accounts (agents)
+
+When verifying signed-in flows (especially `/revision`), read **`.agents/qa-accounts.local.md`**. That file is gitignored and holds buyer, seller, reviewer, and admin emails plus passwords.
+
+- Use **admin** for `/revision` hub metrics, payouts, and disputes.
+- Use **reviewer** for listing/identity/support queues without admin-only cards.
+- Use **seller** / **buyer** for marketplace flows.
+- Do not copy passwords into tracked docs, commits, or chat unless the user asks.
+
+---
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
