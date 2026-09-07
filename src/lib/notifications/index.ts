@@ -1,6 +1,6 @@
 /**
  * @file index.ts
- * @description Public barrel for TruePhone notifications (Phase 12).
+ * @description Public barrel for TruePhone notifications (Phase 12 + branded email).
  * @dependencies notifications modules
  */
 
@@ -10,6 +10,10 @@ export type {
   CreateNotificationResult,
 } from "@/lib/notifications/create";
 export { sendNotificationEmail } from "@/lib/notifications/email";
+export {
+  buildNotificationEmail,
+  renderNotificationEmailHtml,
+} from "@/lib/notifications/email-template";
 export {
   getNotificationPreferences,
   upsertNotificationPreferences,

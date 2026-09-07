@@ -65,3 +65,16 @@ export function getDatabaseUrl() {
 export function getSupabaseServiceRoleKey() {
   return process.env.SUPABASE_SERVICE_ROLE_KEY ?? null;
 }
+
+/**
+ * isVercelProduction
+ *
+ * True only on the Vercel Production environment. Local builds and Preview
+ * stay false so mock payments / noop email can keep working in development.
+ *
+ * @returns Whether `VERCEL_ENV` is `production`.
+ * @calledBy resolvePaymentProvider, resolvePayoutProvider, sendNotificationEmail
+ */
+export function isVercelProduction() {
+  return process.env.VERCEL_ENV === "production";
+}

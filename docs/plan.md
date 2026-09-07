@@ -4,7 +4,7 @@
 
 Version 1.3
 
-**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics, and Phase **19** mobile web landed with UX polish. Phase **23** thin FAQ is at `/ayuda`; privacy / terms / cookies are at `/privacidad`, `/terminos`, and `/cookies`. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics, and Phase **19** mobile web landed with UX polish. Phase **23** FAQ, legal pages, branded emails, and production fail-closed guards are in code. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
@@ -792,13 +792,13 @@ Tasks
 
 - Privacy / Terms / Cookie policies — **landed** at `/privacidad`, `/terminos`, `/cookies`
 - **Support center / FAQ page** — **thin slice shipped** at `/ayuda` (clusters below)
-- Email templates
-- Production database / storage / domains
-- Final QA / load testing
+- Email templates — **landed** (branded HTML via Resend wrapper; Auth emails stay in Supabase)
+- Production database / storage / domains — **code guards landed**; live keys / buckets / domain are ops
+- Final QA / load testing — checklist below; Playwright e2e stays Phase 20
 
 ### FAQ page (canonical)
 
-**Thin FAQ shipped** at `/ayuda` (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Privacy, terms, and cookies are live; remaining launch work is email templates, production infra, and final QA.
+**Thin FAQ shipped** at `/ayuda` (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Privacy, terms, cookies, and branded emails are live; remaining launch work is live env values and sandbox QA.
 
 Suggested FAQ clusters (Spanish copy; English only in docs):
 
@@ -814,7 +814,18 @@ Link FAQ from footer, Help, and key empty states. Keep answers short; deep polic
 
 Result: Launch-ready platform.
 
-Status: **Legal pages landed** (`/privacidad`, `/terminos`, `/cookies`; footer, signup, KYC, and FAQ wired). Remaining: email templates, production infra, final QA.
+Status: **Legal pages landed** (`/privacidad`, `/terminos`, `/cookies`; footer, signup, KYC, and FAQ wired). **Branded notification emails landed** (Resend HTML wrapper). Production refuse-closed: no MOCK payments / noop email when `VERCEL_ENV=production`. Remaining: live env values + sandbox QA (see Launch QA below).
+
+### Launch QA checklist
+
+Run on staging / Wompi sandbox before first real traffic:
+
+1. Register → KYC submit → reviewer approve → create listing → reviewer publish
+2. Buyer pays with Wompi sandbox → seller chooses Carrier or Premium → tracking or inspection → buyer «Ya recibí» → confirm or wait for 24h cron
+3. Ops marks payout in `/revision/pagos` after Financial Core authorizes
+4. Seller-cancel via support → staff accept → buyer chooses 8% replacement or refund
+5. Cron dry-run: `GET /api/cron/buyer-confirm-expiry` and `GET /api/cron/settlement-reminders` with `CRON_SECRET`
+6. Confirm a marketplace email arrives branded (not raw text) when `RESEND_API_KEY` is set
 
 ---
 

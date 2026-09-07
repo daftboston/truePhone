@@ -1,11 +1,12 @@
 /**
  * @file settlement.ts
  * @description Settlement-critical buyer confirm notifications (received + 24h reminders).
- * @dependencies prisma, createNotification, FINANCIAL_MODEL §5.1
+ * @dependencies prisma, createNotification, email-template, FINANCIAL_MODEL §5.1
  */
 
 import { prisma } from "@/lib/db";
 import { createNotification } from "@/lib/notifications/create";
+import { buildNotificationEmail } from "@/lib/notifications/email-template";
 
 /** Hours before deadline when the reminder cron should nudge the buyer. */
 export const CONFIRM_REMINDER_LEAD_HOURS = 6;
@@ -133,15 +134,17 @@ export async function notifyBuyerReceivedConfirm(input: {
     orderId: order.id,
     dedupeKey: buyerReceivedDedupeKey(order.id),
     siteOrigin: input.siteOrigin,
-    emailSubject: "TruePhone: confirma tu iPhone en 24 horas",
-    emailText: [
+    ...buildNotificationEmail({
+      subject: "TruePhone: confirma tu iPhone en 24 horas",
+      title,
       body,
-      "",
-      "Abre tu pedido para confirmar o reportar un problema:",
-      `${input.siteOrigin.replace(/\/$/, "")}${href}`,
-      "",
-      "La batería con caída ≤1% no es motivo de reporte (Términos).",
-    ].join("\n"),
+      siteOrigin: input.siteOrigin,
+      href,
+      ctaLabel: "Confirmar o reportar un problema",
+      extraTextLines: [
+        "La batería con caída ≤1% no es motivo de reporte (Términos).",
+      ],
+    }),
   });
 
   return { ...result, skipped: false as const };
@@ -219,13 +222,14 @@ export async function processSettlementReminders(input?: {
       orderId: order.id,
       dedupeKey: buyerConfirmReminderDedupeKey(order.id),
       siteOrigin,
-      emailSubject: "TruePhone: quedan pocas horas para confirmar tu iPhone",
-      emailText: [
+      ...buildNotificationEmail({
+        subject: "TruePhone: quedan pocas horas para confirmar tu iPhone",
+        title,
         body,
-        "",
-        "Abre tu pedido:",
-        `${siteOrigin.replace(/\/$/, "")}${href}`,
-      ].join("\n"),
+        siteOrigin,
+        href,
+        ctaLabel: "Abrir pedido",
+      }),
     });
 
     if (!result.ok) {

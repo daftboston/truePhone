@@ -1,11 +1,12 @@
 /**
  * @file marketplace.ts
  * @description Phase 12 marketplace notifications: listing, identity, sale, chat, shipping, payout, listing Q&A.
- * @dependencies prisma, createNotification
+ * @dependencies prisma, createNotification, email-template
  */
 
 import { listingQaPublicHref } from "@/lib/listing-qa-access";
 import { createNotification } from "@/lib/notifications/create";
+import { buildNotificationEmail } from "@/lib/notifications/email-template";
 import { prisma } from "@/lib/db";
 
 /**
@@ -199,8 +200,14 @@ export async function notifyListingReviewed(input: {
       href,
       dedupeKey: listingApprovedDedupeKey(listing.id),
       siteOrigin,
-      emailSubject: "TruePhone: tu anuncio está publicado",
-      emailText: `${body}\n\nÁbrelo en TruePhone: ${siteOrigin.replace(/\/$/, "")}${href}`,
+      ...buildNotificationEmail({
+        subject: "TruePhone: tu anuncio está publicado",
+        title,
+        body,
+        siteOrigin,
+        href,
+        ctaLabel: "Ver anuncio",
+      }),
     });
   }
 
@@ -217,8 +224,14 @@ export async function notifyListingReviewed(input: {
     href,
     dedupeKey: listingRejectedDedupeKey(listing.id),
     siteOrigin,
-    emailSubject: "TruePhone: corrige tu anuncio",
-    emailText: `${body}\n\nCorrígelo aquí: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: corrige tu anuncio",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Corregir anuncio",
+    }),
   });
 }
 
@@ -260,8 +273,14 @@ export async function notifyIdentityReviewed(input: {
       href,
       dedupeKey: identityApprovedDedupeKey(verification.id),
       siteOrigin,
-      emailSubject: "TruePhone: identidad verificada",
-      emailText: `${body}\n\nPublica tu primer anuncio: ${siteOrigin.replace(/\/$/, "")}${href}`,
+      ...buildNotificationEmail({
+        subject: "TruePhone: identidad verificada",
+        title,
+        body,
+        siteOrigin,
+        href,
+        ctaLabel: "Publicar un anuncio",
+      }),
     });
   }
 
@@ -279,8 +298,14 @@ export async function notifyIdentityReviewed(input: {
     href,
     dedupeKey: identityRejectedDedupeKey(verification.id),
     siteOrigin,
-    emailSubject: "TruePhone: corrige tu verificación",
-    emailText: `${body}\n\nÁbrelo aquí: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: corrige tu verificación",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Abrir verificación",
+    }),
   });
 }
 
@@ -323,8 +348,14 @@ export async function notifySellerOrderPaid(input: {
     orderId: order.id,
     dedupeKey: orderPaidDedupeKey(order.id),
     siteOrigin,
-    emailSubject: "TruePhone: tienes una venta pagada",
-    emailText: `${body}\n\nAbre la venta: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: tienes una venta pagada",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Elegir envío",
+    }),
   });
 }
 
@@ -364,8 +395,14 @@ export async function notifyNewMessage(input: {
     href,
     dedupeKey: newMessageDedupeKey(input.messageId),
     siteOrigin,
-    emailSubject: "TruePhone: tienes un mensaje",
-    emailText: `${body}\n\nResponde en TruePhone: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: tienes un mensaje",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Responder en TruePhone",
+    }),
   });
 }
 
@@ -409,8 +446,14 @@ export async function notifyBuyerShippingMethodChosen(input: {
     orderId: order.id,
     dedupeKey: shippingMethodDedupeKey(input.shipmentId, input.methodLabel),
     siteOrigin,
-    emailSubject: "TruePhone: ya hay método de envío",
-    emailText: `${body}\n\nVer pedido: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: ya hay método de envío",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver pedido",
+    }),
   });
 }
 
@@ -456,8 +499,14 @@ export async function notifyBuyerTrackingUploaded(input: {
     orderId: order.id,
     dedupeKey: trackingUploadedDedupeKey(input.shipmentId, input.trackingCode),
     siteOrigin,
-    emailSubject: "TruePhone: código de seguimiento",
-    emailText: `${body}\n\nVer pedido: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: código de seguimiento",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver pedido",
+    }),
   });
 }
 
@@ -497,8 +546,14 @@ export async function notifySellerPayoutSent(input: {
     orderId: order.id,
     dedupeKey: payoutSentDedupeKey(order.id),
     siteOrigin,
-    emailSubject: "TruePhone: pago enviado",
-    emailText: `${body}\n\nVer venta: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: pago enviado",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver venta",
+    }),
   });
 }
 
@@ -536,8 +591,14 @@ export async function notifySellerNewListingQuestion(input: {
     href,
     dedupeKey: listingQuestionDedupeKey(input.questionId),
     siteOrigin,
-    emailSubject: "TruePhone: nueva pregunta en tu anuncio",
-    emailText: `${body}\n\nResponde en TruePhone: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: nueva pregunta en tu anuncio",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Responder pregunta",
+    }),
   });
 }
 
@@ -572,7 +633,13 @@ export async function notifyAskerQuestionAnswered(input: {
     href,
     dedupeKey: listingAnswerDedupeKey(input.answerId),
     siteOrigin,
-    emailSubject: "TruePhone: respondieron tu pregunta",
-    emailText: `${body}\n\nVer respuesta: ${siteOrigin.replace(/\/$/, "")}${href}`,
+    ...buildNotificationEmail({
+      subject: "TruePhone: respondieron tu pregunta",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver respuesta",
+    }),
   });
 }

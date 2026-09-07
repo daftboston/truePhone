@@ -1,11 +1,12 @@
 /**
  * @file order-support.ts
  * @description Idempotent notifications for order-support replies, decisions, buyer remedy, and refunds.
- * @dependencies prisma, createNotification, marketplace notification helpers
+ * @dependencies prisma, createNotification, email-template, marketplace notification helpers
  */
 
 import { prisma } from "@/lib/db";
 import { createNotification } from "@/lib/notifications/create";
+import { buildNotificationEmail } from "@/lib/notifications/email-template";
 import { notificationSiteOrigin } from "@/lib/notifications/marketplace";
 
 /**
@@ -63,15 +64,27 @@ export async function notifySellerOrderSupportReply(input: {
   });
   if (!supportCase) return { ok: true as const, skipped: true as const };
 
+  const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const href = `/ventas/${supportCase.orderId}`;
+  const title = "Soporte respondió tu solicitud";
+  const body = input.preview.trim().slice(0, 160);
   return createNotification({
     userId: supportCase.sellerId,
     type: "ORDER_SUPPORT_REPLY",
-    title: "Soporte respondió tu solicitud",
-    body: input.preview.trim().slice(0, 160),
-    href: `/ventas/${supportCase.orderId}`,
+    title,
+    body,
+    href,
     orderId: supportCase.orderId,
     dedupeKey: orderSupportReplyDedupeKey("staff", input.messageId),
-    siteOrigin: input.siteOrigin ?? notificationSiteOrigin(),
+    siteOrigin,
+    ...buildNotificationEmail({
+      subject: "TruePhone: soporte respondió tu solicitud",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver solicitud",
+    }),
   });
 }
 
@@ -97,15 +110,27 @@ export async function notifyAssignedStaffOrderSupportReply(input: {
   preview: string;
   siteOrigin?: string;
 }) {
+  const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const href = `/revision/soporte-pedidos/${input.caseId}`;
+  const title = "El vendedor respondió";
+  const body = input.preview.trim().slice(0, 160);
   return createNotification({
     userId: input.staffId,
     type: "ORDER_SUPPORT_REPLY",
-    title: "El vendedor respondió",
-    body: input.preview.trim().slice(0, 160),
-    href: `/revision/soporte-pedidos/${input.caseId}`,
+    title,
+    body,
+    href,
     orderId: input.orderId,
     dedupeKey: orderSupportReplyDedupeKey("seller", input.messageId),
-    siteOrigin: input.siteOrigin ?? notificationSiteOrigin(),
+    siteOrigin,
+    ...buildNotificationEmail({
+      subject: "TruePhone: el vendedor respondió en soporte",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Abrir caso",
+    }),
   });
 }
 
@@ -133,15 +158,27 @@ export async function notifySellerOrderSupportStatus(input: {
   });
   if (!supportCase) return { ok: true as const, skipped: true as const };
 
+  const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const href = `/ventas/${supportCase.orderId}`;
+  const title = "Actualizamos tu solicitud";
+  const body = input.status;
   return createNotification({
     userId: supportCase.sellerId,
     type: "ORDER_SUPPORT_STATUS",
-    title: "Actualizamos tu solicitud",
-    body: input.status,
-    href: `/ventas/${supportCase.orderId}`,
+    title,
+    body,
+    href,
     orderId: supportCase.orderId,
     dedupeKey: orderSupportStatusDedupeKey(input.caseId, input.eventKey),
-    siteOrigin: input.siteOrigin ?? notificationSiteOrigin(),
+    siteOrigin,
+    ...buildNotificationEmail({
+      subject: "TruePhone: actualizamos tu solicitud",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver solicitud",
+    }),
   });
 }
 
@@ -173,26 +210,49 @@ export async function notifyAcceptedSellerCancellation(input: {
   if (!order) return { ok: true as const, skipped: true as const };
 
   const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const sellerTitle = "Cancelación aceptada";
+  const sellerBody = `Archivamos «${order.listing.title}». El pedido conserva el historial para soporte.`;
+  const sellerHref = `/ventas/${order.id}`;
+  const buyerTitle = "El vendedor canceló tu compra";
+  const buyerBody =
+    "Elige una compra de reemplazo con protección del 8% o solicita el reembolso total.";
+  const buyerHref = `/compras/${order.id}`;
   const [seller, buyer] = await Promise.all([
     createNotification({
       userId: order.sellerId,
       type: "SELLER_CANCELLATION_ACCEPTED",
-      title: "Cancelación aceptada",
-      body: `Archivamos «${order.listing.title}». El pedido conserva el historial para soporte.`,
-      href: `/ventas/${order.id}`,
+      title: sellerTitle,
+      body: sellerBody,
+      href: sellerHref,
       orderId: order.id,
       dedupeKey: `seller-cancellation-accepted:${input.caseId}`,
       siteOrigin,
+      ...buildNotificationEmail({
+        subject: "TruePhone: cancelación aceptada",
+        title: sellerTitle,
+        body: sellerBody,
+        siteOrigin,
+        href: sellerHref,
+        ctaLabel: "Ver venta",
+      }),
     }),
     createNotification({
       userId: order.buyerId,
       type: "BUYER_REMEDY_AVAILABLE",
-      title: "El vendedor canceló tu compra",
-      body: "Elige una compra de reemplazo con protección del 8% o solicita el reembolso total.",
-      href: `/compras/${order.id}`,
+      title: buyerTitle,
+      body: buyerBody,
+      href: buyerHref,
       orderId: order.id,
       dedupeKey: `buyer-remedy-available:${input.caseId}`,
       siteOrigin,
+      ...buildNotificationEmail({
+        subject: "TruePhone: elige reembolso o 8%",
+        title: buyerTitle,
+        body: buyerBody,
+        siteOrigin,
+        href: buyerHref,
+        ctaLabel: "Elegir opción",
+      }),
     }),
   ]);
   return { ok: true as const, seller, buyer };
@@ -218,15 +278,28 @@ export async function notifyBuyerRefundCompleted(input: {
   });
   if (!order) return { ok: true as const, skipped: true as const };
 
+  const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const href = `/compras/${input.orderId}`;
+  const title = "Reembolso procesado";
+  const body =
+    "Registramos el reembolso total. El tiempo para verlo depende de tu medio de pago.";
   return createNotification({
     userId: order.buyerId,
     type: "REFUND_COMPLETED",
-    title: "Reembolso procesado",
-    body: "Registramos el reembolso total. El tiempo para verlo depende de tu medio de pago.",
-    href: `/compras/${input.orderId}`,
+    title,
+    body,
+    href,
     orderId: input.orderId,
     dedupeKey: `seller-cancellation-refund:${input.orderId}`,
-    siteOrigin: input.siteOrigin ?? notificationSiteOrigin(),
+    siteOrigin,
+    ...buildNotificationEmail({
+      subject: "TruePhone: reembolso procesado",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver pedido",
+    }),
   });
 }
 
@@ -250,14 +323,27 @@ export async function notifyFulfillmentEscalated(input: {
   });
   if (!supportCase) return { ok: true as const, skipped: true as const };
 
+  const siteOrigin = input.siteOrigin ?? notificationSiteOrigin();
+  const href = `/ventas/${supportCase.orderId}`;
+  const title = "Escalamos el problema de envío";
+  const body =
+    "Un administrador revisará la custodia y el resultado financiero. El pago sigue congelado.";
   return createNotification({
     userId: supportCase.sellerId,
     type: "FULFILLMENT_ESCALATED",
-    title: "Escalamos el problema de envío",
-    body: "Un administrador revisará la custodia y el resultado financiero. El pago sigue congelado.",
-    href: `/ventas/${supportCase.orderId}`,
+    title,
+    body,
+    href,
     orderId: supportCase.orderId,
     dedupeKey: `fulfillment-escalated:${input.caseId}`,
-    siteOrigin: input.siteOrigin ?? notificationSiteOrigin(),
+    siteOrigin,
+    ...buildNotificationEmail({
+      subject: "TruePhone: escalamos el problema de envío",
+      title,
+      body,
+      siteOrigin,
+      href,
+      ctaLabel: "Ver venta",
+    }),
   });
 }

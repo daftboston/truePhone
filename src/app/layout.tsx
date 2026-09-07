@@ -1,6 +1,6 @@
 /**
  * @file layout.tsx
- * @description Root HTML layout: fonts, metadata, theme boot script, ThemeProvider.
+ * @description Root HTML layout: fonts, metadata (including metadataBase), theme boot script, ThemeProvider.
  * @dependencies next/font, next/script, ThemeProvider, globals.css
  */
 
@@ -22,7 +22,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+
 export const metadata: Metadata = {
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: {
     default: "TruePhone",
     template: "%s · TruePhone",
