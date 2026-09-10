@@ -5,7 +5,9 @@
 # Per-boot reconciliation: brings the local PostgreSQL cluster online so the
 # Prisma-backed app can connect. Runs on every boot and tolerates an
 # already-running cluster.
-set -euo pipefail
+# Do not use -e: a first start attempt may fail on a stale pid file, which we
+# recover from below.
+set -uo pipefail
 
 PG_VERSION="$(ls /usr/lib/postgresql 2>/dev/null | sort -n | tail -1 || true)"
 if [ -z "${PG_VERSION}" ]; then
@@ -13,8 +15,14 @@ if [ -z "${PG_VERSION}" ]; then
   exit 1
 fi
 
-# Start the cluster; ignore the "already running" error on warm boots.
-sudo pg_ctlcluster "${PG_VERSION}" main start 2>/dev/null || true
+# When nothing is listening, drop any stale postmaster.pid inherited from a
+# snapshot so pg_ctlcluster can start cleanly.
+if ! pg_isready -h 127.0.0.1 -p 5432 >/dev/null 2>&1; then
+  sudo rm -f "/var/lib/postgresql/${PG_VERSION}/main/postmaster.pid" 2>/dev/null || true
+fi
+
+# Start the cluster; tolerate the "already running" error on warm boots.
+sudo pg_ctlcluster "${PG_VERSION}" main start || true
 
 # Confirm readiness before returning so downstream services can rely on it.
 for _ in $(seq 1 30); do

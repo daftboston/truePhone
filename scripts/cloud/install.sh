@@ -26,8 +26,12 @@ if [ -z "${PG_VERSION}" ]; then
   exit 1
 fi
 
-# Bring the cluster online so migrations and seeding can connect. Ignore the
-# error emitted when it is already running.
+# Remove a stale pid file left in a warm snapshot when no server is actually
+# listening, then bring the cluster online so migrations and seeding can
+# connect. Tolerate an already-running cluster.
+if ! pg_isready -h 127.0.0.1 -p 5432 >/dev/null 2>&1; then
+  sudo rm -f "/var/lib/postgresql/${PG_VERSION}/main/postmaster.pid" 2>/dev/null || true
+fi
 sudo pg_ctlcluster "${PG_VERSION}" main start 2>/dev/null || true
 
 # Wait until Postgres accepts connections.
@@ -68,5 +72,10 @@ npm ci
 # Apply migrations and seed the canonical catalog (both idempotent).
 npx prisma migrate deploy
 npm run db:seed
+
+# Stop the cluster so the build snapshot captures a clean data directory with
+# no live postmaster.pid. Per-boot startup is handled by start.sh, which then
+# starts from a clean state instead of inheriting a stale pid file.
+sudo pg_ctlcluster "${PG_VERSION}" main stop 2>/dev/null || true
 
 echo "TruePhone install complete."
