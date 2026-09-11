@@ -110,10 +110,10 @@ export function RecentlyViewedSection() {
     return null;
   }
 
-  const skeletonCount = listings ? 0 : slugs.length;
+  const isLoading = listings === null;
 
   return (
-    <section className="space-y-4" aria-busy={skeletonCount > 0}>
+    <section className="space-y-4" aria-busy={isLoading}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-foreground text-lg font-semibold md:text-2xl">
           Vistos recientemente
@@ -126,8 +126,8 @@ export function RecentlyViewedSection() {
         </Link>
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        {skeletonCount > 0
-          ? Array.from({ length: skeletonCount }, (_, index) => (
+        {isLoading
+          ? Array.from({ length: slugs.length }, (_, index) => (
               <ListingCardSkeleton key={index} />
             ))
           : listings.map((listing) => (
