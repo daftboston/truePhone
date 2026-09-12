@@ -17,6 +17,7 @@ import {
   conditionLabels,
   listingStatusLabel,
 } from "@/features/listings/schemas/listing";
+import { gallerySlotTitle } from "@/features/listings/types";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { formatStorageLabel } from "@/lib/iphone-catalog";
 import type { getOwnedListing } from "@/lib/listings";
@@ -138,18 +139,21 @@ export async function SellerListingSummary({
         <section className="space-y-2">
           <h2 className="text-foreground text-sm font-semibold">Fotos</h2>
           <ul className="grid grid-cols-3 gap-2 lg:grid-cols-4">
-            {gallery.map((image, index) => (
+            {gallery.map((image) => (
               <li
                 key={image.id}
                 className="bg-muted relative aspect-square overflow-hidden rounded-lg"
               >
                 <Image
                   src={image.imageUrl}
-                  alt={`Foto ${index + 1}`}
+                  alt={gallerySlotTitle(image.displayOrder)}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 30vw, 180px"
                 />
+                <span className="bg-background/80 text-foreground pointer-events-none absolute inset-x-0 bottom-0 truncate px-1 py-0.5 text-center text-[10px]">
+                  {gallerySlotTitle(image.displayOrder)}
+                </span>
               </li>
             ))}
           </ul>

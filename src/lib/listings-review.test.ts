@@ -8,6 +8,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  formatQueueWait,
+  matchesListingQueueQuery,
   reviewQueueTabForListing,
   reviewStatusBadgeVariant,
   reviewStatusLabel,
@@ -58,6 +60,39 @@ describe("reviewStatusLabel", () => {
     assert.equal(
       reviewStatusLabel({ status: "SUBMITTED", reviewerId: null }),
       "Pendiente",
+    );
+  });
+});
+
+describe("matchesListingQueueQuery", () => {
+  const listing = {
+    title: "iPhone 16 Pro 256",
+    seller: { fullName: "Ana Pérez", username: "ana" },
+    reviewer: { fullName: "Diego", username: "reviewer" },
+  };
+
+  it("matches title, seller, or assignee", () => {
+    assert.equal(matchesListingQueueQuery(listing, ""), true);
+    assert.equal(matchesListingQueueQuery(listing, "16 pro"), true);
+    assert.equal(matchesListingQueueQuery(listing, "diego"), true);
+    assert.equal(matchesListingQueueQuery(listing, "pixel"), false);
+  });
+});
+
+describe("formatQueueWait", () => {
+  it("uses hours then days", () => {
+    const now = new Date("2026-09-12T12:00:00.000Z");
+    assert.equal(
+      formatQueueWait(new Date("2026-09-12T11:30:00.000Z"), now),
+      "Hace menos de 1 h",
+    );
+    assert.equal(
+      formatQueueWait(new Date("2026-09-12T09:00:00.000Z"), now),
+      "Hace 3 h",
+    );
+    assert.equal(
+      formatQueueWait(new Date("2026-09-10T12:00:00.000Z"), now),
+      "Hace 2 días",
     );
   });
 });

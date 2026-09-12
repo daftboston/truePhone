@@ -11,11 +11,14 @@ import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { ReviewQueueRow } from "@/components/review-queue-row";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ListingReviewTabs } from "@/features/listings/components/listing-review-tabs";
 import { getCurrentProfile } from "@/lib/auth/session";
 import {
   countListingsForReview,
+  formatQueueWait,
   listListingsForReview,
+  matchesListingQueueQuery,
   parseListingReviewTab,
   reviewStatusBadgeVariant,
   reviewStatusLabel,
@@ -27,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 };
 
 /**
@@ -61,10 +64,14 @@ export default async function ListingReviewQueuePage({
 
   const params = await searchParams;
   const tab = parseListingReviewTab(params.tab);
+  const query = params.q ?? "";
   const [listings, counts] = await Promise.all([
     listListingsForReview(tab),
     countListingsForReview(),
   ]);
+  const visible = listings.filter((listing) =>
+    matchesListingQueueQuery(listing, query),
+  );
 
   return (
     <div className="space-y-6">
@@ -78,6 +85,22 @@ export default async function ListingReviewQueuePage({
       </div>
 
       <ListingReviewTabs active={tab} counts={counts} />
+
+      <form
+        className="flex flex-col gap-2 sm:flex-row"
+        action="/revision/anuncios"
+      >
+        <input type="hidden" name="tab" value={tab} />
+        <Input
+          name="q"
+          defaultValue={query}
+          placeholder="Buscar título, vendedor o revisor"
+          aria-label="Buscar en la cola"
+        />
+        <Button type="submit" variant="outline">
+          Buscar
+        </Button>
+      </form>
 
       {listings.length === 0 ? (
         <EmptyState
@@ -93,16 +116,31 @@ export default async function ListingReviewQueuePage({
             </Button>
           }
         />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          title="Sin coincidencias"
+          description="Prueba otro título, vendedor o revisor."
+          action={
+            <Button asChild variant="outline">
+              <Link href={`/revision/anuncios?tab=${tab}`}>
+                Ver toda la cola
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="border-border overflow-hidden rounded-xl border">
-          {listings.map((listing) => {
+          {visible.map((listing) => {
             const thumb = listing.images[0]?.imageUrl;
-            const stamp = (
-              listing.reviewedAt ?? listing.updatedAt
-            ).toLocaleString("es-CO", {
+            const waitFrom = listing.reviewedAt ?? listing.updatedAt;
+            const stamp = waitFrom.toLocaleString("es-CO", {
               dateStyle: "medium",
               timeStyle: "short",
             });
+            const wait = formatQueueWait(waitFrom);
+            const assignee = listing.reviewer
+              ? sellerDisplayName(listing.reviewer)
+              : "Sin asignar";
             return (
               <ReviewQueueRow
                 key={listing.id}
@@ -110,6 +148,7 @@ export default async function ListingReviewQueuePage({
                 title={listing.title}
                 sellerName={sellerDisplayName(listing.seller)}
                 submittedAt={stamp}
+                detail={`${wait} · ${assignee}`}
                 imageUrl={thumb}
                 statusLabel={reviewStatusLabel(listing)}
                 statusVariant={reviewStatusBadgeVariant(listing)}

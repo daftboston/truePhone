@@ -387,7 +387,7 @@ export function OrderSupportPanel({
                 Enviar esto no cancela el pedido de inmediato. El equipo lo
                 revisará. Si lo acepta, el anuncio se archivará y el comprador
                 elegirá una compra de reemplazo con 8% o el reembolso total. El
-                incidente permanece privado para operaciones.
+                incidente permanece privado para el equipo de TruePhone.
               </p>
             ) : null}
           </div>

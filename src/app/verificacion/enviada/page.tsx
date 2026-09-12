@@ -45,7 +45,7 @@ export default async function VerificationSubmittedPage() {
     <AppShell mainClassName="max-w-lg justify-center">
       <EmptyState
         title="Recibimos tu verificación"
-        description="Un revisor de TruePhone confirmará tu identidad. Te avisaremos cuando puedas publicar anuncios."
+        description="Un revisor de TruePhone confirmará tu identidad. Revisamos en orden de llegada. Te avisamos por correo y en Notificaciones cuando puedas publicar anuncios."
         action={
           <Button asChild>
             <Link href="/perfil">Ir a tu perfil</Link>

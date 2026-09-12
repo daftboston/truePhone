@@ -26,7 +26,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Soporte de pedidos",
-  description: "Solicitudes de vendedores revisadas por operaciones TruePhone.",
+  description:
+    "Solicitudes de vendedores revisadas por el equipo de TruePhone.",
 };
 
 /**

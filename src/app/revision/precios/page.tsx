@@ -11,7 +11,9 @@ import { redirect } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { conditionLabels } from "@/features/listings/schemas/listing";
+import { filterRecommendedPrices } from "@/features/recommended-prices/lib/filter-recommended-prices";
 import { DeleteRecommendedPriceButton } from "@/features/recommended-prices/components/delete-recommended-price-button";
 import { RecommendedPriceForm } from "@/features/recommended-prices/components/recommended-price-form";
 import { getCurrentProfile, roleLabel } from "@/lib/auth/session";
@@ -32,7 +34,7 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; q?: string }>;
 };
 
 /**
@@ -41,6 +43,7 @@ type PageProps = {
  * ADMIN-only UI to maintain seller pricing guidance rows.
  *
  * @param props.searchParams.edit - Optional row id to prefill the form.
+ * @param props.searchParams.q - Optional model/storage search.
  * @returns Recommended prices admin page.
  */
 export default async function AdminRecommendedPricesPage({
@@ -66,11 +69,14 @@ export default async function AdminRecommendedPricesPage({
   }
 
   const params = await searchParams;
+  const query = params.q?.trim() ?? "";
   const [rows, catalog, editing] = await Promise.all([
     listRecommendedPrices(),
     getCatalog(),
     params.edit ? getRecommendedPriceById(params.edit) : Promise.resolve(null),
   ]);
+
+  const visibleRows = filterRecommendedPrices(rows, query);
 
   const formCatalog = {
     models: catalog.models.map((model) => ({
@@ -140,86 +146,147 @@ export default async function AdminRecommendedPricesPage({
           <h2 className="text-foreground text-sm font-semibold">
             Tabla actual
           </h2>
-          <Badge variant="secondary">{rows.length}</Badge>
+          <Badge variant="secondary">{visibleRows.length}</Badge>
         </div>
+
+        {rows.length > 0 ? (
+          <form
+            className="flex flex-col gap-2 sm:flex-row"
+            action="/revision/precios"
+          >
+            <Input
+              name="q"
+              defaultValue={query}
+              placeholder="Buscar modelo, GB o estado"
+              aria-label="Buscar precios de referencia"
+            />
+            <Button type="submit" variant="outline">
+              Buscar
+            </Button>
+          </form>
+        ) : null}
 
         {rows.length === 0 ? (
           <EmptyState
             title="Sin precios de referencia"
             description="Agrega la primera combinación modelo + almacenamiento + estado arriba."
           />
+        ) : visibleRows.length === 0 ? (
+          <EmptyState
+            title="Sin coincidencias"
+            description="Prueba otro modelo, almacenamiento o estado."
+            action={
+              <Button asChild variant="outline">
+                <Link href="/revision/precios">Ver toda la tabla</Link>
+              </Button>
+            }
+          />
         ) : (
-          <div className="border-border overflow-x-auto rounded-xl border">
-            <table className="w-full min-w-[40rem] text-left text-sm">
-              <thead className="bg-muted/50 text-muted-foreground border-border border-b text-xs">
-                <tr>
-                  <th className="px-3 py-2 font-medium">Modelo</th>
-                  <th className="px-3 py-2 font-medium">GB</th>
-                  <th className="px-3 py-2 font-medium">Estado</th>
-                  <th className="px-3 py-2 font-medium">Referencia</th>
-                  <th className="px-3 py-2 font-medium">Banda</th>
-                  <th className="px-3 py-2 font-medium">Vigencia</th>
-                  <th className="px-3 py-2 font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => {
-                  const effective = isRecommendedPriceEffective(row);
-                  const label = `${row.iphoneModel.name} ${formatStorageLabel(row.iphoneStorage.valueGb)} · ${conditionLabels[row.condition]}`;
-                  const band =
-                    row.minPriceCop != null || row.maxPriceCop != null
-                      ? `${row.minPriceCop != null ? formatOrderMoney(row.minPriceCop) : "—"} – ${row.maxPriceCop != null ? formatOrderMoney(row.maxPriceCop) : "—"}`
-                      : "—";
-                  return (
-                    <tr
-                      key={row.id}
-                      className={cn(
-                        "border-border border-b last:border-b-0",
-                        !effective && "bg-muted/30 text-muted-foreground",
-                        editing?.id === row.id && "bg-primary/5",
-                      )}
-                    >
-                      <td className="px-3 py-2.5 font-medium">
-                        {row.iphoneModel.name}
-                      </td>
-                      <td className="px-3 py-2.5 tabular-nums">
-                        {formatStorageLabel(row.iphoneStorage.valueGb)}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {conditionLabels[row.condition]}
-                      </td>
-                      <td className="px-3 py-2.5 tabular-nums">
-                        {formatOrderMoney(row.priceCop)}
-                      </td>
-                      <td className="px-3 py-2.5 text-xs tabular-nums">
-                        {band}
-                      </td>
-                      <td className="px-3 py-2.5 text-xs">
-                        {effective ? (
-                          <Badge variant="secondary">Activa</Badge>
-                        ) : (
-                          <Badge variant="outline">Fuera de vigencia</Badge>
+          <>
+            <ul className="space-y-3 md:hidden">
+              {visibleRows.map((row) => {
+                const effective = isRecommendedPriceEffective(row);
+                const label = `${row.iphoneModel.name} ${formatStorageLabel(row.iphoneStorage.valueGb)} · ${conditionLabels[row.condition]}`;
+                return (
+                  <li
+                    key={row.id}
+                    className="border-border space-y-2 rounded-xl border p-4"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-foreground text-sm font-semibold">
+                        {label}
+                      </p>
+                      <Badge variant={effective ? "secondary" : "outline"}>
+                        {effective ? "Activa" : "Fuera de vigencia"}
+                      </Badge>
+                    </div>
+                    <p className="text-foreground text-sm tabular-nums">
+                      {formatOrderMoney(row.priceCop)}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`/revision/precios?edit=${row.id}`}>
+                          Editar
+                        </Link>
+                      </Button>
+                      <DeleteRecommendedPriceButton id={row.id} label={label} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="border-border hidden overflow-x-auto rounded-xl border md:block">
+              <table className="w-full min-w-[40rem] text-left text-sm">
+                <thead className="bg-muted/50 text-muted-foreground border-border border-b text-xs">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Modelo</th>
+                    <th className="px-3 py-2 font-medium">GB</th>
+                    <th className="px-3 py-2 font-medium">Estado</th>
+                    <th className="px-3 py-2 font-medium">Referencia</th>
+                    <th className="px-3 py-2 font-medium">Banda</th>
+                    <th className="px-3 py-2 font-medium">Vigencia</th>
+                    <th className="px-3 py-2 font-medium">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleRows.map((row) => {
+                    const effective = isRecommendedPriceEffective(row);
+                    const label = `${row.iphoneModel.name} ${formatStorageLabel(row.iphoneStorage.valueGb)} · ${conditionLabels[row.condition]}`;
+                    const band =
+                      row.minPriceCop != null || row.maxPriceCop != null
+                        ? `${row.minPriceCop != null ? formatOrderMoney(row.minPriceCop) : "—"} – ${row.maxPriceCop != null ? formatOrderMoney(row.maxPriceCop) : "—"}`
+                        : "—";
+                    return (
+                      <tr
+                        key={row.id}
+                        className={cn(
+                          "border-border border-b last:border-b-0",
+                          !effective && "bg-muted/30 text-muted-foreground",
+                          editing?.id === row.id && "bg-primary/5",
                         )}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button asChild size="sm" variant="outline">
-                            <Link href={`/revision/precios?edit=${row.id}`}>
-                              Editar
-                            </Link>
-                          </Button>
-                          <DeleteRecommendedPriceButton
-                            id={row.id}
-                            label={label}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      >
+                        <td className="px-3 py-2.5 font-medium">
+                          {row.iphoneModel.name}
+                        </td>
+                        <td className="px-3 py-2.5 tabular-nums">
+                          {formatStorageLabel(row.iphoneStorage.valueGb)}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          {conditionLabels[row.condition]}
+                        </td>
+                        <td className="px-3 py-2.5 tabular-nums">
+                          {formatOrderMoney(row.priceCop)}
+                        </td>
+                        <td className="px-3 py-2.5 text-xs tabular-nums">
+                          {band}
+                        </td>
+                        <td className="px-3 py-2.5 text-xs">
+                          {effective ? (
+                            <Badge variant="secondary">Activa</Badge>
+                          ) : (
+                            <Badge variant="outline">Fuera de vigencia</Badge>
+                          )}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button asChild size="sm" variant="outline">
+                              <Link href={`/revision/precios?edit=${row.id}`}>
+                                Editar
+                              </Link>
+                            </Button>
+                            <DeleteRecommendedPriceButton
+                              id={row.id}
+                              label={label}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
     </div>

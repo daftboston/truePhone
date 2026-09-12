@@ -12,6 +12,8 @@ import {
   hoursBetween,
   medianNumber,
   modelCountsFromGroups,
+  opsAnalyticsSince,
+  parseOpsAnalyticsRange,
   viewsToCompletedPercent,
 } from "@/lib/ops-analytics";
 
@@ -56,6 +58,24 @@ describe("hoursBetween", () => {
     const end = new Date("2026-09-01T06:00:00.000Z");
     assert.equal(hoursBetween(start, end), 6);
     assert.equal(hoursBetween(end, start), 0);
+  });
+});
+
+describe("parseOpsAnalyticsRange", () => {
+  it("defaults to all-time and accepts chip ids", () => {
+    assert.equal(parseOpsAnalyticsRange(undefined), "all");
+    assert.equal(parseOpsAnalyticsRange("7d"), "7d");
+    assert.equal(parseOpsAnalyticsRange("nope"), "all");
+  });
+});
+
+describe("opsAnalyticsSince", () => {
+  it("returns null for all-time and a past date for windows", () => {
+    const now = new Date("2026-09-12T00:00:00.000Z");
+    assert.equal(opsAnalyticsSince("all", now), null);
+    const since7 = opsAnalyticsSince("7d", now);
+    assert.ok(since7);
+    assert.equal(since7.getTime(), now.getTime() - 7 * 24 * 60 * 60 * 1000);
   });
 });
 

@@ -15,6 +15,8 @@ type ReviewQueueRowProps = {
   title: string;
   sellerName: string;
   submittedAt: string;
+  /** Extra queue meta: wait age, assignee. */
+  detail?: string;
   imageUrl?: string;
   /** When false, skips the thumbnail well (identity queue has no listing photo). */
   showThumbnail?: boolean;
@@ -33,6 +35,7 @@ type ReviewQueueRowProps = {
  * @param props.title - Listing title.
  * @param props.sellerName - Seller display name.
  * @param props.submittedAt - Human-readable submission time.
+ * @param props.detail - Optional age/assignee line under the timestamp.
  * @param props.imageUrl - Optional thumbnail URL.
  * @param props.showThumbnail - When false, omits the photo well.
  * @param props.statusLabel - Optional status text shown as a Badge.
@@ -46,6 +49,7 @@ export function ReviewQueueRow({
   title,
   sellerName,
   submittedAt,
+  detail,
   imageUrl,
   showThumbnail = true,
   statusLabel,
@@ -79,6 +83,9 @@ export function ReviewQueueRow({
         </p>
         <p className="text-muted-foreground truncate text-xs">{sellerName}</p>
         <p className="text-muted-foreground text-xs">{submittedAt}</p>
+        {detail ? (
+          <p className="text-muted-foreground text-xs">{detail}</p>
+        ) : null}
       </div>
       {statusLabel ? (
         <Badge variant={statusVariant} className="shrink-0">

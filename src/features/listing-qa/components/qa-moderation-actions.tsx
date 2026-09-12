@@ -9,6 +9,7 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { Button } from "@/components/ui/button";
 import {
   dismissListingQuestionReportsAction,
@@ -63,14 +64,18 @@ export function QaModerationActions({
           ) : (
             <input type="hidden" name="answerId" value={answerId} />
           )}
-          <Button
+          <ConfirmAction
             type="submit"
             variant="destructive"
             size="sm"
-            loading={hidePending}
-          >
-            {questionId ? "Ocultar pregunta" : "Ocultar respuesta"}
-          </Button>
+            fullWidth={false}
+            pending={hidePending}
+            idleLabel={questionId ? "Ocultar pregunta" : "Ocultar respuesta"}
+            confirmLabel={
+              questionId ? "Sí, ocultar pregunta" : "Sí, ocultar respuesta"
+            }
+            hint="Dejará de verse en el anuncio público."
+          />
         </form>
         <form action={dismissAction}>
           {questionId ? (

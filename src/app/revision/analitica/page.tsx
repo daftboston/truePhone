@@ -25,7 +25,11 @@ import {
 } from "@/lib/auth/session";
 import { formatOrderMoney } from "@/lib/format-money";
 import { publicListingPath } from "@/lib/listings-marketplace";
-import { loadOpsAnalytics } from "@/lib/ops-analytics";
+import {
+  loadOpsAnalytics,
+  parseOpsAnalyticsRange,
+  type OpsAnalyticsRange,
+} from "@/lib/ops-analytics";
 
 export const metadata: Metadata = {
   title: "Analítica",
@@ -87,6 +91,7 @@ type StatCardProps = {
   title: string;
   value: string;
   hint: string;
+  href?: string;
 };
 
 /**
@@ -97,12 +102,13 @@ type StatCardProps = {
  * @param props.title - Metric name.
  * @param props.value - Formatted primary value.
  * @param props.hint - Supporting copy.
+ * @param props.href - Optional queue/deep link.
  * @returns Card tile.
  * @calledBy OpsAnalyticsPage
  */
-function StatCard({ title, value, hint }: StatCardProps) {
-  return (
-    <Card>
+function StatCard({ title, value, hint, href }: StatCardProps) {
+  const card = (
+    <Card className={href ? "hover:bg-muted/40 transition-colors" : undefined}>
       <CardHeader className="pb-2">
         <CardDescription>{title}</CardDescription>
         <CardTitle className="text-2xl font-semibold tracking-tight tabular-nums">
@@ -114,6 +120,14 @@ function StatCard({ title, value, hint }: StatCardProps) {
       </CardContent>
     </Card>
   );
+
+  if (!href) return card;
+
+  return (
+    <Link href={href} className="block rounded-xl focus-visible:outline-none">
+      {card}
+    </Link>
+  );
 }
 
 /**
@@ -124,7 +138,17 @@ function StatCard({ title, value, hint }: StatCardProps) {
  *
  * @returns Analytics dashboard or an access-restricted empty state.
  */
-export default async function OpsAnalyticsPage() {
+type PageProps = {
+  searchParams: Promise<{ rango?: string }>;
+};
+
+const RANGE_CHIPS: { id: OpsAnalyticsRange; label: string }[] = [
+  { id: "7d", label: "7 días" },
+  { id: "30d", label: "30 días" },
+  { id: "all", label: "Todo" },
+];
+
+export default async function OpsAnalyticsPage({ searchParams }: PageProps) {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/analitica");
 
@@ -144,7 +168,15 @@ export default async function OpsAnalyticsPage() {
     );
   }
 
-  const stats = await loadOpsAnalytics();
+  const params = await searchParams;
+  const range = parseOpsAnalyticsRange(params.rango);
+  const stats = await loadOpsAnalytics(range);
+  const rangeHint =
+    range === "7d"
+      ? "Últimos 7 días."
+      : range === "30d"
+        ? "Últimos 30 días."
+        : "Todo el tiempo.";
 
   return (
     <div className="space-y-8">
@@ -156,9 +188,38 @@ export default async function OpsAnalyticsPage() {
           <Badge variant="outline">{roleLabel(current.profile.role)}</Badge>
         </div>
         <p className="text-muted-foreground text-sm">
-          Solo el equipo de operaciones. Las vistas no aparecen en perfiles
-          públicos ni en las tarjetas de pedido.
+          Solo el equipo de TruePhone. Las vistas no aparecen en perfiles
+          públicos ni en las tarjetas de pedido. {rangeHint} Las colas son el
+          trabajo abierto ahora.
         </p>
+        <div
+          className="flex flex-wrap gap-2"
+          role="tablist"
+          aria-label="Rango de analítica"
+        >
+          {RANGE_CHIPS.map((chip) => {
+            const selected = chip.id === range;
+            const href =
+              chip.id === "all"
+                ? "/revision/analitica"
+                : `/revision/analitica?rango=${chip.id}`;
+            return (
+              <Link
+                key={chip.id}
+                href={href}
+                role="tab"
+                aria-selected={selected}
+                className={
+                  selected
+                    ? "border-primary bg-primary text-primary-foreground rounded-full border px-3.5 py-1.5 text-sm font-medium"
+                    : "border-border bg-background text-foreground hover:bg-muted rounded-full border px-3.5 py-1.5 text-sm font-medium"
+                }
+              >
+                {chip.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       <section
@@ -168,7 +229,7 @@ export default async function OpsAnalyticsPage() {
         <StatCard
           title="GMV liquidado"
           value={formatOrderMoney(stats.settledGmvPesos)}
-          hint={`${stats.settledOrderCount} pedido${stats.settledOrderCount === 1 ? "" : "s"} con desembolso completado.`}
+          hint={`${stats.settledOrderCount} pedido${stats.settledOrderCount === 1 ? "" : "s"} con desembolso completado. ${rangeHint}`}
         />
         <StatCard
           title="Comisión cobrada"
@@ -178,7 +239,7 @@ export default async function OpsAnalyticsPage() {
         <StatCard
           title="Vistas de anuncios"
           value={stats.listingViewCount.toLocaleString("es-CO")}
-          hint="Visitantes únicos por anuncio y por día. Sin el vendedor ni crawlers."
+          hint={`Visitantes únicos por anuncio y por día. Sin el vendedor ni crawlers. ${rangeHint}`}
         />
         <StatCard
           title="Vistas → liquidado"
@@ -213,7 +274,8 @@ export default async function OpsAnalyticsPage() {
           <StatCard
             title="Publicados"
             value={String(stats.listingStatusCounts.published)}
-            hint="Visibles en el marketplace."
+            hint="Visibles en el marketplace ahora."
+            href="/explorar"
           />
           <StatCard
             title="Reservados"
@@ -229,11 +291,13 @@ export default async function OpsAnalyticsPage() {
             title="En cola"
             value={String(stats.listingStatusCounts.pendingReview)}
             hint="Enviados o en revisión."
+            href="/revision/anuncios?tab=pendiente"
           />
           <StatCard
             title="Rechazados"
             value={String(stats.listingStatusCounts.rejected)}
             hint="Pendientes de corrección del vendedor."
+            href="/revision/anuncios?tab=rechazados"
           />
         </div>
       </section>
@@ -247,33 +311,43 @@ export default async function OpsAnalyticsPage() {
             title="Anuncios pendientes"
             value={String(stats.queue.listingsPending)}
             hint={`${stats.queue.listingsInReview} ya reclamados.`}
+            href="/revision/anuncios?tab=pendiente"
           />
           <StatCard
             title="Identidad"
             value={String(stats.queue.identityPending)}
             hint="Cédula y selfie por revisar."
+            href="/revision/identidad"
           />
           <StatCard
             title="Soporte de pedidos"
             value={String(stats.queue.orderSupport)}
             hint="Casos accionables de vendedores."
+            href="/revision/soporte-pedidos?tab=pendientes"
           />
           <StatCard
-            title="Reportes"
-            value={String(
-              stats.queue.questionReports + stats.queue.reviewReports,
-            )}
-            hint={`${stats.queue.questionReports} preguntas · ${stats.queue.reviewReports} reseñas.`}
+            title="Preguntas"
+            value={String(stats.queue.questionReports)}
+            hint="Reportes abiertos de Q&A."
+            href="/revision/preguntas"
+          />
+          <StatCard
+            title="Reseñas"
+            value={String(stats.queue.reviewReports)}
+            hint="Reportes abiertos de calificaciones."
+            href="/revision/resenas"
           />
           <StatCard
             title="Liquidaciones"
             value={String(stats.queue.payoutsAuthorized)}
             hint="Autorizadas, pendientes de pago en Wompi."
+            href="/revision/pagos"
           />
           <StatCard
             title="Disputas"
             value={String(stats.queue.disputesFrozen)}
             hint="Pagos congelados."
+            href="/revision/disputas"
           />
         </div>
       </section>

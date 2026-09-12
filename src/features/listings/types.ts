@@ -108,6 +108,25 @@ export function isGuidedSlotIndex(displayOrder: number): boolean {
 }
 
 /**
+ * gallerySlotTitle
+ *
+ * Spanish label for a gallery displayOrder: guided slot title or Extra N.
+ *
+ * @param displayOrder - ListingImage.displayOrder value.
+ * @returns Slot title for thumbs and inspect captions.
+ * @calledBy SellerListingSummary, ReviewPhotoInspect
+ */
+export function gallerySlotTitle(displayOrder: number): string {
+  if (isGuidedSlotIndex(displayOrder)) {
+    return LISTING_PHOTO_SLOTS[displayOrder].title;
+  }
+  if (displayOrder >= LISTING_EXTRA_PHOTO_START) {
+    return `Extra ${displayOrder - LISTING_EXTRA_PHOTO_START + 1}`;
+  }
+  return `Foto ${displayOrder + 1}`;
+}
+
+/**
  * galleryImageAtOrder
  *
  * Finds the gallery image stored at a slot or extra index.

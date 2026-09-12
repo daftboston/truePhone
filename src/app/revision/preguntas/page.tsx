@@ -9,6 +9,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
+import { QueueTabs } from "@/components/queue-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { QaModerationActions } from "@/features/listing-qa/components/qa-moderation-actions";
@@ -18,9 +19,12 @@ import {
   roleLabel,
 } from "@/lib/auth/session";
 import {
+  countOpenListingQuestionReports,
+  countResolvedListingQuestionReports,
   listingQaAuthorName,
   listingQaPublicHref,
   listOpenListingQuestionReports,
+  listResolvedListingQuestionReports,
 } from "@/lib/listing-qa";
 
 export const metadata: Metadata = {
@@ -51,7 +55,13 @@ function formatWhen(date: Date) {
  *
  * @returns Q&A reports queue.
  */
-export default async function ListingQuestionReportsPage() {
+type PageProps = {
+  searchParams: Promise<{ tab?: string }>;
+};
+
+export default async function ListingQuestionReportsPage({
+  searchParams,
+}: PageProps) {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/preguntas");
 
@@ -71,7 +81,15 @@ export default async function ListingQuestionReportsPage() {
     );
   }
 
-  const reports = await listOpenListingQuestionReports(80);
+  const params = await searchParams;
+  const tab = params.tab === "resueltos" ? "resueltos" : "abiertos";
+  const [reports, openCount, resolvedCount] = await Promise.all([
+    tab === "resueltos"
+      ? listResolvedListingQuestionReports(80)
+      : listOpenListingQuestionReports(80),
+    countOpenListingQuestionReports(),
+    countResolvedListingQuestionReports(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -87,10 +105,42 @@ export default async function ListingQuestionReportsPage() {
         </p>
       </div>
 
+      <QueueTabs
+        active={tab}
+        ariaLabel="Filtros de preguntas"
+        tabs={[
+          {
+            id: "abiertos",
+            label: "Abiertos",
+            href: "/revision/preguntas",
+            count: openCount,
+          },
+          {
+            id: "resueltos",
+            label: "Resueltos",
+            href: "/revision/preguntas?tab=resueltos",
+            count: resolvedCount,
+          },
+        ]}
+      />
+
       {reports.length === 0 ? (
         <EmptyState
-          title="Sin reportes abiertos"
-          description="Cuando alguien reporte una pregunta o respuesta, aparecerá aquí."
+          title={
+            tab === "resueltos"
+              ? "Sin reportes resueltos"
+              : "Sin reportes abiertos"
+          }
+          description={
+            tab === "resueltos"
+              ? "Cuando ocultes o descartes un reporte, aparecerá aquí."
+              : "Cuando alguien reporte una pregunta o respuesta, aparecerá aquí."
+          }
+          action={
+            <Button asChild variant="outline">
+              <Link href="/revision">Volver al centro</Link>
+            </Button>
+          }
         />
       ) : (
         <ul className="space-y-4">
@@ -151,10 +201,12 @@ export default async function ListingQuestionReportsPage() {
                     </Link>
                   </Button>
                 ) : null}
-                <QaModerationActions
-                  questionId={report.questionId ?? undefined}
-                  answerId={report.answerId ?? undefined}
-                />
+                {tab === "abiertos" ? (
+                  <QaModerationActions
+                    questionId={report.questionId ?? undefined}
+                    answerId={report.answerId ?? undefined}
+                  />
+                ) : null}
               </li>
             );
           })}

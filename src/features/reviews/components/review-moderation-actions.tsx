@@ -9,6 +9,7 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { Button } from "@/components/ui/button";
 import {
   dismissReviewReportsAction,
@@ -55,14 +56,16 @@ export function ReviewModerationActions({
       <div className="flex flex-wrap gap-2">
         <form action={hideAction}>
           <input type="hidden" name="reviewId" value={reviewId} />
-          <Button
+          <ConfirmAction
             type="submit"
             variant="destructive"
             size="sm"
-            loading={hidePending}
-          >
-            Ocultar reseña
-          </Button>
+            fullWidth={false}
+            pending={hidePending}
+            idleLabel="Ocultar reseña"
+            confirmLabel="Sí, ocultar reseña"
+            hint="Dejará de verse en el perfil público."
+          />
         </form>
         <form action={dismissAction}>
           <input type="hidden" name="reviewId" value={reviewId} />

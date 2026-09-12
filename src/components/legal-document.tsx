@@ -99,13 +99,13 @@ export function LegalDocument({ document, currentPath }: LegalDocumentProps) {
         <div className="sticky top-14 z-20 -mx-4 px-4 md:top-16">
           <nav
             aria-label="Secciones"
-            className="tp-glass border-border mx-auto flex max-w-2xl flex-wrap justify-center gap-2 rounded-xl border px-3 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none"
+            className="tp-glass border-border mx-auto flex max-w-2xl [scrollbar-width:none] gap-2 overflow-x-auto rounded-xl border px-3 py-3 backdrop-blur-md backdrop-saturate-[1.1] [-ms-overflow-style:none] motion-reduce:backdrop-blur-none [&::-webkit-scrollbar]:hidden"
           >
             {document.sections.map((section) => (
               <Link
                 key={section.id}
                 href={`#${section.id}`}
-                className="border-border bg-muted/40 text-foreground hover:bg-muted rounded-full border px-3 py-1.5 text-xs font-medium"
+                className="border-border bg-muted/40 text-foreground hover:bg-muted shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium"
               >
                 {section.title}
               </Link>

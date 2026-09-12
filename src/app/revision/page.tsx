@@ -196,8 +196,6 @@ export default async function ReviewHubPage() {
   const firstName =
     current.profile.fullName?.trim().split(/\s+/)[0] ?? "equipo";
 
-  const listingsHot =
-    listingCounts.pendiente + listingCounts.enRevision >= identityPending;
   const openWork =
     listingCounts.pendiente +
     listingCounts.enRevision +
@@ -254,6 +252,8 @@ export default async function ReviewHubPage() {
       : []),
   ]);
 
+  const hottestWorkHref = primaryCta.count > 0 ? primaryCta.href : "";
+
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -283,7 +283,9 @@ export default async function ReviewHubPage() {
             description="Sin revisor asignado. Tómalos al abrir."
             count={listingCounts.pendiente}
             icon={ClipboardList}
-            emphasized={listingsHot && listingCounts.pendiente > 0}
+            emphasized={hottestWorkHref.includes(
+              "/revision/anuncios?tab=pendiente",
+            )}
           />
           <QueueCard
             href="/revision/anuncios?tab=en_revision"
@@ -291,6 +293,7 @@ export default async function ReviewHubPage() {
             description="Ya reclamados por un revisor."
             count={listingCounts.enRevision}
             icon={ClipboardList}
+            emphasized={hottestWorkHref.includes("en_revision")}
           />
           <QueueCard
             href="/revision/identidad"
@@ -298,7 +301,7 @@ export default async function ReviewHubPage() {
             description="Cédula y selfie pendientes de aprobación."
             count={identityPending}
             icon={BadgeCheck}
-            emphasized={!listingsHot && identityPending > 0}
+            emphasized={hottestWorkHref.startsWith("/revision/identidad")}
           />
           <QueueCard
             href="/revision/resenas"
@@ -306,7 +309,7 @@ export default async function ReviewHubPage() {
             description="Moderación de calificaciones del marketplace."
             count={reviewReportsOpen}
             icon={reviewReportsOpen > 0 ? MessageSquareWarning : Star}
-            emphasized={reviewReportsOpen > 0}
+            emphasized={hottestWorkHref.startsWith("/revision/resenas")}
           />
 
           <QueueCard
@@ -315,7 +318,7 @@ export default async function ReviewHubPage() {
             description="Moderación de preguntas y respuestas públicas."
             count={questionReportsOpen}
             icon={questionReportsOpen > 0 ? MessageSquareWarning : Star}
-            emphasized={questionReportsOpen > 0}
+            emphasized={hottestWorkHref.startsWith("/revision/preguntas")}
           />
 
           <QueueCard
@@ -324,7 +327,7 @@ export default async function ReviewHubPage() {
             description="Solicitudes de cancelación, problemas de envío y preguntas de vendedores."
             count={orderSupportCount}
             icon={LifeBuoy}
-            emphasized={orderSupportCount > 0}
+            emphasized={hottestWorkHref.startsWith("/revision/soporte-pedidos")}
           />
         </div>
       </section>
@@ -357,7 +360,7 @@ export default async function ReviewHubPage() {
               description="Liquidaciones autorizadas listas para pagar en Wompi."
               count={authorizedPayoutCount}
               icon={CreditCard}
-              emphasized={(authorizedPayoutCount ?? 0) > 0}
+              emphasized={hottestWorkHref.startsWith("/revision/pagos")}
             />
             <QueueCard
               href="/revision/disputas"
@@ -365,15 +368,32 @@ export default async function ReviewHubPage() {
               description="Pagos congelados, reembolsos ops y pérdidas absorbidas en Cuenta Wompi."
               count={disputeQueueCount}
               icon={ShieldAlert}
-              emphasized={disputeQueueCount > 0}
+              emphasized={hottestWorkHref.startsWith("/revision/disputas")}
             />
-            <QueueCard
+            <Link
               href="/revision/precios"
-              title="Precios de referencia"
-              description="Guía para vendedores por modelo, almacenamiento y estado."
-              count={recommendedPriceCount}
-              icon={Tags}
-            />
+              className="border-border hover:bg-muted/50 flex items-start gap-3 rounded-xl border p-4 transition-colors"
+            >
+              <span className="bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <Tags className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-foreground text-sm font-semibold">
+                  Precios de referencia
+                </p>
+                <p className="text-muted-foreground text-xs leading-snug">
+                  Guía para vendedores. No es una cola de trabajo.
+                </p>
+                <p className="text-muted-foreground pt-1 text-sm">
+                  {recommendedPriceCount} combinación
+                  {recommendedPriceCount === 1 ? "" : "es"} en la tabla
+                </p>
+              </div>
+              <ChevronRight
+                className="text-muted-foreground mt-1 size-4 shrink-0"
+                aria-hidden
+              />
+            </Link>
             <aside className="border-border bg-muted/50 flex gap-3 rounded-xl border p-4">
               <ShieldAlert
                 className="text-muted-foreground mt-0.5 size-5 shrink-0"

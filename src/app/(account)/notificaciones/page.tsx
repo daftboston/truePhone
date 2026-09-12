@@ -58,18 +58,28 @@ export default async function NotificationsPage() {
           title="Sin notificaciones todavía"
           description="Cuando alguien compre, te escriba o un revisor decida sobre tu anuncio, el aviso aparecerá aquí. También te recordamos confirmar el iPhone después de «Ya recibí»."
           action={
-            <Button asChild variant="outline">
-              <Link href="/compras">Ver compras</Link>
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button asChild>
+                <Link href="/explorar">Explorar iPhones</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/compras">Ver compras</Link>
+              </Button>
+            </div>
           }
         />
       ) : (
         <NotificationList notifications={notifications} />
       )}
 
-      <section className="border-border space-y-3 rounded-xl border p-4">
-        <NotificationPreferencesForm initial={prefs} />
-      </section>
+      <details className="border-border rounded-xl border p-4">
+        <summary className="text-foreground cursor-pointer text-sm font-semibold">
+          Preferencias de avisos
+        </summary>
+        <div className="mt-3">
+          <NotificationPreferencesForm initial={prefs} />
+        </div>
+      </details>
     </>
   );
 }

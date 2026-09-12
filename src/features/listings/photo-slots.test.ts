@@ -10,6 +10,7 @@ import { describe, it } from "node:test";
 import {
   extraGalleryImages,
   galleryImageAtOrder,
+  gallerySlotTitle,
   guidedSlotFillCount,
   isGuidedGalleryComplete,
   isGuidedSlotIndex,
@@ -48,6 +49,11 @@ describe("listing photo slots", () => {
 });
 
 describe("gallery slot indexes", () => {
+  it("labels guided slots and extras", () => {
+    assert.equal(gallerySlotTitle(0), LISTING_PHOTO_SLOTS[0].title);
+    assert.equal(gallerySlotTitle(8), "Extra 1");
+  });
+
   it("treats 0..7 as guided and 8..11 as extras", () => {
     assert.equal(isGuidedSlotIndex(0), true);
     assert.equal(isGuidedSlotIndex(7), true);

@@ -670,6 +670,57 @@ export async function listOpenListingQuestionReports(take = 80) {
 }
 
 /**
+ * countResolvedListingQuestionReports
+ *
+ * Counts closed Q&A reports for the moderation tabs.
+ *
+ * @returns Resolved report count.
+ * @calledBy /revision/preguntas
+ */
+export async function countResolvedListingQuestionReports() {
+  return prisma.listingQuestionReport.count({
+    where: { resolvedAt: { not: null } },
+  });
+}
+
+/**
+ * listResolvedListingQuestionReports
+ *
+ * Lists recently resolved Q&A reports.
+ *
+ * @param take - Max rows; defaults to 80.
+ * @returns Report rows with question/answer context.
+ * @calledBy /revision/preguntas
+ */
+export async function listResolvedListingQuestionReports(take = 80) {
+  return prisma.listingQuestionReport.findMany({
+    where: { resolvedAt: { not: null } },
+    include: {
+      reporter: { select: partySelect },
+      question: {
+        include: {
+          asker: { select: partySelect },
+          listing: { select: { id: true, title: true, slug: true } },
+        },
+      },
+      answer: {
+        include: {
+          seller: { select: partySelect },
+          question: {
+            include: {
+              asker: { select: partySelect },
+              listing: { select: { id: true, title: true, slug: true } },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { resolvedAt: "desc" },
+    take,
+  });
+}
+
+/**
  * validateQaBody
  *
  * Trims, length-checks, and rejects off-platform contact fishing.

@@ -16,7 +16,46 @@ import { countOpenReviewReports } from "@/lib/reviews";
 const TOP_N = 8;
 const REVIEW_TIME_SAMPLE = 200;
 
+export type OpsAnalyticsRange = "7d" | "30d" | "all";
+
+/**
+ * parseOpsAnalyticsRange
+ *
+ * Reads `?rango=` for the ops analytics date chips.
+ *
+ * @param value - Raw search param.
+ * @returns Valid range; defaults to all-time so existing totals stay honest.
+ * @calledBy OpsAnalyticsPage
+ */
+export function parseOpsAnalyticsRange(
+  value: string | undefined,
+): OpsAnalyticsRange {
+  if (value === "7d" || value === "30d" || value === "all") return value;
+  return "all";
+}
+
+/**
+ * opsAnalyticsSince
+ *
+ * Start instant for a bounded analytics range, or null for all-time.
+ *
+ * @param range - Chip id.
+ * @param now - Comparison instant.
+ * @returns Date threshold, or null when range is `all`.
+ * @calledBy loadOpsAnalytics
+ */
+export function opsAnalyticsSince(
+  range: OpsAnalyticsRange,
+  now: Date = new Date(),
+): Date | null {
+  if (range === "7d") return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  if (range === "30d")
+    return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  return null;
+}
+
 export type OpsAnalyticsSnapshot = {
+  range: OpsAnalyticsRange;
   listingStatusCounts: {
     published: number;
     reserved: number;
@@ -157,12 +196,22 @@ export function modelCountsFromGroups(
  * Loads one ops snapshot for `/revision/analitica`. Views are never meant
  * for public profiles or order party cards.
  *
+ * @param range - Optional time window for GMV, views, and signup metrics.
  * @returns Aggregated marketplace, queue, and listing-view metrics.
  * @calledBy OpsAnalyticsPage
  */
-export async function loadOpsAnalytics(): Promise<OpsAnalyticsSnapshot> {
+export async function loadOpsAnalytics(
+  range: OpsAnalyticsRange = "all",
+): Promise<OpsAnalyticsSnapshot> {
+  const since = opsAnalyticsSince(range);
   const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const settledWhere = since
+    ? { payoutCompletedAt: { not: null, gte: since } }
+    : { payoutCompletedAt: { not: null } };
+  const reviewWhere = since
+    ? { deletedAt: null, reviewedAt: { not: null, gte: since } }
+    : { deletedAt: null, reviewedAt: { not: null } };
 
   const [
     published,
@@ -206,15 +255,21 @@ export async function loadOpsAnalytics(): Promise<OpsAnalyticsSnapshot> {
       where: { deletedAt: null, status: "REJECTED" },
     }),
     prisma.order.aggregate({
-      where: { payoutCompletedAt: { not: null } },
+      where: settledWhere,
       _sum: { equipmentPrice: true, platformFee: true },
       _count: true,
     }),
     prisma.order.count({ where: { status: "PAID" } }),
-    prisma.listing.aggregate({
-      where: { deletedAt: null },
-      _sum: { views: true },
-    }),
+    since
+      ? prisma.listingViewEvent.count({
+          where: { createdAt: { gte: since } },
+        })
+      : prisma.listing
+          .aggregate({
+            where: { deletedAt: null },
+            _sum: { views: true },
+          })
+          .then((sum) => sum._sum.views ?? 0),
     countListingsForReview(),
     countPendingIdentityVerifications(),
     countAuthorizedPayouts(),
@@ -226,21 +281,10 @@ export async function loadOpsAnalytics(): Promise<OpsAnalyticsSnapshot> {
     prisma.profile.count({ where: { createdAt: { gte: since30 } } }),
     prisma.listing.groupBy({
       by: ["sellerId"],
-      where: { createdAt: { gte: since30 }, deletedAt: null },
+      where: { createdAt: { gte: since ?? since30 }, deletedAt: null },
       _count: { _all: true },
     }),
-    prisma.listing.findMany({
-      where: { deletedAt: null, views: { gt: 0 } },
-      orderBy: { views: "desc" },
-      take: TOP_N,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        views: true,
-        status: true,
-      },
-    }),
+    loadTopViewedListings(since),
     prisma.listing.groupBy({
       by: ["iphoneModelId"],
       where: { deletedAt: null, status: "PUBLISHED" },
@@ -250,12 +294,12 @@ export async function loadOpsAnalytics(): Promise<OpsAnalyticsSnapshot> {
       by: ["iphoneModelId"],
       where: {
         deletedAt: null,
-        orders: { some: { payoutCompletedAt: { not: null } } },
+        orders: { some: settledWhere },
       },
       _count: { _all: true },
     }),
     prisma.listing.findMany({
-      where: { deletedAt: null, reviewedAt: { not: null } },
+      where: reviewWhere,
       orderBy: { reviewedAt: "desc" },
       take: REVIEW_TIME_SAMPLE,
       select: { createdAt: true, reviewedAt: true },
@@ -265,7 +309,7 @@ export async function loadOpsAnalytics(): Promise<OpsAnalyticsSnapshot> {
 
   const names = new Map(catalogModels.map((model) => [model.id, model.name]));
   const settledOrderCount = settledMoney._count;
-  const listingViewCount = listingViewSum._sum.views ?? 0;
+  const listingViewCount = listingViewSum;
   const medianReviewHours = medianNumber(
     reviewDurations.flatMap((row) =>
       row.reviewedAt ? [hoursBetween(row.createdAt, row.reviewedAt)] : [],
@@ -273,6 +317,7 @@ export async function loadOpsAnalytics(): Promise<OpsAnalyticsSnapshot> {
   );
 
   return {
+    range,
     listingStatusCounts: {
       published,
       reserved,
@@ -311,6 +356,52 @@ export async function loadOpsAnalytics(): Promise<OpsAnalyticsSnapshot> {
     popularPublishedModels: modelCountsFromGroups(publishedModelGroups, names),
     popularSoldModels: modelCountsFromGroups(soldModelGroups, names),
   };
+}
+
+/**
+ * loadTopViewedListings
+ *
+ * All-time uses denormalized Listing.views; ranged windows count view events.
+ *
+ * @param since - Inclusive start, or null for all-time.
+ * @returns Top listings with view counts for the window.
+ * @calledBy loadOpsAnalytics
+ */
+async function loadTopViewedListings(since: Date | null) {
+  if (!since) {
+    return prisma.listing.findMany({
+      where: { deletedAt: null, views: { gt: 0 } },
+      orderBy: { views: "desc" },
+      take: TOP_N,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        views: true,
+        status: true,
+      },
+    });
+  }
+
+  const groups = await prisma.listingViewEvent.groupBy({
+    by: ["listingId"],
+    where: { createdAt: { gte: since } },
+    _count: { _all: true },
+  });
+  const top = groups
+    .sort((left, right) => right._count._all - left._count._all)
+    .slice(0, TOP_N);
+  const listings = await prisma.listing.findMany({
+    where: { id: { in: top.map((group) => group.listingId) } },
+    select: { id: true, slug: true, title: true, status: true },
+  });
+  const byId = new Map(listings.map((listing) => [listing.id, listing]));
+
+  return top.flatMap((group) => {
+    const listing = byId.get(group.listingId);
+    if (!listing) return [];
+    return [{ ...listing, views: group._count._all }];
+  });
 }
 
 /**

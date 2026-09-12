@@ -6,9 +6,10 @@
  * @dependencies react, next/navigation, Button, Badge, Textarea, staff support actions
  */
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +19,10 @@ import {
   staffOrderSupportMessageAction,
 } from "@/features/orders/actions/order-support-ops";
 import type { OrderSupportActionState } from "@/features/orders/schemas/order-support";
+import {
+  isSupportMoneyDecision,
+  supportMoneyDecisionHint,
+} from "@/features/orders/lib/support-money-decision";
 import type { StaffOrderSupportCase } from "@/lib/orders/order-support-service";
 
 const initialState: OrderSupportActionState = null;
@@ -136,6 +141,9 @@ export function OrderSupportOpsPanel({
   const canHandle = active && assignedToCurrent;
   const isAdmin = currentStaffRole === "ADMIN";
   const isFulfillment = supportCase.type === "FULFILLMENT_EXCEPTION";
+  const [decision, setDecision] = useState("");
+  const moneyDecision = isSupportMoneyDecision(decision, supportCase.type);
+  const moneyHint = supportMoneyDecisionHint(decision);
 
   useEffect(() => {
     if (claimState?.ok || decisionState?.ok) router.refresh();
@@ -242,7 +250,8 @@ export function OrderSupportOpsPanel({
               name="decision"
               className="border-input bg-background ring-offset-background focus-visible:ring-ring h-10 w-full rounded-md border px-3 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               required
-              defaultValue=""
+              value={decision}
+              onChange={(event) => setDecision(event.target.value)}
             >
               <option value="" disabled>
                 Selecciona una acción
@@ -301,9 +310,19 @@ export function OrderSupportOpsPanel({
                 {decisionState.message}
               </p>
             ) : null}
-            <Button type="submit" loading={decisionPending}>
-              Guardar decisión
-            </Button>
+            {moneyDecision ? (
+              <ConfirmAction
+                type="submit"
+                pending={decisionPending}
+                idleLabel="Guardar decisión"
+                confirmLabel="Sí, aplicar esta decisión"
+                hint={moneyHint ?? undefined}
+              />
+            ) : (
+              <Button type="submit" loading={decisionPending}>
+                Guardar decisión
+              </Button>
+            )}
           </form>
         </section>
       ) : null}

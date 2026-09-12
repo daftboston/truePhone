@@ -110,7 +110,7 @@ export default async function PublicProfilePage({
         ) : null}
       </div>
 
-      <section className="space-y-3">
+      <section id="anuncios-activos" className="space-y-3">
         <div className="space-y-1">
           <h2 className="text-foreground text-sm font-semibold">
             Anuncios activos
@@ -157,9 +157,29 @@ export default async function PublicProfilePage({
           </p>
         </div>
         {reviews.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Aún no hay reseñas públicas.
-          </p>
+          <EmptyState
+            title="Aún no hay reseñas"
+            description={
+              isOwner
+                ? "Las reseñas aparecen cuando cierras una venta en TruePhone."
+                : "Cuando alguien compre y califique a este vendedor, la reseña se verá aquí."
+            }
+            action={
+              isOwner ? (
+                <Button asChild variant="outline">
+                  <Link href="/vender">Publicar un iPhone</Link>
+                </Button>
+              ) : shop.length > 0 ? (
+                <Button asChild variant="outline">
+                  <Link href="#anuncios-activos">Ver anuncios activos</Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link href="/explorar">Explorar iPhones</Link>
+                </Button>
+              )
+            }
+          />
         ) : (
           <ul className="space-y-3">
             {reviews.map((review) => (

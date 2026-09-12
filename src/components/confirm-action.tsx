@@ -19,6 +19,7 @@ type ConfirmActionProps = {
   disabled?: boolean;
   variant?: "default" | "destructive" | "outline";
   type?: "button" | "submit";
+  size?: "default" | "sm";
   fullWidth?: boolean;
   onConfirm?: () => void;
 };
@@ -37,6 +38,7 @@ type ConfirmActionProps = {
  * @param props.disabled - Disables both steps.
  * @param props.variant - Button variant for both steps.
  * @param props.type - `submit` for forms; `button` with onConfirm otherwise.
+ * @param props.size - Button size; `sm` for queue rows.
  * @param props.fullWidth - Stretch buttons.
  * @param props.onConfirm - Click handler when type is button.
  * @returns Two-step action controls.
@@ -51,6 +53,7 @@ export function ConfirmAction({
   disabled = false,
   variant = "default",
   type = "button",
+  size = "default",
   fullWidth = true,
   onConfirm,
 }: ConfirmActionProps) {
@@ -61,6 +64,7 @@ export function ConfirmAction({
       <Button
         type="button"
         variant={variant}
+        size={size}
         fullWidth={fullWidth}
         disabled={disabled || pending}
         onClick={() => setConfirming(true)}
@@ -80,6 +84,7 @@ export function ConfirmAction({
       <Button
         type={type}
         variant={variant}
+        size={size}
         fullWidth={fullWidth}
         loading={pending}
         disabled={disabled}

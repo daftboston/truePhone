@@ -57,7 +57,7 @@ export default async function ListingSubmittedPage({ params }: PageProps) {
     <AppShell mainClassName="max-w-lg justify-center gap-4">
       <EmptyState
         title="Anuncio enviado a revisión"
-        description="Un revisor de TruePhone validará las fotos, el IMEI y la prueba de posesión antes de publicarlo."
+        description="Un revisor de TruePhone validará las fotos, el IMEI y la prueba de posesión. Revisamos en orden de llegada. Te avisamos por correo y en Notificaciones cuando haya una decisión."
         action={
           <Button asChild>
             <Link href={`/vender/${listing.id}`}>Ver estado del anuncio</Link>

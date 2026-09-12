@@ -11,7 +11,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { LISTING_PHOTO_SLOTS } from "@/features/listings/types";
+import { gallerySlotTitle } from "@/features/listings/types";
 
 type ReviewImage = {
   id: string;
@@ -43,12 +43,8 @@ type ReviewPhotoInspectProps = {
  * @calledBy photosFromReview
  */
 function reviewPhotoLabel(image: ReviewImage, fallbackIndex: number) {
-  if (
-    image.displayOrder != null &&
-    image.displayOrder >= 0 &&
-    image.displayOrder < LISTING_PHOTO_SLOTS.length
-  ) {
-    return LISTING_PHOTO_SLOTS[image.displayOrder].title;
+  if (image.displayOrder != null) {
+    return gallerySlotTitle(image.displayOrder);
   }
   return `Foto ${fallbackIndex + 1}`;
 }
@@ -111,6 +107,9 @@ export function ReviewPhotoInspect({
   const thumbs = photos.slice(1);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const pointerStartX = useRef<number | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   /**
    * goTo
@@ -131,11 +130,13 @@ export function ReviewPhotoInspect({
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
 
     /**
      * onKeyDown
      *
-     * Esc closes; arrows move when more than one photo exists.
+     * Esc closes; arrows move; Tab stays inside the overlay.
      *
      * @param event - Window keyboard event.
      */
@@ -143,6 +144,23 @@ export function ReviewPhotoInspect({
       if (event.key === "Escape") {
         setOpenIndex(null);
         return;
+      }
+      if (event.key === "Tab" && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], [tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((node) => !node.hasAttribute("disabled"));
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
       }
       if (photos.length < 2) return;
       if (event.key === "ArrowLeft") {
@@ -163,6 +181,7 @@ export function ReviewPhotoInspect({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
+      previousFocusRef.current?.focus();
     };
   }, [openIndex, photos.length]);
 
@@ -244,6 +263,7 @@ export function ReviewPhotoInspect({
 
       {openPhoto ? (
         <div
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label={openPhoto.caption}
@@ -258,6 +278,7 @@ export function ReviewPhotoInspect({
               {openPhoto.caption}
             </p>
             <Button
+              ref={closeRef}
               type="button"
               variant="secondary"
               size="sm"
