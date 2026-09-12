@@ -101,6 +101,7 @@ export function ConfirmAction({
       <Button
         type="button"
         variant="ghost"
+        size={size}
         fullWidth={fullWidth}
         disabled={pending}
         onClick={() => setConfirming(false)}

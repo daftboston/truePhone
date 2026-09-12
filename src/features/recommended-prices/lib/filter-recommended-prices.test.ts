@@ -42,5 +42,9 @@ describe("filterRecommendedPrices", () => {
       filterRecommendedPrices(rows, "good").map((row) => row.id),
       ["2"],
     );
+    assert.deepEqual(
+      filterRecommendedPrices(rows, "excelente").map((row) => row.id),
+      ["1"],
+    );
   });
 });

@@ -1,7 +1,7 @@
 /**
  * @file seller-listing-summary.tsx
  * @description SellerListingSummary component for the listings feature.tsx.
- * @dependencies next/image, next/link, @prisma/client, @/components/price-display, @/components/ui/badge
+ * @dependencies next/image, next/link, @prisma/client, PriceDisplay, Badge, listing helpers, review-wait-copy
  */
 
 import Image from "next/image";
@@ -22,6 +22,7 @@ import { publicListingPath } from "@/lib/listings-marketplace";
 import { formatStorageLabel } from "@/lib/iphone-catalog";
 import type { getOwnedListing } from "@/lib/listings";
 import { prisma } from "@/lib/db";
+import { listingPendingReviewDescription } from "@/lib/review-wait-copy";
 
 type OwnedListing = NonNullable<Awaited<ReturnType<typeof getOwnedListing>>>;
 
@@ -32,17 +33,17 @@ type SellerListingSummaryProps = {
 /**
  * statusDescription
  *
- * Supports listings by implementing statusDescription.
+ * Maps listing status to seller-facing Spanish copy.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy listings UI and related modules
+ * @param status - Current listing status.
+ * @returns One-line explanation of what happens next.
+ * @calledBy SellerListingSummary
  */
 function statusDescription(status: ListingStatus) {
   switch (status) {
     case "PENDING_REVIEW":
     case "SUBMITTED":
-      return "Un revisor de TruePhone está validando las fotos, el IMEI y la prueba de posesión.";
+      return listingPendingReviewDescription();
     case "APPROVED":
       return "Tu anuncio fue aprobado. En TruePhone la aprobación lo deja público.";
     case "PUBLISHED":
@@ -63,11 +64,11 @@ function statusDescription(status: ListingStatus) {
 /**
  * getLatestOrderIdForListing
  *
- * Supports listings by implementing getLatestOrderIdForListing.
+ * Loads the newest order for a reserved or sold listing.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy listings UI and related modules
+ * @param listingId - Listing UUID.
+ * @returns Latest order id and status, or null.
+ * @calledBy SellerListingSummary
  */
 async function getLatestOrderIdForListing(listingId: string) {
   const order = await prisma.order.findFirst({

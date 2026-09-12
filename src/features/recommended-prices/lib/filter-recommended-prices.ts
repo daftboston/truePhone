@@ -1,14 +1,32 @@
 /**
  * @file filter-recommended-prices.ts
  * @description Pure filter for the admin recommended-price table.
- * @dependencies none
+ * @dependencies @/features/listings/schemas/listing
  */
+
+import { conditionLabels } from "@/features/listings/schemas/listing";
 
 export type RecommendedPriceSearchRow = {
   iphoneModel: { name: string };
   iphoneStorage: { valueGb: number };
   condition: string;
 };
+
+/**
+ * conditionSearchText
+ *
+ * Builds searchable condition text from the enum and its Spanish label.
+ *
+ * @param condition - Listing condition enum value.
+ * @returns Lowercased enum + label, or the raw value when unknown.
+ */
+function conditionSearchText(condition: string): string {
+  const label =
+    condition in conditionLabels
+      ? conditionLabels[condition as keyof typeof conditionLabels]
+      : "";
+  return `${condition} ${label}`.toLowerCase();
+}
 
 /**
  * filterRecommendedPrices
@@ -29,7 +47,7 @@ export function filterRecommendedPrices<T extends RecommendedPriceSearchRow>(
 
   return rows.filter((row) => {
     const haystack =
-      `${row.iphoneModel.name} ${row.iphoneStorage.valueGb} ${row.condition}`.toLowerCase();
+      `${row.iphoneModel.name} ${row.iphoneStorage.valueGb} gb ${conditionSearchText(row.condition)}`.toLowerCase();
     return haystack.includes(needle);
   });
 }

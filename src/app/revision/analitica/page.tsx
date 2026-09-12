@@ -33,7 +33,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Analítica",
-  description: "Métricas de operaciones del marketplace TruePhone.",
+  description: "Métricas internas del marketplace TruePhone.",
 };
 
 /**
@@ -157,7 +157,7 @@ export default async function OpsAnalyticsPage({ searchParams }: PageProps) {
       <div className="mx-auto max-w-lg">
         <EmptyState
           title="Acceso restringido"
-          description="Solo revisores y administradores pueden ver la analítica de operaciones."
+          description="Solo revisores y administradores pueden ver la analítica."
           action={
             <Button asChild variant="outline">
               <Link href="/perfil">Volver a Mi TruePhone</Link>
@@ -357,7 +357,8 @@ export default async function OpsAnalyticsPage({ searchParams }: PageProps) {
           <CardHeader>
             <CardTitle className="text-base">Anuncios más vistos</CardTitle>
             <CardDescription>
-              Conteos privados para operaciones. No se muestran al público.
+              Conteos privados para el equipo de TruePhone. No se muestran al
+              público.
             </CardDescription>
           </CardHeader>
           <CardContent>

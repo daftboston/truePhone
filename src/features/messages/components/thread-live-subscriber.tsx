@@ -23,7 +23,8 @@ type ThreadLiveSubscriberProps = {
  *
  * Subscribes to `messages` postgres_changes and calls `router.refresh()`.
  * The Server Component remains the source of truth — no client message store.
- * Realtime is the fast path; a 15s visible-tab poll remains as fallback.
+ * Realtime is the fast path. The 15s visible-tab poll starts only if subscribe
+ * fails, times out, or does not reach SUBSCRIBED within POLL_MS.
  *
  * @param props.listingId - Optional listing filter for an open thread.
  * @returns null (side-effect only).
@@ -62,7 +63,59 @@ export function ThreadLiveSubscriber({ listingId }: ThreadLiveSubscriberProps) {
             onChange,
           );
 
-    channel.subscribe();
+    let pollId: number | undefined;
+    let subscribed = false;
+
+    /**
+     * tick
+     *
+     * Polls while the tab is visible if Realtime misses an event.
+     */
+    const tick = () => {
+      if (document.visibilityState !== "visible") return;
+      router.refresh();
+    };
+
+    /**
+     * startPoll
+     *
+     * Starts the visible-tab fallback once. No-ops if already polling.
+     */
+    const startPoll = () => {
+      if (pollId != null) return;
+      pollId = window.setInterval(tick, POLL_MS);
+    };
+
+    /**
+     * stopPoll
+     *
+     * Clears the fallback interval when Realtime is healthy.
+     */
+    const stopPoll = () => {
+      if (pollId == null) return;
+      window.clearInterval(pollId);
+      pollId = undefined;
+    };
+
+    const fallbackTimer = window.setTimeout(() => {
+      if (!subscribed) startPoll();
+    }, POLL_MS);
+
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        subscribed = true;
+        window.clearTimeout(fallbackTimer);
+        stopPoll();
+        return;
+      }
+      if (
+        status === "CHANNEL_ERROR" ||
+        status === "TIMED_OUT" ||
+        status === "CLOSED"
+      ) {
+        startPoll();
+      }
+    });
 
     /**
      * onVisibility
@@ -76,20 +129,10 @@ export function ThreadLiveSubscriber({ listingId }: ThreadLiveSubscriberProps) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    /**
-     * tick
-     *
-     * Polls while the tab is visible if Realtime misses an event.
-     */
-    const tick = () => {
-      if (document.visibilityState !== "visible") return;
-      router.refresh();
-    };
-    const pollId = window.setInterval(tick, POLL_MS);
-
     return () => {
       document.removeEventListener("visibilitychange", onVisibility);
-      window.clearInterval(pollId);
+      window.clearTimeout(fallbackTimer);
+      stopPoll();
       void supabase.removeChannel(channel);
     };
   }, [listingId, router]);

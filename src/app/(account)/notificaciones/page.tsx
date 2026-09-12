@@ -58,14 +58,14 @@ export default async function NotificationsPage() {
           title="Sin notificaciones todavía"
           description="Cuando alguien compre, te escriba o un revisor decida sobre tu anuncio, el aviso aparecerá aquí. También te recordamos confirmar el iPhone después de «Ya recibí»."
           action={
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild>
-                <Link href="/explorar">Explorar iPhones</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/compras">Ver compras</Link>
-              </Button>
-            </div>
+            <Button asChild>
+              <Link href="/explorar">Explorar iPhones</Link>
+            </Button>
+          }
+          secondaryAction={
+            <Button asChild variant="outline">
+              <Link href="/compras">Ver compras</Link>
+            </Button>
           }
         />
       ) : (

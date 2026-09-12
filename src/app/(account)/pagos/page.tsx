@@ -8,7 +8,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SellerBankForm } from "@/features/payouts/components/seller-bank-form";
-import { Button } from "@/components/ui/button";
 import { requireCurrentProfile } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -46,20 +45,24 @@ export default async function SellerPagosPage({ searchParams }: PageProps) {
         </h1>
         <p className="text-muted-foreground text-sm">
           Esta cuenta es para recibir el pago de una venta. Si compraste un
-          iPhone, el cobro se hace en el pedido.
+          iPhone, el cobro está en{" "}
+          <Link
+            href="/compras"
+            className="text-foreground font-medium underline-offset-4 hover:underline"
+          >
+            Compras
+          </Link>
+          .
         </p>
         <p className="text-muted-foreground text-sm">
           TruePhone te paga aquí después de que el comprador confirme el iPhone
           (o pasen 24 horas desde que marcó que lo recibió).
         </p>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/compras">Ir a compras</Link>
-        </Button>
       </div>
 
       {justSaved && account ? (
         <p
-          className="border-border bg-muted/50 text-foreground rounded-xl border px-4 py-3 text-sm"
+          className="border-border bg-muted/50 text-trust rounded-xl border px-4 py-3 text-sm"
           role="status"
         >
           Cuenta lista. TruePhone te pagará a{" "}
