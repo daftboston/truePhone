@@ -285,7 +285,7 @@ model IphoneModel {
   modelNumber       String?
   /// Independent line: numbered iPhone, SE, or Air. SE is never a 13/14 variant.
   productLine       IphoneProductLine
-  /// Generation within the product line (SE 2/3, numbered 12–17, Air 1).
+  /// Generation within the product line (SE 3/4, numbered 12–17, Air 1).
   generation        Int
   variantType       IphoneVariantType
   releaseYear       Int?

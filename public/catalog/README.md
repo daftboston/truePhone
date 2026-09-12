@@ -28,7 +28,6 @@ When **both** files exist, hovering (or focusing) the card flips front → back.
 
 | Model                      | Front                          | Back                          |
 | -------------------------- | ------------------------------ | ----------------------------- |
-| iPhone SE (2.ª generación) | `iphone-se-2-front.webp`       | `iphone-se-2-back.webp`       |
 | iPhone 12 mini             | `iphone-12-mini-front.webp`    | `iphone-12-mini-back.webp`    |
 | iPhone 12                  | `iphone-12-front.webp`         | `iphone-12-back.webp`         |
 | iPhone 12 Pro              | `iphone-12-pro-front.webp`     | `iphone-12-pro-back.webp`     |
@@ -38,6 +37,7 @@ When **both** files exist, hovering (or focusing) the card flips front → back.
 | iPhone 13 Pro              | `iphone-13-pro-front.webp`     | `iphone-13-pro-back.webp`     |
 | iPhone 13 Pro Max          | `iphone-13-pro-max-front.webp` | `iphone-13-pro-max-back.webp` |
 | iPhone SE (3.ª generación) | `iphone-se-3-front.webp`       | `iphone-se-3-back.webp`       |
+| iPhone SE (4.ª generación) | `iphone-se-4-front.webp`       | `iphone-se-4-back.webp`       |
 | iPhone 14                  | `iphone-14-front.webp`         | `iphone-14-back.webp`         |
 | iPhone 14 Plus             | `iphone-14-plus-front.webp`    | `iphone-14-plus-back.webp`    |
 | iPhone 14 Pro              | `iphone-14-pro-front.webp`     | `iphone-14-pro-back.webp`     |
