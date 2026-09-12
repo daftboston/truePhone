@@ -1,7 +1,7 @@
 /**
  * @file iphone-catalog.test.ts
- * @description Guards the 28-model catalog, product-line grouping, typeahead matching, seed backfill, and catalog image filenames.
- * @dependencies node:test, node:assert/strict, iphone-catalog, iphone-catalog-data
+ * @description Guards the 28-model catalog, product-line grouping, typeahead matching, seed backfill, catalog image filenames, and lineup size scale.
+ * @dependencies node:test, node:assert/strict, iphone-catalog, iphone-catalog-data, iphone-catalog-images
  */
 
 import assert from "node:assert/strict";
@@ -19,7 +19,12 @@ import {
   IPHONE_CATALOG_MODELS,
 } from "@/lib/iphone-catalog-data";
 import { missingCatalogSlugs } from "@/lib/iphone-catalog-sync";
-import { catalogImageFilename } from "@/lib/iphone-catalog-images";
+import {
+  CATALOG_PHONE_BODY_MM,
+  CATALOG_PHONE_MAX_PX,
+  catalogImageFilename,
+  catalogPhoneRenderHeight,
+} from "@/lib/iphone-catalog-images";
 
 const REQUIRED_SLUGS = [
   "iphone-se-2",
@@ -398,5 +403,27 @@ describe("catalogImageFilename", () => {
       assert.equal(catalogImageFilename(slug, "front"), `${slug}-front.webp`);
       assert.equal(catalogImageFilename(slug, "back"), `${slug}-back.webp`);
     }
+  });
+});
+
+describe("catalogPhoneRenderHeight", () => {
+  it("has a body height for every canonical slug", () => {
+    for (const slug of REQUIRED_SLUGS) {
+      assert.ok(CATALOG_PHONE_BODY_MM[slug], slug);
+    }
+  });
+
+  it("keeps the 17 series on real-life proportions", () => {
+    const seventeen = catalogPhoneRenderHeight("iphone-17");
+    const pro = catalogPhoneRenderHeight("iphone-17-pro");
+    const proMax = catalogPhoneRenderHeight("iphone-17-pro-max");
+    const e = catalogPhoneRenderHeight("iphone-17e");
+    const air = catalogPhoneRenderHeight("iphone-air");
+
+    assert.equal(proMax, CATALOG_PHONE_MAX_PX);
+    assert.ok(Math.abs(seventeen - pro) <= 4);
+    assert.ok(pro < proMax);
+    assert.ok(e < seventeen);
+    assert.ok(seventeen < air && air < proMax);
   });
 });

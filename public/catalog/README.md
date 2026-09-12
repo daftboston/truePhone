@@ -57,8 +57,27 @@ When **both** files exist, hovering (or focusing) the card flips front → back.
 | iPhone 17 Pro Max          | `iphone-17-pro-max-front.webp` | `iphone-17-pro-max-back.webp` |
 | iPhone 17e                 | `iphone-17e-front.webp`        | `iphone-17e-back.webp`        |
 
+## Size scale
+
+Phone height on the 1200×1600 canvas follows **official body height**, so a 6.3" 17 / 17 Pro looks smaller than a 6.9" Pro Max. Source of truth: `CATALOG_PHONE_BODY_MM` in `src/lib/iphone-catalog-images.ts`.
+
+iPhone 17 series (display diagonal → body):
+
+| Model             | Display | Body height | Canvas phone height |
+| ----------------- | ------- | ----------- | ------------------- |
+| iPhone 17         | 6.3"    | 149.6 mm    | ~1208 px            |
+| iPhone 17 Pro     | 6.3"    | 150.0 mm    | ~1212 px            |
+| iPhone 17 Pro Max | 6.9"    | 163.4 mm    | 1320 px (max)       |
+| iPhone 17e        | 6.1"    | 146.7 mm    | ~1185 px            |
+| iPhone Air        | 6.5"    | 156.2 mm    | ~1262 px            |
+
+The 6.5" phone in Apple's 17-family size chart is **Air**, not 17e.
+
+Use this scale for every later model. Do not draw all phones the same size.
+
 ## Tips
 
-- Use a transparent or studio background so the card lighting still reads.
-- Keep a portrait crop (about 3:4) with the phone centered.
+- **Transparent background is required.** The Explorar card already has the studio well; a white plate shows as a rectangle on the card.
+- Prefer WebP with an alpha channel (PNG is fine). Do not composite onto white.
+- Keep a portrait crop (about 3:4) with the phone centered on the canvas; smaller models keep more margin.
 - Commit the files in git, then redeploy — no extra upload UI.
