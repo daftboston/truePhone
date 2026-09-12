@@ -86,7 +86,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Qué pasa con mi anuncio si cancelo una venta ya pagada?",
         answer:
-          "Abre «Contactar soporte» en la venta y envía una solicitud con el motivo. No cancela de inmediato: REVIEWER/ADMIN puede responder, pedir información o decidir. Si la acepta, el pedido se cancela y el anuncio queda archivado. El incidente permanece privado para operaciones; no aparece como contador público ni permite una reseña del pedido cancelado.",
+          "Abre «Contactar soporte» en la venta y envía una solicitud con el motivo. No cancela de inmediato: el equipo de TruePhone puede responder, pedir información o decidir. Si lo acepta, el pedido se cancela y el anuncio queda archivado. El incidente permanece privado para nuestro equipo; no aparece como contador público ni permite una reseña del pedido cancelado.",
       },
     ],
   },

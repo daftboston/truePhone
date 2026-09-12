@@ -13,6 +13,7 @@ import { VerificationShell } from "@/features/verification/components/verificati
 import { verificationLockedPath } from "@/features/verification/types";
 import { getOrCreateDraftVerification } from "@/lib/auth/identity";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { createSignedStorageUrl } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Cédula — reverso",
@@ -34,10 +35,12 @@ export default async function CedulaBackPage() {
   if (locked) redirect(locked);
   if (!draft.frontImageUrl) redirect("/verificacion/cedula-frente");
 
+  const existingImageUrl = await createSignedStorageUrl(draft.backImageUrl);
+
   return (
     <AppShell mainClassName="max-w-lg">
       <VerificationShell step={3} title="Reverso de tu cédula">
-        <CedulaBackForm />
+        <CedulaBackForm existingImageUrl={existingImageUrl} />
       </VerificationShell>
     </AppShell>
   );

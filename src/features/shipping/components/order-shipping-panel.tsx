@@ -388,7 +388,10 @@ export function OrderShippingPanel({
     inBuyerReportWindow;
 
   return (
-    <section className="border-border space-y-4 rounded-xl border p-4">
+    <section
+      id="envio"
+      className="border-border space-y-4 rounded-xl border p-4"
+    >
       <div className="space-y-1">
         <h2 className="text-foreground text-sm font-semibold">Envío</h2>
         <p className="text-muted-foreground text-xs">

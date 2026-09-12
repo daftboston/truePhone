@@ -10,6 +10,7 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ListingWizardShell } from "@/features/listings/components/listing-wizard-shell";
 import { PossessionForm } from "@/features/listings/components/possession-form";
+import { LISTING_WIZARD_FORM_IDS } from "@/features/listings/lib/listing-wizard-intent";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { ensurePossessionChallenge, getOwnedListing } from "@/lib/listings";
@@ -52,6 +53,7 @@ export default async function ListingPossessionPage({ params }: PageProps) {
         title="Prueba de posesión"
         listingId={listing.id}
         rejectionReason={listing.rejectionReason}
+        formId={LISTING_WIZARD_FORM_IDS.possession}
       >
         <PossessionForm
           listingId={listing.id}

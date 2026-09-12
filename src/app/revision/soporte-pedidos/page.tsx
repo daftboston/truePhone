@@ -1,69 +1,33 @@
 /**
  * @file page.tsx
  * @description Request-backed staff queue for seller order-support cases.
- * @dependencies next/link, auth session, order-support service, shared UI
+ * @dependencies next/link, auth session, order-support service, QueueTabs
+ * @changelog 2026-09-11 — QueueTabs with counts; EmptyState on deny.
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { OrderSupportCaseStatus } from "@prisma/client";
 
 import { EmptyState } from "@/components/empty-state";
+import { QueueTabs } from "@/components/queue-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canAccessReviewPortal, getCurrentProfile } from "@/lib/auth/session";
 import {
+  ORDER_SUPPORT_QUEUE_TABS,
+  parseOrderSupportQueueTab,
+} from "@/lib/orders/order-support-queue";
+import {
+  countOrderSupportCasesForStaff,
   listOrderSupportCasesForStaff,
   orderSupportStatusLabel,
 } from "@/lib/orders/order-support-service";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Soporte de pedidos",
   description: "Solicitudes de vendedores revisadas por operaciones TruePhone.",
 };
-
-const TABS = {
-  pendientes: {
-    label: "Pendientes",
-    statuses: ["PENDING"],
-  },
-  revision: {
-    label: "En revisión",
-    statuses: ["IN_REVIEW"],
-  },
-  vendedor: {
-    label: "Esperando vendedor",
-    statuses: ["NEEDS_SELLER_RESPONSE"],
-  },
-  escaladas: {
-    label: "Escaladas",
-    statuses: ["ESCALATED"],
-  },
-  resueltas: {
-    label: "Resueltas",
-    statuses: ["APPROVED", "REJECTED", "RESOLVED", "WITHDRAWN"],
-  },
-} satisfies Record<
-  string,
-  { label: string; statuses: OrderSupportCaseStatus[] }
->;
-
-type QueueTab = keyof typeof TABS;
-
-/**
- * normalizeQueueTab
- *
- * Resolves a supported query tab and falls back to pending work.
- *
- * @param value - Raw `tab` query value.
- * @returns Valid queue tab key.
- * @calledBy OrderSupportQueuePage
- */
-function normalizeQueueTab(value: string | undefined): QueueTab {
-  return value && value in TABS ? (value as QueueTab) : "pendientes";
-}
 
 /**
  * caseTypeLabel
@@ -95,11 +59,28 @@ export default async function OrderSupportQueuePage({
 }) {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/soporte-pedidos");
-  if (!canAccessReviewPortal(current.profile.role)) redirect("/perfil");
+  if (!canAccessReviewPortal(current.profile.role)) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <EmptyState
+          title="Acceso restringido"
+          description="Solo revisores y administradores pueden ver esta cola."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/perfil">Volver a Mi TruePhone</Link>
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   const { tab: rawTab } = await searchParams;
-  const tab = normalizeQueueTab(rawTab);
-  const cases = await listOrderSupportCasesForStaff(TABS[tab].statuses);
+  const tab = parseOrderSupportQueueTab(rawTab);
+  const [cases, counts] = await Promise.all([
+    listOrderSupportCasesForStaff(ORDER_SUPPORT_QUEUE_TABS[tab].statuses),
+    countOrderSupportCasesForStaff(),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -116,30 +97,20 @@ export default async function OrderSupportQueuePage({
         </p>
       </div>
 
-      <nav
-        aria-label="Estados de soporte"
-        className="flex gap-2 overflow-x-auto pb-1"
-      >
-        {Object.entries(TABS).map(([key, item]) => (
-          <Link
-            key={key}
-            href={`/revision/soporte-pedidos?tab=${key}`}
-            aria-current={tab === key ? "page" : undefined}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors",
-              tab === key
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border text-foreground hover:bg-muted",
-            )}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <QueueTabs
+        active={tab}
+        ariaLabel="Estados de soporte"
+        tabs={Object.entries(ORDER_SUPPORT_QUEUE_TABS).map(([id, item]) => ({
+          id,
+          label: item.label,
+          href: `/revision/soporte-pedidos?tab=${id}`,
+          count: counts[id as keyof typeof counts],
+        }))}
+      />
 
       {cases.length === 0 ? (
         <EmptyState
-          title={`No hay casos en ${TABS[tab].label.toLowerCase()}`}
+          title={`No hay casos en ${ORDER_SUPPORT_QUEUE_TABS[tab].label.toLowerCase()}`}
           description="Cuando un vendedor envíe una solicitud con este estado aparecerá aquí."
           action={
             <Button asChild variant="outline">

@@ -45,6 +45,7 @@ import {
   canRelistListing,
   listingHadPaidOrder,
 } from "@/features/listings/lib/seller-listing-hub";
+import { listingWizardNextPath } from "@/features/listings/lib/listing-wizard-intent";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
@@ -226,7 +227,12 @@ export async function createListingAction(
   });
 
   revalidatePath("/vender");
-  redirect(`/vender/${listing.id}/fotos`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/fotos`,
+    ),
+  );
 }
 
 /**
@@ -332,7 +338,12 @@ export async function updateListingDetailsAction(
 
   revalidatePath(`/vender/${listing.id}`);
   revalidatePath("/vender");
-  redirect(`/vender/${listing.id}/fotos`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/fotos`,
+    ),
+  );
 }
 
 /**
@@ -535,7 +546,12 @@ export async function updateListingSecurityAction(
   });
 
   revalidatePath(`/vender/${listing.id}`);
-  redirect(`/vender/${listing.id}/posesion`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/posesion`,
+    ),
+  );
 }
 
 /**
@@ -568,7 +584,14 @@ export async function uploadPossessionPhotoAction(
   }
 
   const file = formData.get("possessionImage");
-  if (!(file instanceof File) || file.size === 0) {
+  const hasNewFile = file instanceof File && file.size > 0;
+  const saveExit = formData.get("intent") === "save_exit";
+
+  if (!hasNewFile) {
+    if (saveExit) {
+      revalidatePath("/vender");
+      redirect("/vender?borrador=ok");
+    }
     return {
       ok: false,
       error: "Sube una foto del iPhone mostrando el código.",
@@ -607,7 +630,12 @@ export async function uploadPossessionPhotoAction(
   ]);
 
   revalidatePath(`/vender/${listing.id}/posesion`);
-  redirect(`/vender/${listing.id}/revisar`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/revisar`,
+    ),
+  );
 }
 
 /**

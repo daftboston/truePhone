@@ -19,6 +19,7 @@ import {
   CreditCard,
   Heart,
   HelpCircle,
+  KeyRound,
   LifeBuoy,
   MapPin,
   MessageSquare,
@@ -209,8 +210,9 @@ function buildGroups(
   groups.push({
     title: "Cuenta",
     items: [
-      { href: "/perfil", label: "Resumen", icon: UserRound, exact: true },
+      { href: "/perfil", label: "Perfil", icon: UserRound, exact: true },
       { href: "/perfil/editar", label: "Editar perfil", icon: Pencil },
+      { href: "/perfil/seguridad", label: "Contraseña", icon: KeyRound },
       { href: "/ayuda", label: "Ayuda", icon: HelpCircle },
     ],
   });

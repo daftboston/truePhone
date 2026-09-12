@@ -101,4 +101,24 @@ describe("isAccountNavItemActive", () => {
       true,
     );
   });
+
+  it("highlights Contraseña on /perfil/seguridad, not the Perfil hub", () => {
+    assert.equal(
+      isAccountNavItemActive("/perfil/seguridad", {
+        href: "/perfil/seguridad",
+      }),
+      true,
+    );
+    assert.equal(
+      isAccountNavItemActive("/perfil/seguridad", {
+        href: "/perfil",
+        exact: true,
+      }),
+      false,
+    );
+    assert.equal(
+      isAccountNavItemActive("/perfil", { href: "/perfil", exact: true }),
+      true,
+    );
+  });
 });

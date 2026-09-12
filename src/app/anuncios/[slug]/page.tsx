@@ -201,6 +201,8 @@ export default async function PublicListingPage({
     ? `/u/${listing.seller.username}`
     : null;
   const isOwnListing = current?.profile.id === listing.sellerId;
+  const buyerTotal =
+    compensationFees?.buyerTotal ?? listing.finalPrice ?? listing.price;
 
   return (
     <AppShell className="pb-40 md:pb-0" mainClassName="gap-8 md:gap-10">
@@ -248,11 +250,7 @@ export default async function PublicListingPage({
           </div>
 
           <PriceDisplay
-            price={
-              compensationFees?.buyerTotal ??
-              listing.finalPrice ??
-              listing.price
-            }
+            price={buyerTotal}
             equipmentPrice={listing.price}
             protectionFee={
               compensationFees?.platformFee ?? listing.platformFee ?? undefined
@@ -265,6 +263,10 @@ export default async function PublicListingPage({
           />
 
           <GuaranteeBanner />
+          <p className="text-muted-foreground text-sm">
+            El vendedor cubre el envío (transportadora o Premium Bogotá). Este
+            cobro es el equipo y la protección; no incluye flete.
+          </p>
 
           {sellerHref ? (
             <Link href={sellerHref} className="block">
@@ -296,6 +298,7 @@ export default async function PublicListingPage({
             isAuthenticated={Boolean(user)}
             pendingOrderId={pendingOrder?.id ?? null}
             favorited={favorited}
+            totalPrice={buyerTotal}
           />
         </div>
       </div>
@@ -423,6 +426,7 @@ export default async function PublicListingPage({
           isAuthenticated={Boolean(user)}
           pendingOrderId={pendingOrder?.id ?? null}
           favorited={favorited}
+          totalPrice={buyerTotal}
         />
       </div>
     </AppShell>

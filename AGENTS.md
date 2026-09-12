@@ -14,6 +14,7 @@ Before implementing any feature, read the following documents in order:
 8. docs/DESIGN_SYSTEM.md
 9. docs/COPY_GUIDELINES.md
 10. docs/COMPONENT_LIBRARY.md
+11. docs/AUTH_SOCIAL.md (Google Sign-In setup; Apple deferred)
 
 These documents are the source of truth for the project.
 

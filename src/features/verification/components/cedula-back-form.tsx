@@ -2,28 +2,33 @@
 
 /**
  * @file cedula-back-form.tsx
- * @description CedulaBackForm component for the verification feature.tsx.
- * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/file-input
+ * @description Cédula back photo capture with preview.
+ * @dependencies react, identity actions, IdentityCaptureFrame, UI primitives
  */
 
 import { useActionState } from "react";
 
 import { saveCedulaBackAction } from "@/features/verification/actions/identity";
+import { IdentityCaptureFrame } from "@/features/verification/components/identity-capture-frame";
 import type { VerificationActionState } from "@/features/verification/types";
 import { Button } from "@/components/ui/button";
-import { FileInput } from "@/components/ui/file-input";
-import { Label } from "@/components/ui/label";
+
+type CedulaBackFormProps = {
+  existingImageUrl?: string | null;
+};
 
 /**
  * CedulaBackForm
  *
- * Renders the Cedula Back Form UI for verification.
+ * Captures the back of the Colombian ID. Revisits can keep the saved photo.
  *
- * @param props - CedulaBackForm props.
- * @returns CedulaBackForm React element.
- * @calledBy verification pages and parent components
+ * @param props.existingImageUrl - Signed URL of a saved back photo.
+ * @returns Cédula back form.
+ * @calledBy `/verificacion/cedula-reverso`
  */
-export function CedulaBackForm() {
+export function CedulaBackForm({
+  existingImageUrl = null,
+}: CedulaBackFormProps) {
   const [state, formAction, pending] = useActionState<
     VerificationActionState,
     FormData
@@ -31,21 +36,16 @@ export function CedulaBackForm() {
 
   return (
     <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="backImage">Foto del reverso</Label>
-        <FileInput
-          id="backImage"
-          name="backImage"
-          accept="image/jpeg,image/png,image/webp"
-          required
-          buttonLabel="Elegir de la galería"
-          cameraLabel="Tomar foto"
-          captureFacing="environment"
-        />
-        <p className="text-muted-foreground text-xs">
-          Asegúrate de que el código de barras o QR se vea completo.
-        </p>
-      </div>
+      <IdentityCaptureFrame
+        variant="cedula"
+        inputId="backImage"
+        inputName="backImage"
+        label="Reverso de la cédula"
+        why="El código debe verse completo para validar el documento."
+        how="Asegúrate de que el código de barras o QR se vea completo."
+        existingImageUrl={existingImageUrl}
+        required
+      />
 
       {state?.ok === false ? (
         <p className="text-destructive text-sm" role="alert">

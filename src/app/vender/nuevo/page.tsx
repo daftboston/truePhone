@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { DeviceDetailsForm } from "@/features/listings/components/device-details-form";
 import { ListingWizardShell } from "@/features/listings/components/listing-wizard-shell";
+import { LISTING_WIZARD_FORM_IDS } from "@/features/listings/lib/listing-wizard-intent";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getCatalog } from "@/lib/listings";
@@ -57,7 +58,11 @@ export default async function NewListingPage() {
 
   return (
     <AppShell mainClassName="gap-4 md:gap-6">
-      <ListingWizardShell step={1} title="Datos del dispositivo">
+      <ListingWizardShell
+        step={1}
+        title="Datos del dispositivo"
+        formId={LISTING_WIZARD_FORM_IDS.device}
+      >
         <DeviceDetailsForm
           models={catalog.models}
           colors={catalog.colors}

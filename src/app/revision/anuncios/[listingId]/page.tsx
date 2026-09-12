@@ -2,10 +2,11 @@
  * @file page.tsx
  * @description Detail view for reviewing a single listing submission.
  * @dependencies Listing review actions and media viewers
+ * @changelog 2026-09-11 — Hero photo + labeled thumbs; sticky decision panel.
+ * @changelog 2026-09-11 — Photo inspect overlay extracted to ReviewPhotoInspect.
  */
 
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -14,6 +15,7 @@ import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ListingReviewActions } from "@/features/listings/components/listing-review-actions";
+import { ReviewPhotoInspect } from "@/features/listings/components/review-photo-inspect";
 import {
   conditionLabels,
   listingStatusLabel,
@@ -130,47 +132,11 @@ export default async function ListingReviewDetailPage({ params }: PageProps) {
             {gallery.length === 0 && !possession ? (
               <p className="text-muted-foreground text-sm">Sin imágenes.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-                {gallery.map((image, index) => (
-                  <a
-                    key={image.id}
-                    href={image.imageUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-muted relative aspect-square overflow-hidden rounded-lg"
-                  >
-                    <Image
-                      src={image.imageUrl}
-                      alt={`Foto ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 45vw, 280px"
-                    />
-                  </a>
-                ))}
-                {possession ? (
-                  <a
-                    href={possession.imageUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-muted relative aspect-square overflow-hidden rounded-lg"
-                  >
-                    <Image
-                      src={possession.imageUrl}
-                      alt="Posesión"
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 45vw, 280px"
-                    />
-                    <span className="bg-background/80 text-foreground absolute inset-x-0 bottom-0 px-1 py-0.5 text-center text-[10px]">
-                      Posesión
-                      {listing.possessionChallenge?.code
-                        ? ` · ${listing.possessionChallenge.code}`
-                        : ""}
-                    </span>
-                  </a>
-                ) : null}
-              </div>
+              <ReviewPhotoInspect
+                gallery={gallery}
+                possession={possession}
+                possessionCode={listing.possessionChallenge?.code ?? null}
+              />
             )}
           </section>
 
@@ -271,7 +237,7 @@ export default async function ListingReviewDetailPage({ params }: PageProps) {
           ) : null}
         </div>
 
-        <div className="lg:sticky lg:top-24">
+        <div className="bg-background/95 sticky bottom-20 z-10 max-h-[70dvh] overflow-y-auto lg:top-24 lg:bottom-auto lg:max-h-none">
           {canEditDecision ? (
             <ListingReviewActions
               listingId={listing.id}

@@ -11,16 +11,18 @@ import { redirect } from "next/navigation";
 
 import {
   approveIdentitySchema,
-  cedulaNumberSchema,
   documentLast4,
   hashDocumentNumber,
   rejectIdentitySchema,
+  resolveCedulaNumberInput,
+  resolveOptionalIdentityFile,
 } from "@/features/verification/schemas/identity";
 import {
   fieldErrorsFromZod,
   type VerificationActionState,
 } from "@/features/verification/types";
 import {
+  canDecideIdentityReview,
   getLatestIdentityVerification,
   getOrCreateDraftVerification,
 } from "@/lib/auth/identity";
@@ -174,31 +176,50 @@ export async function saveCedulaFrontAction(
     return { ok: false, error: "Primero acepta el aviso de privacidad." };
   }
 
-  const parsed = cedulaNumberSchema.safeParse(formData.get("documentNumber"));
-  if (!parsed.success) {
+  const numberResult = resolveCedulaNumberInput(
+    formData.get("documentNumber"),
+    Boolean(draft.documentNumberHash),
+  );
+  if (!numberResult.ok) {
     return {
       ok: false,
-      error: "Revisa el número de cédula.",
-      fieldErrors: fieldErrorsFromZod(parsed.error),
+      error: numberResult.error,
+      fieldErrors: numberResult.fieldErrors,
     };
   }
 
-  const file = formData.get("frontImage");
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: "Sube la foto del frente de tu cédula." };
+  const fileResult = resolveOptionalIdentityFile(
+    formData.get("frontImage"),
+    draft.frontImageUrl,
+    "Sube la foto del frente de tu cédula.",
+  );
+  if (!fileResult.ok) {
+    return { ok: false, error: fileResult.error };
   }
 
-  const upload = await uploadIdentityImage(current.user.id, "front", file);
-  if ("error" in upload) {
-    return { ok: false, error: upload.error };
+  let frontImageUrl = draft.frontImageUrl;
+  if (fileResult.file) {
+    const upload = await uploadIdentityImage(
+      current.user.id,
+      "front",
+      fileResult.file,
+    );
+    if ("error" in upload) {
+      return { ok: false, error: upload.error };
+    }
+    frontImageUrl = upload.path;
   }
 
   await prisma.identityVerification.update({
     where: { id: draft.id },
     data: {
-      documentNumberHash: hashDocumentNumber(parsed.data),
-      documentNumberLast4: documentLast4(parsed.data),
-      frontImageUrl: upload.path,
+      ...(numberResult.documentNumber
+        ? {
+            documentNumberHash: hashDocumentNumber(numberResult.documentNumber),
+            documentNumberLast4: documentLast4(numberResult.documentNumber),
+          }
+        : {}),
+      frontImageUrl,
     },
   });
 
@@ -230,19 +251,31 @@ export async function saveCedulaBackAction(
     return { ok: false, error: "Completa primero el frente de la cédula." };
   }
 
-  const file = formData.get("backImage");
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: "Sube la foto del reverso de tu cédula." };
+  const fileResult = resolveOptionalIdentityFile(
+    formData.get("backImage"),
+    draft.backImageUrl,
+    "Sube la foto del reverso de tu cédula.",
+  );
+  if (!fileResult.ok) {
+    return { ok: false, error: fileResult.error };
   }
 
-  const upload = await uploadIdentityImage(current.user.id, "back", file);
-  if ("error" in upload) {
-    return { ok: false, error: upload.error };
+  let backImageUrl = draft.backImageUrl;
+  if (fileResult.file) {
+    const upload = await uploadIdentityImage(
+      current.user.id,
+      "back",
+      fileResult.file,
+    );
+    if ("error" in upload) {
+      return { ok: false, error: upload.error };
+    }
+    backImageUrl = upload.path;
   }
 
   await prisma.identityVerification.update({
     where: { id: draft.id },
-    data: { backImageUrl: upload.path },
+    data: { backImageUrl },
   });
 
   revalidatePath("/verificacion");
@@ -273,19 +306,31 @@ export async function saveSelfieAction(
     return { ok: false, error: "Completa primero el reverso de la cédula." };
   }
 
-  const file = formData.get("selfieImage");
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: "Sube una selfie clara de tu rostro." };
+  const fileResult = resolveOptionalIdentityFile(
+    formData.get("selfieImage"),
+    draft.selfieImageUrl,
+    "Sube una selfie clara de tu rostro.",
+  );
+  if (!fileResult.ok) {
+    return { ok: false, error: fileResult.error };
   }
 
-  const upload = await uploadIdentityImage(current.user.id, "selfie", file);
-  if ("error" in upload) {
-    return { ok: false, error: upload.error };
+  let selfieImageUrl = draft.selfieImageUrl;
+  if (fileResult.file) {
+    const upload = await uploadIdentityImage(
+      current.user.id,
+      "selfie",
+      fileResult.file,
+    );
+    if ("error" in upload) {
+      return { ok: false, error: upload.error };
+    }
+    selfieImageUrl = upload.path;
   }
 
   await prisma.identityVerification.update({
     where: { id: draft.id },
-    data: { selfieImageUrl: upload.path },
+    data: { selfieImageUrl },
   });
 
   revalidatePath("/verificacion");
@@ -343,6 +388,71 @@ export async function submitIdentityVerificationAction(): Promise<VerificationAc
 }
 
 /**
+ * requireIdentityReviewer
+ *
+ * Gates identity-review mutations to REVIEWER and ADMIN profiles.
+ *
+ * @returns Current session or an error state.
+ * @calledBy claim, approve, and reject identity actions
+ */
+async function requireIdentityReviewer() {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return { ok: false as const, error: "Debes iniciar sesión." };
+  }
+  if (current.profile.role !== "REVIEWER" && current.profile.role !== "ADMIN") {
+    return {
+      ok: false as const,
+      error: "No tienes permiso para revisar identidades.",
+    };
+  }
+  return { ok: true as const, current };
+}
+
+/**
+ * claimIdentityForReviewAction
+ *
+ * Assigns an unclaimed PENDING/IN_REVIEW identity case to the current reviewer.
+ * Does not steal a case already claimed by someone else.
+ *
+ * @param verificationId - IdentityVerification id.
+ * @returns Action state; callers refresh the detail page.
+ * @calledBy Identity review detail page
+ */
+export async function claimIdentityForReviewAction(verificationId: string) {
+  const gate = await requireIdentityReviewer();
+  if (!gate.ok) return gate;
+
+  const verification = await prisma.identityVerification.findUnique({
+    where: { id: verificationId },
+  });
+  if (
+    !verification ||
+    (verification.status !== "PENDING" && verification.status !== "IN_REVIEW")
+  ) {
+    return {
+      ok: false as const,
+      error: "Esta verificación no está en la cola.",
+    };
+  }
+
+  if (!verification.reviewerId) {
+    await prisma.identityVerification.update({
+      where: { id: verification.id },
+      data: {
+        status: "IN_REVIEW",
+        reviewerId: gate.current.profile.id,
+      },
+    });
+    revalidatePath("/revision/identidad");
+    revalidatePath(`/revision/identidad/${verification.id}`);
+    revalidatePath("/revision");
+  }
+
+  return { ok: true as const };
+}
+
+/**
  * approveIdentityVerificationAction
  *
  * Approves identity verification and sets verifikStatus to verified.
@@ -357,16 +467,9 @@ export async function approveIdentityVerificationAction(
   _prev: VerificationActionState,
   formData: FormData,
 ): Promise<VerificationActionState> {
-  const current = await getCurrentProfile();
-  if (!current) {
-    return { ok: false, error: "Debes iniciar sesión." };
-  }
-  if (current.profile.role !== "REVIEWER" && current.profile.role !== "ADMIN") {
-    return {
-      ok: false,
-      error: "No tienes permiso para aprobar verificaciones.",
-    };
-  }
+  const gate = await requireIdentityReviewer();
+  if (!gate.ok) return { ok: false, error: gate.error };
+  const current = gate.current;
 
   const parsed = approveIdentitySchema.safeParse({
     verificationId: formData.get("verificationId"),
@@ -383,6 +486,19 @@ export async function approveIdentityVerificationAction(
     (verification.status !== "PENDING" && verification.status !== "IN_REVIEW")
   ) {
     return { ok: false, error: "Esta verificación no está pendiente." };
+  }
+  if (
+    !canDecideIdentityReview({
+      status: verification.status,
+      reviewerId: verification.reviewerId,
+      actorId: current.profile.id,
+      actorRole: current.profile.role,
+    })
+  ) {
+    return {
+      ok: false,
+      error: "Otro revisor ya tiene este caso.",
+    };
   }
 
   await prisma.$transaction([
@@ -406,6 +522,7 @@ export async function approveIdentityVerificationAction(
   ]);
 
   revalidatePath("/revision/identidad");
+  revalidatePath(`/revision/identidad/${verification.id}`);
   revalidatePath("/vender");
   revalidatePath("/perfil");
   revalidatePath("/notificaciones");
@@ -434,16 +551,9 @@ export async function rejectIdentityVerificationAction(
   _prev: VerificationActionState,
   formData: FormData,
 ): Promise<VerificationActionState> {
-  const current = await getCurrentProfile();
-  if (!current) {
-    return { ok: false, error: "Debes iniciar sesión." };
-  }
-  if (current.profile.role !== "REVIEWER" && current.profile.role !== "ADMIN") {
-    return {
-      ok: false,
-      error: "No tienes permiso para rechazar verificaciones.",
-    };
-  }
+  const gate = await requireIdentityReviewer();
+  if (!gate.ok) return { ok: false, error: gate.error };
+  const current = gate.current;
 
   const parsed = rejectIdentitySchema.safeParse({
     verificationId: formData.get("verificationId"),
@@ -466,6 +576,19 @@ export async function rejectIdentityVerificationAction(
   ) {
     return { ok: false, error: "Esta verificación no está pendiente." };
   }
+  if (
+    !canDecideIdentityReview({
+      status: verification.status,
+      reviewerId: verification.reviewerId,
+      actorId: current.profile.id,
+      actorRole: current.profile.role,
+    })
+  ) {
+    return {
+      ok: false,
+      error: "Otro revisor ya tiene este caso.",
+    };
+  }
 
   await prisma.$transaction([
     prisma.identityVerification.update({
@@ -487,6 +610,7 @@ export async function rejectIdentityVerificationAction(
   ]);
 
   revalidatePath("/revision/identidad");
+  revalidatePath(`/revision/identidad/${verification.id}`);
   revalidatePath("/vender");
   revalidatePath("/perfil");
   revalidatePath("/notificaciones");

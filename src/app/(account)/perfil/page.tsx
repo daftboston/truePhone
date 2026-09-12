@@ -1,15 +1,15 @@
 /**
  * @file page.tsx
- * @description Account profile overview with identity and account links.
+ * @description Account profile hub: identity status and shortcuts (no inline forms).
  * @dependencies Profile helpers and account components
+ * @changelog 2026-09-11 — ProfileHeader name is h2 so Perfil stays the page h1.
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { AvatarUploadForm } from "@/features/profile/components/avatar-upload-form";
-import { ChangePasswordForm } from "@/features/profile/components/change-password-form";
 import { ProfileHeader } from "@/features/profile/components/profile-header";
 import { ShareProfileButton } from "@/features/profile/components/share-profile-button";
 import { publicProfilePath } from "@/features/profile/types";
@@ -30,15 +30,43 @@ export const metadata: Metadata = {
   title: "Perfil",
 };
 
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+/**
+ * hubBannerMessage
+ *
+ * Maps success query flags to a short next-action banner.
+ *
+ * @param params - Route search params.
+ * @returns Spanish status copy, or null.
+ * @calledBy ProfilePage
+ */
+function hubBannerMessage(
+  params: Record<string, string | string[] | undefined>,
+) {
+  if (params.contrasena === "ok") {
+    return "Tu contraseña ha sido actualizada.";
+  }
+  if (params.guardado === "1") {
+    return "Cambios guardados.";
+  }
+  return null;
+}
+
 /**
  * ProfilePage
  *
- * Shows the signed-in user's profile summary and account shortcuts.
+ * Shows the signed-in user's public snapshot and account shortcuts.
  *
- * @returns Profile overview page.
+ * @param props.searchParams - Optional `guardado` / `contrasena` success flags.
+ * @returns Profile hub page.
  */
-export default async function ProfilePage() {
+export default async function ProfilePage({ searchParams }: PageProps) {
   const current = await requireCurrentProfile("/perfil");
+  const params = await searchParams;
+  const banner = hubBannerMessage(params);
 
   const { user, profile } = current;
   const sharePath = publicProfilePath(profile.username);
@@ -56,14 +84,24 @@ export default async function ProfilePage() {
     <>
       <div className="space-y-2">
         <h1 className="text-foreground text-xl font-semibold tracking-tight">
-          Resumen
+          Perfil
         </h1>
         <p className="text-muted-foreground text-sm">
-          Tu cuenta y estado en TruePhone.
+          Datos públicos, verificación y seguridad de la cuenta.
         </p>
       </div>
 
+      {banner ? (
+        <p
+          className="border-trust/30 bg-trust/10 text-foreground rounded-xl border px-3 py-2 text-sm"
+          role="status"
+        >
+          {banner}
+        </p>
+      ) : null}
+
       <ProfileHeader
+        headingLevel="h2"
         fullName={profile.fullName}
         username={profile.username}
         avatarUrl={profile.avatarUrl}
@@ -80,75 +118,50 @@ export default async function ProfilePage() {
       />
 
       <section className="border-border space-y-3 rounded-xl border p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-foreground text-sm font-semibold">
-              Verificación de identidad
-            </h2>
-            <p className="text-muted-foreground mt-1 text-xs">
-              Estado: {verificationStatusLabel(profile.verifikStatus)}
-            </p>
-          </div>
-          <Button asChild size="sm" variant={verified ? "outline" : "default"}>
-            <Link href={verificationHref}>
-              {verified
-                ? "Ver estado"
-                : profile.verifikStatus === "pending"
-                  ? "Ver estado"
-                  : "Verificar"}
-            </Link>
-          </Button>
+        <div>
+          <h2 className="text-foreground text-sm font-semibold">
+            Verificación de identidad
+          </h2>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Estado: {verificationStatusLabel(profile.verifikStatus)}
+          </p>
         </div>
+        <Button asChild size="sm" variant={verified ? "outline" : "default"}>
+          <Link href={verificationHref}>
+            {verified
+              ? "Ver estado"
+              : profile.verifikStatus === "pending"
+                ? "Ver estado"
+                : "Verificar"}
+          </Link>
+        </Button>
       </section>
 
-      {canAccessReviewPortal(profile.role) ? (
-        <section className="border-border space-y-3 rounded-xl border p-4">
-          <div>
-            <h2 className="text-foreground text-sm font-semibold">
-              Centro de revisión
-            </h2>
-            <p className="text-muted-foreground mt-1 text-xs">
-              Acceso de {roleLabel(profile.role)} a las colas de confianza.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button asChild>
-              <Link href="/revision/anuncios">Cola de anuncios</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/revision/identidad">Cola de identidad</Link>
-            </Button>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="border-border space-y-4 rounded-xl border p-4">
-        <h2 className="text-foreground text-sm font-semibold">
-          Foto de perfil
-        </h2>
-        <AvatarUploadForm
-          fullName={profile.fullName}
-          avatarUrl={profile.avatarUrl}
-        />
-      </section>
-
-      <section className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <nav aria-label="Atajos de cuenta" className="space-y-2">
+        <HubLink href="/perfil/editar" label="Editar datos" />
+        <HubLink href="/perfil/seguridad" label="Contraseña" />
+        <HubLink href={verificationHref} label="Verificación" />
         {sharePath ? (
-          <ShareProfileButton
-            path={sharePath}
-            title={profile.fullName ?? `@${profile.username}`}
-          />
+          <HubLink href={sharePath} label="Ver perfil público" />
         ) : (
-          <p className="text-muted-foreground self-center text-sm">
+          <p className="text-muted-foreground px-1 text-sm">
             Elige un usuario público para compartir tu perfil.
           </p>
         )}
-        {sharePath ? (
-          <Button variant="ghost" asChild>
-            <Link href={sharePath}>Ver perfil público</Link>
-          </Button>
-        ) : null}
-      </section>
+      </nav>
+
+      {sharePath ? (
+        <ShareProfileButton
+          path={sharePath}
+          title={profile.fullName ?? `@${profile.username}`}
+        />
+      ) : null}
+
+      {canAccessReviewPortal(profile.role) ? (
+        <Button asChild variant="outline">
+          <Link href="/revision">Centro de revisión</Link>
+        </Button>
+      ) : null}
 
       <section className="border-border space-y-3 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">Cuenta</h2>
@@ -163,18 +176,31 @@ export default async function ProfilePage() {
           </div>
         </dl>
       </section>
-
-      <section className="border-border space-y-4 rounded-xl border p-4">
-        <div>
-          <h2 className="text-foreground text-sm font-semibold">
-            Cambiar contraseña
-          </h2>
-          <p className="text-muted-foreground mt-1 text-xs">
-            Usa una contraseña de al menos 8 caracteres.
-          </p>
-        </div>
-        <ChangePasswordForm />
-      </section>
     </>
+  );
+}
+
+/**
+ * HubLink
+ *
+ * Compact chevron row linking to an account destination.
+ *
+ * @param props.href - Destination path.
+ * @param props.label - Visible Spanish label.
+ * @returns Linked row.
+ * @calledBy ProfilePage
+ */
+function HubLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="border-border bg-card hover:bg-muted/60 focus-visible:ring-ring flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+    >
+      {label}
+      <ChevronRight
+        className="text-muted-foreground size-4 shrink-0"
+        aria-hidden
+      />
+    </Link>
   );
 }

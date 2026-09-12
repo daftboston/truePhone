@@ -10,6 +10,7 @@ import { useActionState } from "react";
 import Image from "next/image";
 
 import { uploadPossessionPhotoAction } from "@/features/listings/actions/listings";
+import { LISTING_WIZARD_FORM_IDS } from "@/features/listings/lib/listing-wizard-intent";
 import type { ListingActionState } from "@/features/listings/types";
 import { Button } from "@/components/ui/button";
 import { FileInput } from "@/components/ui/file-input";
@@ -69,14 +70,17 @@ export function PossessionForm({
           </div>
         ) : null}
 
-        <form action={formAction} className="space-y-4">
+        <form
+          id={LISTING_WIZARD_FORM_IDS.possession}
+          action={formAction}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="possessionImage">Foto con el código</Label>
             <FileInput
               id="possessionImage"
               name="possessionImage"
               accept="image/jpeg,image/png,image/webp"
-              required
               buttonLabel="Elegir de la galería"
               cameraLabel="Tomar foto"
               captureFacing="environment"

@@ -13,6 +13,7 @@ import { VerificationShell } from "@/features/verification/components/verificati
 import { verificationLockedPath } from "@/features/verification/types";
 import { getOrCreateDraftVerification } from "@/lib/auth/identity";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { createSignedStorageUrl } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Cédula — frente",
@@ -34,10 +35,15 @@ export default async function CedulaFrontPage() {
   if (locked) redirect(locked);
   if (!draft.privacyAcceptedAt) redirect("/verificacion");
 
+  const existingImageUrl = await createSignedStorageUrl(draft.frontImageUrl);
+
   return (
     <AppShell mainClassName="max-w-lg">
       <VerificationShell step={2} title="Frente de tu cédula">
-        <CedulaFrontForm />
+        <CedulaFrontForm
+          existingImageUrl={existingImageUrl}
+          documentLast4={draft.documentNumberLast4}
+        />
       </VerificationShell>
     </AppShell>
   );

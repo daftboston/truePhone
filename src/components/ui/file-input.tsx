@@ -39,6 +39,11 @@ type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
    * flows that should not require a separate submit click.
    */
   onFileReady?: (file: File) => void;
+  /**
+   * Called with the prepared file without clearing the input. Use for
+   * local previews on forms that still submit the file.
+   */
+  onPreviewReady?: (file: File) => void;
   /** Hide the selected-file name (useful when upload starts immediately). */
   hideFileName?: boolean;
   /**
@@ -48,6 +53,11 @@ type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
   layout?: "row" | "stack";
   /** Visual size of the gallery/camera buttons. */
   buttonSize?: "default" | "sm";
+  /**
+   * When true, Tomar foto is the primary control on mobile. Gallery stays
+   * available as the outline action (and is the only control from `md` up).
+   */
+  cameraPrimary?: boolean;
 };
 
 /**
@@ -81,9 +91,11 @@ function setInputFile(target: HTMLInputElement, file: File) {
  * @param props.captureFacing - `environment` (rear) or `user` (selfie).
  * @param props.compressImages - When false, skips client JPEG compression.
  * @param props.onFileReady - Optional callback after the file is ready to upload.
+ * @param props.onPreviewReady - Optional preview callback that keeps the input value.
  * @param props.hideFileName - When true, omits the filename status text.
  * @param props.layout - `row` (default) or `stack` for per-slot controls.
  * @param props.buttonSize - `default` or `sm` button height.
+ * @param props.cameraPrimary - When true, camera is the primary mobile action.
  * @returns Accessible file control with Spanish chrome.
  * @calledBy Listing photo/possession forms and identity verification uploads
  */
@@ -99,9 +111,11 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
       captureFacing = "environment",
       compressImages = true,
       onFileReady,
+      onPreviewReady,
       hideFileName = false,
       layout = "row",
       buttonSize = "default",
+      cameraPrimary = false,
       onChange,
       onInvalid,
       ...props
@@ -148,6 +162,7 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
           : file;
         setInputFile(named, ready);
         setFileName(ready.name);
+        onPreviewReady?.(ready);
         onFileReady?.(ready);
         return ready;
       } finally {
@@ -233,23 +248,41 @@ const FileInput = React.forwardRef<HTMLInputElement, FileInputProps>(
             }}
           />
         ) : null}
+        {showCamera && cameraPrimary ? (
+          <Button
+            type="button"
+            variant="default"
+            size={buttonSize}
+            fullWidth={stacked}
+            aria-label={cameraAriaLabel}
+            className={cn(
+              "md:hidden",
+              stacked &&
+                "h-auto min-h-9 px-2 text-center leading-tight whitespace-normal",
+            )}
+            disabled={preparing || props.disabled}
+            onClick={() => cameraRef.current?.click()}
+          >
+            {cameraLabel}
+          </Button>
+        ) : null}
         <Button
           type="button"
-          variant="outline"
+          variant={cameraPrimary ? "outline" : "outline"}
           size={buttonSize}
           fullWidth={stacked}
           aria-label={buttonAriaLabel}
-          className={
-            stacked
-              ? "h-auto min-h-9 px-2 text-center leading-tight whitespace-normal"
-              : undefined
-          }
+          className={cn(
+            cameraPrimary ? "md:inline-flex" : undefined,
+            stacked &&
+              "h-auto min-h-9 px-2 text-center leading-tight whitespace-normal",
+          )}
           disabled={preparing || props.disabled}
           onClick={() => innerRef.current?.click()}
         >
           {preparing ? "Preparando…" : buttonLabel}
         </Button>
-        {showCamera ? (
+        {showCamera && !cameraPrimary ? (
           <Button
             type="button"
             variant="outline"

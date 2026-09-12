@@ -3,11 +3,13 @@
 /**
  * @file listing-review-actions.tsx
  * @description ListingReviewActions component for the listings feature.tsx.
- * @dependencies react, @/features/listings/actions/review, @/features/listings/schemas/review, @/features/listings/types, @/components/ui/button
+ * @dependencies react, ConfirmAction, listing review actions/schemas, UI primitives
+ * @changelog 2026-09-11 — Two-step ConfirmAction on approve and reject.
  */
 
 import { useActionState, useState } from "react";
 
+import { ConfirmAction } from "@/components/confirm-action";
 import {
   approveListingAction,
   rejectListingAction,
@@ -30,11 +32,14 @@ type ListingReviewActionsProps = {
 /**
  * ListingReviewActions
  *
- * Renders the Listing Review Actions UI for listings.
+ * Renders the quality checklist, notes, and two-step approve/reject controls.
  *
- * @param props - ListingReviewActions props.
- * @returns ListingReviewActions React element.
- * @calledBy listings pages and parent components
+ * @param props.listingId - Listing under review.
+ * @param props.status - Current listing status.
+ * @param props.initialNotes - Saved reviewer notes.
+ * @param props.initialRejectionReason - Saved rejection reason, if any.
+ * @returns Listing review decision panel.
+ * @calledBy ListingReviewDetailPage
  */
 export function ListingReviewActions({
   listingId,
@@ -140,9 +145,13 @@ export function ListingReviewActions({
         <form action={approveAction} className="space-y-2">
           <input type="hidden" name="listingId" value={listingId} />
           <input type="hidden" name="reviewerNotes" value={notes} />
-          <Button type="submit" fullWidth loading={approvePending}>
-            {isRejected ? "Cambiar a aprobado" : "Aprobar y publicar"}
-          </Button>
+          <ConfirmAction
+            type="submit"
+            idleLabel={isRejected ? "Cambiar a aprobado" : "Aprobar y publicar"}
+            confirmLabel="Confirmar publicación"
+            hint="El anuncio quedará visible para compradores."
+            pending={approvePending}
+          />
         </form>
       ) : (
         <p className="text-success text-xs" role="status">
@@ -173,18 +182,20 @@ export function ListingReviewActions({
             placeholder="Ej. Las fotos no muestran el estado real del equipo"
           />
         </div>
-        <Button
+        <ConfirmAction
           type="submit"
           variant="outline"
-          fullWidth
-          loading={rejectPending}
-        >
-          {isRejected
-            ? "Actualizar rechazo"
-            : isApproved
-              ? "Cambiar a rechazado"
-              : "Rechazar anuncio"}
-        </Button>
+          idleLabel={
+            isRejected
+              ? "Actualizar rechazo"
+              : isApproved
+                ? "Cambiar a rechazado"
+                : "Rechazar anuncio"
+          }
+          confirmLabel="Confirmar rechazo"
+          hint="El vendedor verá este motivo y podrá corregir el anuncio."
+          pending={rejectPending}
+        />
       </form>
       {rejectState?.ok === true ? (
         <p className="text-success text-xs" role="status">

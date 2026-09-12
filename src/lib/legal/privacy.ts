@@ -21,6 +21,16 @@ import type { LegalDocument } from "./types";
 export const PRIVACY_DOCUMENT: LegalDocument = {
   title: "Política de privacidad",
   description: `Cómo ${LEGAL_OPERATOR_NAME} trata tus datos personales en ${LEGAL_JURISDICTION}.`,
+  summary: {
+    title: "En 30 segundos",
+    bullets: [
+      `${LEGAL_OPERATOR_NAME} trata tus datos en ${LEGAL_JURISDICTION}. Preguntas: ${LEGAL_CONTACT_EMAIL}.`,
+      "Pedimos cuenta, identidad de vendedores, anuncios, pedidos, desembolsos y mensajes: solo lo necesario para el marketplace.",
+      "Los usamos para verificar, cobrar con Compra Garantizada, notificar y prevenir fraude.",
+      "No publicamos tu cédula, selfie, IMEI completo, datos bancarios ni correo.",
+      "Puedes conocer, actualizar, rectificar o pedir borrar tus datos escribiendo desde el correo de tu cuenta.",
+    ],
+  },
   sections: [
     {
       id: "responsable",

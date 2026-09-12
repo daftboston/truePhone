@@ -13,6 +13,7 @@ import { VerificationShell } from "@/features/verification/components/verificati
 import { verificationLockedPath } from "@/features/verification/types";
 import { getOrCreateDraftVerification } from "@/lib/auth/identity";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { createSignedStorageUrl } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Selfie de verificación",
@@ -34,10 +35,12 @@ export default async function SelfiePage() {
   if (locked) redirect(locked);
   if (!draft.backImageUrl) redirect("/verificacion/cedula-reverso");
 
+  const existingImageUrl = await createSignedStorageUrl(draft.selfieImageUrl);
+
   return (
     <AppShell mainClassName="max-w-lg">
       <VerificationShell step={4} title="Confirma tu rostro">
-        <SelfieForm />
+        <SelfieForm existingImageUrl={existingImageUrl} />
       </VerificationShell>
     </AppShell>
   );

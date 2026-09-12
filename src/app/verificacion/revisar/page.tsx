@@ -13,6 +13,7 @@ import { VerificationShell } from "@/features/verification/components/verificati
 import { verificationLockedPath } from "@/features/verification/types";
 import { getOrCreateDraftVerification } from "@/lib/auth/identity";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { createSignedStorageUrl } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Revisar verificación",
@@ -34,14 +35,20 @@ export default async function ReviewVerificationPage() {
   if (locked) redirect(locked);
   if (!draft.selfieImageUrl) redirect("/verificacion/selfie");
 
+  const [frontImageUrl, backImageUrl, selfieImageUrl] = await Promise.all([
+    createSignedStorageUrl(draft.frontImageUrl),
+    createSignedStorageUrl(draft.backImageUrl),
+    createSignedStorageUrl(draft.selfieImageUrl),
+  ]);
+
   return (
     <AppShell mainClassName="max-w-lg">
       <VerificationShell step={5} title="Revisa y envía">
         <ReviewSubmitForm
           documentLast4={draft.documentNumberLast4}
-          hasFront={Boolean(draft.frontImageUrl)}
-          hasBack={Boolean(draft.backImageUrl)}
-          hasSelfie={Boolean(draft.selfieImageUrl)}
+          frontImageUrl={frontImageUrl}
+          backImageUrl={backImageUrl}
+          selfieImageUrl={selfieImageUrl}
         />
       </VerificationShell>
     </AppShell>

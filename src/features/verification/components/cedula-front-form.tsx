@@ -2,29 +2,39 @@
 
 /**
  * @file cedula-front-form.tsx
- * @description CedulaFrontForm component for the verification feature.tsx.
- * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/file-input, @/components/ui/input
+ * @description Cédula number + front photo capture with preview.
+ * @dependencies react, identity actions, IdentityCaptureFrame, UI primitives
  */
 
 import { useActionState } from "react";
 
 import { saveCedulaFrontAction } from "@/features/verification/actions/identity";
+import { IdentityCaptureFrame } from "@/features/verification/components/identity-capture-frame";
 import type { VerificationActionState } from "@/features/verification/types";
 import { Button } from "@/components/ui/button";
-import { FileInput } from "@/components/ui/file-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+type CedulaFrontFormProps = {
+  existingImageUrl?: string | null;
+  documentLast4?: string | null;
+};
 
 /**
  * CedulaFrontForm
  *
- * Renders the Cedula Front Form UI for verification.
+ * Captures the Colombian ID number and front photo. Revisits can keep the
+ * saved image and last-4 without re-entering the full number.
  *
- * @param props - CedulaFrontForm props.
- * @returns CedulaFrontForm React element.
- * @calledBy verification pages and parent components
+ * @param props.existingImageUrl - Signed URL of a saved front photo.
+ * @param props.documentLast4 - Stored last-4 digits, if any.
+ * @returns Cédula front form.
+ * @calledBy `/verificacion/cedula-frente`
  */
-export function CedulaFrontForm() {
+export function CedulaFrontForm({
+  existingImageUrl = null,
+  documentLast4 = null,
+}: CedulaFrontFormProps) {
   const [state, formAction, pending] = useActionState<
     VerificationActionState,
     FormData
@@ -39,9 +49,15 @@ export function CedulaFrontForm() {
           name="documentNumber"
           inputMode="numeric"
           autoComplete="off"
-          required
+          required={!documentLast4}
           placeholder="Solo dígitos"
         />
+        {documentLast4 ? (
+          <p className="text-muted-foreground text-xs">
+            Terminada en •••• {documentLast4}. Déjala en blanco para
+            conservarla, o escribe el número completo para actualizarla.
+          </p>
+        ) : null}
         {state?.ok === false && state.fieldErrors?.documentNumber?.[0] ? (
           <p className="text-destructive text-xs">
             {state.fieldErrors.documentNumber[0]}
@@ -49,21 +65,16 @@ export function CedulaFrontForm() {
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="frontImage">Foto del frente</Label>
-        <FileInput
-          id="frontImage"
-          name="frontImage"
-          accept="image/jpeg,image/png,image/webp"
-          required
-          buttonLabel="Elegir de la galería"
-          cameraLabel="Tomar foto"
-          captureFacing="environment"
-        />
-        <p className="text-muted-foreground text-xs">
-          Buena luz, sin reflejos. JPG, PNG o WebP · máx. 4 MB.
-        </p>
-      </div>
+      <IdentityCaptureFrame
+        variant="cedula"
+        inputId="frontImage"
+        inputName="frontImage"
+        label="Frente de la cédula"
+        why="La usamos para confirmar que eres tú. Solo un revisor de TruePhone la ve."
+        how="Buena luz, sin reflejos. JPG, PNG o WebP · máx. 4 MB."
+        existingImageUrl={existingImageUrl}
+        required
+      />
 
       {state?.ok === false ? (
         <p className="text-destructive text-sm" role="alert">

@@ -2,15 +2,17 @@
  * @file gallery-upload-form.tsx
  * @description Guided eight-slot listing photo gallery with per-slot capture.
  * @dependencies react, next/image, lucide-react, listing actions/types, UI primitives
- * @changelog 2026-08-25 — Tomar foto / galería on each slot; replace in place.
+ * @changelog 2026-09-10 — Mobile one-slot focus, optimistic preview, delete confirm.
  */
 
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Check, Trash2 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { FileInput } from "@/components/ui/file-input";
 import {
   continueFromPhotosAction,
   deleteListingGalleryImageAction,
@@ -28,8 +30,6 @@ import {
   nextEmptyGuidedSlotIndex,
   nextExtraDisplayOrder,
 } from "@/features/listings/types";
-import { Button } from "@/components/ui/button";
-import { FileInput } from "@/components/ui/file-input";
 import { cn } from "@/lib/utils";
 
 type GalleryImage = { id: string; imageUrl: string; displayOrder: number };
@@ -44,6 +44,7 @@ type SlotCaptureProps = {
   title: string;
   disabled: boolean;
   onFileReady: (file: File) => void;
+  layout?: "row" | "stack";
 };
 
 /**
@@ -53,9 +54,10 @@ type SlotCaptureProps = {
  *
  * @param props.inputId - Unique input id for the hidden file control.
  * @param props.title - Slot title used in accessible button names.
- * @param props.disabled - True while another upload or delete is in flight.
+ * @param props.disabled - True while another upload is in flight.
  * @param props.onFileReady - Uploads the compressed file into this slot.
- * @returns Stacked Elegir de la galería / Tomar foto controls.
+ * @param props.layout - Button arrangement; row fits overlays.
+ * @returns Elegir / Tomar foto controls.
  * @calledBy GalleryUploadForm slot cards
  */
 function SlotCaptureControls({
@@ -63,6 +65,7 @@ function SlotCaptureControls({
   title,
   disabled,
   onFileReady,
+  layout = "stack",
 }: SlotCaptureProps) {
   return (
     <FileInput
@@ -75,7 +78,7 @@ function SlotCaptureControls({
       cameraAriaLabel={`Tomar foto: ${title}`}
       captureFacing="environment"
       hideFileName
-      layout="stack"
+      layout={layout}
       buttonSize="sm"
       disabled={disabled}
       onFileReady={onFileReady}
@@ -86,9 +89,8 @@ function SlotCaptureControls({
 /**
  * GalleryUploadForm
  *
- * Guided marketplace photo step: eight labeled slots with example icons.
- * Each slot has its own gallery/camera actions so the seller can fill or
- * replace that angle without shifting the others. Extras stay optional.
+ * Guided marketplace photo step: eight labeled slots. Mobile focuses one
+ * slot at a time; desktop keeps a grid with overlay capture on empty cards.
  *
  * @param props.listingId - Draft listing id.
  * @param props.images - Existing gallery images with displayOrder slot indexes.
@@ -105,20 +107,49 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
   const extraOrder = nextExtraDisplayOrder(images);
   const galleryFull = images.length >= MAX_LISTING_GALLERY_PHOTOS;
 
+  const [focusedIndex, setFocusedIndex] = useState(
+    () => nextEmptyGuidedSlotIndex(images) ?? 0,
+  );
+  const [previews, setPreviews] = useState<Record<number, string>>({});
   const [uploadPending, startUpload] = useTransition();
   const [continuePending, startContinue] = useTransition();
   const [deletePending, startDelete] = useTransition();
   const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [uploadOrder, setUploadOrder] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const uploadLock = useRef(false);
-  const busy = uploadPending || deletePending;
+
+  useEffect(() => {
+    return () => {
+      Object.values(previews).forEach((url) => URL.revokeObjectURL(url));
+    };
+    // Revoke leftover object URLs only on unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * setSlotPreview
+   *
+   * Stores a local object-URL preview for a slot while the server upload runs.
+   *
+   * @param displayOrder - Slot index.
+   * @param file - Compressed image.
+   * @calledBy uploadFile
+   */
+  function setSlotPreview(displayOrder: number, file: File) {
+    setPreviews((current) => {
+      const previous = current[displayOrder];
+      if (previous) URL.revokeObjectURL(previous);
+      return { ...current, [displayOrder]: URL.createObjectURL(file) };
+    });
+  }
 
   /**
    * uploadFile
    *
-   * Sends one prepared image into a specific slot index.
+   * Sends one prepared image into a specific slot index with a local preview.
    *
    * @param displayOrder - Guided or extra slot index.
    * @param file - Compressed image ready for the Server Action.
@@ -126,11 +157,17 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
    */
   function uploadFile(displayOrder: number, file: File) {
     const replacing = Boolean(galleryImageAtOrder(images, displayOrder));
-    if ((!replacing && galleryFull) || uploadLock.current) return;
+    if ((!replacing && galleryFull) || uploadLock.current) {
+      if (uploadLock.current) {
+        setError("Espera a que termine la subida anterior.");
+      }
+      return;
+    }
     uploadLock.current = true;
     setUploadOrder(displayOrder);
     setError(null);
     setStatus(null);
+    setSlotPreview(displayOrder, file);
 
     const formData = new FormData();
     formData.append("image", file);
@@ -146,6 +183,15 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
           setError(result.error);
         } else if (result?.ok === true) {
           setStatus(result.message ?? "Foto agregada.");
+          if (displayOrder < LISTING_PHOTO_SLOTS.length) {
+            const taken = new Set(
+              images.map((image) => image.displayOrder).concat(displayOrder),
+            );
+            const next = LISTING_PHOTO_SLOTS.findIndex(
+              (_, index) => !taken.has(index),
+            );
+            if (next >= 0) setFocusedIndex(next);
+          }
         }
       } finally {
         uploadLock.current = false;
@@ -157,8 +203,7 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
   /**
    * removeImage
    *
-   * Deletes a gallery image and clears local feedback. Guided slots stay
-   * in place; extras compact on the server.
+   * Deletes a gallery image after inline confirmation.
    *
    * @param imageId - ListingImage id to remove.
    * @calledBy slot delete controls
@@ -173,11 +218,23 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
         setError(result.error);
       }
       setDeletePendingId(null);
+      setDeleteConfirmId(null);
     });
   }
 
+  const focusedSlot = LISTING_PHOTO_SLOTS[focusedIndex];
+  const focusedImage = galleryImageAtOrder(images, focusedIndex);
+  const focusedPreview =
+    previews[focusedIndex] ?? focusedImage?.imageUrl ?? null;
+  const focusedUploading = uploadPending && uploadOrder === focusedIndex;
+
   return (
     <div className="space-y-6">
+      <p className="text-muted-foreground text-sm">
+        Estas 8 fotos son las que el revisor y el comprador usarán para confiar
+        en el iPhone.
+      </p>
+
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="space-y-1">
           <p className="text-foreground text-sm font-medium">
@@ -200,7 +257,7 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
           aria-label="Progreso de fotos"
         >
           <div
-            className="bg-primary h-full rounded-full transition-[width] duration-300 ease-out"
+            className="bg-primary h-full rounded-full transition-[width] duration-300 ease-out motion-reduce:transition-none"
             style={{
               width: `${(filledCount / MIN_LISTING_GALLERY_PHOTOS) * 100}%`,
             }}
@@ -208,9 +265,120 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
         </div>
       </div>
 
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+      <div className="space-y-3 pb-28 sm:hidden sm:pb-0">
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {LISTING_PHOTO_SLOTS.map((slot, index) => {
+            const image = galleryImageAtOrder(images, index);
+            const preview = previews[index] ?? image?.imageUrl ?? null;
+            const selected = index === focusedIndex;
+            return (
+              <button
+                key={slot.id}
+                type="button"
+                onClick={() => setFocusedIndex(index)}
+                className={cn(
+                  "relative size-12 shrink-0 overflow-hidden rounded-lg border",
+                  selected
+                    ? "border-primary ring-primary/20 ring-2"
+                    : "border-border",
+                )}
+                aria-label={slot.title}
+                aria-current={selected ? true : undefined}
+              >
+                {preview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={preview}
+                    alt=""
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <span className="text-muted-foreground flex size-full items-center justify-center text-[10px]">
+                    {index + 1}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <div className="border-border bg-card relative aspect-square overflow-hidden rounded-2xl border">
+          {focusedPreview ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}
+              <img
+                src={focusedPreview}
+                alt={`Foto: ${focusedSlot.title}`}
+                className="size-full object-cover"
+              />
+              {focusedUploading ? (
+                <div className="bg-background/70 text-foreground absolute inset-0 flex items-center justify-center text-sm">
+                  Subiendo…
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="bg-muted/50 flex h-full flex-col items-center justify-center gap-2 px-6 pb-20 text-center">
+              <div className="text-primary size-16">
+                <ListingPhotoSlotGuide slotId={focusedSlot.id} />
+              </div>
+              <p className="text-foreground text-sm font-medium">
+                {focusedSlot.title}
+              </p>
+              <p className="text-muted-foreground text-xs">{focusedSlot.tip}</p>
+            </div>
+          )}
+          <div className="bg-background/90 absolute inset-x-0 bottom-0 p-2.5">
+            <SlotCaptureControls
+              inputId={`listing-gallery-focus-${focusedSlot.id}`}
+              title={focusedSlot.title}
+              layout="row"
+              disabled={uploadPending && uploadOrder !== focusedIndex}
+              onFileReady={(file) => uploadFile(focusedIndex, file)}
+            />
+          </div>
+        </div>
+        {focusedImage ? (
+          deleteConfirmId === focusedImage.id ? (
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs" role="status">
+                ¿Quitar esta foto?
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                fullWidth
+                loading={deletePending && deletePendingId === focusedImage.id}
+                onClick={() => removeImage(focusedImage.id)}
+              >
+                Sí, quitar esta foto
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                fullWidth
+                disabled={deletePending}
+                onClick={() => setDeleteConfirmId(null)}
+              >
+                Cancelar
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              fullWidth
+              onClick={() => setDeleteConfirmId(focusedImage.id)}
+            >
+              Quitar foto
+            </Button>
+          )
+        ) : null}
+      </div>
+
+      <ul className="hidden grid-cols-2 gap-3 sm:grid sm:grid-cols-3 sm:gap-4">
         {LISTING_PHOTO_SLOTS.map((slot, index) => {
           const image = galleryImageAtOrder(images, index);
+          const preview = previews[index] ?? image?.imageUrl ?? null;
           const isNext = !image && index === nextSlotIndex;
           const isUploadingInto = uploadPending && uploadOrder === index;
 
@@ -218,22 +386,30 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
             <li key={slot.id} className="min-w-0 space-y-2">
               <div
                 className={cn(
-                  "border-border bg-card relative aspect-square overflow-hidden rounded-2xl border transition-[box-shadow,border-color]",
-                  isNext &&
-                    "border-primary ring-primary/20 shadow-[var(--shadow-card)] ring-2",
-                  image && "border-transparent",
+                  "border-border bg-card relative aspect-square overflow-hidden rounded-2xl border motion-reduce:transition-none",
+                  isNext && "border-primary ring-primary/20 ring-2",
+                  preview && "border-transparent",
                 )}
               >
-                {image ? (
+                {preview ? (
                   <>
-                    <Image
-                      key={image.imageUrl}
-                      src={image.imageUrl}
-                      alt={`Foto: ${slot.title}`}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 45vw, 200px"
-                    />
+                    {image && !previews[index] ? (
+                      <Image
+                        key={image.imageUrl}
+                        src={image.imageUrl}
+                        alt={`Foto: ${slot.title}`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 45vw, 200px"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={preview}
+                        alt={`Foto: ${slot.title}`}
+                        className="size-full object-cover"
+                      />
+                    )}
                     <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-gradient-to-b from-black/55 to-transparent p-2.5">
                       <span className="text-xs font-medium text-white">
                         {slot.title}
@@ -242,22 +418,64 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
                         <Check className="size-3" strokeWidth={3} aria-hidden />
                       </span>
                     </div>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="secondary"
-                      className="absolute right-2 bottom-2 size-8 rounded-full shadow-sm"
-                      loading={deletePending && deletePendingId === image.id}
-                      aria-label={`Eliminar foto de ${slot.title}`}
-                      onClick={() => removeImage(image.id)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+                    {isUploadingInto ? (
+                      <div className="bg-background/70 text-foreground absolute inset-0 flex items-center justify-center text-sm">
+                        Subiendo…
+                      </div>
+                    ) : null}
+                    {image && deleteConfirmId === image.id ? (
+                      <div className="bg-background/90 absolute inset-x-2 bottom-2 space-y-1 rounded-lg p-2">
+                        <p className="text-muted-foreground text-[11px]">
+                          ¿Quitar esta foto?
+                        </p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          fullWidth
+                          loading={
+                            deletePending && deletePendingId === image.id
+                          }
+                          onClick={() => removeImage(image.id)}
+                        >
+                          Sí, quitar
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          fullWidth
+                          onClick={() => setDeleteConfirmId(null)}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : image ? (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="absolute right-2 bottom-2 size-8 rounded-full"
+                        loading={deletePending && deletePendingId === image.id}
+                        aria-label={`Eliminar foto de ${slot.title}`}
+                        onClick={() => setDeleteConfirmId(image.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    ) : null}
+                    <div className="absolute inset-x-2 bottom-2 opacity-0 transition-opacity focus-within:opacity-100 hover:opacity-100">
+                      <SlotCaptureControls
+                        inputId={`listing-gallery-replace-${slot.id}`}
+                        title={slot.title}
+                        disabled={uploadPending}
+                        onFileReady={(file) => uploadFile(index, file)}
+                      />
+                    </div>
                   </>
                 ) : (
                   <div
                     className={cn(
-                      "flex h-full flex-col items-center justify-center gap-2 px-3 text-center",
+                      "flex h-full flex-col items-center justify-center gap-2 px-3 pb-16 text-center",
                       isNext ? "bg-accent/40" : "bg-muted/50",
                     )}
                   >
@@ -287,20 +505,17 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
                         Siguiente
                       </span>
                     ) : null}
+                    <div className="absolute inset-x-2 bottom-2">
+                      <SlotCaptureControls
+                        inputId={`listing-gallery-${slot.id}`}
+                        title={slot.title}
+                        disabled={uploadPending}
+                        onFileReady={(file) => uploadFile(index, file)}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
-              <SlotCaptureControls
-                inputId={`listing-gallery-${slot.id}`}
-                title={slot.title}
-                disabled={busy}
-                onFileReady={(file) => uploadFile(index, file)}
-              />
-              {isUploadingInto && image ? (
-                <p className="text-muted-foreground text-xs" role="status">
-                  Subiendo…
-                </p>
-              ) : null}
             </li>
           );
         })}
@@ -330,29 +545,33 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
                     className="object-cover"
                     sizes="120px"
                   />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="secondary"
-                    className="absolute right-1.5 bottom-1.5 size-8 rounded-full"
-                    loading={deletePending && deletePendingId === image.id}
-                    aria-label={`Eliminar foto extra ${index + 1}`}
-                    onClick={() => removeImage(image.id)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                  {deleteConfirmId === image.id ? (
+                    <div className="bg-background/90 absolute inset-x-1.5 bottom-1.5 space-y-1 rounded-lg p-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        fullWidth
+                        loading={deletePending && deletePendingId === image.id}
+                        onClick={() => removeImage(image.id)}
+                      >
+                        Sí, quitar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="secondary"
+                      className="absolute right-1.5 bottom-1.5 size-8 rounded-full"
+                      loading={deletePending && deletePendingId === image.id}
+                      aria-label={`Eliminar foto extra ${index + 1}`}
+                      onClick={() => setDeleteConfirmId(image.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
                 </div>
-                <SlotCaptureControls
-                  inputId={`listing-gallery-extra-${image.displayOrder}`}
-                  title={`Foto extra ${index + 1}`}
-                  disabled={busy}
-                  onFileReady={(file) => uploadFile(image.displayOrder, file)}
-                />
-                {uploadPending && uploadOrder === image.displayOrder ? (
-                  <p className="text-muted-foreground text-xs" role="status">
-                    Subiendo…
-                  </p>
-                ) : null}
               </li>
             ))}
             {extraOrder !== null ? (
@@ -370,7 +589,7 @@ export function GalleryUploadForm({ listingId, images }: GalleryFormProps) {
                 <SlotCaptureControls
                   inputId={`listing-gallery-extra-${extraOrder}`}
                   title="Foto extra"
-                  disabled={busy}
+                  disabled={uploadPending}
                   onFileReady={(file) => uploadFile(extraOrder, file)}
                 />
               </li>

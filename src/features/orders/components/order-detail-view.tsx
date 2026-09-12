@@ -2,7 +2,7 @@
  * @file order-detail-view.tsx
  * @description OrderDetailView component for the orders feature.
  * @dependencies next/link, price-display, order actions, financial-core settlement-guards
- * @changelog 2026-08-24 — Sellers on PAID no longer get canCancel (support UI instead).
+ * @changelog 2026-09-10 — Unpaid buyer view is a checkout hero with shipping copy.
  */
 
 import Link from "next/link";
@@ -15,6 +15,7 @@ import { OrderSupportPanel } from "@/features/orders/components/order-support-pa
 import { OrderStatusActions } from "@/features/orders/components/order-status-actions";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { PayOrderButton } from "@/features/payments/components/pay-order-button";
+import { sellerOrderNextAction } from "@/features/orders/lib/seller-order-next-action";
 import { PartyCard } from "@/features/profile/components/party-card";
 import { OrderReviewsSection } from "@/features/reviews/components/order-reviews-section";
 import { OrderShippingPanel } from "@/features/shipping/components/order-shipping-panel";
@@ -154,20 +155,42 @@ export function OrderDetailView({
     needsBankAccount &&
     order.status === "PAID" &&
     !order.payoutCompletedAt;
+  const sellerNext = !isBuyer
+    ? sellerOrderNextAction({
+        status: order.status,
+        needsBankAccount,
+        payoutCompletedAt: order.payoutCompletedAt,
+        shipment: order.shipment
+          ? {
+              method: order.shipment.method,
+              trackingCode: order.shipment.trackingCode,
+            }
+          : null,
+      })
+    : null;
+  const showSellerHero = Boolean(sellerNext);
+
+  const coverUrl = order.listing.images[0]?.imageUrl ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className={canPay ? "space-y-6 pb-32 md:pb-0" : "space-y-6"}>
       <div className="space-y-3">
         <Button asChild variant="outline" size="sm">
           <Link href={backHref}>{backLabel}</Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-foreground text-xl font-semibold tracking-tight">
-            Pedido
+            {canPay
+              ? "Completa tu compra"
+              : showSellerHero
+                ? "Siguiente paso"
+                : "Pedido"}
           </h1>
           <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
         </div>
-        <p className="text-muted-foreground text-sm">{order.listing.title}</p>
+        {showSellerHero ? null : (
+          <p className="text-muted-foreground text-sm">{order.listing.title}</p>
+        )}
         {paymentNotice ? (
           <p
             className="text-foreground bg-muted/60 rounded-lg px-3 py-2 text-sm"
@@ -176,7 +199,7 @@ export function OrderDetailView({
             {paymentNotice}
           </p>
         ) : null}
-        {showBankReminder ? (
+        {showBankReminder && !showSellerHero ? (
           <p
             className="text-foreground bg-muted/60 rounded-lg px-3 py-2 text-sm"
             role="status"
@@ -190,6 +213,93 @@ export function OrderDetailView({
           </p>
         ) : null}
       </div>
+
+      {canPay ? (
+        <section className="border-border space-y-4 rounded-xl border p-4">
+          <div className="flex gap-3">
+            {coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={coverUrl}
+                alt=""
+                className="size-20 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="bg-muted size-20 shrink-0 rounded-lg" />
+            )}
+            <div className="min-w-0">
+              <h2 className="text-foreground text-sm font-semibold">
+                {order.listing.title}
+              </h2>
+              <p className="text-muted-foreground text-xs">
+                Compra Garantizada
+              </p>
+            </div>
+          </div>
+          <PriceDisplay
+            price={order.totalPrice}
+            equipmentPrice={order.equipmentPrice}
+            protectionFee={order.platformFee}
+            currency={order.currency}
+            className="[&>p]:text-xl"
+          />
+          <p className="text-muted-foreground text-sm">
+            TruePhone retiene el pago hasta que confirmes el iPhone, o hasta 24
+            horas después de marcar «Ya recibí».
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Este pago no incluye envío. El vendedor cubre el transporte (carrier
+            o Premium Bogotá).
+          </p>
+          <PayOrderButton
+            orderId={order.id}
+            totalPrice={order.totalPrice}
+            platformFee={order.platformFee}
+            feePercent={feePercent}
+            currency={order.currency}
+            disclosure="fee"
+          />
+        </section>
+      ) : null}
+
+      {showSellerHero && sellerNext ? (
+        <section className="border-border space-y-4 rounded-xl border p-4">
+          <div className="flex gap-3">
+            {coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={coverUrl}
+                alt=""
+                className="size-20 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="bg-muted size-20 shrink-0 rounded-lg" />
+            )}
+            <div className="min-w-0">
+              <h2 className="text-foreground text-sm font-semibold">
+                {order.listing.title}
+              </h2>
+              <p className="text-muted-foreground text-xs">
+                Compra Garantizada
+              </p>
+            </div>
+          </div>
+          <PriceDisplay
+            price={order.totalPrice}
+            equipmentPrice={order.equipmentPrice}
+            protectionFee={order.platformFee}
+            currency={order.currency}
+            className="[&>p]:text-xl"
+          />
+          <p className="text-muted-foreground text-sm">
+            TruePhone retiene el pago. Tras «Ya recibí» el comprador tiene 24
+            horas para confirmar o reportar.
+          </p>
+          <Button asChild fullWidth>
+            <Link href={sellerNext.href}>{sellerNext.label}</Link>
+          </Button>
+        </section>
+      ) : null}
 
       <section
         className="grid gap-3 sm:grid-cols-2"
@@ -217,70 +327,71 @@ export function OrderDetailView({
         />
       </section>
 
-      <section className="border-border space-y-3 rounded-xl border p-4">
-        <h2 className="text-foreground text-sm font-semibold">Resumen</h2>
-        <PriceDisplay
-          price={order.totalPrice}
-          equipmentPrice={order.equipmentPrice}
-          protectionFee={order.platformFee}
-          currency={order.currency}
-          className="[&>p]:text-xl"
-        />
-        <dl className="text-muted-foreground grid gap-2 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt>Creado</dt>
-            <dd className="text-foreground">{formatWhen(order.createdAt)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt>Pago</dt>
-            <dd className="text-foreground">{paymentStatusCopy(order)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt>Total</dt>
-            <dd className="text-foreground font-semibold">
-              {formatOrderMoney(order.totalPrice, order.currency)}
-            </dd>
-          </div>
-        </dl>
-        {listingHref ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={listingHref}>Ver anuncio</Link>
-          </Button>
-        ) : null}
-        <Button asChild variant="outline" size="sm">
-          <Link
-            href={
-              isBuyer
-                ? `/mensajes/${order.listingId}`
-                : `/mensajes/${order.listingId}?con=${order.buyer.id}`
-            }
-          >
-            {isBuyer ? "Contactar vendedor" : "Contactar comprador"}
-          </Link>
-        </Button>
-      </section>
-
       {showAbandonChoice ? <BuyerAbandonChoice orderId={order.id} /> : null}
 
-      {canPay ? (
+      {canPay || showSellerHero ? (
+        <div className="flex flex-wrap gap-2">
+          {listingHref ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={listingHref}>Ver anuncio</Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="ghost" size="sm">
+            <Link
+              href={
+                isBuyer
+                  ? `/mensajes/${order.listingId}`
+                  : `/mensajes/${order.listingId}?con=${order.buyer.id}`
+              }
+            >
+              {isBuyer ? "Contactar vendedor" : "Contactar comprador"}
+            </Link>
+          </Button>
+        </div>
+      ) : (
         <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="text-foreground text-sm font-semibold">
-            Compra Garantizada
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            Paga el total ya mostrado (equipo + protección {feePercent}%). Sin
-            cargos sorpresa. TruePhone retiene el pago hasta que confirmes el
-            iPhone, o hasta 24 horas después de marcar «Ya recibí».
-          </p>
-          <PayOrderButton
-            orderId={order.id}
-            totalPrice={order.totalPrice}
-            platformFee={order.platformFee}
-            feePercent={feePercent}
+          <h2 className="text-foreground text-sm font-semibold">Resumen</h2>
+          <PriceDisplay
+            price={order.totalPrice}
+            equipmentPrice={order.equipmentPrice}
+            protectionFee={order.platformFee}
             currency={order.currency}
+            className="[&>p]:text-xl"
           />
+          <dl className="text-muted-foreground grid gap-2 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt>Creado</dt>
+              <dd className="text-foreground">{formatWhen(order.createdAt)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt>Pago</dt>
+              <dd className="text-foreground">{paymentStatusCopy(order)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt>Total</dt>
+              <dd className="text-foreground font-semibold">
+                {formatOrderMoney(order.totalPrice, order.currency)}
+              </dd>
+            </div>
+          </dl>
+          {listingHref ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={listingHref}>Ver anuncio</Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={
+                isBuyer
+                  ? `/mensajes/${order.listingId}`
+                  : `/mensajes/${order.listingId}?con=${order.buyer.id}`
+              }
+            >
+              {isBuyer ? "Contactar vendedor" : "Contactar comprador"}
+            </Link>
+          </Button>
         </section>
-      ) : null}
+      )}
 
       <section className="border-border space-y-3 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">Timeline</h2>
@@ -391,6 +502,22 @@ export function OrderDetailView({
         currentUserId={currentUserId}
         reviews={order.reviews}
       />
+
+      {canPay ? (
+        <div className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden">
+          <p className="text-muted-foreground mb-2 text-center text-[11px]">
+            Sin envío en este cobro · retención 24h
+          </p>
+          <PayOrderButton
+            orderId={order.id}
+            totalPrice={order.totalPrice}
+            platformFee={order.platformFee}
+            feePercent={feePercent}
+            currency={order.currency}
+            disclosure="none"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

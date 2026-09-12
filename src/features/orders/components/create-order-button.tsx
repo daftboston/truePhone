@@ -18,8 +18,8 @@ type CreateOrderButtonProps = {
   loginHref: string;
   fullWidth?: boolean;
   label?: string;
-  /** When true, shows FINANCIAL_MODEL §5.1 24h disclosure under the CTA. */
-  showSettlementDisclosure?: boolean;
+  /** `fee` is a short hold line; `none` is the button only. */
+  disclosure?: "fee" | "none";
 };
 
 /**
@@ -31,7 +31,7 @@ type CreateOrderButtonProps = {
  * @param props.loginHref - Redirect when the buyer must sign in.
  * @param props.fullWidth - Stretch the button to the container width.
  * @param props.label - Button label (default «Comprar»).
- * @param props.showSettlementDisclosure - Show 24h hold/auto-release copy.
+ * @param props.disclosure - Helper copy under the button.
  * @returns CreateOrderButton React element.
  * @calledBy Listing detail (`/anuncios/[slug]`)
  */
@@ -40,7 +40,7 @@ export function CreateOrderButton({
   loginHref,
   fullWidth = false,
   label = "Comprar",
-  showSettlementDisclosure = false,
+  disclosure = "none",
 }: CreateOrderButtonProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -80,12 +80,9 @@ export function CreateOrderButton({
           {error}
         </p>
       ) : null}
-      {showSettlementDisclosure ? (
+      {disclosure === "fee" ? (
         <p className="text-muted-foreground text-center text-xs">
-          Al comprar, el anuncio se reserva y pagas Compra Garantizada (precio +
-          protección 10%). TruePhone retiene el pago: tras marcar «Ya recibí»
-          tienes 24 horas para confirmar o reportar; si no reportas, TruePhone
-          paga al vendedor.
+          Sin envío en este cobro. Retención 24h tras «Ya recibí».
         </p>
       ) : null}
     </div>

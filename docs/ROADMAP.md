@@ -64,30 +64,30 @@ Full phase detail: [plan.md](./plan.md)
 
 ## Phase checklist
 
-| Phase               | Status                                                                                                          |
-| ------------------- | --------------------------------------------------------------------------------------------------------------- |
-| 0 Foundation        | **Complete**                                                                                                    |
-| 1 Design System     | **Complete** (core primitives; Dialog/Drawer/Toast/DataTable with later forms)                                  |
-| 2 Authentication    | **Complete** (V1 email + Google); later: Apple, WhatsApp, Facebook                                              |
-| 3 Profiles          | **Complete**; public counters (total / active / bought) landed                                                  |
-| 4 Seller identity   | **Complete** (manual review pipeline)                                                                           |
-| 5 Listing creation  | **Complete** + seller price-guide UI (**landed** with Phase 13)                                                 |
-| 6 Review Portal     | **Complete**                                                                                                    |
-| 7 Marketplace       | **Complete — closed**                                                                                           |
-| 8 Messaging         | **Complete — closed** (private DMs)                                                                             |
-| 8b Listing Q&A      | **Closed** — public Preguntas on listing pages; report queue at `/revision/preguntas`                           |
-| 9 Orders            | **Complete — closed**; party cards + public counters on order detail                                            |
-| 10 Payments         | **Closed** for collect (Wompi + mock; fee UI 10%)                                                               |
-| 10b Financial Core  | **Closed** — Ledger, hold, fee engine; seller bank + manual Wompi pay; API lotes → Phase 24                     |
-| 10c Shipping        | **Closed** — Carrier + Premium Bogotá + buyer received → 24h                                                    |
-| 10d Order lifecycle | **Closed** — 24h disclosed; confirm UX; cron auto-release; seller-complete killed                               |
-| 11 Reviews          | **Complete — closed**                                                                                           |
-| 12 Notifications    | **Closed** for in-app/email marketplace events + settlement reminders; push later                               |
-| 13 Admin            | **Price table landed** (`RecommendedPrice` + `/revision/precios`); full dashboard still open                    |
-| 15 Analytics        | **Landed** — ops dashboard `/revision/analitica` + unique listing-view events                                   |
-| 19 Mobile           | **Landed** — Tomar foto, account drawer, filter sheet, gallery swipe                                            |
-| 23 Launch / FAQ     | **FAQ + legal + branded emails landed**; production fail-closed guards in code; live env + sandbox QA still ops |
-| 24 Post-launch      | Not started — Pagos a Terceros API, native apps, **seller listing-view analytics**, …                           |
+| Phase               | Status                                                                                                                             |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 0 Foundation        | **Complete**                                                                                                                       |
+| 1 Design System     | **Complete** (core primitives; Dialog/Drawer/Toast/DataTable with later forms)                                                     |
+| 2 Authentication    | **Complete** (email + Google); enable Google in Supabase per [AUTH_SOCIAL.md](./AUTH_SOCIAL.md); Apple / WhatsApp / Facebook later |
+| 3 Profiles          | **Complete**; public counters (total / active / bought) landed                                                                     |
+| 4 Seller identity   | **Complete** (manual review pipeline)                                                                                              |
+| 5 Listing creation  | **Complete** + seller price-guide UI (**landed** with Phase 13)                                                                    |
+| 6 Review Portal     | **Complete**                                                                                                                       |
+| 7 Marketplace       | **Complete — closed**                                                                                                              |
+| 8 Messaging         | **Complete — closed** (private DMs)                                                                                                |
+| 8b Listing Q&A      | **Closed** — public Preguntas on listing pages; report queue at `/revision/preguntas`                                              |
+| 9 Orders            | **Complete — closed**; party cards + public counters on order detail                                                               |
+| 10 Payments         | **Closed** for collect (Wompi + mock; fee UI 10%)                                                                                  |
+| 10b Financial Core  | **Closed** — Ledger, hold, fee engine; seller bank + manual Wompi pay; API lotes → Phase 24                                        |
+| 10c Shipping        | **Closed** — Carrier + Premium Bogotá + buyer received → 24h                                                                       |
+| 10d Order lifecycle | **Closed** — 24h disclosed; confirm UX; cron auto-release; seller-complete killed                                                  |
+| 11 Reviews          | **Complete — closed**                                                                                                              |
+| 12 Notifications    | **Closed** for in-app/email marketplace events + settlement reminders; push later                                                  |
+| 13 Admin            | **Price table landed** (`RecommendedPrice` + `/revision/precios`); full dashboard still open                                       |
+| 15 Analytics        | **Landed** — ops dashboard `/revision/analitica` + unique listing-view events                                                      |
+| 19 Mobile           | **Landed** — Tomar foto, account drawer, filter sheet, gallery swipe                                                               |
+| 23 Launch / FAQ     | **FAQ + legal + branded emails landed**; production fail-closed guards in code; live env + sandbox QA still ops                    |
+| 24 Post-launch      | Not started — Pagos a Terceros API, native apps, **seller listing-view analytics**, …                                              |
 
 ---
 
@@ -118,6 +118,6 @@ Do not treat Figma frames as a product checklist. Figma informs colors, type, an
 
 ## Post-MVP growth sequence (suggested)
 
-1. Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap)
+1. Apple / WhatsApp / Facebook Sign-In (Phase 2 roadmap; Google setup: [AUTH_SOCIAL.md](./AUTH_SOCIAL.md))
 2. Phase 24: seller private analytics — **views per listing** for each of the seller’s listings (Phase 15 view events already exist)
 3. Phase 24: automated Wompi Pagos a Terceros API when manual payouts become the bottleneck

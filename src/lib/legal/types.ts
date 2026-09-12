@@ -17,6 +17,16 @@ export type LegalSection = {
 };
 
 /**
+ * LegalSummary
+ *
+ * Optional 30-second bullets shown above the section chips (privacy only).
+ */
+export type LegalSummary = {
+  title: string;
+  bullets: string[];
+};
+
+/**
  * LegalDocument
  *
  * Full public legal page payload: route metadata plus ordered sections.
@@ -26,5 +36,6 @@ export type LegalSection = {
 export type LegalDocument = {
   title: string;
   description: string;
+  summary?: LegalSummary;
   sections: LegalSection[];
 };

@@ -2,13 +2,16 @@
 
 /**
  * @file security-form.tsx
- * @description SecurityForm component for the listings feature.tsx.
- * @dependencies react, @/features/listings/actions/listings, @/features/listings/schemas/listing, @/features/listings/types, @/components/ui/button, @/components/ui/input
+ * @description SecurityForm component for the listings feature.
+ * @dependencies react, listings actions/schemas, GuideImei, design-system inputs
+ * @changelog 2026-09-10 — Hydrate Activation Lock; GuideImei beside IMEI.
  */
 
 import { useActionState, useState } from "react";
 
 import { updateListingSecurityAction } from "@/features/listings/actions/listings";
+import { GuideImei } from "@/features/listings/components/listing-photo-slot-guides";
+import { LISTING_WIZARD_FORM_IDS } from "@/features/listings/lib/listing-wizard-intent";
 import {
   COLOMBIAN_OPERATORS,
   matchColombianOperator,
@@ -23,6 +26,7 @@ type SecurityFormProps = {
   listingId: string;
   defaults?: {
     imeiLast4: string | null;
+    activationLocked: "" | "true" | "false";
     unlocked: boolean;
     carrier: string | null;
   };
@@ -35,7 +39,7 @@ type SecurityFormProps = {
  * when the device is carrier-locked.
  *
  * @param props.listingId - Draft listing being edited.
- * @param props.defaults - Saved IMEI last-4, unlock flag, and carrier.
+ * @param props.defaults - Saved IMEI last-4, lock state, unlock flag, and carrier.
  * @returns Security wizard step form.
  * @calledBy ListingSecurityPage
  */
@@ -55,33 +59,44 @@ export function SecurityForm({ listingId, defaults }: SecurityFormProps) {
 
   return (
     <form
+      id={LISTING_WIZARD_FORM_IDS.security}
       action={formAction}
       className="grid gap-4 lg:grid-cols-2 lg:items-start"
     >
       <div className="border-border bg-muted/40 space-y-2 rounded-xl border p-4 text-sm lg:col-span-2">
         <p className="text-foreground font-medium">IMEI y Activation Lock</p>
         <p className="text-muted-foreground">
-          Encuentra el IMEI en Ajustes → General → Información. No publicamos el
-          IMEI completo: solo guardamos un resumen seguro y los últimos 4
-          dígitos.
+          Encuentra el IMEI en Ajustes → General → Información, o marca *#06#.
+          No publicamos el IMEI completo: solo guardamos un resumen seguro y los
+          últimos 4 dígitos.
         </p>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="imei">IMEI (15 dígitos)</Label>
-        <Input
-          id="imei"
-          name="imei"
-          inputMode="numeric"
-          required
-          minLength={15}
-          maxLength={15}
-          placeholder={
-            defaults?.imeiLast4
-              ? `Actual termina en ${defaults.imeiLast4}`
-              : "356938035643809"
-          }
-        />
+        <div className="flex items-start gap-3">
+          <div className="bg-muted text-muted-foreground size-16 shrink-0 rounded-xl p-2">
+            <GuideImei />
+          </div>
+          <div className="min-w-0 flex-1 space-y-2">
+            <Input
+              id="imei"
+              name="imei"
+              inputMode="numeric"
+              required
+              minLength={15}
+              maxLength={15}
+              placeholder={
+                defaults?.imeiLast4
+                  ? `Actual termina en ${defaults.imeiLast4}`
+                  : "356938035643809"
+              }
+            />
+            <p className="text-muted-foreground text-xs">
+              Ajustes → General → Información, o *#06#.
+            </p>
+          </div>
+        </div>
         {state?.ok === false && state.fieldErrors?.imei?.[0] ? (
           <p className="text-destructive text-xs">
             {state.fieldErrors.imei[0]}
@@ -95,11 +110,17 @@ export function SecurityForm({ listingId, defaults }: SecurityFormProps) {
           id="activationLocked"
           name="activationLocked"
           required
-          defaultValue="false"
+          defaultValue={defaults?.activationLocked ?? ""}
         >
+          <option value="" disabled>
+            Selecciona el estado de Activation Lock
+          </option>
           <option value="false">No — está desactivado</option>
           <option value="true">Sí — todavía activo</option>
         </Select>
+        <p className="text-muted-foreground text-xs">
+          Si “Buscar” sigue activo, el comprador no podrá activar el iPhone.
+        </p>
       </div>
 
       <div className="space-y-2">

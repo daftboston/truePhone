@@ -1,7 +1,8 @@
 /**
  * @file listing-wizard-shell.tsx
- * @description ListingWizardShell component for the listings feature.tsx.
+ * @description ListingWizardShell component for the listings feature.
  * @dependencies next/link, @/components/step-progress-header, @/components/ui/button, @/features/listings/types, @/lib/utils
+ * @changelog 2026-09-10 — Guardar y salir submits the step form when formId is set.
  */
 
 import Link from "next/link";
@@ -17,6 +18,8 @@ type ListingWizardShellProps = {
   listingId?: string;
   /** Prior rejection reason kept on DRAFT until the next successful submit. */
   rejectionReason?: string | null;
+  /** When set, Guardar y salir submits this form with intent=save_exit. */
+  formId?: string;
   children: React.ReactNode;
   className?: string;
 };
@@ -36,6 +39,7 @@ export function ListingWizardShell({
   title,
   listingId,
   rejectionReason,
+  formId,
   children,
   className,
 }: ListingWizardShellProps) {
@@ -77,13 +81,26 @@ export function ListingWizardShell({
             </Link>
           </Button>
         ) : null}
-        <Button
-          variant="ghost"
-          asChild
-          className="flex-1 lg:min-w-40 lg:flex-none"
-        >
-          <Link href="/vender">Guardar y salir</Link>
-        </Button>
+        {formId ? (
+          <Button
+            type="submit"
+            form={formId}
+            name="intent"
+            value="save_exit"
+            variant="ghost"
+            className="flex-1 lg:min-w-40 lg:flex-none"
+          >
+            Guardar y salir
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            asChild
+            className="flex-1 lg:min-w-40 lg:flex-none"
+          >
+            <Link href="/vender">Guardar y salir</Link>
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -319,8 +319,9 @@ function GuideBattery({ className }: GuideProps) {
  * Settings info rows suggesting the IMEI screen.
  *
  * @returns SVG guide for the IMEI slot.
+ * @calledBy ListingPhotoSlotGuide, SecurityForm
  */
-function GuideImei({ className }: GuideProps) {
+export function GuideImei({ className }: GuideProps) {
   return (
     <svg
       viewBox="0 0 64 64"

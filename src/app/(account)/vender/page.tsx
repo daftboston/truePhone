@@ -89,6 +89,7 @@ export default async function SellPage({ searchParams }: SellPageProps) {
   const archived = query.vista === "archivados";
   const hasFilters = Boolean(query.q || query.estado);
   const clearHref = archived ? "/vender?vista=archivados" : "/vender";
+  const draftSaved = params.borrador === "ok";
 
   return (
     <>
@@ -107,6 +108,15 @@ export default async function SellPage({ searchParams }: SellPageProps) {
           <Link href="/vender/nuevo">Nuevo anuncio</Link>
         </Button>
       </div>
+
+      {draftSaved ? (
+        <p
+          className="border-trust/30 bg-trust/10 text-foreground rounded-xl border px-3 py-2 text-sm"
+          role="status"
+        >
+          Borrador guardado.
+        </p>
+      ) : null}
 
       <SellerListingsToolbar query={query} />
 

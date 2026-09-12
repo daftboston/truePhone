@@ -2,48 +2,57 @@
 
 /**
  * @file identity-review-actions.tsx
- * @description IdentityReviewActions component for the verification feature.tsx.
- * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/input
+ * @description Approve/reject controls for a claimed identity verification.
+ * @dependencies react, ConfirmAction, identity actions, UI primitives
  */
 
 import { useActionState } from "react";
+import Link from "next/link";
 
+import { ConfirmAction } from "@/components/confirm-action";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   approveIdentityVerificationAction,
   rejectIdentityVerificationAction,
 } from "@/features/verification/actions/identity";
 import type { VerificationActionState } from "@/features/verification/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 type IdentityReviewActionsProps = {
   verificationId: string;
   documentLast4: string | null;
-  sellerName: string;
-  frontImageUrl: string | null;
-  backImageUrl: string | null;
-  selfieImageUrl: string | null;
+  canApprove: boolean;
+  canReject: boolean;
   docsAvailable: boolean;
+  assignedLabel: string | null;
+  nextHref: string | null;
 };
 
 /**
  * IdentityReviewActions
  *
- * Renders the Identity Review Actions UI for verification.
+ * Renders two-step approve/reject for identity review. Approve stays disabled
+ * when documents are missing; reject remains available with a reason.
  *
- * @param props - IdentityReviewActions props.
- * @returns IdentityReviewActions React element.
- * @calledBy verification pages and parent components
+ * @param props.verificationId - Case id.
+ * @param props.documentLast4 - Masked cédula digits.
+ * @param props.canApprove - True when the actor may approve and docs exist.
+ * @param props.canReject - True when the actor may reject.
+ * @param props.docsAvailable - Signed document URLs loaded.
+ * @param props.assignedLabel - Assignee copy, or null.
+ * @param props.nextHref - Next unclaimed case, if any.
+ * @returns Decision panel.
+ * @calledBy Identity review detail page
  */
 export function IdentityReviewActions({
   verificationId,
   documentLast4,
-  sellerName,
-  frontImageUrl,
-  backImageUrl,
-  selfieImageUrl,
+  canApprove,
+  canReject,
   docsAvailable,
+  assignedLabel,
+  nextHref,
 }: IdentityReviewActionsProps) {
   const [approveState, approveAction, approvePending] = useActionState<
     VerificationActionState,
@@ -55,109 +64,110 @@ export function IdentityReviewActions({
     FormData
   >(rejectIdentityVerificationAction, null);
 
+  const decided = approveState?.ok === true || rejectState?.ok === true;
+
   return (
     <div className="border-border space-y-4 rounded-xl border p-4">
       <div>
-        <p className="text-foreground text-sm font-semibold">{sellerName}</p>
+        <p className="text-foreground text-sm font-semibold">Decisión</p>
         <p className="text-muted-foreground text-xs">
-          Cédula •••• {documentLast4 ?? "????"} · revisión manual
+          Cédula •••• {documentLast4 ?? "????"}
         </p>
+        {assignedLabel ? (
+          <p className="text-muted-foreground mt-1 text-xs">{assignedLabel}</p>
+        ) : null}
       </div>
 
-      {docsAvailable ? (
-        <div className="grid grid-cols-3 gap-2">
-          <DocThumb href={frontImageUrl} label="Frente" />
-          <DocThumb href={backImageUrl} label="Reverso" />
-          <DocThumb href={selfieImageUrl} label="Selfie" />
-        </div>
-      ) : (
+      {!docsAvailable ? (
         <p className="text-muted-foreground text-xs">
           Las fotos de identidad no están disponibles ahora. Un administrador
-          debe revisar la configuración de almacenamiento.
-        </p>
-      )}
-
-      <form action={approveAction}>
-        <input type="hidden" name="verificationId" value={verificationId} />
-        <Button type="submit" fullWidth loading={approvePending}>
-          Aprobar identidad
-        </Button>
-      </form>
-      {approveState?.ok === true ? (
-        <p className="text-success text-xs" role="status">
-          {approveState.message}
-        </p>
-      ) : null}
-      {approveState?.ok === false ? (
-        <p className="text-destructive text-xs" role="alert">
-          {approveState.error}
+          debe revisar la configuración de almacenamiento. Puedes rechazar el
+          caso si falta evidencia.
         </p>
       ) : null}
 
-      <form action={rejectAction} className="space-y-3">
-        <input type="hidden" name="verificationId" value={verificationId} />
-        <div className="space-y-2">
-          <Label htmlFor={`reason-${verificationId}`}>Motivo de rechazo</Label>
-          <Input
-            id={`reason-${verificationId}`}
-            name="rejectionReason"
-            required
-            placeholder="Ej. La selfie no coincide con la cédula"
-          />
+      {decided ? (
+        <div className="space-y-3">
+          <p className="text-success text-sm" role="status">
+            {approveState?.ok === true
+              ? approveState.message
+              : rejectState?.ok === true
+                ? rejectState.message
+                : null}
+          </p>
+          {nextHref ? (
+            <Button asChild fullWidth>
+              <Link href={nextHref}>Siguiente en la cola</Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline" fullWidth>
+              <Link href="/revision/identidad">Volver a la cola</Link>
+            </Button>
+          )}
         </div>
-        <Button
-          type="submit"
-          variant="outline"
-          fullWidth
-          loading={rejectPending}
-        >
-          Rechazar
-        </Button>
-      </form>
-      {rejectState?.ok === true ? (
-        <p className="text-success text-xs" role="status">
-          {rejectState.message}
-        </p>
-      ) : null}
-      {rejectState?.ok === false ? (
-        <p className="text-destructive text-xs" role="alert">
-          {rejectState.error}
-        </p>
-      ) : null}
+      ) : (
+        <>
+          {canApprove ? (
+            <form action={approveAction}>
+              <input
+                type="hidden"
+                name="verificationId"
+                value={verificationId}
+              />
+              <ConfirmAction
+                type="submit"
+                idleLabel="Aprobar identidad"
+                confirmLabel="Confirmar aprobación"
+                hint="La persona podrá publicar anuncios después de esta aprobación."
+                pending={approvePending}
+              />
+            </form>
+          ) : (
+            <Button type="button" fullWidth disabled>
+              Aprobar identidad
+            </Button>
+          )}
+          {approveState?.ok === false ? (
+            <p className="text-destructive text-xs" role="alert">
+              {approveState.error}
+            </p>
+          ) : null}
+
+          {canReject ? (
+            <form action={rejectAction} className="space-y-3">
+              <input
+                type="hidden"
+                name="verificationId"
+                value={verificationId}
+              />
+              <div className="space-y-2">
+                <Label htmlFor={`reason-${verificationId}`}>
+                  Motivo de rechazo
+                </Label>
+                <Input
+                  id={`reason-${verificationId}`}
+                  name="rejectionReason"
+                  required
+                  placeholder="Ej. La selfie no coincide con la cédula"
+                />
+              </div>
+              <ConfirmAction
+                type="submit"
+                variant="outline"
+                idleLabel="Rechazar"
+                confirmLabel="Confirmar rechazo"
+                hint="El vendedor verá este motivo y podrá volver a enviar su identidad."
+                pending={rejectPending}
+              />
+            </form>
+          ) : null}
+          {rejectState?.ok === false ? (
+            <p className="text-destructive text-xs" role="alert">
+              {rejectState.error}
+            </p>
+          ) : null}
+        </>
+      )}
     </div>
-  );
-}
-
-/**
- * DocThumb
- *
- * Renders the Doc Thumb UI for verification.
- *
- * @param props - DocThumb props.
- * @returns DocThumb React element.
- * @calledBy verification pages and parent components
- */
-function DocThumb({ href, label }: { href: string | null; label: string }) {
-  if (!href) {
-    return (
-      <div className="bg-muted text-muted-foreground flex aspect-[3/4] items-center justify-center rounded-lg text-[10px]">
-        {label}
-      </div>
-    );
-  }
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="bg-muted relative block aspect-[3/4] overflow-hidden rounded-lg"
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={href} alt={label} className="size-full object-cover" />
-      <span className="bg-background/80 text-foreground absolute inset-x-0 bottom-0 truncate px-1 py-0.5 text-center text-[10px]">
-        {label}
-      </span>
-    </a>
   );
 }

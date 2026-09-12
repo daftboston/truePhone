@@ -12,7 +12,7 @@ import {
   markManualPayoutCompletedAction,
   type ManualPayoutActionState,
 } from "@/features/payouts/actions/manual-payout";
-import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/confirm-action";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -52,9 +52,13 @@ export function MarkManualPayoutButton({
           autoComplete="off"
         />
       </div>
-      <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Confirmando…" : "Ya pagué en Wompi"}
-      </Button>
+      <ConfirmAction
+        type="submit"
+        pending={pending}
+        idleLabel="Ya pagué en Wompi"
+        confirmLabel="¿Confirmar pago?"
+        hint="Solo si ya transferiste en Wompi. Esto marca el payout como pagado en el ledger."
+      />
       {state?.ok === false ? (
         <p className="text-destructive text-xs" role="alert">
           {state.error}

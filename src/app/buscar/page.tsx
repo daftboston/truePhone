@@ -11,6 +11,7 @@ import { ChevronLeft } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
+import { GuaranteeBanner } from "@/components/guarantee-banner";
 import { ListingCard } from "@/components/listing-card";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
@@ -180,6 +181,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         <p className="text-muted-foreground text-sm">
           Solo anuncios revisados y publicados por TruePhone.
         </p>
+        <GuaranteeBanner />
       </div>
 
       <SearchBar

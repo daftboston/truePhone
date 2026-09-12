@@ -2,12 +2,14 @@
  * @file page.tsx
  * @description Staff detail for one seller-submitted order-support case.
  * @dependencies next/link, auth session, order-support service and ops panel
+ * @changelog 2026-09-11 — EmptyState on deny instead of a silent redirect.
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { EmptyState } from "@/components/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderSupportOpsPanel } from "@/features/orders/components/order-support-ops-panel";
@@ -61,7 +63,21 @@ export default async function OrderSupportCasePage({ params }: PageProps) {
   if (!current) {
     redirect(`/login?next=/revision/soporte-pedidos/${caseId}`);
   }
-  if (!canAccessReviewPortal(current.profile.role)) redirect("/perfil");
+  if (!canAccessReviewPortal(current.profile.role)) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <EmptyState
+          title="Acceso restringido"
+          description="Solo revisores y administradores pueden ver esta cola."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/perfil">Volver a Mi TruePhone</Link>
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   const supportCase = await getOrderSupportCaseForStaff(caseId);
   if (!supportCase) notFound();

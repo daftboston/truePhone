@@ -217,7 +217,7 @@ These are **not** “social login.” They add a second check or replace passwor
 - Do not expose phone numbers on public profiles by default (same rule as messaging).
 - Prefer a small set of well-supported methods (email + Google + Apple + WhatsApp + Facebook) over many half-integrated providers.
 
-Status: V1 complete (email + Google). Chosen next: Apple, WhatsApp, Facebook (not blocking MVP).
+Status: V1 complete (email + Google). Enable Google in Supabase using [AUTH_SOCIAL.md](./AUTH_SOCIAL.md). Apple, WhatsApp, and Facebook remain post-MVP.
 
 ---
 

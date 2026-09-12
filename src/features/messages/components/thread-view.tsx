@@ -2,6 +2,7 @@
  * @file thread-view.tsx
  * @description Thread view with listing jump card, messages, composer, and safety actions.
  * @dependencies MessageListingCard, MessageComposer, ThreadSafetyActions, @/lib/messages
+ * @changelog 2026-09-11 — Viewport-filling messenger column with sticky glass composer.
  */
 
 import { MessageComposer } from "@/features/messages/components/message-composer";
@@ -30,11 +31,11 @@ type ThreadViewProps = {
 /**
  * formatTime
  *
- * Formats a display value for messages UI.
+ * Formats a timestamp for message bubbles.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy messages UI and related modules
+ * @param date - Message createdAt.
+ * @returns Localized short date and time.
+ * @calledBy ThreadView
  */
 function formatTime(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
@@ -46,7 +47,7 @@ function formatTime(date: Date) {
 /**
  * ThreadView
  *
- * Renders a listing-scoped chat: jump card, safety actions, history, composer.
+ * Renders a listing-scoped chat: jump card, collapsible safety, history, composer.
  *
  * @param props.listingId - Listing this thread belongs to.
  * @param props.listingTitle - Listing title for the jump card.
@@ -56,6 +57,10 @@ function formatTime(date: Date) {
  * @param props.listingPrice - Equipment price in COP.
  * @param props.currentUserId - Viewer profile id for bubble alignment.
  * @param props.otherUser - Counterpart profile card.
+ * @param props.messages - Chronological thread history.
+ * @param props.messagingDisabled - True when send is blocked.
+ * @param props.disabledReason - Copy shown instead of the composer.
+ * @param props.initiallyBlockedByMe - Whether the viewer already blocked the counterpart.
  * @returns Thread view React element.
  * @calledBy MessageThreadPage
  */
@@ -76,7 +81,7 @@ export function ThreadView({
   const otherName = marketplaceSellerDisplayName(otherUser);
 
   return (
-    <div className="flex min-h-[28rem] flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       <MessageListingCard
         title={listingTitle}
         status={listingStatus}
@@ -86,13 +91,22 @@ export function ThreadView({
         href={listingHref}
       />
 
-      <ThreadSafetyActions
-        listingId={listingId}
-        otherUserId={otherUser.id}
-        initiallyBlockedByMe={initiallyBlockedByMe}
-      />
+      <details className="group">
+        <summary className="text-muted-foreground hover:text-foreground cursor-pointer list-none text-xs font-medium [&::-webkit-details-marker]:hidden">
+          <span className="underline-offset-2 group-open:no-underline group-hover:underline">
+            Bloquear o reportar
+          </span>
+        </summary>
+        <div className="mt-2">
+          <ThreadSafetyActions
+            listingId={listingId}
+            otherUserId={otherUser.id}
+            initiallyBlockedByMe={initiallyBlockedByMe}
+          />
+        </div>
+      </details>
 
-      <div className="border-border bg-muted/30 flex flex-1 flex-col gap-3 rounded-xl border p-3">
+      <div className="border-border bg-muted/30 flex min-h-0 flex-1 flex-col-reverse overflow-y-auto rounded-xl border p-3">
         {messages.length === 0 ? (
           <p className="text-muted-foreground py-10 text-center text-sm">
             Escribe para iniciar la conversación.
@@ -136,13 +150,16 @@ export function ThreadView({
         )}
       </div>
 
-      {messagingDisabled ? (
-        <p className="text-muted-foreground text-center text-sm">
-          {disabledReason ?? "No puedes enviar mensajes en esta conversación."}
-        </p>
-      ) : (
-        <MessageComposer listingId={listingId} receiverId={otherUser.id} />
-      )}
+      <div className="tp-glass border-border sticky bottom-20 z-10 -mx-4 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:bottom-0 md:mx-0 md:rounded-xl md:border">
+        {messagingDisabled ? (
+          <p className="text-muted-foreground text-center text-sm">
+            {disabledReason ??
+              "No puedes enviar mensajes en esta conversación."}
+          </p>
+        ) : (
+          <MessageComposer listingId={listingId} receiverId={otherUser.id} />
+        )}
+      </div>
     </div>
   );
 }

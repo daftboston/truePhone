@@ -2,6 +2,7 @@
  * @file order-support-service.ts
  * @description Persists seller order-support cases with ownership, duplicate, and payout-freeze guards.
  * @dependencies @prisma/client, prisma, financial-core settlement, order-support classifiers
+ * @changelog 2026-09-11 — Staff queue tab counts via status groupBy.
  */
 
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/lib/financial-core/settlement";
 import { prisma } from "@/lib/db";
 import { classifyOrderSupportOptions } from "@/lib/orders/order-support";
+import { tallyOrderSupportQueueCounts } from "@/lib/orders/order-support-queue";
 
 export const ACTIVE_ORDER_SUPPORT_STATUSES: OrderSupportCaseStatus[] = [
   "PENDING",
@@ -302,6 +304,25 @@ export async function countActionableOrderSupportCases() {
 }
 
 /**
+ * countOrderSupportCasesForStaff
+ *
+ * Counts cases per queue tab from a single status groupBy.
+ *
+ * @returns Tab totals for QueueTabs badges.
+ * @calledBy OrderSupportQueuePage
+ */
+export async function countOrderSupportCasesForStaff() {
+  const rows = await prisma.orderSupportCase.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
+
+  return tallyOrderSupportQueueCounts(
+    rows.map((row) => ({ status: row.status, count: row._count._all })),
+  );
+}
+
+/**
  * listOrderSupportCasesForStaff
  *
  * Lists request-backed support queue rows for one status group.
@@ -311,10 +332,10 @@ export async function countActionableOrderSupportCases() {
  * @calledBy OrderSupportQueuePage
  */
 export async function listOrderSupportCasesForStaff(
-  statuses: OrderSupportCaseStatus[],
+  statuses: readonly OrderSupportCaseStatus[],
 ) {
   return prisma.orderSupportCase.findMany({
-    where: { status: { in: statuses } },
+    where: { status: { in: [...statuses] } },
     include: {
       order: {
         select: {

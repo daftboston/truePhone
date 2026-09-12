@@ -211,6 +211,38 @@ export async function countPublishedListings(
   return prisma.listing.count({ where: buildPublishedWhere(options) });
 }
 
+export type PublishedStockByModel = {
+  count: number;
+  minBuyerPrice: number | null;
+};
+
+/**
+ * listPublishedStockByModel
+ *
+ * Groups published listings by catalog model and returns count plus the
+ * lowest buyer-facing price (finalPrice, then price).
+ *
+ * @returns Map of iphoneModelId to stock summary.
+ * @calledBy ExplorePage
+ */
+export async function listPublishedStockByModel() {
+  const rows = await prisma.listing.groupBy({
+    by: ["iphoneModelId"],
+    where: publishedListingWhere,
+    _count: { _all: true },
+    _min: { finalPrice: true, price: true },
+  });
+
+  const stock = new Map<string, PublishedStockByModel>();
+  for (const row of rows) {
+    stock.set(row.iphoneModelId, {
+      count: row._count._all,
+      minBuyerPrice: row._min.finalPrice ?? row._min.price,
+    });
+  }
+  return stock;
+}
+
 /**
  * getPublishedListingBySlug
  *

@@ -18,6 +18,10 @@ import { getCurrentProfile } from "@/lib/auth/session";
 import { findActiveFeeEntitlementForSource } from "@/lib/financial-core/entitlements";
 import { groupModelsBySeries } from "@/lib/iphone-catalog";
 import { getCatalog } from "@/lib/listings";
+import {
+  countPublishedListings,
+  listPublishedStockByModel,
+} from "@/lib/listings-marketplace";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -43,9 +47,11 @@ export default async function ExplorePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const requestedCompensation =
     typeof params.compensacion === "string" ? params.compensacion : "";
-  const [catalog, current] = await Promise.all([
+  const [catalog, current, publishedCount, stockByModelId] = await Promise.all([
     getCatalog(),
     requestedCompensation ? getCurrentProfile() : Promise.resolve(null),
+    countPublishedListings(),
+    listPublishedStockByModel(),
   ]);
   const compensation =
     current && requestedCompensation
@@ -70,13 +76,19 @@ export default async function ExplorePage({ searchParams }: PageProps) {
         <p className="text-muted-foreground text-sm md:text-base">
           Elige un modelo. Solo verás anuncios revisados por TruePhone.
         </p>
-        {modelCount > 0 ? (
+        {publishedCount > 0 ? (
           <div className="flex justify-center">
             <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
               <ShieldCheck className="text-trust size-3.5" aria-hidden />
-              {modelCount} modelos · inventario revisado
+              {publishedCount === 1
+                ? "1 anuncio publicado"
+                : `${publishedCount} anuncios publicados`}
             </p>
           </div>
+        ) : modelCount > 0 ? (
+          <p className="text-muted-foreground text-xs font-medium">
+            {modelCount === 1 ? "1 modelo" : `${modelCount} modelos`}
+          </p>
         ) : null}
         <ModelSearch
           models={catalog.models}
@@ -107,6 +119,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
               key={series.key}
               series={series}
               compensationId={compensation?.sourceOrderId}
+              stockByModelId={stockByModelId}
             />
           ))}
         </div>

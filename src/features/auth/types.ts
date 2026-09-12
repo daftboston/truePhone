@@ -27,7 +27,7 @@ export type AuthActionState =
  *
  * @param codeOrMessage - Raw error message or code from Supabase Auth.
  * @returns Localized error string safe to show in forms.
- * @calledBy loginAction, registerAction, recoverAction, updatePasswordAction, signInWithGoogleAction, resendConfirmationAction
+ * @calledBy loginAction, registerAction, recoverAction, updatePasswordAction, signInWithGoogleAction, signInWithAppleAction, resendConfirmationAction
  */
 export function authErrorMessage(codeOrMessage: string | undefined): string {
   const value = (codeOrMessage ?? "").toLowerCase();
@@ -48,7 +48,7 @@ export function authErrorMessage(codeOrMessage: string | undefined): string {
     return "Demasiados intentos. Espera un momento e intenta de nuevo.";
   }
   if (value.includes("provider") || value.includes("oauth")) {
-    return "No pudimos conectar con Google. Intenta de nuevo.";
+    return "No pudimos conectar con el proveedor de inicio de sesión. Intenta de nuevo.";
   }
 
   return "No pudimos completar la solicitud. Intenta de nuevo.";
@@ -61,7 +61,7 @@ export function authErrorMessage(codeOrMessage: string | undefined): string {
  *
  * @param next - Raw `next` query param from login/register/OAuth.
  * @returns Sanitized path defaulting to `/`.
- * @calledBy loginAction, signInWithGoogleAction, auth/callback/route
+ * @calledBy loginAction, signInWithGoogleAction, signInWithAppleAction, auth/callback/route
  */
 export function safeNextPath(next: string | null | undefined): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {

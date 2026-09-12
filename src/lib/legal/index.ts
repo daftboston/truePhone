@@ -16,4 +16,4 @@ export {
 export { COOKIES_DOCUMENT } from "./cookies";
 export { PRIVACY_DOCUMENT } from "./privacy";
 export { TERMS_DOCUMENT } from "./terms";
-export type { LegalDocument, LegalSection } from "./types";
+export type { LegalDocument, LegalSection, LegalSummary } from "./types";

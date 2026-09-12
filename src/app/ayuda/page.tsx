@@ -1,15 +1,16 @@
 /**
  * @file page.tsx
  * @description Public FAQ / help center at /ayuda (Phase 23 thin slice).
- * @dependencies AppShell, SiteFooter, FAQ_CLUSTERS
+ * @dependencies AppShell, SiteFooter, FaqList, FAQ_CLUSTERS
  */
 
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { SiteFooter } from "@/components/site-footer";
+import { FaqList } from "@/features/help/components/faq-list";
 import { FAQ_CLUSTERS } from "@/lib/help/faq";
+import { LEGAL_CONTACT_EMAIL, LEGAL_CONTACT_MAILTO } from "@/lib/legal";
 
 export const metadata: Metadata = {
   title: "Ayuda",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 /**
  * AyudaPage
  *
- * Renders Spanish FAQ clusters with in-page anchors for footer and empty states.
+ * Renders Spanish FAQ clusters with in-page search and topic chips.
  *
  * @returns Public help page.
  */
@@ -36,70 +37,16 @@ export default function AyudaPage() {
             Respuestas cortas sobre cómo funciona TruePhone. Si no encuentras lo
             que buscas, escribe a{" "}
             <a
-              href="mailto:hola@truephone.co"
+              href={LEGAL_CONTACT_MAILTO}
               className="text-foreground font-medium underline-offset-2 hover:underline"
             >
-              hola@truephone.co
+              {LEGAL_CONTACT_EMAIL}
             </a>
             .
           </p>
         </div>
 
-        <nav
-          aria-label="Temas de ayuda"
-          className="mx-auto flex max-w-2xl flex-wrap justify-center gap-2"
-        >
-          {FAQ_CLUSTERS.map((cluster) => (
-            <Link
-              key={cluster.id}
-              href={`#${cluster.id}`}
-              className="border-border bg-muted/40 text-foreground hover:bg-muted rounded-full border px-3 py-1.5 text-xs font-medium"
-            >
-              {cluster.title}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="mx-auto w-full max-w-2xl space-y-10">
-          {FAQ_CLUSTERS.map((cluster) => (
-            <section
-              key={cluster.id}
-              id={cluster.id}
-              className="scroll-mt-24 space-y-4"
-            >
-              <h2 className="text-foreground text-lg font-semibold tracking-tight">
-                {cluster.title}
-              </h2>
-              <ul className="space-y-3">
-                {cluster.items.map((item) => (
-                  <li key={item.question}>
-                    <details className="border-border bg-card rounded-xl border px-4 py-3">
-                      <summary className="text-foreground cursor-pointer text-sm font-medium">
-                        {item.question}
-                      </summary>
-                      <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-                        {item.answer}
-                      </p>
-                      {item.links && item.links.length > 0 ? (
-                        <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                          {item.links.map((link) => (
-                            <Link
-                              key={link.href}
-                              href={link.href}
-                              className="text-trust font-medium underline-offset-4 hover:underline"
-                            >
-                              {link.label}
-                            </Link>
-                          ))}
-                        </p>
-                      ) : null}
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+        <FaqList clusters={FAQ_CLUSTERS} />
       </AppShell>
       <SiteFooter />
     </>

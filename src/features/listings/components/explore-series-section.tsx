@@ -16,6 +16,11 @@ import {
   type ModelSeries,
 } from "@/lib/iphone-catalog";
 import {
+  formatExploreModelStock,
+  formatExploreSeriesModelCount,
+  type ExploreModelStock,
+} from "@/features/listings/lib/explore-stock";
+import {
   resolveCatalogModelImages,
   type CatalogModelImages,
 } from "@/lib/iphone-catalog-images";
@@ -24,12 +29,37 @@ import { cn } from "@/lib/utils";
 type ExploreSeriesSectionProps = {
   series: ModelSeries;
   compensationId?: string;
+  stockByModelId: Map<string, ExploreModelStock>;
 };
+
+/**
+ * ExploreAppleMark
+ *
+ * Small decorative Apple glyph in the card footer, matching store-style model tiles.
+ *
+ * @returns Hidden-from-AT SVG mark.
+ * @calledBy ExploreModelCard
+ */
+function ExploreAppleMark() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden
+      className="text-muted-foreground/70 absolute right-3 bottom-3 size-3.5"
+    >
+      <path
+        fill="currentColor"
+        d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"
+      />
+    </svg>
+  );
+}
 
 /**
  * ExploreModelMedia
  *
  * Renders the card well: product shots with a front/back flip, or the silhouette.
+ * Catalog shots stay `unoptimized` so Next.js does not flatten WebP alpha onto white.
  *
  * @param props.model - Catalog model for the fallback glyph.
  * @param props.images - Resolved public URLs from `public/catalog`.
@@ -52,6 +82,7 @@ function ExploreModelMedia({
               src={images.front}
               alt=""
               fill
+              unoptimized
               className="object-contain p-5"
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 272px"
             />
@@ -61,6 +92,7 @@ function ExploreModelMedia({
               src={images.back}
               alt=""
               fill
+              unoptimized
               className="object-contain p-5"
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 272px"
             />
@@ -77,6 +109,7 @@ function ExploreModelMedia({
           src={images.front}
           alt=""
           fill
+          unoptimized
           className="object-contain p-5"
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 272px"
         />
@@ -105,13 +138,16 @@ function ExploreModelCard({
   model,
   index,
   compensationId,
+  stock,
 }: {
   model: CatalogModel;
   index: number;
   compensationId?: string;
+  stock: ExploreModelStock;
 }) {
   const images = resolveCatalogModelImages(model.slug);
   const canFlip = Boolean(images.front && images.back);
+  const stockLine = formatExploreModelStock(stock);
 
   return (
     <li
@@ -129,13 +165,14 @@ function ExploreModelCard({
         <div className="explore-phone-stage relative aspect-[3/4]">
           <ExploreModelMedia model={model} images={images} />
         </div>
-        <div className="space-y-1 px-3 pt-3 pb-4 text-center">
+        <div className="relative space-y-1 px-3 pt-3 pr-8 pb-4 text-center">
           <p className="text-foreground text-sm font-semibold tracking-tight">
             {model.name}
           </p>
           <p className="text-muted-foreground group-hover:text-primary text-xs font-medium transition-colors">
-            Ver anuncios
+            {stockLine}
           </p>
+          <ExploreAppleMark />
         </div>
       </Link>
     </li>
@@ -148,12 +185,15 @@ function ExploreModelCard({
  * Renders a series label and a centered wrap of model cards.
  *
  * @param props.series - Grouped models for one product-line family.
+ * @param props.compensationId - Optional fee-entitlement query to pass through.
+ * @param props.stockByModelId - Published listing counts and floor prices.
  * @returns Explore series section.
  * @calledBy ExplorePage
  */
 export function ExploreSeriesSection({
   series,
   compensationId,
+  stockByModelId,
 }: ExploreSeriesSectionProps) {
   const modelCount = series.models.length;
 
@@ -168,9 +208,7 @@ export function ExploreSeriesSection({
           <span className="bg-border h-px flex-1" aria-hidden />
         </div>
         <p className="text-muted-foreground text-sm">
-          {modelCount === 1
-            ? "1 modelo revisado"
-            : `${modelCount} modelos revisados`}
+          {formatExploreSeriesModelCount(modelCount)}
         </p>
         <Link
           href={`${browseSeriesHref(series.key)}${compensationId ? `&compensacion=${encodeURIComponent(compensationId)}` : ""}`}
@@ -187,6 +225,12 @@ export function ExploreSeriesSection({
             model={model}
             index={index}
             compensationId={compensationId}
+            stock={
+              stockByModelId.get(model.id) ?? {
+                count: 0,
+                minBuyerPrice: null,
+              }
+            }
           />
         ))}
       </ul>

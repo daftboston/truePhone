@@ -16,6 +16,8 @@ type ReviewQueueRowProps = {
   sellerName: string;
   submittedAt: string;
   imageUrl?: string;
+  /** When false, skips the thumbnail well (identity queue has no listing photo). */
+  showThumbnail?: boolean;
   statusLabel?: string;
   statusVariant?:
     "secondary" | "outline" | "success" | "warning" | "destructive";
@@ -32,6 +34,7 @@ type ReviewQueueRowProps = {
  * @param props.sellerName - Seller display name.
  * @param props.submittedAt - Human-readable submission time.
  * @param props.imageUrl - Optional thumbnail URL.
+ * @param props.showThumbnail - When false, omits the photo well.
  * @param props.statusLabel - Optional status text shown as a Badge.
  * @param props.statusVariant - Badge color; defaults to outline.
  * @param props.className - Optional className.
@@ -44,6 +47,7 @@ export function ReviewQueueRow({
   sellerName,
   submittedAt,
   imageUrl,
+  showThumbnail = true,
   statusLabel,
   statusVariant = "outline",
   className,
@@ -56,17 +60,19 @@ export function ReviewQueueRow({
         className,
       )}
     >
-      <div className="bg-muted relative size-16 shrink-0 overflow-hidden rounded-lg">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="64px"
-          />
-        ) : null}
-      </div>
+      {showThumbnail ? (
+        <div className="bg-muted relative size-16 shrink-0 overflow-hidden rounded-lg">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="64px"
+            />
+          ) : null}
+        </div>
+      ) : null}
       <div className="min-w-0 flex-1">
         <p className="text-foreground truncate text-sm font-semibold">
           {title}

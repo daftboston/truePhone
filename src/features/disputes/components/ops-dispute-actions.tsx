@@ -14,7 +14,7 @@ import {
   resolveDisputeForSellerAction,
 } from "@/features/disputes/actions/ops-disputes";
 import type { OpsDisputeActionState } from "@/features/disputes/types";
-import { Button } from "@/components/ui/button";
+import { ConfirmAction } from "@/components/confirm-action";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -106,9 +106,13 @@ export function OpsDisputeActions({
             autoComplete="off"
           />
         </div>
-        <Button type="submit" size="sm" disabled={absorbPending}>
-          {absorbPending ? "Guardando…" : "Marcar contracargo absorbido"}
-        </Button>
+        <ConfirmAction
+          type="submit"
+          pending={absorbPending}
+          idleLabel="Marcar contracargo absorbido"
+          confirmLabel="¿Confirmar absorción?"
+          hint="Solo si el contracargo ya quedó como pérdida en el ledger / Cuenta Wompi."
+        />
         <ActionStatus state={absorbState} />
       </form>
     );
@@ -170,9 +174,14 @@ export function OpsDisputeActions({
             className="min-h-16 text-sm"
           />
         </div>
-        <Button type="submit" size="sm" disabled={refundPending}>
-          {refundPending ? "Procesando…" : "Reembolsar al comprador"}
-        </Button>
+        <ConfirmAction
+          type="submit"
+          variant="destructive"
+          pending={refundPending}
+          idleLabel="Reembolsar al comprador"
+          confirmLabel="¿Confirmar reembolso?"
+          hint="Esto mueve el ledger. No lo uses si el dinero no debe volver al comprador."
+        />
         <ActionStatus state={refundState} />
       </form>
 
@@ -194,14 +203,14 @@ export function OpsDisputeActions({
               autoComplete="off"
             />
           </div>
-          <Button
+          <ConfirmAction
             type="submit"
-            size="sm"
             variant="outline"
-            disabled={sellerPending}
-          >
-            {sellerPending ? "Guardando…" : "Descongelar (gana vendedor)"}
-          </Button>
+            pending={sellerPending}
+            idleLabel="Descongelar (gana vendedor)"
+            confirmLabel="¿Confirmar descongelar?"
+            hint="Libera el pago al vendedor. Solo si el reclamo no procede."
+          />
           <ActionStatus state={sellerState} />
         </form>
       ) : null}

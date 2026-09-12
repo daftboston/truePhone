@@ -105,6 +105,24 @@ export function resolveListingCarrier(
   return matchColombianOperator(carrier);
 }
 
+/**
+ * activationLockFormValue
+ *
+ * Leaves Activation Lock unselected until the seller has saved an IMEI.
+ * A missing value is never treated as unlocked on first paint.
+ *
+ * @param listing - Saved IMEI last-4 and lock flag.
+ * @returns Empty string on first visit, otherwise "true" or "false".
+ * @calledBy SecurityForm defaults
+ */
+export function activationLockFormValue(listing: {
+  imeiLast4: string | null;
+  activationLocked: boolean;
+}): "" | "true" | "false" {
+  if (!listing.imeiLast4) return "";
+  return listing.activationLocked ? "true" : "false";
+}
+
 /** updateListingSecuritySchema — validates input for related updateListingSecurity flows. */
 export const updateListingSecuritySchema = z
   .object({
