@@ -293,6 +293,11 @@ html.disable-transitions *::after {
     box-shadow 280ms ease;
 }
 
+/* Keep a 3D containing block so overflow-hidden cards can still flip without hover. */
+.explore-model-card--flip {
+  transform: translateZ(0);
+}
+
 .explore-model-card .explore-phone-glyph {
   transition: transform 280ms ease;
 }
@@ -309,6 +314,7 @@ html.disable-transitions *::after {
   position: absolute;
   inset: 0;
   perspective: 1000px;
+  transform-style: preserve-3d;
 }
 
 .explore-phone-flip-inner {
@@ -359,10 +365,51 @@ html.disable-transitions *::after {
   }
 }
 
+.explore-show-backs .explore-model-card--flip .explore-phone-flip-inner {
+  transform: none;
+}
+
+.explore-show-backs .explore-model-card--flip .explore-phone-face {
+  transition: opacity 280ms ease;
+}
+
+.explore-show-backs .explore-model-card--flip .explore-phone-face-front {
+  opacity: 0;
+}
+
+.explore-show-backs .explore-model-card--flip .explore-phone-face-back {
+  transform: none;
+  opacity: 1;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  z-index: 1;
+}
+
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .explore-model-card--flip:hover .explore-phone-flip-inner,
   .explore-model-card--flip:focus-visible .explore-phone-flip-inner {
     transform: rotateY(180deg);
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-flip-inner,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-flip-inner {
+    transform: none;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-front,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-front {
+    opacity: 1;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-back,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-back {
+    opacity: 0;
   }
 }
 
@@ -384,5 +431,19 @@ html.disable-transitions *::after {
   .explore-model-card--flip:hover .explore-phone-face-back,
   .explore-model-card--flip:focus-visible .explore-phone-face-back {
     opacity: 1;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-front,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-front {
+    opacity: 1;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-back,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-back {
+    opacity: 0;
   }
 }

@@ -1,7 +1,7 @@
 /**
  * @file page.tsx
  * @description Browse/explore marketplace listings by model filters.
- * @dependencies AppShell, listing browse components and loaders
+ * @dependencies AppShell, listing browse components, ExploreCatalogShell
  */
 
 import type { Metadata } from "next";
@@ -11,6 +11,7 @@ import { ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
+import { ExploreCatalogShell } from "@/features/listings/components/explore-catalog-shell";
 import { ExploreSeriesSection } from "@/features/listings/components/explore-series-section";
 import { ModelSearch } from "@/features/listings/components/model-search";
 import { CompensationBanner } from "@/features/orders/components/compensation-banner";
@@ -113,16 +114,18 @@ export default async function ExplorePage({ searchParams }: PageProps) {
           }
         />
       ) : (
-        <div className="space-y-12 md:space-y-16">
-          {seriesList.map((series) => (
-            <ExploreSeriesSection
-              key={series.key}
-              series={series}
-              compensationId={compensation?.sourceOrderId}
-              stockByModelId={stockByModelId}
-            />
-          ))}
-        </div>
+        <ExploreCatalogShell>
+          <div className="space-y-12 md:space-y-16">
+            {seriesList.map((series) => (
+              <ExploreSeriesSection
+                key={series.key}
+                series={series}
+                compensationId={compensation?.sourceOrderId}
+                stockByModelId={stockByModelId}
+              />
+            ))}
+          </div>
+        </ExploreCatalogShell>
       )}
 
       <p className="text-muted-foreground text-center text-sm">
