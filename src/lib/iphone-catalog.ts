@@ -208,7 +208,7 @@ export function matchModelsForSearch(
     const seModels = models.filter(
       (model) => model.productLine === "IPHONE_SE",
     );
-    const genMatch = q.match(/\b([23])\b/);
+    const genMatch = q.match(/\b([234])\b/);
     if (genMatch) {
       const generation = Number(genMatch[1]);
       return seModels.filter((model) => model.generation === generation);

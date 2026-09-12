@@ -15,6 +15,22 @@ import {
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { ensureIphoneCatalog } from "@/lib/iphone-catalog-sync";
+import { isRetiredCatalogSlug } from "@/lib/iphone-catalog-data";
+
+/**
+ * filterSellableCatalogModels
+ *
+ * Drops retired slugs from picker lists while leaving legacy DB rows untouched.
+ *
+ * @param models - Raw IphoneModel rows from Postgres.
+ * @returns Models eligible for Explorar and new sell flows.
+ * @calledBy getCatalog, listIphoneModels
+ */
+function filterSellableCatalogModels<T extends { slug: string }>(
+  models: T[],
+): T[] {
+  return models.filter((model) => !isRetiredCatalogSlug(model.slug));
+}
 
 /**
  * backfillIphoneCatalog
@@ -224,9 +240,10 @@ export function getSellerDraftResumePath(listing: {
  */
 export async function listIphoneModels() {
   await backfillIphoneCatalog();
-  return prisma.iphoneModel.findMany({
+  const models = await prisma.iphoneModel.findMany({
     orderBy: [{ sortOrder: "desc" }, { name: "asc" }],
   });
+  return filterSellableCatalogModels(models);
 }
 
 /**
@@ -269,7 +286,7 @@ export async function getCatalog() {
   }
 
   return {
-    models,
+    models: filterSellableCatalogModels(models),
     colors,
     storages,
     colorIdsByModelId,

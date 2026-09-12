@@ -17,6 +17,8 @@ import {
 import {
   IPHONE_CATALOG_COLORS,
   IPHONE_CATALOG_MODELS,
+  IPHONE_CATALOG_RETIRED_SLUGS,
+  isRetiredCatalogSlug,
 } from "@/lib/iphone-catalog-data";
 import { missingCatalogSlugs } from "@/lib/iphone-catalog-sync";
 import {
@@ -27,7 +29,6 @@ import {
 } from "@/lib/iphone-catalog-images";
 
 const REQUIRED_SLUGS = [
-  "iphone-se-2",
   "iphone-12-mini",
   "iphone-12",
   "iphone-12-pro",
@@ -37,6 +38,7 @@ const REQUIRED_SLUGS = [
   "iphone-13-pro",
   "iphone-13-pro-max",
   "iphone-se-3",
+  "iphone-se-4",
   "iphone-14",
   "iphone-14-plus",
   "iphone-14-pro",
@@ -103,12 +105,12 @@ describe("IPHONE_CATALOG_MODELS", () => {
     );
     assert.equal(seModels.length, 2);
     assert.deepEqual(seModels.map((model) => model.slug).sort(), [
-      "iphone-se-2",
       "iphone-se-3",
+      "iphone-se-4",
     ]);
     for (const model of seModels) {
       assert.equal(model.variantType, "STANDARD");
-      assert.ok(model.generation === 2 || model.generation === 3);
+      assert.ok(model.generation === 3 || model.generation === 4);
       assert.notEqual(model.generation, 13);
       assert.notEqual(model.generation, 14);
     }
@@ -158,7 +160,7 @@ describe("IPHONE_CATALOG_MODELS", () => {
       "iphone-17-pro",
       "iphone-17-pro-max",
       "iphone-17e",
-      "iphone-se-2",
+      "iphone-se-4",
     ]) {
       assert.equal(slugs.has(slug), true, slug);
     }
@@ -197,8 +199,8 @@ describe("groupModelsBySeries", () => {
     assert.ok(se);
     assert.equal(se.label, "Serie iPhone SE");
     assert.deepEqual(se.models.map((model) => model.slug).sort(), [
-      "iphone-se-2",
       "iphone-se-3",
+      "iphone-se-4",
     ]);
     assert.equal(
       byKey
@@ -239,12 +241,16 @@ describe("matchModelsForSearch", () => {
   it("returns only SE models for se queries, including generation narrowing", () => {
     const se = matchModelsForSearch(models, "iphone se");
     assert.deepEqual(se.map((model) => model.slug).sort(), [
-      "iphone-se-2",
       "iphone-se-3",
+      "iphone-se-4",
     ]);
     assert.deepEqual(
       matchModelsForSearch(models, "se 3").map((model) => model.slug),
       ["iphone-se-3"],
+    );
+    assert.deepEqual(
+      matchModelsForSearch(models, "se 4").map((model) => model.slug),
+      ["iphone-se-4"],
     );
   });
 
@@ -371,7 +377,7 @@ describe("missingCatalogSlugs", () => {
       "iphone-15-plus",
       "iphone-16-plus",
       "iphone-16e",
-      "iphone-se-2",
+      "iphone-se-4",
     ]) {
       assert.equal(missing.includes(slug), true, slug);
     }
@@ -382,6 +388,18 @@ describe("missingCatalogSlugs", () => {
     assert.deepEqual(
       missingCatalogSlugs(IPHONE_CATALOG_MODELS.map((model) => model.slug)),
       [],
+    );
+  });
+});
+
+describe("retired catalog slugs", () => {
+  it("marks iphone-se-2 as retired and excludes it from the 28-model set", () => {
+    assert.equal(isRetiredCatalogSlug("iphone-se-2"), true);
+    assert.equal(isRetiredCatalogSlug("iphone-se-4"), false);
+    assert.deepEqual([...IPHONE_CATALOG_RETIRED_SLUGS], ["iphone-se-2"]);
+    assert.equal(
+      IPHONE_CATALOG_MODELS.some((model) => model.slug === "iphone-se-2"),
+      false,
     );
   });
 });

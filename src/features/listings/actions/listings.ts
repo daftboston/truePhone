@@ -40,6 +40,7 @@ import {
   isStorageAllowedForModel,
   requireVerifiedSeller,
 } from "@/lib/listings";
+import { isRetiredCatalogSlug } from "@/lib/iphone-catalog-data";
 import {
   canArchiveListing,
   canRelistListing,
@@ -168,6 +169,13 @@ export async function createListingAction(
     return { ok: false, error: "Modelo, color o almacenamiento no válido." };
   }
 
+  if (isRetiredCatalogSlug(model.slug)) {
+    return {
+      ok: false,
+      error: "Este modelo ya no está disponible para nuevos anuncios.",
+    };
+  }
+
   const colorAllowed = await isColorAllowedForModel(model.id, color.id);
   if (!colorAllowed) {
     return {
@@ -291,6 +299,13 @@ export async function updateListingDetailsAction(
 
   if (!model || !color || !storage) {
     return { ok: false, error: "Modelo, color o almacenamiento no válido." };
+  }
+
+  if (isRetiredCatalogSlug(model.slug) && model.id !== listing.iphoneModelId) {
+    return {
+      ok: false,
+      error: "Este modelo ya no está disponible para nuevos anuncios.",
+    };
   }
 
   const colorAllowed = await isColorAllowedForModel(model.id, color.id);

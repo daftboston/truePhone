@@ -4,6 +4,24 @@
  * @dependencies none
  */
 
+/** Slugs removed from browse/sell pickers; legacy DB rows may remain for existing listings. */
+export const IPHONE_CATALOG_RETIRED_SLUGS = ["iphone-se-2"] as const;
+
+/**
+ * isRetiredCatalogSlug
+ *
+ * Returns whether a model slug is retired from new marketplace pickers.
+ *
+ * @param slug - IphoneModel slug.
+ * @returns True when the slug must not appear in Explorar or new sell flows.
+ * @calledBy getCatalog, listIphoneModels, listing create/update actions
+ */
+export function isRetiredCatalogSlug(
+  slug: string,
+): slug is (typeof IPHONE_CATALOG_RETIRED_SLUGS)[number] {
+  return (IPHONE_CATALOG_RETIRED_SLUGS as readonly string[]).includes(slug);
+}
+
 export const IPHONE_PRODUCT_LINES = [
   "IPHONE",
   "IPHONE_SE",
@@ -130,21 +148,10 @@ const C17_PRO = ["Plata", "Naranja cósmico", "Azul profundo"];
 const C_AIR = ["Negro espacial", "Blanco nube", "Oro claro", "Azul cielo"];
 
 /**
- * Required 28-model catalog from iPhone 12 / SE (2nd gen) through iPhone 17e.
+ * Required 28-model catalog from iPhone 12 through iPhone 17e (SE 3/4 on IPHONE_SE).
  * Product line is explicit: SE and Air are not numbered-generation variants.
  */
 export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
-  {
-    name: "iPhone SE (2.ª generación)",
-    slug: "iphone-se-2",
-    productLine: "IPHONE_SE",
-    generation: 2,
-    variantType: "STANDARD",
-    releaseYear: 2020,
-    sortOrder: 1,
-    storageGb: GB_64_256,
-    colorNames: ["Blanco", "Negro", "(PRODUCT)RED"],
-  },
   {
     name: "iPhone 12 mini",
     slug: "iphone-12-mini",
@@ -152,7 +159,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 12,
     variantType: "MINI",
     releaseYear: 2020,
-    sortOrder: 2,
+    sortOrder: 1,
     storageGb: GB_64_256,
     colorNames: C12,
   },
@@ -163,7 +170,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 12,
     variantType: "STANDARD",
     releaseYear: 2020,
-    sortOrder: 3,
+    sortOrder: 2,
     storageGb: GB_64_256,
     colorNames: C12,
   },
@@ -174,7 +181,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 12,
     variantType: "PRO",
     releaseYear: 2020,
-    sortOrder: 4,
+    sortOrder: 3,
     storageGb: GB_128_512,
     colorNames: C12_PRO,
   },
@@ -185,7 +192,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 12,
     variantType: "PRO_MAX",
     releaseYear: 2020,
-    sortOrder: 5,
+    sortOrder: 4,
     storageGb: GB_128_512,
     colorNames: C12_PRO,
   },
@@ -196,7 +203,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 13,
     variantType: "MINI",
     releaseYear: 2021,
-    sortOrder: 6,
+    sortOrder: 5,
     storageGb: GB_128_512,
     colorNames: C13,
   },
@@ -207,7 +214,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 13,
     variantType: "STANDARD",
     releaseYear: 2021,
-    sortOrder: 7,
+    sortOrder: 6,
     storageGb: GB_128_512,
     colorNames: C13,
   },
@@ -218,7 +225,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 13,
     variantType: "PRO",
     releaseYear: 2021,
-    sortOrder: 8,
+    sortOrder: 7,
     storageGb: GB_128_1TB,
     colorNames: C13_PRO,
   },
@@ -229,7 +236,7 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 13,
     variantType: "PRO_MAX",
     releaseYear: 2021,
-    sortOrder: 9,
+    sortOrder: 8,
     storageGb: GB_128_1TB,
     colorNames: C13_PRO,
   },
@@ -240,9 +247,20 @@ export const IPHONE_CATALOG_MODELS: CatalogModelSeed[] = [
     generation: 3,
     variantType: "STANDARD",
     releaseYear: 2022,
-    sortOrder: 10,
+    sortOrder: 9,
     storageGb: GB_64_256,
     colorNames: ["(PRODUCT)RED", "Luz de estrellas", "Medianoche"],
+  },
+  {
+    name: "iPhone SE (4.ª generación)",
+    slug: "iphone-se-4",
+    productLine: "IPHONE_SE",
+    generation: 4,
+    variantType: "STANDARD",
+    releaseYear: 2025,
+    sortOrder: 10,
+    storageGb: GB_128_512,
+    colorNames: ["Negro", "Blanco"],
   },
   {
     name: "iPhone 14",

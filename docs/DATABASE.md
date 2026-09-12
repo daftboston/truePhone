@@ -133,12 +133,12 @@ Numbered models (12–17, including `e` variants), the SE line, and iPhone Air a
 | Field         | Meaning                                                              |
 | ------------- | -------------------------------------------------------------------- |
 | `productLine` | Independent commercial line                                          |
-| `generation`  | Generation **within that line** (SE 2/3, numbered 12–17, Air 1)      |
+| `generation`  | Generation **within that line** (SE 3/4, numbered 12–17, Air 1)      |
 | `variantType` | `STANDARD` \| `MINI` \| `PLUS` \| `PRO` \| `PRO_MAX` \| `E` \| `AIR` |
 | `releaseYear` | Commercial introduction year                                         |
 | `sortOrder`   | Stable catalog order (1 = oldest in the 2020+ set)                   |
 
-Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts`. Apply them with `npm run db:seed` (local / first provision). Browse and sell also backfill missing slugs via `ensureIphoneCatalog` so `/explorar` does not stay on the original 13-model seed. Production `npm run build` migrates only — it does not seed.
+Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts`. Retired slugs (currently `iphone-se-2`) stay in Postgres for legacy listings but are filtered out of Explorar and new sell pickers via `IPHONE_CATALOG_RETIRED_SLUGS`. Apply the catalog with `npm run db:seed` (local / first provision). Browse and sell also backfill missing slugs via `ensureIphoneCatalog` so `/explorar` does not stay on the original 13-model seed. Production `npm run build` migrates only — it does not seed.
 
 Explorar product shots (front/back hover flip) are static files in `public/catalog/` named `{slug}-front.webp` and `{slug}-back.webp`. See `public/catalog/README.md`. Seller listing photos stay in the Supabase `listing-images` bucket.
 
