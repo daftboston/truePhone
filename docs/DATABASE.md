@@ -33,6 +33,7 @@ When schema and this doc disagree, update both in the same change.
 - `prisma db push` is acceptable for early local prototyping only
 - Always run `prisma generate` after schema changes
 - Never commit `.env`
+- **CI (plain Postgres):** GitHub Actions runs `scripts/ci/prepare-supabase-compat.sql` before `npm run build` so migrations that reference Supabase roles (`authenticated`, `anon`) or `auth.uid()` can apply on the service database. The script creates NOLOGIN role stubs and a stub `auth.uid()` returning NULL. Production Supabase keeps the real roles and function — never remove the CI prep step or rewrite applied migration checksums for CI convenience.
 
 ---
 

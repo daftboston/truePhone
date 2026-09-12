@@ -57,6 +57,14 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Prepare Supabase-compatible roles for CI
+        run: psql "$DIRECT_URL" -v ON_ERROR_STOP=1 -f scripts/ci/prepare-supabase-compat.sql
+        env:
+          DIRECT_URL: postgresql://user:pass@localhost:5432/truephone
+
       - name: Build
         run: npm run build
         env:
