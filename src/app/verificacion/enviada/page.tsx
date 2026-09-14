@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { getLatestIdentityVerification } from "@/lib/auth/identity";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { kycSubmittedDescription } from "@/lib/review-wait-copy";
 
 export const metadata: Metadata = {
   title: "Verificación enviada",
@@ -45,7 +46,7 @@ export default async function VerificationSubmittedPage() {
     <AppShell mainClassName="max-w-lg justify-center">
       <EmptyState
         title="Recibimos tu verificación"
-        description="Un revisor de TruePhone confirmará tu identidad. Te avisaremos cuando puedas publicar anuncios."
+        description={kycSubmittedDescription()}
         action={
           <Button asChild>
             <Link href="/perfil">Ir a tu perfil</Link>

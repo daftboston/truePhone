@@ -1,17 +1,19 @@
 /**
  * @file profile-header.tsx
- * @description Public/account profile header with avatar, badges, and seller stats.
- * @dependencies TrustBadge, Avatar, Badge, profile types, @/lib/utils
+ * @description Public/account profile header with avatar, badges, stats, and activity strip.
+ * @changelog 2026-09-11 — headingLevel so the account hub keeps a single h1.
  */
 
 import { TrustBadge } from "@/components/trust-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { PublicActivityStrip } from "@/features/profile/components/public-activity-strip";
 import {
   formatMemberSince,
   formatSellerRating,
   isIdentityVerified,
 } from "@/features/profile/types";
+import type { PublicActivityCounts } from "@/lib/profile-activity";
 import { cn } from "@/lib/utils";
 
 type ProfileHeaderProps = {
@@ -27,7 +29,10 @@ type ProfileHeaderProps = {
   isTrustedSeller: boolean;
   verifikStatus: string;
   createdAt: Date;
+  activity: PublicActivityCounts;
   className?: string;
+  /** Public profile uses h1; the account hub already has a page h1. */
+  headingLevel?: "h1" | "h2";
 };
 
 /**
@@ -54,7 +59,8 @@ function initials(name: string | null) {
  *
  * Renders identity, trust badges, bio, and seller metrics for a profile.
  *
- * @param props - Profile display fields and seller aggregates.
+ * @param props - Profile display fields, seller aggregates, and public activity.
+ * @param props.headingLevel - Name heading tag. Defaults to h1 on public profiles.
  * @returns Profile header section.
  * @calledBy profile and public `/u/[username]` pages
  */
@@ -71,10 +77,13 @@ export function ProfileHeader({
   isTrustedSeller,
   verifikStatus,
   createdAt,
+  activity,
   className,
+  headingLevel = "h1",
 }: ProfileHeaderProps) {
   const location = [city, department].filter(Boolean).join(", ");
   const displayName = fullName ?? username ?? "Usuario TruePhone";
+  const NameHeading = headingLevel;
 
   return (
     <div className={cn("space-y-5", className)}>
@@ -88,9 +97,9 @@ export function ProfileHeader({
 
         <div className="min-w-0 flex-1 space-y-2">
           <div className="space-y-1">
-            <h1 className="text-foreground text-xl font-semibold tracking-tight md:text-2xl">
+            <NameHeading className="text-foreground text-xl font-semibold tracking-tight md:text-2xl">
               {displayName}
-            </h1>
+            </NameHeading>
             {username ? (
               <p className="text-muted-foreground text-sm">@{username}</p>
             ) : null}
@@ -106,6 +115,8 @@ export function ProfileHeader({
           </div>
         </div>
       </div>
+
+      <PublicActivityStrip counts={activity} />
 
       {bio ? (
         <p className="text-foreground text-sm leading-relaxed">{bio}</p>

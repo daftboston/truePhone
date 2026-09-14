@@ -7,6 +7,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { sellerBankAccountSchema } from "@/features/payouts/schemas/bank-account";
 import {
@@ -24,7 +25,7 @@ import { findColombiaBank } from "@/lib/payments/colombia-banks";
  *
  * @param _prev - Previous form state from useActionState.
  * @param formData - Bank account form fields.
- * @returns PayoutActionState with success message or validation errors.
+ * @returns PayoutActionState on validation errors; redirects to /pagos?guardado=1 on success.
  * @calledBy SellerBankForm
  */
 export async function upsertSellerBankAccountAction(
@@ -81,8 +82,5 @@ export async function upsertSellerBankAccountAction(
   revalidatePath("/pagos");
   revalidatePath("/ventas");
 
-  return {
-    ok: true,
-    message: "Cuenta bancaria guardada. La usaremos para enviarte el pago.",
-  };
+  redirect("/pagos?guardado=1");
 }

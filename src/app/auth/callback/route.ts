@@ -29,14 +29,22 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data.user) {
+      const meta = data.user.user_metadata ?? {};
+      const given =
+        typeof meta.given_name === "string" ? meta.given_name.trim() : "";
+      const family =
+        typeof meta.family_name === "string" ? meta.family_name.trim() : "";
+      const combinedName = [given, family].filter(Boolean).join(" ");
+      const fullName =
+        typeof meta.full_name === "string" && meta.full_name.trim()
+          ? meta.full_name.trim()
+          : typeof meta.name === "string" && meta.name.trim()
+            ? meta.name.trim()
+            : combinedName || null;
+
       await ensureProfile({
         authUserId: data.user.id,
-        fullName:
-          typeof data.user.user_metadata?.full_name === "string"
-            ? data.user.user_metadata.full_name
-            : typeof data.user.user_metadata?.name === "string"
-              ? data.user.user_metadata.name
-              : null,
+        fullName,
       });
 
       return NextResponse.redirect(new URL(next, origin));

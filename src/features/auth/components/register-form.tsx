@@ -3,10 +3,11 @@
 /**
  * @file register-form.tsx
  * @description Client form for email/password registration with Google OAuth option.
- * @dependencies react, registerAction, GoogleSignInButton, design-system inputs
+ * @dependencies react, next/link, registerAction, GoogleSignInButton, @/lib/legal, design-system inputs
  */
 
 import { useActionState } from "react";
+import Link from "next/link";
 
 import { registerAction } from "@/features/auth/actions/auth";
 import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
@@ -14,6 +15,37 @@ import type { AuthActionState } from "@/features/auth/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LEGAL_PATHS } from "@/lib/legal";
+
+/**
+ * SignupLegalNotice
+ *
+ * States that creating an account accepts terms and privacy.
+ *
+ * @returns Compact Spanish notice with legal links.
+ * @calledBy RegisterForm
+ */
+function SignupLegalNotice() {
+  return (
+    <p className="text-muted-foreground text-center text-xs leading-relaxed">
+      Al crear una cuenta aceptas los{" "}
+      <Link
+        href={LEGAL_PATHS.terms}
+        className="text-foreground font-medium underline-offset-2 hover:underline"
+      >
+        Términos
+      </Link>{" "}
+      y la{" "}
+      <Link
+        href={LEGAL_PATHS.privacy}
+        className="text-foreground font-medium underline-offset-2 hover:underline"
+      >
+        Privacidad
+      </Link>
+      .
+    </p>
+  );
+}
 
 /**
  * RegisterForm
@@ -40,7 +72,10 @@ export function RegisterForm() {
 
   return (
     <div className="space-y-5">
-      <GoogleSignInButton next="/perfil" />
+      <div className="space-y-2">
+        <GoogleSignInButton next="/perfil" />
+        <SignupLegalNotice />
+      </div>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center" aria-hidden>
@@ -131,6 +166,7 @@ export function RegisterForm() {
         <Button type="submit" fullWidth loading={pending}>
           Crear cuenta
         </Button>
+        <SignupLegalNotice />
       </form>
     </div>
   );

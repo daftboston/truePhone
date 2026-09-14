@@ -3,7 +3,8 @@
 /**
  * @file listings.ts
  * @description Server actions for listings (listings.ts).
- * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/lib/listings
+ * @dependencies next/cache, next/navigation, @/features/listings/schemas/listing, @/features/listings/types, @/features/listings/lib/seller-listing-hub, @/lib/listings
+ * @changelog 2026-08-25 — Gallery uploads target a displayOrder slot and replace in place.
  */
 
 import { revalidatePath } from "next/cache";
@@ -23,6 +24,13 @@ import {
 } from "@/features/listings/schemas/listing";
 import {
   fieldErrorsFromZod,
+  galleryImageAtOrder,
+  isGuidedGalleryComplete,
+  isGuidedSlotIndex,
+  isValidGalleryDisplayOrder,
+  LISTING_EXTRA_PHOTO_START,
+  MAX_LISTING_GALLERY_PHOTOS,
+  MIN_LISTING_GALLERY_PHOTOS,
   type ListingActionState,
 } from "@/features/listings/types";
 import {
@@ -32,11 +40,20 @@ import {
   isStorageAllowedForModel,
   requireVerifiedSeller,
 } from "@/lib/listings";
+import { isRetiredCatalogSlug } from "@/lib/iphone-catalog-data";
+import {
+  canArchiveListing,
+  canRelistListing,
+  listingHadPaidOrder,
+} from "@/features/listings/lib/seller-listing-hub";
+import { listingWizardNextPath } from "@/features/listings/lib/listing-wizard-intent";
+import { publicListingPath } from "@/lib/listings-marketplace";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
 
 const LISTING_BUCKET = "listing-images";
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+/** Matches next.config.ts experimental.serverActions.bodySizeLimit. */
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 /**
@@ -71,7 +88,7 @@ async function uploadListingImage(
     return { error: "Usa una imagen JPG, PNG o WebP." };
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return { error: "La imagen debe pesar máximo 5 MB." };
+    return { error: "La imagen debe pesar máximo 4 MB." };
   }
 
   const extension = file.type.split("/")[1] ?? "jpg";
@@ -152,6 +169,13 @@ export async function createListingAction(
     return { ok: false, error: "Modelo, color o almacenamiento no válido." };
   }
 
+  if (isRetiredCatalogSlug(model.slug)) {
+    return {
+      ok: false,
+      error: "Este modelo ya no está disponible para nuevos anuncios.",
+    };
+  }
+
   const colorAllowed = await isColorAllowedForModel(model.id, color.id);
   if (!colorAllowed) {
     return {
@@ -211,7 +235,12 @@ export async function createListingAction(
   });
 
   revalidatePath("/vender");
-  redirect(`/vender/${listing.id}/fotos`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/fotos`,
+    ),
+  );
 }
 
 /**
@@ -272,6 +301,13 @@ export async function updateListingDetailsAction(
     return { ok: false, error: "Modelo, color o almacenamiento no válido." };
   }
 
+  if (isRetiredCatalogSlug(model.slug) && model.id !== listing.iphoneModelId) {
+    return {
+      ok: false,
+      error: "Este modelo ya no está disponible para nuevos anuncios.",
+    };
+  }
+
   const colorAllowed = await isColorAllowedForModel(model.id, color.id);
   if (!colorAllowed) {
     return {
@@ -317,22 +353,30 @@ export async function updateListingDetailsAction(
 
   revalidatePath(`/vender/${listing.id}`);
   revalidatePath("/vender");
-  redirect(`/vender/${listing.id}/fotos`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/fotos`,
+    ),
+  );
 }
 
 /**
  * uploadListingGalleryAction
  *
- * Server action: upload listing gallery for authenticated listings flows.
+ * Uploads a gallery photo into a specific slot index. Guided slots (0–7) map
+ * 1:1 to Frente…IMEI; 8+ are optional extras. An existing image at that
+ * displayOrder is replaced in place so other angles do not shift.
  *
- * @param _prev - Previous form state from useActionState when applicable.
- * @param formDataOrArgs - FormData or typed action arguments.
- * @returns Action state on errors; may redirect on success.
- * @calledBy listings components
+ * @param listingId - Draft listing id.
+ * @param displayOrder - Target slot index (0..MAX_LISTING_GALLERY_PHOTOS-1).
+ * @param formData - Multipart body with the `image` file.
+ * @returns Action state; ok when the slot is filled or replaced.
+ * @calledBy GalleryUploadForm
  */
 export async function uploadListingGalleryAction(
   listingId: string,
-  _prev: ListingActionState,
+  displayOrder: number,
   formData: FormData,
 ): Promise<ListingActionState> {
   const seller = await requireVerifiedSeller();
@@ -345,9 +389,33 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: "Solo puedes editar borradores." };
   }
 
+  if (!isValidGalleryDisplayOrder(displayOrder)) {
+    return { ok: false, error: "Ese espacio de foto no es válido." };
+  }
+
   const file = formData.get("image");
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Selecciona una foto." };
+  }
+
+  const gallery = listing.images.filter(
+    (image) => image.imageType === "gallery",
+  );
+  const existing = galleryImageAtOrder(gallery, displayOrder);
+
+  if (!existing && gallery.length >= MAX_LISTING_GALLERY_PHOTOS) {
+    return {
+      ok: false,
+      error: `Máximo ${MAX_LISTING_GALLERY_PHOTOS} fotos. Elimina una para reemplazarla.`,
+    };
+  }
+
+  // Extras are optional detail shots — only after every guided angle exists.
+  if (!isGuidedSlotIndex(displayOrder) && !isGuidedGalleryComplete(gallery)) {
+    return {
+      ok: false,
+      error: `Completa las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas antes de agregar extras.`,
+    };
   }
 
   const upload = await uploadListingImage(
@@ -360,16 +428,21 @@ export async function uploadListingGalleryAction(
     return { ok: false, error: upload.error };
   }
 
-  const nextOrder = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
+  if (existing) {
+    await prisma.listingImage.update({
+      where: { id: existing.id },
+      data: { imageUrl: upload.url },
+    });
+    revalidatePath(`/vender/${listing.id}/fotos`);
+    return { ok: true, message: "Foto actualizada." };
+  }
 
   await prisma.listingImage.create({
     data: {
       listingId: listing.id,
       imageUrl: upload.url,
       imageType: "gallery",
-      displayOrder: nextOrder,
+      displayOrder,
     },
   });
 
@@ -398,13 +471,13 @@ export async function continueFromPhotosAction(listingId: string) {
     return { ok: false as const, error: "Anuncio no encontrado." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount < 1) {
+  const gallery = listing.images.filter(
+    (image) => image.imageType === "gallery",
+  );
+  if (!isGuidedGalleryComplete(gallery)) {
     return {
       ok: false as const,
-      error: "Agrega al menos una foto del dispositivo.",
+      error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
     };
   }
 
@@ -488,7 +561,12 @@ export async function updateListingSecurityAction(
   });
 
   revalidatePath(`/vender/${listing.id}`);
-  redirect(`/vender/${listing.id}/posesion`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/posesion`,
+    ),
+  );
 }
 
 /**
@@ -521,7 +599,14 @@ export async function uploadPossessionPhotoAction(
   }
 
   const file = formData.get("possessionImage");
-  if (!(file instanceof File) || file.size === 0) {
+  const hasNewFile = file instanceof File && file.size > 0;
+  const saveExit = formData.get("intent") === "save_exit";
+
+  if (!hasNewFile) {
+    if (saveExit) {
+      revalidatePath("/vender");
+      redirect("/vender?borrador=ok");
+    }
     return {
       ok: false,
       error: "Sube una foto del iPhone mostrando el código.",
@@ -560,7 +645,12 @@ export async function uploadPossessionPhotoAction(
   ]);
 
   revalidatePath(`/vender/${listing.id}/posesion`);
-  redirect(`/vender/${listing.id}/revisar`);
+  redirect(
+    listingWizardNextPath(
+      formData.get("intent"),
+      `/vender/${listing.id}/revisar`,
+    ),
+  );
 }
 
 /**
@@ -586,11 +676,14 @@ export async function submitListingForReviewAction(
     return { ok: false, error: "Solo puedes enviar borradores." };
   }
 
-  const galleryCount = listing.images.filter(
-    (i) => i.imageType === "gallery",
-  ).length;
-  if (galleryCount < 1) {
-    return { ok: false, error: "Agrega al menos una foto del dispositivo." };
+  const gallery = listing.images.filter(
+    (image) => image.imageType === "gallery",
+  );
+  if (!isGuidedGalleryComplete(gallery)) {
+    return {
+      ok: false,
+      error: `Agrega las ${MIN_LISTING_GALLERY_PHOTOS} fotos guiadas del dispositivo.`,
+    };
   }
   if (!listing.imeiHash) {
     return { ok: false, error: "Completa el IMEI y la seguridad del equipo." };
@@ -710,6 +803,29 @@ export async function deleteListingGalleryImageAction(
   }
 
   await prisma.listingImage.delete({ where: { id: image.id } });
+
+  // Guided slots keep their indexes so deleting Frente does not slide Reverso
+  // into that hole. Extra photos (8+) are compacted so the next extra is next.
+  if (image.displayOrder >= LISTING_EXTRA_PHOTO_START) {
+    const extras = await prisma.listingImage.findMany({
+      where: {
+        listingId: listing.id,
+        imageType: "gallery",
+        displayOrder: { gte: LISTING_EXTRA_PHOTO_START },
+      },
+      orderBy: { displayOrder: "asc" },
+      select: { id: true },
+    });
+    await Promise.all(
+      extras.map((item, index) =>
+        prisma.listingImage.update({
+          where: { id: item.id },
+          data: { displayOrder: LISTING_EXTRA_PHOTO_START + index },
+        }),
+      ),
+    );
+  }
+
   revalidatePath(`/vender/${listing.id}/fotos`);
   return { ok: true, message: "Foto eliminada." };
 }
@@ -741,6 +857,125 @@ export async function deleteDraftListingAction(listingId: string) {
   });
 
   revalidatePath("/vender");
+  redirect("/vender");
+}
+
+/**
+ * revalidateSellerListingHub
+ *
+ * Refreshes seller hub routes and the public listing page after archive/relist.
+ *
+ * @param listingId - Listing UUID.
+ * @param slug - Public slug when present.
+ * @returns void
+ * @calledBy archiveListingAction, relistListingAction
+ */
+function revalidateSellerListingHub(listingId: string, slug: string | null) {
+  revalidatePath("/vender");
+  revalidatePath("/vender", "layout");
+  revalidatePath(`/vender/${listingId}`);
+  if (slug) {
+    revalidatePath(publicListingPath(slug));
+  }
+}
+
+/**
+ * archiveListingAction
+ *
+ * Seller-archives a published listing. It leaves the marketplace and appears
+ * under Archivados. Relist is allowed later if no paid order exists.
+ *
+ * @param listingId - Listing UUID owned by the current seller.
+ * @returns Error state, or redirects to Archivados on success.
+ * @calledBy SellerListingActions
+ */
+export async function archiveListingAction(listingId: string) {
+  const seller = await requireVerifiedSeller();
+  if (!seller.ok) {
+    return { ok: false as const, error: seller.error };
+  }
+
+  const listing = await getOwnedListing(listingId, seller.current.profile.id);
+  if (!listing || !canArchiveListing(listing.status)) {
+    return {
+      ok: false as const,
+      error: "Solo puedes archivar anuncios publicados.",
+    };
+  }
+
+  await prisma.listing.update({
+    where: { id: listing.id },
+    data: { status: "ARCHIVED" },
+  });
+
+  revalidateSellerListingHub(listing.id, listing.slug);
+  redirect("/vender?vista=archivados");
+}
+
+/**
+ * relistListingAction
+ *
+ * Restores a seller-archived listing to PUBLISHED immediately. Blocked when
+ * any related order reached payment (system archive after sale/cancel).
+ *
+ * @param listingId - Listing UUID owned by the current seller.
+ * @returns Error state, or redirects to Anuncios activos on success.
+ * @calledBy SellerListingActions
+ */
+export async function relistListingAction(listingId: string) {
+  const seller = await requireVerifiedSeller();
+  if (!seller.ok) {
+    return { ok: false as const, error: seller.error };
+  }
+
+  const listing = await getOwnedListing(listingId, seller.current.profile.id);
+  if (!listing) {
+    return { ok: false as const, error: "Anuncio no encontrado." };
+  }
+
+  const paidOrder = await prisma.order.findFirst({
+    where: {
+      listingId: listing.id,
+      OR: [
+        { status: { in: ["PAID", "COMPLETED"] } },
+        { fundsHeldAt: { not: null } },
+      ],
+    },
+    select: { id: true, status: true, fundsHeldAt: true },
+  });
+  const hadPaidOrder = listingHadPaidOrder(paidOrder ? [paidOrder] : []);
+
+  if (!canRelistListing({ status: listing.status, hadPaidOrder })) {
+    return {
+      ok: false as const,
+      error: "Este anuncio no se puede volver a publicar.",
+    };
+  }
+
+  if (listing.imeiHash) {
+    const duplicate = await prisma.listing.findFirst({
+      where: {
+        imeiHash: listing.imeiHash,
+        deletedAt: null,
+        NOT: { id: listing.id },
+        status: { notIn: ["ARCHIVED", "REJECTED"] },
+      },
+      select: { id: true },
+    });
+    if (duplicate) {
+      return {
+        ok: false as const,
+        error: "Ya existe un anuncio con este IMEI en TruePhone.",
+      };
+    }
+  }
+
+  await prisma.listing.update({
+    where: { id: listing.id },
+    data: { status: "PUBLISHED" },
+  });
+
+  revalidateSellerListingHub(listing.id, listing.slug);
   redirect("/vender");
 }
 

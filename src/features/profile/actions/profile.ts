@@ -120,7 +120,7 @@ export async function updateProfileAction(
     revalidatePath(`/u/${updated.username}`);
   }
 
-  redirect("/perfil");
+  redirect("/perfil?guardado=1");
 }
 
 /**
@@ -207,7 +207,7 @@ export async function uploadAvatarAction(
  *
  * @param _prev - Previous form state from useActionState.
  * @param formData - password, confirmPassword.
- * @returns ProfileActionState with success message or validation/auth error.
+ * @returns ProfileActionState on errors; redirects to the hub on success.
  * @calledBy ChangePasswordForm
  */
 export async function changePasswordAction(
@@ -244,5 +244,6 @@ export async function changePasswordAction(
     };
   }
 
-  return { ok: true, message: "Tu contraseña ha sido actualizada." };
+  revalidatePath("/perfil");
+  redirect("/perfil?contrasena=ok");
 }

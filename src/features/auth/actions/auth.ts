@@ -2,7 +2,7 @@
 
 /**
  * @file auth.ts
- * @description Server actions for email/password auth, Google OAuth, recovery, and logout.
+ * @description Server actions for email/password auth, Google/Apple OAuth, recovery, and logout.
  * @dependencies next/navigation, auth schemas/types, ensureProfile, Supabase server client
  */
 
@@ -213,7 +213,7 @@ export async function recoverAction(
  *
  * @param _prev - Previous form state from useActionState.
  * @param formData - password, confirmPassword.
- * @returns AuthActionState on errors; redirects to `/perfil` on success.
+ * @returns AuthActionState on errors; redirects to `/perfil?contrasena=ok` on success.
  * @calledBy UpdatePasswordForm
  */
 export async function updatePasswordAction(
@@ -253,7 +253,34 @@ export async function updatePasswordAction(
     return { ok: false, error: authErrorMessage(error.message) };
   }
 
-  redirect("/perfil");
+  redirect("/perfil?contrasena=ok");
+}
+
+/**
+ * startOAuthSignIn
+ *
+ * Shared Supabase OAuth redirect for social providers.
+ *
+ * @param provider - Supabase Auth provider id (`google` or `apple`).
+ * @param next - Optional post-login path passed through the auth callback.
+ * @returns Error object when OAuth URL cannot be created; otherwise redirects.
+ * @calledBy signInWithGoogleAction, signInWithAppleAction
+ */
+async function startOAuthSignIn(provider: "google" | "apple", next?: string) {
+  const origin = await getRequestOrigin();
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNextPath(next))}`,
+    },
+  });
+
+  if (error || !data.url) {
+    return { ok: false as const, error: authErrorMessage(error?.message) };
+  }
+
+  redirect(data.url);
 }
 
 /**
@@ -266,20 +293,22 @@ export async function updatePasswordAction(
  * @calledBy GoogleSignInButton
  */
 export async function signInWithGoogleAction(next?: string) {
-  const origin = await getRequestOrigin();
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNextPath(next))}`,
-    },
-  });
+  return startOAuthSignIn("google", next);
+}
 
-  if (error || !data.url) {
-    return { ok: false as const, error: authErrorMessage(error?.message) };
-  }
-
-  redirect(data.url);
+/**
+ * signInWithAppleAction
+ *
+ * Starts Apple OAuth and redirects to the provider URL.
+ * Requires Apple enabled in the Supabase Auth providers dashboard
+ * (see docs/AUTH_SOCIAL.md). Supports Hide My Email private relay addresses.
+ *
+ * @param next - Optional post-login path passed through the auth callback.
+ * @returns Error object when OAuth URL cannot be created; otherwise redirects.
+ * @calledBy AppleSignInButton
+ */
+export async function signInWithAppleAction(next?: string) {
+  return startOAuthSignIn("apple", next);
 }
 
 /**

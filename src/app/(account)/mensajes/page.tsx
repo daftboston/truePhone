@@ -10,6 +10,7 @@ import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { ConversationList } from "@/features/messages/components/conversation-list";
+import { ThreadLiveSubscriber } from "@/features/messages/components/thread-live-subscriber";
 import {
   canAccessReviewPortal,
   requireCurrentProfile,
@@ -34,6 +35,7 @@ export default async function MessagesInboxPage() {
 
   return (
     <>
+      <ThreadLiveSubscriber />
       <div className="space-y-2">
         <h1 className="text-foreground text-xl font-semibold tracking-tight">
           Mensajes
@@ -50,6 +52,11 @@ export default async function MessagesInboxPage() {
           action={
             <Button asChild>
               <Link href="/explorar">Explorar iPhones</Link>
+            </Button>
+          }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda">Preguntas frecuentes</Link>
             </Button>
           }
         />

@@ -59,4 +59,66 @@ describe("isAccountNavItemActive", () => {
       false,
     );
   });
+
+  it("distinguishes Anuncios activos from Archivados via vista", () => {
+    assert.equal(isAccountNavItemActive("/vender", { href: "/vender" }), true);
+    assert.equal(
+      isAccountNavItemActive(
+        "/vender",
+        { href: "/vender?vista=archivados" },
+        "vista=archivados",
+      ),
+      true,
+    );
+    assert.equal(
+      isAccountNavItemActive(
+        "/vender",
+        { href: "/vender" },
+        "vista=archivados",
+      ),
+      false,
+    );
+    assert.equal(
+      isAccountNavItemActive("/vender", {
+        href: "/vender?vista=archivados",
+      }),
+      false,
+    );
+    assert.equal(
+      isAccountNavItemActive(
+        "/vender",
+        { href: "/vender" },
+        "q=pro&orden=price_asc",
+      ),
+      true,
+    );
+    assert.equal(
+      isAccountNavItemActive(
+        "/vender",
+        { href: "/vender?vista=archivados" },
+        "?vista=archivados&q=pro",
+      ),
+      true,
+    );
+  });
+
+  it("highlights Contraseña on /perfil/seguridad, not the Perfil hub", () => {
+    assert.equal(
+      isAccountNavItemActive("/perfil/seguridad", {
+        href: "/perfil/seguridad",
+      }),
+      true,
+    );
+    assert.equal(
+      isAccountNavItemActive("/perfil/seguridad", {
+        href: "/perfil",
+        exact: true,
+      }),
+      false,
+    );
+    assert.equal(
+      isAccountNavItemActive("/perfil", { href: "/perfil", exact: true }),
+      true,
+    );
+  });
 });

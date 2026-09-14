@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { getProfileByAuthUserId } from "@/lib/auth/profile";
 import { getAuthUser } from "@/lib/auth/session";
 import { listIphoneModels } from "@/lib/listings";
+import { countUnreadNotifications } from "@/lib/notifications";
 import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
 type AppShellProps = {
@@ -39,6 +40,9 @@ export async function AppShell({
     listIphoneModels(),
   ]);
   const profile = user ? await getProfileByAuthUserId(user.id) : null;
+  const unreadNotifications = profile
+    ? await countUnreadNotifications(profile.id)
+    : 0;
 
   return (
     <div
@@ -50,6 +54,7 @@ export async function AppShell({
       <AppHeader
         isAuthenticated={Boolean(user)}
         catalogModels={catalogModels}
+        unreadNotifications={unreadNotifications}
         user={
           profile
             ? {

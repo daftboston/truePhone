@@ -2,11 +2,11 @@
 
 /**
  * @file model-search.tsx
- * @description ModelSearch component for the listings feature.tsx.
+ * @description ModelSearch typeahead for listing browse, with catalog glyphs.
  * @dependencies lucide-react, next/link, next/navigation, react, @/lib/iphone-catalog
  */
 
-import { Search, Smartphone } from "lucide-react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -18,6 +18,8 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+
+import { IphoneModelGlyph } from "@/components/iphone-model-glyph";
 
 import {
   browseModelHref,
@@ -31,6 +33,7 @@ type ModelSearchProps = {
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
+  compensationId?: string;
 };
 
 /**
@@ -47,6 +50,7 @@ export function ModelSearch({
   placeholder = "Buscar iPhone…",
   className,
   autoFocus = false,
+  compensationId,
 }: ModelSearchProps) {
   const router = useRouter();
   const listId = useId();
@@ -59,6 +63,10 @@ export function ModelSearch({
   const showResults = open && deferredQuery.trim().length > 0;
   const safeActiveIndex =
     results.length === 0 ? 0 : Math.min(activeIndex, results.length - 1);
+  const withCompensation = (href: string) =>
+    compensationId
+      ? `${href}${href.includes("?") ? "&" : "?"}compensacion=${encodeURIComponent(compensationId)}`
+      : href;
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -73,7 +81,7 @@ export function ModelSearch({
   function goToModel(modelId: string) {
     setOpen(false);
     setQuery("");
-    router.push(browseModelHref(modelId));
+    router.push(withCompensation(browseModelHref(modelId)));
   }
 
   function onSubmit(event: FormEvent) {
@@ -82,7 +90,13 @@ export function ModelSearch({
       goToModel(results[0].id);
       return;
     }
-    router.push("/explorar");
+    const trimmed = query.trim();
+    if (trimmed) {
+      setOpen(false);
+      router.push(withCompensation(`/buscar?q=${encodeURIComponent(trimmed)}`));
+      return;
+    }
+    router.push(withCompensation("/explorar"));
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -155,11 +169,13 @@ export function ModelSearch({
             <li className="text-muted-foreground px-3 py-3 text-sm">
               No encontramos ese modelo.{" "}
               <Link
-                href="/explorar"
+                href={withCompensation(
+                  `/buscar?q=${encodeURIComponent(deferredQuery.trim())}`,
+                )}
                 className="text-foreground font-medium underline-offset-2 hover:underline"
                 onClick={() => setOpen(false)}
               >
-                Ver catálogo
+                Buscar anuncios
               </Link>
             </li>
           ) : (
@@ -180,8 +196,11 @@ export function ModelSearch({
                       : "text-foreground hover:bg-muted/70",
                   )}
                 >
-                  <span className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-lg">
-                    <Smartphone className="size-5" aria-hidden />
+                  <span className="bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                    <IphoneModelGlyph
+                      model={model}
+                      className="h-[78%] w-auto"
+                    />
                   </span>
                   <span className="min-w-0">
                     <span className="block truncate font-medium">

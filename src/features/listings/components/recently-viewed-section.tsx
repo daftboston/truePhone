@@ -3,13 +3,14 @@
 /**
  * @file recently-viewed-section.tsx
  * @description RecentlyViewedSection component for the listings feature.tsx.
- * @dependencies next/link, react, @/components/listing-card, @/features/listings/actions/recently-viewed, @/features/listings/schemas/listing
+ * @dependencies next/link, react, @/components/listing-card, @/features/listings/actions/recently-viewed, @/lib/recently-viewed
  */
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { ListingCard } from "@/components/listing-card";
+import { ListingCardSkeleton } from "@/components/loading-skeleton";
 import { getRecentlyViewedListingsAction } from "@/features/listings/actions/recently-viewed";
 import { conditionLabels } from "@/features/listings/schemas/listing";
 import { readRecentlyViewed } from "@/lib/recently-viewed";
@@ -26,42 +27,93 @@ type RecentCard = {
   verified: boolean;
 };
 
+const EMPTY_SLUGS_JSON = "[]";
+
+/**
+ * subscribeRecentlyViewed
+ *
+ * No-op subscribe: recently-viewed is read once per mount from localStorage.
+ *
+ * @returns Unsubscribe function.
+ * @calledBy useSyncExternalStore in RecentlyViewedSection
+ */
+function subscribeRecentlyViewed() {
+  return () => {};
+}
+
+/**
+ * getRecentlyViewedSlugsSnapshot
+ *
+ * Serializes up to four stored slugs so the snapshot is referentially stable.
+ *
+ * @returns JSON array of listing slugs.
+ * @calledBy useSyncExternalStore in RecentlyViewedSection
+ */
+function getRecentlyViewedSlugsSnapshot() {
+  return JSON.stringify(
+    readRecentlyViewed()
+      .map((item) => item.slug)
+      .slice(0, 4),
+  );
+}
+
+/**
+ * getServerRecentlyViewedSnapshot
+ *
+ * Server render has no localStorage, so the section stays empty until hydrate.
+ *
+ * @returns Empty JSON array.
+ * @calledBy useSyncExternalStore in RecentlyViewedSection
+ */
+function getServerRecentlyViewedSnapshot() {
+  return EMPTY_SLUGS_JSON;
+}
+
 /**
  * RecentlyViewedSection
  *
- * Renders the Recently Viewed Section UI for listings.
+ * Home-grid of recently viewed listings. Shows ListingCardSkeleton while
+ * local storage slugs are resolved.
  *
- * @param props - RecentlyViewedSection props.
- * @returns RecentlyViewedSection React element.
- * @calledBy listings pages and parent components
+ * @returns Section, loading placeholders, or null when nothing was viewed.
+ * @calledBy HomePage
  */
 export function RecentlyViewedSection() {
-  const [listings, setListings] = useState<RecentCard[]>([]);
+  const slugsJson = useSyncExternalStore(
+    subscribeRecentlyViewed,
+    getRecentlyViewedSlugsSnapshot,
+    getServerRecentlyViewedSnapshot,
+  );
+  const slugs = JSON.parse(slugsJson) as string[];
+  const [listings, setListings] = useState<RecentCard[] | null>(null);
 
   useEffect(() => {
-    const items = readRecentlyViewed();
-    if (items.length === 0) return;
+    const nextSlugs = JSON.parse(slugsJson) as string[];
+    if (nextSlugs.length === 0) return;
 
     let cancelled = false;
-    void getRecentlyViewedListingsAction(items.map((item) => item.slug)).then(
-      (result) => {
-        if (!cancelled && result.ok) {
-          setListings(result.listings);
-        }
-      },
-    );
+    void getRecentlyViewedListingsAction(nextSlugs).then((result) => {
+      if (cancelled) return;
+      setListings(result.ok ? result.listings : []);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [slugsJson]);
 
-  if (listings.length === 0) {
+  if (slugs.length === 0) {
     return null;
   }
 
+  if (listings && listings.length === 0) {
+    return null;
+  }
+
+  const isLoading = listings === null;
+
   return (
-    <section className="space-y-4">
+    <section className="space-y-4" aria-busy={isLoading}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-foreground text-lg font-semibold md:text-2xl">
           Vistos recientemente
@@ -74,18 +126,22 @@ export function RecentlyViewedSection() {
         </Link>
       </div>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        {listings.map((listing) => (
-          <ListingCard
-            key={listing.id}
-            href={`/anuncios/${listing.slug}`}
-            title={listing.title}
-            imageUrl={listing.imageUrl}
-            price={listing.finalPrice ?? listing.price}
-            batteryHealth={listing.batteryHealth ?? undefined}
-            verified={listing.verified}
-            conditionLabel={conditionLabels[listing.condition]}
-          />
-        ))}
+        {isLoading
+          ? Array.from({ length: slugs.length }, (_, index) => (
+              <ListingCardSkeleton key={index} />
+            ))
+          : listings.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                href={`/anuncios/${listing.slug}`}
+                title={listing.title}
+                imageUrl={listing.imageUrl}
+                price={listing.finalPrice ?? listing.price}
+                batteryHealth={listing.batteryHealth ?? undefined}
+                verified={listing.verified}
+                conditionLabel={conditionLabels[listing.condition]}
+              />
+            ))}
       </div>
     </section>
   );

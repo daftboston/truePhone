@@ -63,6 +63,8 @@ export type BrowseQuery = {
   price: BrowsePriceBand | "";
   sort: BrowseSort;
   page: number;
+  /** Active seller-cancellation entitlement source order. */
+  compensationId: string;
 };
 
 /**
@@ -96,6 +98,7 @@ export function parseBrowseSearchParams(
     price: priceParsed.success ? priceParsed.data : "",
     sort: sortParsed.success ? sortParsed.data : "newest",
     page: Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1,
+    compensationId: raw("compensacion").trim(),
   };
 }
 
@@ -123,14 +126,17 @@ export function buildBrowseHref(
   if (next.price) params.set("price", next.price);
   if (next.sort && next.sort !== "newest") params.set("sort", next.sort);
   if (next.page > 1) params.set("page", String(next.page));
+  if (next.compensationId) {
+    params.set("compensacion", next.compensationId);
+  }
 
   const qs = params.toString();
   return qs ? `/buscar?${qs}` : "/buscar";
 }
 
-/** Browse requires a model or series; otherwise redirect to the explore hub. */
+/** Browse requires a model, series, or free-text query. */
 export function hasBrowseScope(query: BrowseQuery) {
-  return Boolean(query.modelId || query.seriesKey);
+  return Boolean(query.modelId || query.seriesKey || query.q);
 }
 
 /**

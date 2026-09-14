@@ -41,9 +41,9 @@ export default async function ListingReviewPage({ params }: PageProps) {
   if (!listing) notFound();
   if (listing.status !== "DRAFT") redirect(`/vender/${listingId}`);
 
-  const galleryCount = listing.images.filter(
+  const gallery = listing.images.filter(
     (image) => image.imageType === "gallery",
-  ).length;
+  );
 
   return (
     <AppShell mainClassName="gap-4 md:gap-6">
@@ -62,8 +62,8 @@ export default async function ListingReviewPage({ params }: PageProps) {
           platformFee={listing.platformFee}
           finalPrice={listing.finalPrice}
           imeiLast4={listing.imeiLast4}
-          galleryCount={galleryCount}
-          hasPossessionPhoto={Boolean(listing.possessionChallenge?.photoUrl)}
+          images={gallery}
+          possessionPhotoUrl={listing.possessionChallenge?.photoUrl ?? null}
           description={listing.description}
         />
       </ListingWizardShell>

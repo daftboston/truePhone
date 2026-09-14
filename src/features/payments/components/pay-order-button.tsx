@@ -2,8 +2,7 @@
 
 /**
  * @file pay-order-button.tsx
- * @description Client button that starts Guaranteed Purchase checkout and shows
- * fee + 24h settlement disclosure (FINANCIAL_MODEL §5.1).
+ * @description Client button that starts Guaranteed Purchase checkout.
  * @dependencies react, startCheckoutAction, formatOrderMoney, Button
  */
 
@@ -20,20 +19,23 @@ type PayOrderButtonProps = {
   platformFee: number;
   feePercent?: number;
   currency?: string;
+  /** `fee` shows total + protection amount; `none` is the button only. */
+  disclosure?: "fee" | "none";
 };
 
 /**
  * PayOrderButton
  *
- * Invokes startCheckoutAction and shows fee breakdown copy under the CTA.
+ * Invokes startCheckoutAction and optionally shows fee microcopy.
  *
  * @param props.orderId - Order to pay.
  * @param props.totalPrice - Buyer total including platform fee.
  * @param props.platformFee - TruePhone protection fee amount.
  * @param props.feePercent - Fee percent shown in helper copy (default 10).
  * @param props.currency - Currency code for money formatting (default COP).
- * @returns Pay button with error alert and fee explanation.
- * @calledBy OrderDetailView, order buyer pages
+ * @param props.disclosure - Helper copy under the button.
+ * @returns Pay button with error alert and optional fee explanation.
+ * @calledBy OrderDetailView
  */
 export function PayOrderButton({
   orderId,
@@ -41,6 +43,7 @@ export function PayOrderButton({
   platformFee,
   feePercent = 10,
   currency = "COP",
+  disclosure = "fee",
 }: PayOrderButtonProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -75,13 +78,13 @@ export function PayOrderButton({
           {error}
         </p>
       ) : null}
-      <p className="text-muted-foreground text-center text-xs">
-        Pagarás {formatOrderMoney(totalPrice, currency)} (incluye{" "}
-        {formatOrderMoney(platformFee, currency)} de protección TruePhone{" "}
-        {feePercent}%). TruePhone retiene el pago hasta que confirmes que el
-        iPhone está correcto, o hasta 24 horas después de marcar «Ya recibí». Si
-        no reportas un problema en ese lapso, TruePhone paga al vendedor.
-      </p>
+      {disclosure === "fee" ? (
+        <p className="text-muted-foreground text-center text-xs">
+          Pagarás {formatOrderMoney(totalPrice, currency)}, incluyendo{" "}
+          {formatOrderMoney(platformFee, currency)} de protección TruePhone (
+          {feePercent}%).
+        </p>
+      ) : null}
     </div>
   );
 }

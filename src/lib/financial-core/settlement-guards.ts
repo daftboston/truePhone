@@ -1,6 +1,9 @@
 /**
  * @file settlement-guards.ts
- * @description Pure Financial Core guards so cancel/refund cannot race with seller payout.
+ * @description Pure Financial Core guards so cancel/refund cannot race with seller payout,
+ * unpaid cancel cannot overwrite a concurrent capture, buyer problem reports cannot
+ * freeze after the 24h window, and support-case unfreeze cannot drop a chargeback
+ * or buyer-dispute freeze.
  * @dependencies none
  */
 
@@ -14,6 +17,14 @@ export type PaidOrderCancelSnapshot = {
 export type ManualPayoutOrderSnapshot = {
   status: string;
   payoutFrozen: boolean;
+  payoutCompletedAt: Date | null;
+};
+
+export type BuyerProblemReportSnapshot = {
+  status: string;
+  buyerConfirmDeadlineAt: Date | null;
+  buyerConfirmedAt: Date | null;
+  payoutAuthorizedAt: Date | null;
   payoutCompletedAt: Date | null;
 };
 
@@ -40,6 +51,71 @@ export function canCancelPaidOrder(order: PaidOrderCancelSnapshot): boolean {
 export const PAID_ORDER_CANCEL_BLOCKED_ERROR =
   "Ya no puedes cancelar este pedido. Si el iPhone no coincide, reporta un problema para congelar el pago al vendedor.";
 
+/** Spanish copy when unpaid cancel loses a race with payment capture. */
+export const PRE_PAYMENT_CANCEL_LOST_RACE_ERROR =
+  "El pago se acaba de confirmar. Recarga la página e intenta cancelar de nuevo para solicitar el reembolso.";
+
+export type CancelMoneyMode =
+  "pre_payment" | "buyer_refund" | "seller_abandon_entitlement";
+
+/**
+ * orderStatusWhereForCancelCommit
+ *
+ * Optimistic-lock filter for the cancel commit. Unpaid cancel may only match
+ * AWAITING_PAYMENT so a concurrent Wompi APPROVED cannot be overwritten to
+ * CANCELLED without a refund. Paid cancel/abandon may only match PAID.
+ *
+ * @param mode - Financial Core cancel money mode already authorized.
+ * @returns Prisma `status` where clause for `order.updateMany`.
+ * @calledBy cancelOrder
+ */
+export function orderStatusWhereForCancelCommit(mode: CancelMoneyMode): {
+  status: "AWAITING_PAYMENT" | "PAID";
+} {
+  if (mode === "pre_payment") {
+    return { status: "AWAITING_PAYMENT" };
+  }
+  return { status: "PAID" };
+}
+
+/**
+ * Spanish error when a seller tries to self-cancel a PAID order.
+ * Paid seller-abandon goes through support / ops (not in-app self-cancel).
+ */
+export const SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR =
+  "Tras el pago no puedes cancelar el pedido de inmediato. Abre «Contactar soporte» en la venta para enviar una solicitud al equipo.";
+
+/**
+ * sellerPaidSelfCancelBlocker
+ *
+ * Returns a Spanish error when the seller must not self-cancel a PAID order.
+ * Null when cancel may proceed (unpaid, buyer actor, or ops seller-abandon).
+ *
+ * @param input.orderStatus - Current order status.
+ * @param input.actorId - Profile UUID attempting cancel.
+ * @param input.sellerId - Order seller profile UUID.
+ * @param input.asOpsSellerAbandon - When true, ops is cancelling as seller abandon (caller gates REVIEWER/ADMIN).
+ * @returns Error message or null.
+ * @calledBy authorizeCancelMoney, cancelOrder
+ */
+export function sellerPaidSelfCancelBlocker(input: {
+  orderStatus: string;
+  actorId: string;
+  sellerId: string;
+  asOpsSellerAbandon?: boolean;
+}): string | null {
+  if (input.asOpsSellerAbandon) {
+    return null;
+  }
+  if (input.orderStatus !== "PAID") {
+    return null;
+  }
+  if (input.actorId !== input.sellerId) {
+    return null;
+  }
+  return SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR;
+}
+
 /**
  * manualPayoutCompletionBlocker
  *
@@ -63,4 +139,76 @@ export function manualPayoutCompletionBlocker(
     return "El pago está congelado (disputa o reclamo). No se puede marcar como pagado.";
   }
   return null;
+}
+
+export const BUYER_PROBLEM_REPORT_NOT_RECEIVED_ERROR =
+  "Solo puedes reportar después de confirmar que recibiste el iPhone.";
+
+export const BUYER_PROBLEM_REPORT_AFTER_CONFIRM_ERROR =
+  "Ya confirmaste que el iPhone está correcto. El pago al vendedor sigue su curso.";
+
+export const BUYER_PROBLEM_REPORT_WINDOW_CLOSED_ERROR =
+  "La ventana de 24 horas para reportar un problema ya cerró. TruePhone procesará el pago al vendedor.";
+
+/**
+ * buyerProblemReportBlocker
+ *
+ * Returns a Spanish error when the buyer must not freeze payout via
+ * «Reportar un problema». Null when the 24h confirm window is still open.
+ * After confirm, auto-release, or payout authorization, a self-serve report
+ * would freeze an already-authorized seller payout (FINANCIAL_MODEL.md §5.1).
+ *
+ * @param order - Settlement timestamps on the order.
+ * @param now - Optional clock; defaults to Date.now.
+ * @returns Error message or null.
+ * @calledBy freezePayoutForBuyerProblem, OrderShippingPanel
+ */
+export function buyerProblemReportBlocker(
+  order: BuyerProblemReportSnapshot,
+  now: Date = new Date(),
+): string | null {
+  if (order.status !== "PAID") {
+    return BUYER_PROBLEM_REPORT_NOT_RECEIVED_ERROR;
+  }
+  if (!order.buyerConfirmDeadlineAt) {
+    return BUYER_PROBLEM_REPORT_NOT_RECEIVED_ERROR;
+  }
+  if (order.buyerConfirmedAt) {
+    return BUYER_PROBLEM_REPORT_AFTER_CONFIRM_ERROR;
+  }
+  if (order.payoutAuthorizedAt || order.payoutCompletedAt) {
+    return BUYER_PROBLEM_REPORT_WINDOW_CLOSED_ERROR;
+  }
+  if (order.buyerConfirmDeadlineAt.getTime() <= now.getTime()) {
+    return BUYER_PROBLEM_REPORT_WINDOW_CLOSED_ERROR;
+  }
+  return null;
+}
+
+/**
+ * shouldReleaseSupportCasePayoutFreeze
+ *
+ * True only when this fulfillment-exception case is the sole freeze source.
+ * A chargeback or another DISPUTE_OPENED (buyer problem, ops freeze) must keep
+ * payoutFrozen so closing the shipping case cannot pay the seller.
+ *
+ * @param input.payoutFrozen - Current Order.payoutFrozen flag.
+ * @param input.freezeRecordedForThisCase - Ledger has DISPUTE_OPENED for this case.
+ * @param input.hasChargebackReceived - CHARGEBACK_RECEIVED exists on the order.
+ * @param input.hasOtherDisputeOpened - A DISPUTE_OPENED not owned by this case.
+ * @returns Whether Financial Core may clear payoutFrozen for this case.
+ * @calledBy releaseFulfillmentExceptionFreeze
+ */
+export function shouldReleaseSupportCasePayoutFreeze(input: {
+  payoutFrozen: boolean;
+  freezeRecordedForThisCase: boolean;
+  hasChargebackReceived: boolean;
+  hasOtherDisputeOpened: boolean;
+}): boolean {
+  return (
+    input.payoutFrozen &&
+    input.freezeRecordedForThisCase &&
+    !input.hasChargebackReceived &&
+    !input.hasOtherDisputeOpened
+  );
 }

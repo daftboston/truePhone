@@ -16,6 +16,14 @@ import {
   recordPaymentHold,
 } from "@/lib/financial-core";
 import { prisma } from "@/lib/db";
+import {
+  paymentStatusesEligibleForSuccess,
+  paymentSuccessApplyBlocker,
+} from "@/lib/payments/checkout-success-guards";
+import {
+  notifySellerOrderPaid,
+  safeNotify,
+} from "@/lib/notifications/marketplace";
 import { resolvePaymentProvider } from "@/lib/payments/resolve-provider";
 import {
   verifyWompiEventChecksum,
@@ -311,6 +319,8 @@ export async function startCheckoutForOrder(input: {
  * markPaymentSucceeded
  *
  * Marks payment SUCCEEDED, order PAID, and records Financial Core hold.
+ * Uses status-filtered updateMany so a concurrent unpaid cancel cannot be
+ * overwritten back to PAID (listing already republished).
  *
  * @param input - payment reference / provider ids and amounts.
  * @returns Success or error result.
@@ -332,19 +342,28 @@ export async function markPaymentSucceeded(input: {
       if (!payment) {
         throw new PaymentError("Pago no encontrado.");
       }
-      if (payment.status === "SUCCEEDED") {
+
+      const apply = paymentSuccessApplyBlocker({
+        paymentStatus: payment.status,
+        orderStatus: payment.order.status,
+      });
+      if (apply?.kind === "already_succeeded") {
         return;
       }
-      if (payment.status === "REFUNDED" || payment.status === "CANCELLED") {
-        throw new PaymentError("Este pago ya no se puede confirmar.");
+      if (apply?.kind === "blocked") {
+        throw new PaymentError(apply.error);
       }
       if (amountPesos != null && amountPesos !== payment.amount) {
         throw new PaymentError("El monto pagado no coincide con el pedido.");
       }
 
       const now = new Date();
-      await tx.payment.update({
-        where: { id: payment.id },
+      // Optimistic lock: unpaid cancel marks Payment CANCELLED; do not resurrect it.
+      const paymentMoved = await tx.payment.updateMany({
+        where: {
+          id: payment.id,
+          status: { in: paymentStatusesEligibleForSuccess() },
+        },
         data: {
           status: "SUCCEEDED",
           paidAt: now,
@@ -353,31 +372,47 @@ export async function markPaymentSucceeded(input: {
           failureMessage: null,
         },
       });
-
-      if (payment.order.status === "AWAITING_PAYMENT") {
-        await tx.order.update({
-          where: { id: payment.orderId },
-          data: {
-            status: "PAID",
-            paidAt: now,
-          },
-        });
-
-        await recordPaymentHold(tx, {
-          orderId: payment.orderId,
-          paymentId: payment.id,
-          buyerTotal: payment.order.totalPrice,
-          sellerAmountPesos:
-            payment.order.sellerAmountPesos || payment.order.equipmentPrice,
-          platformFee: payment.order.platformFee,
-          wompiCollectionPesos: payment.order.wompiCollectionPesos,
-          wompiPayoutPesos: payment.order.wompiPayoutPesos,
-          truephoneRevenuePesos: payment.order.truephoneRevenuePesos,
-          feeRateBps: payment.order.feeRateBps,
-          currency: payment.order.currency,
-        });
+      if (paymentMoved.count !== 1) {
+        throw new PaymentError("Este pago ya no se puede confirmar.");
       }
+
+      // Optimistic lock: only AWAITING_PAYMENT may become PAID. Rollback the
+      // payment SUCCEEDED write if cancel already committed CANCELLED.
+      const orderMoved = await tx.order.updateMany({
+        where: { id: payment.orderId, status: "AWAITING_PAYMENT" },
+        data: {
+          status: "PAID",
+          paidAt: now,
+        },
+      });
+      if (orderMoved.count !== 1) {
+        throw new PaymentError(
+          "El pedido ya no está pendiente de pago. No se puede confirmar el cobro.",
+        );
+      }
+
+      await recordPaymentHold(tx, {
+        orderId: payment.orderId,
+        paymentId: payment.id,
+        buyerTotal: payment.order.totalPrice,
+        sellerAmountPesos:
+          payment.order.sellerAmountPesos || payment.order.equipmentPrice,
+        platformFee: payment.order.platformFee,
+        wompiCollectionPesos: payment.order.wompiCollectionPesos,
+        wompiPayoutPesos: payment.order.wompiPayoutPesos,
+        truephoneRevenuePesos: payment.order.truephoneRevenuePesos,
+        feeRateBps: payment.order.feeRateBps,
+        currency: payment.order.currency,
+      });
     });
+
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      select: { orderId: true, order: { select: { status: true } } },
+    });
+    if (payment?.order.status === "PAID") {
+      await safeNotify(notifySellerOrderPaid({ orderId: payment.orderId }));
+    }
 
     return { ok: true };
   } catch (error) {
@@ -515,7 +550,8 @@ export async function refundPaymentForOrder(input: {
  *
  * @param orderId - Order UUID.
  * @returns void after updates.
- * @calledBy Order cancel pre-payment
+ * @calledBy Legacy callers; unpaid cancel now cancels open payments inside
+ * the same Prisma transaction as the order CANCELLED write.
  */
 export async function cancelOpenPaymentsForOrder(orderId: string) {
   await prisma.payment.updateMany({

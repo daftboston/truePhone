@@ -2,28 +2,31 @@
 
 /**
  * @file selfie-form.tsx
- * @description SelfieForm component for the verification feature.tsx.
- * @dependencies react, @/features/verification/actions/identity, @/features/verification/types, @/components/ui/button, @/components/ui/file-input
+ * @description Selfie capture with oval preview and camera-first mobile CTA.
+ * @dependencies react, identity actions, IdentityCaptureFrame, UI primitives
  */
 
 import { useActionState } from "react";
 
 import { saveSelfieAction } from "@/features/verification/actions/identity";
+import { IdentityCaptureFrame } from "@/features/verification/components/identity-capture-frame";
 import type { VerificationActionState } from "@/features/verification/types";
 import { Button } from "@/components/ui/button";
-import { FileInput } from "@/components/ui/file-input";
-import { Label } from "@/components/ui/label";
+
+type SelfieFormProps = {
+  existingImageUrl?: string | null;
+};
 
 /**
  * SelfieForm
  *
- * Renders the Selfie Form UI for verification.
+ * Captures the seller selfie used to match the cédula.
  *
- * @param props - SelfieForm props.
- * @returns SelfieForm React element.
- * @calledBy verification pages and parent components
+ * @param props.existingImageUrl - Signed URL of a saved selfie.
+ * @returns Selfie form.
+ * @calledBy `/verificacion/selfie`
  */
-export function SelfieForm() {
+export function SelfieForm({ existingImageUrl = null }: SelfieFormProps) {
   const [state, formAction, pending] = useActionState<
     VerificationActionState,
     FormData
@@ -36,24 +39,21 @@ export function SelfieForm() {
         <ul className="text-muted-foreground list-disc space-y-1 pl-4">
           <li>Mira de frente a la cámara, sin gafas oscuras ni gorra.</li>
           <li>Usa luz natural y un fondo simple.</li>
-          <li>
-            Esta foto se compara con tu cédula. Más adelante conectaremos
-            liveness biométrico.
-          </li>
+          <li>Esta foto se compara con tu cédula.</li>
         </ul>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="selfieImage">Selfie</Label>
-        <FileInput
-          id="selfieImage"
-          name="selfieImage"
-          accept="image/jpeg,image/png,image/webp"
-          capture="user"
-          required
-          buttonLabel="Elegir foto"
-        />
-      </div>
+      <IdentityCaptureFrame
+        variant="selfie"
+        inputId="selfieImage"
+        inputName="selfieImage"
+        label="Tu rostro"
+        why="La comparamos con tu cédula para confirmar que eres tú. Solo un revisor de TruePhone la ve."
+        existingImageUrl={existingImageUrl}
+        captureFacing="user"
+        cameraPrimary
+        required
+      />
 
       {state?.ok === false ? (
         <p className="text-destructive text-sm" role="alert">

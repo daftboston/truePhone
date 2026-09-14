@@ -1,11 +1,13 @@
 /**
  * @file page.tsx
  * @description Public listing detail page for a published anuncio slug.
- * @dependencies Listing gallery, price, seller, order/favorite actions
+ *   Buyer copy explains Revisado and Activation Lock in human Spanish.
+ * @dependencies Listing gallery, price, seller, order/favorite actions, public Q&A, listing views
  */
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
@@ -17,14 +19,24 @@ import { SellerCard } from "@/components/seller-card";
 import { TrustBadge } from "@/components/trust-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FavoriteButton } from "@/features/listings/components/favorite-button";
+import { ListingQaSection } from "@/features/listing-qa/components/listing-qa-section";
+import { ListingPurchaseActions } from "@/features/listings/components/listing-purchase-actions";
 import { RecordRecentlyViewed } from "@/features/listings/components/record-recently-viewed";
-import { ShareListingButton } from "@/features/listings/components/share-listing-button";
-import { CreateOrderButton } from "@/features/orders/components/create-order-button";
+import { CompensationBanner } from "@/features/orders/components/compensation-banner";
 import { conditionLabels } from "@/features/listings/schemas/listing";
+import { formatSellerRating } from "@/features/profile/types";
 import { isSellerIdentityVerified } from "@/features/verification/types";
-import { getAuthUser, getCurrentProfile } from "@/lib/auth/session";
+import {
+  canAccessReviewPortal,
+  getAuthUser,
+  getCurrentProfile,
+} from "@/lib/auth/session";
 import { isListingFavorited } from "@/lib/favorites";
+import { findActiveFeeEntitlementForSource } from "@/lib/financial-core/entitlements";
+import {
+  computeOrderFees,
+  LOYALTY_FEE_RATE_BPS,
+} from "@/lib/financial-core/fees";
 import { formatStorageLabel } from "@/lib/iphone-catalog";
 import {
   getPublishedListingBySlug,
@@ -33,10 +45,12 @@ import {
   primaryGalleryUrl,
   publicListingPath,
 } from "@/lib/listings-marketplace";
+import { listingViewRequestMeta, recordListingView } from "@/lib/listing-views";
 import { getActiveOrderForBuyerOnListing } from "@/lib/orders";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateMetadata({
@@ -72,24 +86,63 @@ export async function generateMetadata({
 }
 
 /**
+ * activationLockCopy
+ *
+ * Returns buyer-facing Activation Lock status in human Spanish, not
+ * technical Activado/Desactivado labels.
+ *
+ * @param locked - Listing `activationLocked` flag.
+ * @returns Short status plus one-line explanation.
+ * @calledBy PublicListingPage
+ */
+function activationLockCopy(locked: boolean) {
+  if (locked) {
+    return {
+      status: "Activo",
+      detail:
+        "Sigue vinculado a una cuenta de Apple y no se puede usar hasta que se quite.",
+    };
+  }
+
+  return {
+    status: "Sin bloqueo",
+    detail: "El iPhone no está vinculado a una cuenta de Apple.",
+  };
+}
+
+/**
  * PublicListingPage
  *
  * Loads a published listing by slug and composes the buyer-facing detail view.
  *
  * @returns Public listing detail page or notFound.
  */
-export default async function PublicListingPage({ params }: PageProps) {
-  const { slug } = await params;
-  const listing = await getPublishedListingBySlug(slug, {
-    incrementViews: true,
-  });
+export default async function PublicListingPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const [{ slug }, queryParams] = await Promise.all([params, searchParams]);
+  const requestedCompensation =
+    typeof queryParams.compensacion === "string"
+      ? queryParams.compensacion
+      : "";
+  const listing = await getPublishedListingBySlug(slug);
 
   if (!listing) notFound();
 
-  const [user, current] = await Promise.all([
+  const [user, current, headerStore] = await Promise.all([
     getAuthUser(),
     getCurrentProfile(),
+    headers(),
   ]);
+  const viewMeta = listingViewRequestMeta(headerStore);
+  await recordListingView({
+    listingId: listing.id,
+    sellerId: listing.sellerId,
+    viewerId: current?.profile.id ?? null,
+    ip: viewMeta.ip,
+    userAgent: viewMeta.userAgent,
+  });
   const favorited = current
     ? await isListingFavorited(current.profile.id, listing.id)
     : false;
@@ -97,6 +150,19 @@ export default async function PublicListingPage({ params }: PageProps) {
     current && current.profile.id !== listing.sellerId
       ? await getActiveOrderForBuyerOnListing(listing.id, current.profile.id)
       : null;
+  const compensation =
+    current && requestedCompensation
+      ? await findActiveFeeEntitlementForSource(
+          current.profile.id,
+          requestedCompensation,
+        )
+      : null;
+  const compensationFees = compensation
+    ? computeOrderFees({
+        salePrice: listing.price,
+        feeRateBps: LOYALTY_FEE_RATE_BPS,
+      })
+    : null;
   const related = await listRelatedPublishedListings(listing);
   const gallery = listing.images.filter(
     (image) => image.imageType === "gallery",
@@ -110,8 +176,12 @@ export default async function PublicListingPage({ params }: PageProps) {
     .join(", ");
   const sellerSubtitle = [
     sellerLocation ? `Vendedor en ${sellerLocation}` : null,
+    formatSellerRating(listing.seller.sellerRating),
     listing.seller.totalSales > 0
       ? `${listing.seller.totalSales} venta${listing.seller.totalSales === 1 ? "" : "s"}`
+      : null,
+    listing.seller.totalReviews > 0
+      ? `${listing.seller.totalReviews} reseña${listing.seller.totalReviews === 1 ? "" : "s"}`
       : null,
   ]
     .filter(Boolean)
@@ -122,17 +192,24 @@ export default async function PublicListingPage({ params }: PageProps) {
     listing.hasCharger ? "Cargador" : null,
     listing.hasReceipt ? "Factura" : null,
   ].filter(Boolean);
+  const activationLock = activationLockCopy(listing.activationLocked);
 
   const loginHref = `/login?next=${encodeURIComponent(publicListingPath(listing.slug))}`;
+  const qaLoginHref = `/login?next=${encodeURIComponent(`${publicListingPath(listing.slug)}#preguntas`)}`;
   const messageLoginHref = `/login?next=${encodeURIComponent(`/mensajes/${listing.id}`)}`;
   const sellerHref = listing.seller.username
     ? `/u/${listing.seller.username}`
     : null;
   const isOwnListing = current?.profile.id === listing.sellerId;
+  const buyerTotal =
+    compensationFees?.buyerTotal ?? listing.finalPrice ?? listing.price;
 
   return (
-    <AppShell className="pb-24 md:pb-0" mainClassName="gap-8 md:gap-10">
+    <AppShell className="pb-40 md:pb-0" mainClassName="gap-8 md:gap-10">
       <RecordRecentlyViewed slug={listing.slug} title={listing.title} />
+      {compensation ? (
+        <CompensationBanner sourceOrderId={compensation.sourceOrderId} />
+      ) : null}
       <div className="space-y-2">
         <Button asChild variant="outline" size="sm">
           <Link href={`/buscar?model=${listing.iphoneModelId}`}>
@@ -149,16 +226,21 @@ export default async function PublicListingPage({ params }: PageProps) {
             <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
               {listing.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">
-                {conditionLabels[listing.condition]}
-              </Badge>
-              <TrustBadge />
-              {listing.batteryHealth != null ? (
-                <Badge variant="outline">
-                  Batería {listing.batteryHealth}%
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">
+                  {conditionLabels[listing.condition]}
                 </Badge>
-              ) : null}
+                <TrustBadge label="Revisado" />
+                {listing.batteryHealth != null ? (
+                  <Badge variant="outline">
+                    Batería {listing.batteryHealth}%
+                  </Badge>
+                ) : null}
+              </div>
+              <p className="text-muted-foreground text-sm">
+                Un revisor de TruePhone lo aprobó antes de publicarse.
+              </p>
             </div>
             <p className="text-muted-foreground text-sm">
               {listing.iphoneModel.name} ·{" "}
@@ -168,12 +250,23 @@ export default async function PublicListingPage({ params }: PageProps) {
           </div>
 
           <PriceDisplay
-            price={listing.finalPrice ?? listing.price}
+            price={buyerTotal}
             equipmentPrice={listing.price}
-            protectionFee={listing.platformFee ?? undefined}
+            protectionFee={
+              compensationFees?.platformFee ?? listing.platformFee ?? undefined
+            }
+            protectionLabel={
+              compensationFees
+                ? "Protección TruePhone 8% por compensación"
+                : undefined
+            }
           />
 
           <GuaranteeBanner />
+          <p className="text-muted-foreground text-sm">
+            El vendedor cubre el envío (transportadora o Premium Bogotá). Este
+            cobro es el equipo y la protección; no incluye flete.
+          </p>
 
           {sellerHref ? (
             <Link href={sellerHref} className="block">
@@ -193,67 +286,20 @@ export default async function PublicListingPage({ params }: PageProps) {
             />
           )}
 
-          <div className="space-y-2">
-            {isOwnListing ? (
-              <Button fullWidth asChild variant="outline">
-                <Link href={`/vender/${listing.id}`}>Ver en mis anuncios</Link>
-              </Button>
-            ) : user ? (
-              <>
-                {pendingOrder ? (
-                  <Button fullWidth asChild>
-                    <Link href={`/compras/${pendingOrder.id}`}>
-                      Ver mi pedido
-                    </Link>
-                  </Button>
-                ) : (
-                  <CreateOrderButton
-                    listingId={listing.id}
-                    loginHref={loginHref}
-                    fullWidth
-                    showSettlementDisclosure
-                  />
-                )}
-                <Button fullWidth asChild variant="outline">
-                  <Link href={`/mensajes/${listing.id}`}>
-                    Contactar vendedor
-                  </Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button fullWidth asChild>
-                  <Link href={loginHref}>Iniciar sesión para comprar</Link>
-                </Button>
-                <Button fullWidth asChild variant="outline">
-                  <Link href={messageLoginHref}>
-                    Iniciar sesión para contactar
-                  </Link>
-                </Button>
-              </>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              <FavoriteButton
-                listingId={listing.id}
-                initialFavorited={favorited}
-                loginHref={loginHref}
-                fullWidth
-              />
-              <ShareListingButton
-                path={publicListingPath(listing.slug)}
-                title={listing.title}
-                fullWidth
-              />
-            </div>
-            {!isOwnListing && !user ? (
-              <p className="text-muted-foreground text-center text-xs">
-                Al comprar, el anuncio se reserva y pagas Compra Garantizada
-                (precio del equipo + protección 10%). Tras marcar «Ya recibí»
-                tienes 24 horas para confirmar o reportar; si no reportas,
-                TruePhone paga al vendedor.
-              </p>
-            ) : null}
-          </div>
+          <ListingPurchaseActions
+            className="hidden md:block"
+            listingId={listing.id}
+            listingTitle={listing.title}
+            publicPath={publicListingPath(listing.slug)}
+            loginHref={loginHref}
+            messageHref={`/mensajes/${listing.id}`}
+            messageLoginHref={messageLoginHref}
+            isOwnListing={isOwnListing}
+            isAuthenticated={Boolean(user)}
+            pendingOrderId={pendingOrder?.id ?? null}
+            favorited={favorited}
+            totalPrice={buyerTotal}
+          />
         </div>
       </div>
 
@@ -301,11 +347,16 @@ export default async function PublicListingPage({ params }: PageProps) {
               {listing.carrier ? ` · ${listing.carrier}` : ""}
             </dd>
           </div>
-          <div className="flex justify-between gap-4 sm:block sm:space-y-1">
-            <dt>Activation Lock</dt>
-            <dd className="text-foreground font-medium">
-              {listing.activationLocked ? "Activado" : "Desactivado"}
-            </dd>
+          <div className="space-y-1">
+            <div className="flex justify-between gap-4 sm:block sm:space-y-1">
+              <dt>Activation Lock</dt>
+              <dd className="text-foreground font-medium">
+                {activationLock.status}
+              </dd>
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              {activationLock.detail}
+            </p>
           </div>
           <div className="flex justify-between gap-4 sm:block sm:space-y-1">
             <dt>Accesorios</dt>
@@ -324,6 +375,20 @@ export default async function PublicListingPage({ params }: PageProps) {
           </p>
         </section>
       ) : null}
+
+      <ListingQaSection
+        listingId={listing.id}
+        listingStatus={listing.status}
+        sellerId={listing.sellerId}
+        viewer={{
+          profileId: current?.profile.id ?? null,
+          isStaff: current
+            ? canAccessReviewPortal(current.profile.role)
+            : false,
+        }}
+        isAuthenticated={Boolean(user)}
+        loginHref={qaLoginHref}
+      />
 
       {related.length > 0 ? (
         <section className="space-y-4">
@@ -346,6 +411,24 @@ export default async function PublicListingPage({ params }: PageProps) {
           </div>
         </section>
       ) : null}
+
+      {/* Glass sticky buy bar — sits above bottom nav; blur via Tailwind */}
+      <div className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden">
+        <ListingPurchaseActions
+          compact
+          listingId={listing.id}
+          listingTitle={listing.title}
+          publicPath={publicListingPath(listing.slug)}
+          loginHref={loginHref}
+          messageHref={`/mensajes/${listing.id}`}
+          messageLoginHref={messageLoginHref}
+          isOwnListing={isOwnListing}
+          isAuthenticated={Boolean(user)}
+          pendingOrderId={pendingOrder?.id ?? null}
+          favorited={favorited}
+          totalPrice={buyerTotal}
+        />
+      </div>
     </AppShell>
   );
 }

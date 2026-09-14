@@ -10,10 +10,37 @@ import { describe, it } from "node:test";
 import {
   matchColombianOperator,
   resolveListingCarrier,
+  activationLockFormValue,
   updateListingSecuritySchema,
 } from "@/features/listings/schemas/listing";
 
 const validImei = "356938035643809";
+
+describe("activationLockFormValue", () => {
+  it("stays empty until an IMEI has been saved", () => {
+    assert.equal(
+      activationLockFormValue({ imeiLast4: null, activationLocked: false }),
+      "",
+    );
+  });
+
+  it("hydrates the saved lock state on revisit", () => {
+    assert.equal(
+      activationLockFormValue({
+        imeiLast4: "3809",
+        activationLocked: false,
+      }),
+      "false",
+    );
+    assert.equal(
+      activationLockFormValue({
+        imeiLast4: "3809",
+        activationLocked: true,
+      }),
+      "true",
+    );
+  });
+});
 
 describe("matchColombianOperator", () => {
   it("canonicalizes a known operator regardless of case", () => {
@@ -56,6 +83,23 @@ describe("updateListingSecuritySchema", () => {
       carrier: "WOM",
     });
     assert.equal(parsed.success, true);
+  });
+
+  it("does not coerce a missing Activation Lock to unlocked", () => {
+    const parsed = updateListingSecuritySchema.safeParse({
+      imei: validImei,
+      unlocked: "true",
+      carrier: "",
+    });
+    assert.equal(parsed.success, false);
+
+    const empty = updateListingSecuritySchema.safeParse({
+      imei: validImei,
+      activationLocked: "",
+      unlocked: "true",
+      carrier: "",
+    });
+    assert.equal(empty.success, false);
   });
 
   it("allows an empty carrier when the device is unlocked", () => {

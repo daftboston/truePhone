@@ -1,13 +1,11 @@
 /**
  * @file listing-review-tabs.tsx
- * @description ListingReviewTabs component for the listings feature.tsx.
- * @dependencies next/link, @/features/listings/schemas/review, @/lib/utils
+ * @description Queue chips for listing review tabs with counts.
+ * @dependencies @/components/queue-tabs, @/features/listings/schemas/review
  */
 
-import Link from "next/link";
-
+import { QueueTabs } from "@/components/queue-tabs";
 import type { ListingReviewTab } from "@/features/listings/schemas/review";
-import { cn } from "@/lib/utils";
 
 type ListingReviewTabsProps = {
   active: ListingReviewTab;
@@ -35,38 +33,24 @@ const TABS: {
 /**
  * ListingReviewTabs
  *
- * Renders the Listing Review Tabs UI for listings.
+ * Renders listing-review queue filters with counts.
  *
- * @param props - ListingReviewTabs props.
- * @returns ListingReviewTabs React element.
- * @calledBy listings pages and parent components
+ * @param props.active - Selected tab.
+ * @param props.counts - Per-tab listing counts.
+ * @returns Queue chip tablist.
+ * @calledBy Listing review queue page
  */
 export function ListingReviewTabs({ active, counts }: ListingReviewTabsProps) {
   return (
-    <div
-      role="tablist"
-      aria-label="Filtros de cola"
-      className="flex [scrollbar-width:none] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-    >
-      {TABS.map((tab) => {
-        const selected = active === tab.id;
-        return (
-          <Link
-            key={tab.id}
-            href={`/revision/anuncios?tab=${tab.id}`}
-            role="tab"
-            aria-selected={selected}
-            className={cn(
-              "shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
-              selected
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-background text-foreground hover:bg-muted",
-            )}
-          >
-            {tab.label} ({counts[tab.countKey]})
-          </Link>
-        );
-      })}
-    </div>
+    <QueueTabs
+      active={active}
+      ariaLabel="Filtros de cola de anuncios"
+      tabs={TABS.map((tab) => ({
+        id: tab.id,
+        label: tab.label,
+        href: `/revision/anuncios?tab=${tab.id}`,
+        count: counts[tab.countKey],
+      }))}
+    />
   );
 }

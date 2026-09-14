@@ -8,7 +8,11 @@
 import { Prisma } from "@prisma/client";
 
 import { appendLedgerEntry } from "@/lib/financial-core/ledger";
-import { manualPayoutCompletionBlocker } from "@/lib/financial-core/settlement-guards";
+import {
+  buyerProblemReportBlocker,
+  manualPayoutCompletionBlocker,
+  shouldReleaseSupportCasePayoutFreeze,
+} from "@/lib/financial-core/settlement-guards";
 import { prisma } from "@/lib/db";
 import { resolvePayoutProvider } from "@/lib/payments/payouts/resolve-provider";
 
@@ -189,12 +193,153 @@ export async function confirmOrderByBuyer(input: {
 }
 
 /**
+ * freezePayoutInTransaction
+ *
+ * Sets payoutFrozen when it is not already set and always records DISPUTE_OPENED.
+ * Additional freeze reasons (buyer problem after a shipping freeze, overlapping
+ * cases) must stay on the ledger so a later unfreeze cannot drop them.
+ *
+ * @param tx - Prisma transaction shared with the workflow that requested the freeze.
+ * @param input.orderId - Order whose payout to freeze.
+ * @param input.reason - Human-readable freeze reason for the ledger.
+ * @param input.metadata - Optional ledger metadata (e.g. supportCaseId).
+ * @returns True when this call created the freeze; false when it was already frozen.
+ * @calledBy freezePayout, freezePayoutForBuyerProblem, createOrderSupportCase
+ */
+export async function freezePayoutInTransaction(
+  tx: Prisma.TransactionClient,
+  input: {
+    orderId: string;
+    reason: string;
+    metadata?: Prisma.InputJsonValue;
+  },
+): Promise<boolean> {
+  const order = await tx.order.findFirst({ where: { id: input.orderId } });
+  if (!order) throw new FinancialCoreError("Pedido no encontrado.");
+  if (order.status !== "PAID") {
+    throw new FinancialCoreError("No hay fondos en custodia para congelar.");
+  }
+
+  const frozen = await tx.order.updateMany({
+    where: { id: order.id, status: "PAID", payoutFrozen: false },
+    data: { payoutFrozen: true },
+  });
+  const createdFreeze = frozen.count === 1;
+
+  await appendLedgerEntry(tx, {
+    orderId: order.id,
+    type: "DISPUTE_OPENED",
+    amountPesos: order.sellerAmountPesos,
+    memo: input.reason,
+    metadata: input.metadata,
+  });
+  return createdFreeze;
+}
+
+/**
+ * ledgerSupportCaseId
+ *
+ * Reads a support-case id stored on a DISPUTE_OPENED ledger row.
+ *
+ * @param metadata - Ledger metadata JSON.
+ * @returns supportCaseId string or null.
+ * @calledBy freezeOwnedBySupportCase
+ */
+function ledgerSupportCaseId(metadata: Prisma.JsonValue | null): string | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+  const id = (metadata as { supportCaseId?: unknown }).supportCaseId;
+  return typeof id === "string" ? id : null;
+}
+
+/**
+ * freezeOwnedBySupportCase
+ *
+ * True when a DISPUTE_OPENED row is attributed to this support case via
+ * metadata.supportCaseId or (legacy) memo containing the case id.
+ *
+ * @param entry - Ledger type, memo, and metadata.
+ * @param caseId - Support case UUID.
+ * @returns Whether this case owns the freeze fact.
+ * @calledBy releaseFulfillmentExceptionFreeze
+ */
+function freezeOwnedBySupportCase(
+  entry: { memo: string | null; metadata: Prisma.JsonValue | null },
+  caseId: string,
+): boolean {
+  if (ledgerSupportCaseId(entry.metadata) === caseId) return true;
+  return Boolean(entry.memo?.includes(caseId));
+}
+
+/**
+ * releaseFulfillmentExceptionFreeze
+ *
+ * Clears payoutFrozen only when this fulfillment-exception case is the sole
+ * freeze source. Chargebacks and buyer/ops DISPUTE_OPENED rows keep the hold.
+ *
+ * @param tx - Prisma transaction shared with the resolving workflow.
+ * @param input.orderId - Order whose payout may continue.
+ * @param input.caseId - Fulfillment-exception support case UUID.
+ * @param input.memo - Resolution context for the ledger when unfreezing.
+ * @returns True when this call cleared the freeze.
+ * @calledBy withdrawOrderSupportCase, transitionOrderSupportCase
+ */
+export async function releaseFulfillmentExceptionFreeze(
+  tx: Prisma.TransactionClient,
+  input: {
+    orderId: string;
+    caseId: string;
+    memo: string;
+  },
+): Promise<boolean> {
+  const order = await tx.order.findFirst({ where: { id: input.orderId } });
+  if (!order) throw new FinancialCoreError("Pedido no encontrado.");
+
+  const [disputeRows, chargeback] = await Promise.all([
+    tx.ledgerEntry.findMany({
+      where: { orderId: input.orderId, type: "DISPUTE_OPENED" },
+      select: { memo: true, metadata: true },
+    }),
+    tx.ledgerEntry.findFirst({
+      where: { orderId: input.orderId, type: "CHARGEBACK_RECEIVED" },
+      select: { id: true },
+    }),
+  ]);
+
+  const freezeRecordedForThisCase = disputeRows.some((row) =>
+    freezeOwnedBySupportCase(row, input.caseId),
+  );
+  const hasOtherDisputeOpened = disputeRows.some(
+    (row) => !freezeOwnedBySupportCase(row, input.caseId),
+  );
+
+  if (
+    !shouldReleaseSupportCasePayoutFreeze({
+      payoutFrozen: order.payoutFrozen,
+      freezeRecordedForThisCase,
+      hasChargebackReceived: Boolean(chargeback),
+      hasOtherDisputeOpened,
+    })
+  ) {
+    return false;
+  }
+
+  return unfreezePayoutInTransaction(tx, {
+    orderId: input.orderId,
+    memo: input.memo,
+  });
+}
+
+/**
  * freezePayout
  *
- * Freeze payout (dispute / chargeback / problem report).
+ * Freezes payout for a dispute, chargeback, or problem report.
  *
- * @param input.orderId - Order whose payout to freeze
- * @param input.reason - Human-readable freeze reason (ledger memo)
+ * @param input.orderId - Order whose payout to freeze.
+ * @param input.reason - Human-readable freeze reason.
+ * @returns FinancialResult for caller-safe error handling.
+ * @calledBy ops workflows; buyer reports use freezePayoutForBuyerProblem
  */
 export async function freezePayout(input: {
   orderId: string;
@@ -202,22 +347,65 @@ export async function freezePayout(input: {
 }): Promise<FinancialResult> {
   try {
     await prisma.$transaction(async (tx) => {
-      const order = await tx.order.findFirst({ where: { id: input.orderId } });
+      await freezePayoutInTransaction(tx, input);
+    });
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof FinancialCoreError) {
+      return { ok: false, error: error.message };
+    }
+    throw error;
+  }
+}
+
+/**
+ * freezePayoutForBuyerProblem
+ *
+ * Buyer self-serve freeze during the 24h confirm window only.
+ * Refuses after device confirm, payout authorization, or deadline expiry so a
+ * late report cannot block an already-authorized seller payout.
+ *
+ * @param input.orderId - Order whose payout to freeze.
+ * @param input.buyerId - Must be the order buyer.
+ * @param input.reason - Buyer-written problem description for the ledger.
+ * @returns FinancialResult for caller-safe error handling.
+ * @calledBy reportOrderProblemAction
+ * @consumers freezePayoutInTransaction, buyerProblemReportBlocker
+ */
+export async function freezePayoutForBuyerProblem(input: {
+  orderId: string;
+  buyerId: string;
+  reason: string;
+}): Promise<FinancialResult> {
+  try {
+    await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({
+        where: { id: input.orderId },
+        select: {
+          id: true,
+          buyerId: true,
+          status: true,
+          buyerConfirmDeadlineAt: true,
+          buyerConfirmedAt: true,
+          payoutAuthorizedAt: true,
+          payoutCompletedAt: true,
+        },
+      });
       if (!order) throw new FinancialCoreError("Pedido no encontrado.");
-      if (order.status !== "PAID") {
+      if (order.buyerId !== input.buyerId) {
         throw new FinancialCoreError(
-          "No hay fondos en custodia para congelar.",
+          "Solo el comprador puede reportar un problema.",
         );
       }
-      await tx.order.update({
-        where: { id: order.id },
-        data: { payoutFrozen: true },
-      });
-      await appendLedgerEntry(tx, {
+
+      const blocked = buyerProblemReportBlocker(order);
+      if (blocked) {
+        throw new FinancialCoreError(blocked);
+      }
+
+      await freezePayoutInTransaction(tx, {
         orderId: order.id,
-        type: "DISPUTE_OPENED",
-        amountPesos: order.sellerAmountPesos,
-        memo: input.reason,
+        reason: input.reason,
       });
     });
     return { ok: true };
@@ -230,9 +418,51 @@ export async function freezePayout(input: {
 }
 
 /**
+ * unfreezePayoutInTransaction
+ *
+ * Clears an active payout freeze and records one dispute-resolved ledger fact.
+ *
+ * @param tx - Prisma transaction shared with the resolving workflow.
+ * @param input.orderId - Order whose payout may continue.
+ * @param input.memo - Resolution context for the ledger.
+ * @returns True when this call cleared the freeze; false when already unfrozen.
+ * @calledBy unfreezePayout, resolveDisputeForSeller
+ */
+export async function unfreezePayoutInTransaction(
+  tx: Prisma.TransactionClient,
+  input: {
+    orderId: string;
+    memo?: string;
+  },
+): Promise<boolean> {
+  const order = await tx.order.findFirst({ where: { id: input.orderId } });
+  if (!order) throw new FinancialCoreError("Pedido no encontrado.");
+  if (!order.payoutFrozen) return false;
+
+  const unfrozen = await tx.order.updateMany({
+    where: { id: order.id, payoutFrozen: true },
+    data: { payoutFrozen: false },
+  });
+  if (unfrozen.count !== 1) return false;
+
+  await appendLedgerEntry(tx, {
+    orderId: order.id,
+    type: "DISPUTE_RESOLVED",
+    amountPesos: order.sellerAmountPesos,
+    memo: input.memo ?? "Dispute resolved · payout unfrozen",
+  });
+  return true;
+}
+
+/**
  * unfreezePayout
  *
- * Clears payout freeze after dispute resolution (ops).
+ * Clears payout freeze after dispute resolution.
+ *
+ * @param input.orderId - Order whose payout may continue.
+ * @param input.memo - Optional resolution memo.
+ * @returns FinancialResult for caller-safe handling.
+ * @calledBy ops dispute actions
  */
 export async function unfreezePayout(input: {
   orderId: string;
@@ -240,18 +470,7 @@ export async function unfreezePayout(input: {
 }): Promise<FinancialResult> {
   try {
     await prisma.$transaction(async (tx) => {
-      const order = await tx.order.findFirst({ where: { id: input.orderId } });
-      if (!order) throw new FinancialCoreError("Pedido no encontrado.");
-      await tx.order.update({
-        where: { id: order.id },
-        data: { payoutFrozen: false },
-      });
-      await appendLedgerEntry(tx, {
-        orderId: order.id,
-        type: "DISPUTE_RESOLVED",
-        amountPesos: order.sellerAmountPesos,
-        memo: input.memo ?? "Dispute resolved · payout unfrozen",
-      });
+      await unfreezePayoutInTransaction(tx, input);
     });
     return { ok: true };
   } catch (error) {

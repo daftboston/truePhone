@@ -1,6 +1,6 @@
 /**
  * @file page.tsx
- * @description Reviewer/admin hub linking listing, identity, payments, disputes, and review queues.
+ * @description Reviewer/admin hub linking listing, identity, payments, disputes, review, Q&A, and analytics.
  * @dependencies Review portal access checks and queue summaries
  */
 
@@ -9,9 +9,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   BadgeCheck,
+  BarChart3,
   ChevronRight,
   ClipboardList,
   CreditCard,
+  LifeBuoy,
   MessageSquareWarning,
   ShieldAlert,
   Star,
@@ -28,10 +30,11 @@ import {
   roleLabel,
 } from "@/lib/auth/session";
 import { countListingsForReview } from "@/lib/listings-review";
-import { countPaymentsByStatus } from "@/lib/payments";
 import { countOpsDisputeQueue } from "@/lib/payments/ops-disputes";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
+import { countActionableOrderSupportCases } from "@/lib/orders/order-support-service";
+import { countOpenListingQuestionReports } from "@/lib/listing-qa";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +52,21 @@ type QueueCardProps = {
   emphasized?: boolean;
 };
 
+/**
+ * QueueCard
+ *
+ * Linked count card for one ops queue. Emphasized cards mark work that needs
+ * attention; counts must be real queue sizes, not vanity metrics.
+ *
+ * @param props.href - Queue destination.
+ * @param props.title - Queue name.
+ * @param props.description - One-line scope.
+ * @param props.count - Honest pending/open count.
+ * @param props.icon - Lucide icon.
+ * @param props.emphasized - Highlights the hottest operational queue.
+ * @returns Linked card.
+ * @calledBy ReviewHubPage
+ */
 function QueueCard({
   href,
   title,
@@ -97,6 +115,35 @@ function QueueCard({
   );
 }
 
+type HubPrimaryCta = {
+  href: string;
+  label: string;
+  count: number;
+};
+
+/**
+ * hottestHubCta
+ *
+ * Picks the single primary button: the queue with the most open work.
+ * Falls back to the listing queue when every count is zero.
+ *
+ * @param queues - Candidate CTAs with counts.
+ * @returns Highest-count CTA, or the first candidate when all are empty.
+ * @calledBy ReviewHubPage
+ */
+function hottestHubCta(queues: HubPrimaryCta[]): HubPrimaryCta {
+  const emptyFallback: HubPrimaryCta = {
+    href: "/revision/anuncios",
+    label: "Ir a cola de anuncios",
+    count: 0,
+  };
+  const hottest = queues.reduce(
+    (best, queue) => (queue.count > best.count ? queue : best),
+    emptyFallback,
+  );
+  return hottest.count > 0 ? hottest : emptyFallback;
+}
+
 /**
  * ReviewHubPage
  *
@@ -129,31 +176,83 @@ export default async function ReviewHubPage() {
   const [
     listingCounts,
     identityPending,
-    paymentCounts,
     authorizedPayoutCount,
     disputeQueueCount,
     recommendedPriceCount,
     reviewReportsOpen,
+    questionReportsOpen,
+    orderSupportCount,
   ] = await Promise.all([
     countListingsForReview(),
     countPendingIdentityVerifications(),
-    isAdmin ? countPaymentsByStatus() : Promise.resolve(null),
     isAdmin ? countAuthorizedPayouts() : Promise.resolve(0),
     isAdmin ? countOpsDisputeQueue() : Promise.resolve(0),
     isAdmin ? countRecommendedPrices() : Promise.resolve(0),
     countOpenReviewReports(),
+    countOpenListingQuestionReports(),
+    countActionableOrderSupportCases(),
   ]);
 
   const firstName =
     current.profile.fullName?.trim().split(/\s+/)[0] ?? "equipo";
 
-  const listingsHot =
-    listingCounts.pendiente + listingCounts.enRevision >= identityPending;
   const openWork =
     listingCounts.pendiente +
     listingCounts.enRevision +
     identityPending +
-    reviewReportsOpen;
+    orderSupportCount +
+    reviewReportsOpen +
+    questionReportsOpen +
+    (isAdmin ? authorizedPayoutCount + disputeQueueCount : 0);
+
+  const primaryCta = hottestHubCta([
+    {
+      href: "/revision/anuncios?tab=pendiente",
+      label: "Ir a anuncios pendientes",
+      count: listingCounts.pendiente,
+    },
+    {
+      href: "/revision/anuncios?tab=en_revision",
+      label: "Ir a anuncios en revisión",
+      count: listingCounts.enRevision,
+    },
+    {
+      href: "/revision/identidad",
+      label: "Ir a cola de identidad",
+      count: identityPending,
+    },
+    {
+      href: "/revision/resenas",
+      label: "Ir a reseñas reportadas",
+      count: reviewReportsOpen,
+    },
+    {
+      href: "/revision/preguntas",
+      label: "Ir a preguntas reportadas",
+      count: questionReportsOpen,
+    },
+    {
+      href: "/revision/soporte-pedidos?tab=pendientes",
+      label: "Ir a soporte de pedidos",
+      count: orderSupportCount,
+    },
+    ...(isAdmin
+      ? [
+          {
+            href: "/revision/pagos",
+            label: "Ir a liquidaciones",
+            count: authorizedPayoutCount,
+          },
+          {
+            href: "/revision/disputas",
+            label: "Ir a disputas",
+            count: disputeQueueCount,
+          },
+        ]
+      : []),
+  ]);
+
+  const hottestWorkHref = primaryCta.count > 0 ? primaryCta.href : "";
 
   return (
     <div className="space-y-8">
@@ -184,7 +283,9 @@ export default async function ReviewHubPage() {
             description="Sin revisor asignado. Tómalos al abrir."
             count={listingCounts.pendiente}
             icon={ClipboardList}
-            emphasized={listingsHot && listingCounts.pendiente > 0}
+            emphasized={hottestWorkHref.includes(
+              "/revision/anuncios?tab=pendiente",
+            )}
           />
           <QueueCard
             href="/revision/anuncios?tab=en_revision"
@@ -192,6 +293,7 @@ export default async function ReviewHubPage() {
             description="Ya reclamados por un revisor."
             count={listingCounts.enRevision}
             icon={ClipboardList}
+            emphasized={hottestWorkHref.includes("en_revision")}
           />
           <QueueCard
             href="/revision/identidad"
@@ -199,7 +301,7 @@ export default async function ReviewHubPage() {
             description="Cédula y selfie pendientes de aprobación."
             count={identityPending}
             icon={BadgeCheck}
-            emphasized={!listingsHot && identityPending > 0}
+            emphasized={hottestWorkHref.startsWith("/revision/identidad")}
           />
           <QueueCard
             href="/revision/resenas"
@@ -207,30 +309,42 @@ export default async function ReviewHubPage() {
             description="Moderación de calificaciones del marketplace."
             count={reviewReportsOpen}
             icon={reviewReportsOpen > 0 ? MessageSquareWarning : Star}
-            emphasized={reviewReportsOpen > 0}
+            emphasized={hottestWorkHref.startsWith("/revision/resenas")}
+          />
+
+          <QueueCard
+            href="/revision/preguntas"
+            title="Preguntas reportadas"
+            description="Moderación de preguntas y respuestas públicas."
+            count={questionReportsOpen}
+            icon={questionReportsOpen > 0 ? MessageSquareWarning : Star}
+            emphasized={hottestWorkHref.startsWith("/revision/preguntas")}
+          />
+
+          <QueueCard
+            href="/revision/soporte-pedidos?tab=pendientes"
+            title="Soporte de pedidos"
+            description="Solicitudes de cancelación, problemas de envío y preguntas de vendedores."
+            count={orderSupportCount}
+            icon={LifeBuoy}
+            emphasized={hottestWorkHref.startsWith("/revision/soporte-pedidos")}
           />
         </div>
       </section>
 
       <section className="space-y-3" aria-label="Accesos rápidos">
         <h2 className="text-foreground text-sm font-semibold">Accesos</h2>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            asChild
-            className="sm:flex-1"
-            variant={listingsHot || openWork === 0 ? "default" : "outline"}
-          >
-            <Link href="/revision/anuncios">Ir a cola de anuncios</Link>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Button asChild>
+            <Link href={primaryCta.href}>{primaryCta.label}</Link>
           </Button>
-          <Button
-            asChild
-            className="sm:flex-1"
-            variant={
-              !listingsHot && identityPending > 0 ? "default" : "outline"
-            }
+          <Link
+            href="/revision/analitica"
+            className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline"
           >
-            <Link href="/revision/identidad">Ir a cola de identidad</Link>
-          </Button>
+            <BarChart3 className="size-4" aria-hidden />
+            Ver analítica
+          </Link>
         </div>
       </section>
 
@@ -243,19 +357,10 @@ export default async function ReviewHubPage() {
             <QueueCard
               href="/revision/pagos"
               title="Liquidaciones y cobros"
-              description="Paga en Wompi las liquidaciones autorizadas; historial de checkout."
-              count={
-                (authorizedPayoutCount ?? 0) +
-                (paymentCounts
-                  ? paymentCounts.SUCCEEDED +
-                    paymentCounts.PENDING +
-                    paymentCounts.REQUIRES_ACTION +
-                    paymentCounts.FAILED +
-                    paymentCounts.REFUNDED
-                  : 0)
-              }
+              description="Liquidaciones autorizadas listas para pagar en Wompi."
+              count={authorizedPayoutCount}
               icon={CreditCard}
-              emphasized={(authorizedPayoutCount ?? 0) > 0}
+              emphasized={hottestWorkHref.startsWith("/revision/pagos")}
             />
             <QueueCard
               href="/revision/disputas"
@@ -263,15 +368,32 @@ export default async function ReviewHubPage() {
               description="Pagos congelados, reembolsos ops y pérdidas absorbidas en Cuenta Wompi."
               count={disputeQueueCount}
               icon={ShieldAlert}
-              emphasized={disputeQueueCount > 0}
+              emphasized={hottestWorkHref.startsWith("/revision/disputas")}
             />
-            <QueueCard
+            <Link
               href="/revision/precios"
-              title="Precios de referencia"
-              description="Guía para vendedores por modelo, almacenamiento y estado."
-              count={recommendedPriceCount}
-              icon={Tags}
-            />
+              className="border-border hover:bg-muted/50 flex items-start gap-3 rounded-xl border p-4 transition-colors"
+            >
+              <span className="bg-muted text-foreground flex size-10 shrink-0 items-center justify-center rounded-lg">
+                <Tags className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-foreground text-sm font-semibold">
+                  Precios de referencia
+                </p>
+                <p className="text-muted-foreground text-xs leading-snug">
+                  Guía para vendedores. No es una cola de trabajo.
+                </p>
+                <p className="text-muted-foreground pt-1 text-sm">
+                  {recommendedPriceCount} combinación
+                  {recommendedPriceCount === 1 ? "" : "es"} en la tabla
+                </p>
+              </div>
+              <ChevronRight
+                className="text-muted-foreground mt-1 size-4 shrink-0"
+                aria-hidden
+              />
+            </Link>
             <aside className="border-border bg-muted/50 flex gap-3 rounded-xl border p-4">
               <ShieldAlert
                 className="text-muted-foreground mt-0.5 size-5 shrink-0"
@@ -280,8 +402,8 @@ export default async function ReviewHubPage() {
               <div className="space-y-1 text-sm">
                 <p className="text-foreground font-semibold">Más admin</p>
                 <p className="text-muted-foreground leading-relaxed">
-                  Dispersión al vendedor es manual en Wompi (supervisión). La
-                  API automática llega en Phase 24.
+                  La liquidación al vendedor se paga a mano en Wompi. Revisa
+                  cada envío antes de confirmarlo.
                 </p>
               </div>
             </aside>

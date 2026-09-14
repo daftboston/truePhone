@@ -1,7 +1,7 @@
 /**
  * @file iphone-catalog.test.ts
- * @description Guards the 28-model catalog, product-line grouping, and typeahead matching.
- * @dependencies node:test, node:assert/strict, iphone-catalog, iphone-catalog-data
+ * @description Guards the 28-model catalog, product-line grouping, typeahead matching, seed backfill, catalog image filenames, and lineup size scale.
+ * @dependencies node:test, node:assert/strict, iphone-catalog, iphone-catalog-data, iphone-catalog-images
  */
 
 import assert from "node:assert/strict";
@@ -9,6 +9,7 @@ import { describe, it } from "node:test";
 
 import {
   formatStorageLabel,
+  getIphoneFaceStyle,
   groupModelsBySeries,
   matchModelsForSearch,
   type CatalogModel,
@@ -16,10 +17,18 @@ import {
 import {
   IPHONE_CATALOG_COLORS,
   IPHONE_CATALOG_MODELS,
+  IPHONE_CATALOG_RETIRED_SLUGS,
+  isRetiredCatalogSlug,
 } from "@/lib/iphone-catalog-data";
+import { missingCatalogSlugs } from "@/lib/iphone-catalog-sync";
+import {
+  CATALOG_PHONE_BODY_MM,
+  CATALOG_PHONE_MAX_PX,
+  catalogImageFilename,
+  catalogPhoneRenderHeight,
+} from "@/lib/iphone-catalog-images";
 
 const REQUIRED_SLUGS = [
-  "iphone-se-2",
   "iphone-12-mini",
   "iphone-12",
   "iphone-12-pro",
@@ -29,6 +38,7 @@ const REQUIRED_SLUGS = [
   "iphone-13-pro",
   "iphone-13-pro-max",
   "iphone-se-3",
+  "iphone-se-4",
   "iphone-14",
   "iphone-14-plus",
   "iphone-14-pro",
@@ -95,12 +105,12 @@ describe("IPHONE_CATALOG_MODELS", () => {
     );
     assert.equal(seModels.length, 2);
     assert.deepEqual(seModels.map((model) => model.slug).sort(), [
-      "iphone-se-2",
       "iphone-se-3",
+      "iphone-se-4",
     ]);
     for (const model of seModels) {
       assert.equal(model.variantType, "STANDARD");
-      assert.ok(model.generation === 2 || model.generation === 3);
+      assert.ok(model.generation === 3 || model.generation === 4);
       assert.notEqual(model.generation, 13);
       assert.notEqual(model.generation, 14);
     }
@@ -133,6 +143,35 @@ describe("IPHONE_CATALOG_MODELS", () => {
     assert.equal(seventeenE.variantType, "E");
   });
 
+  it("includes every Pro Max, Plus, mini, e, and Air SKU in the 2020+ set", () => {
+    const slugs = new Set(IPHONE_CATALOG_MODELS.map((model) => model.slug));
+    for (const slug of [
+      "iphone-12-mini",
+      "iphone-12-pro",
+      "iphone-12-pro-max",
+      "iphone-13-mini",
+      "iphone-13-pro-max",
+      "iphone-14-plus",
+      "iphone-15-plus",
+      "iphone-16-plus",
+      "iphone-16e",
+      "iphone-17",
+      "iphone-air",
+      "iphone-17-pro",
+      "iphone-17-pro-max",
+      "iphone-17e",
+      "iphone-se-4",
+    ]) {
+      assert.equal(slugs.has(slug), true, slug);
+    }
+
+    const proMaxGens = IPHONE_CATALOG_MODELS.filter(
+      (model) =>
+        model.productLine === "IPHONE" && model.variantType === "PRO_MAX",
+    ).map((model) => model.generation);
+    assert.deepEqual(proMaxGens, [12, 13, 14, 15, 16, 17]);
+  });
+
   it("only references colors that exist in the color catalog", () => {
     const colorNames = new Set(
       IPHONE_CATALOG_COLORS.map((color) => color.name),
@@ -160,8 +199,8 @@ describe("groupModelsBySeries", () => {
     assert.ok(se);
     assert.equal(se.label, "Serie iPhone SE");
     assert.deepEqual(se.models.map((model) => model.slug).sort(), [
-      "iphone-se-2",
       "iphone-se-3",
+      "iphone-se-4",
     ]);
     assert.equal(
       byKey
@@ -202,12 +241,16 @@ describe("matchModelsForSearch", () => {
   it("returns only SE models for se queries, including generation narrowing", () => {
     const se = matchModelsForSearch(models, "iphone se");
     assert.deepEqual(se.map((model) => model.slug).sort(), [
-      "iphone-se-2",
       "iphone-se-3",
+      "iphone-se-4",
     ]);
     assert.deepEqual(
       matchModelsForSearch(models, "se 3").map((model) => model.slug),
       ["iphone-se-3"],
+    );
+    assert.deepEqual(
+      matchModelsForSearch(models, "se 4").map((model) => model.slug),
+      ["iphone-se-4"],
     );
   });
 
@@ -243,10 +286,162 @@ describe("matchModelsForSearch", () => {
   });
 });
 
+describe("getIphoneFaceStyle", () => {
+  it("uses a home button for SE, notch for 12–13 and 14/16e, island otherwise", () => {
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE_SE",
+        generation: 3,
+        variantType: "STANDARD",
+      }),
+      "home",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 13,
+        variantType: "PRO_MAX",
+      }),
+      "notch",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 14,
+        variantType: "STANDARD",
+      }),
+      "notch",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 16,
+        variantType: "E",
+      }),
+      "notch",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 17,
+        variantType: "PRO_MAX",
+      }),
+      "island",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE_AIR",
+        generation: 1,
+        variantType: "AIR",
+      }),
+      "island",
+    );
+  });
+});
+
 describe("formatStorageLabel", () => {
   it("formats TB capacities without showing raw 1024 GB", () => {
     assert.equal(formatStorageLabel(256), "256 GB");
     assert.equal(formatStorageLabel(1024), "1 TB");
     assert.equal(formatStorageLabel(2048), "2 TB");
+  });
+});
+
+describe("missingCatalogSlugs", () => {
+  const originalSeedSlugs = [
+    "iphone-16-pro-max",
+    "iphone-16-pro",
+    "iphone-16",
+    "iphone-15-pro-max",
+    "iphone-15-pro",
+    "iphone-15",
+    "iphone-14-pro-max",
+    "iphone-14-pro",
+    "iphone-14",
+    "iphone-13-pro",
+    "iphone-13",
+    "iphone-12",
+    "iphone-se-3",
+  ];
+
+  it("flags 17, Air, Plus, mini, and missing Pro Max rows from the original 13-model seed", () => {
+    const missing = missingCatalogSlugs(originalSeedSlugs);
+    for (const slug of [
+      "iphone-17",
+      "iphone-air",
+      "iphone-17-pro",
+      "iphone-17-pro-max",
+      "iphone-13-pro-max",
+      "iphone-12-pro-max",
+      "iphone-14-plus",
+      "iphone-15-plus",
+      "iphone-16-plus",
+      "iphone-16e",
+      "iphone-se-4",
+    ]) {
+      assert.equal(missing.includes(slug), true, slug);
+    }
+    assert.equal(missing.length, 15);
+  });
+
+  it("returns nothing when the stored catalog already has all 28 slugs", () => {
+    assert.deepEqual(
+      missingCatalogSlugs(IPHONE_CATALOG_MODELS.map((model) => model.slug)),
+      [],
+    );
+  });
+});
+
+describe("retired catalog slugs", () => {
+  it("marks iphone-se-2 as retired and excludes it from the 28-model set", () => {
+    assert.equal(isRetiredCatalogSlug("iphone-se-2"), true);
+    assert.equal(isRetiredCatalogSlug("iphone-se-4"), false);
+    assert.deepEqual([...IPHONE_CATALOG_RETIRED_SLUGS], ["iphone-se-2"]);
+    assert.equal(
+      IPHONE_CATALOG_MODELS.some((model) => model.slug === "iphone-se-2"),
+      false,
+    );
+  });
+});
+
+describe("catalogImageFilename", () => {
+  it("uses slug-front and slug-back in public/catalog", () => {
+    assert.equal(
+      catalogImageFilename("iphone-17-pro-max", "front"),
+      "iphone-17-pro-max-front.webp",
+    );
+    assert.equal(
+      catalogImageFilename("iphone-air", "back", "png"),
+      "iphone-air-back.png",
+    );
+  });
+
+  it("covers every canonical model slug", () => {
+    for (const slug of REQUIRED_SLUGS) {
+      assert.equal(catalogImageFilename(slug, "front"), `${slug}-front.webp`);
+      assert.equal(catalogImageFilename(slug, "back"), `${slug}-back.webp`);
+    }
+  });
+});
+
+describe("catalogPhoneRenderHeight", () => {
+  it("has a body height for every canonical slug", () => {
+    for (const slug of REQUIRED_SLUGS) {
+      assert.ok(CATALOG_PHONE_BODY_MM[slug], slug);
+    }
+  });
+
+  it("keeps the 17 series on real-life proportions", () => {
+    const seventeen = catalogPhoneRenderHeight("iphone-17");
+    const pro = catalogPhoneRenderHeight("iphone-17-pro");
+    const proMax = catalogPhoneRenderHeight("iphone-17-pro-max");
+    const e = catalogPhoneRenderHeight("iphone-17e");
+    const air = catalogPhoneRenderHeight("iphone-air");
+
+    assert.equal(proMax, CATALOG_PHONE_MAX_PX);
+    assert.ok(Math.abs(seventeen - pro) <= 4);
+    assert.ok(pro < proMax);
+    assert.ok(e < seventeen);
+    assert.ok(seventeen < air && air < proMax);
   });
 });

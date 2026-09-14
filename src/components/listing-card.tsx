@@ -1,6 +1,7 @@
 /**
  * @file listing-card.tsx
  * @description Linked marketplace card with image, price, condition, and trust badge.
+ *   Hover lift matches explore model cards.
  * @dependencies next/image, next/link, TrustBadge, PriceDisplay, @/lib/utils
  */
 
@@ -37,7 +38,7 @@ type ListingCardProps = {
  * @param props.conditionLabel - Human-readable condition.
  * @param props.className - Optional className.
  * @returns Linked card element.
- * @calledBy Explore, search, favorites, and seller listing grids
+ * @calledBy Search, related listings, recently viewed, and home featured grid
  */
 export function ListingCard({
   href,
@@ -54,7 +55,8 @@ export function ListingCard({
     <Link
       href={href}
       className={cn(
-        "bg-card text-card-foreground border-border shadow-card block overflow-hidden rounded-xl border transition-opacity hover:opacity-95",
+        "listing-card bg-card text-card-foreground border-border shadow-card block overflow-hidden rounded-xl border",
+        "focus-visible:ring-ring focus-visible:ring-offset-background focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
         className,
       )}
     >
@@ -74,7 +76,7 @@ export function ListingCard({
         )}
         {verified && (
           <div className="absolute top-2 left-2">
-            <TrustBadge />
+            <TrustBadge label="Revisado" />
           </div>
         )}
       </div>

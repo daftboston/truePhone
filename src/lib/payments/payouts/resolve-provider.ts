@@ -1,9 +1,10 @@
 /**
  * @file resolve-provider.ts
  * @description Selects mock / manual / Wompi payout (dispersion) provider from env.
- * @dependencies @/lib/payments/payouts/mock, provider, wompi
+ * @dependencies @/lib/env, @/lib/payments/payouts/mock, provider, wompi
  */
 
+import { isVercelProduction } from "@/lib/env";
 import { createMockPayoutProvider } from "@/lib/payments/payouts/mock";
 import type {
   PayoutProviderClient,
@@ -45,6 +46,7 @@ function createManualPayoutProvider(): PayoutProviderClient {
  * - `PAYOUTS_PROVIDER=manual` — authorize only; ops pays in Wompi (MVP production)
  * - `PAYOUTS_PROVIDER=wompi` — Pagos a Terceros API (Phase 24; stub until activated)
  * - unset: **manual** (safe default for supervised dispersion)
+ * Production refuses `PAYOUTS_PROVIDER=mock` (would auto-complete payouts).
  *
  * @returns provider client and mode id.
  * @calledBy financial-core settlement authorizeAndSubmitPayout
@@ -56,6 +58,11 @@ export function resolvePayoutProvider(): {
   const forced = process.env.PAYOUTS_PROVIDER?.trim().toLowerCase();
 
   if (forced === "mock") {
+    if (isVercelProduction()) {
+      throw new Error(
+        "PAYOUTS_PROVIDER=mock is not allowed in production. Use manual Wompi dispersion (default) or Phase 24 API keys.",
+      );
+    }
     return { provider: createMockPayoutProvider(), mode: "MOCK" };
   }
 

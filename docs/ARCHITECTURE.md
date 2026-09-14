@@ -515,7 +515,7 @@ Do not bypass Prisma for routine app queries. Use the Supabase client for Auth a
 - Provider: **Supabase Auth**
 - Sessions: server-readable cookies via Supabase SSR helpers
 - Profile row in `profiles` linked by `authUserId`
-- Roles: `BUYER`, `SELLER`, `REVIEWER`, `ADMIN` (enforced in Server Actions + RLS later)
+- Roles: `BUYER`, `SELLER`, `REVIEWER`, `ADMIN` (enforced in Server Actions). `messages` has participant SELECT RLS for Supabase Realtime.
 - Protected routes check session on the server before rendering sensitive pages
 
 ---

@@ -3,7 +3,8 @@
 /**
  * @file update-password-form.tsx
  * @description Client form for setting a new password after recovery.
- * @dependencies react, updatePasswordAction, design-system inputs
+ * @dependencies react, updatePasswordAction, PasswordField, design-system inputs
+ * @changelog 2026-09-11 — Shared PasswordField for visibility toggles.
  */
 
 import { useActionState } from "react";
@@ -11,8 +12,7 @@ import { useActionState } from "react";
 import { updatePasswordAction } from "@/features/auth/actions/auth";
 import type { AuthActionState } from "@/features/auth/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { PasswordField } from "@/components/ui/password-field";
 
 /**
  * UpdatePasswordForm
@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
  * Collects new password + confirmation and submits to updatePasswordAction.
  *
  * @returns Password update form with field and form-level errors.
- * @calledBy src/app/(auth)/auth/actualizar-contrasena/page.tsx
+ * @calledBy src/app/auth/actualizar-contrasena/page.tsx
  */
 export function UpdatePasswordForm() {
   const [state, formAction, pending] = useActionState<
@@ -30,39 +30,25 @@ export function UpdatePasswordForm() {
 
   return (
     <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="password">Nueva contraseña</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-        />
-        {state?.ok === false && state.fieldErrors?.password?.[0] ? (
-          <p className="text-destructive text-xs">
-            {state.fieldErrors.password[0]}
-          </p>
-        ) : null}
-      </div>
+      <PasswordField
+        id="password"
+        name="password"
+        label="Nueva contraseña"
+        error={
+          state?.ok === false ? state.fieldErrors?.password?.[0] : undefined
+        }
+      />
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={8}
-        />
-        {state?.ok === false && state.fieldErrors?.confirmPassword?.[0] ? (
-          <p className="text-destructive text-xs">
-            {state.fieldErrors.confirmPassword[0]}
-          </p>
-        ) : null}
-      </div>
+      <PasswordField
+        id="confirmPassword"
+        name="confirmPassword"
+        label="Confirmar contraseña"
+        error={
+          state?.ok === false
+            ? state.fieldErrors?.confirmPassword?.[0]
+            : undefined
+        }
+      />
 
       {state?.ok === false ? (
         <p className="text-destructive text-sm" role="alert">

@@ -16,7 +16,14 @@ import {
   type OrderActionState,
 } from "@/features/orders/schemas/order";
 import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
-import { cancelOrder, createOrderAndReserveListing } from "@/lib/orders";
+import { prisma } from "@/lib/db";
+import {
+  cancelOrder,
+  chooseRefundAfterSellerAbandon,
+  createOrderAndReserveListing,
+} from "@/lib/orders";
+import { safeNotify } from "@/lib/notifications/marketplace";
+import { notifyBuyerRefundCompleted } from "@/lib/notifications/order-support";
 
 /**
  * revalidateOrderPaths
@@ -35,6 +42,9 @@ function revalidateOrderPaths(input: {
   revalidatePath("/compras");
   revalidatePath("/ventas");
   revalidatePath("/vender");
+  revalidatePath("/revision/soporte-pedidos");
+  revalidatePath("/revision/anuncios");
+  revalidatePath("/revision");
   if (input.orderId) {
     revalidatePath(`/compras/${input.orderId}`);
     revalidatePath(`/ventas/${input.orderId}`);
@@ -46,6 +56,35 @@ function revalidateOrderPaths(input: {
     revalidatePath(`/anuncios/${input.listingSlug}`);
   }
   revalidatePath("/", "layout");
+}
+
+/**
+ * revalidateForOrderId
+ *
+ * Revalidates order hubs and the public listing page for an order.
+ *
+ * @param orderId - Order UUID.
+ * @param listingId - Optional listing id when already known.
+ * @param listingSlug - Optional public slug when already known.
+ */
+async function revalidateForOrderId(
+  orderId: string,
+  listingId?: string,
+  listingSlug?: string | null,
+) {
+  if (listingId !== undefined || listingSlug !== undefined) {
+    revalidateOrderPaths({ orderId, listingId, listingSlug });
+    return;
+  }
+  const row = await prisma.order.findFirst({
+    where: { id: orderId },
+    select: { listingId: true, listing: { select: { slug: true } } },
+  });
+  revalidateOrderPaths({
+    orderId,
+    listingId: row?.listingId,
+    listingSlug: row?.listing.slug ?? null,
+  });
 }
 
 /**
@@ -91,6 +130,7 @@ export async function createOrderAction(
   revalidateOrderPaths({
     orderId: result.orderId,
     listingId: parsed.data.listingId,
+    listingSlug: result.listingSlug,
   });
   redirect(`/compras/${result.orderId}`);
 }
@@ -141,10 +181,69 @@ export async function cancelOrderAction(
     return { ok: false, error: result.error };
   }
 
-  revalidateOrderPaths({ orderId: parsed.data.orderId });
+  await revalidateForOrderId(
+    parsed.data.orderId,
+    result.listingId,
+    result.listingSlug,
+  );
   return {
     ok: true,
     message:
       result.message ?? "Pedido cancelado. El anuncio volvió a publicarse.",
+  };
+}
+
+/**
+ * chooseRefundAfterSellerAbandonAction
+ *
+ * Server action: buyer chooses full refund after seller cancel / no-ship.
+ *
+ * @param _prev - Previous form state from useActionState.
+ * @param formData - Form with orderId.
+ * @returns Action state; revalidates order paths on success.
+ * @calledBy BuyerAbandonChoice
+ */
+export async function chooseRefundAfterSellerAbandonAction(
+  _prev: OrderActionState,
+  formData: FormData,
+): Promise<OrderActionState> {
+  const current = await getCurrentProfile();
+  if (!current) {
+    return {
+      ok: false,
+      error: "Debes iniciar sesión.",
+      loginRequired: true,
+    };
+  }
+
+  const parsed = cancelOrderSchema.pick({ orderId: true }).safeParse({
+    orderId: formData.get("orderId"),
+  });
+  if (!parsed.success) {
+    return { ok: false, error: "Pedido inválido." };
+  }
+
+  const siteOrigin = await getRequestOrigin();
+  const result = await chooseRefundAfterSellerAbandon({
+    orderId: parsed.data.orderId,
+    buyerId: current.profile.id,
+    siteOrigin,
+  });
+
+  if (!result.ok) {
+    return { ok: false, error: result.error };
+  }
+
+  await revalidateForOrderId(parsed.data.orderId);
+  await safeNotify(
+    notifyBuyerRefundCompleted({
+      orderId: parsed.data.orderId,
+      siteOrigin,
+    }),
+  );
+  return {
+    ok: true,
+    message:
+      "Reembolso autorizado. El dinero vuelve por el mismo medio de pago.",
   };
 }

@@ -10,8 +10,10 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ReviewSubmitForm } from "@/features/verification/components/review-submit-form";
 import { VerificationShell } from "@/features/verification/components/verification-shell";
+import { verificationLockedPath } from "@/features/verification/types";
 import { getOrCreateDraftVerification } from "@/lib/auth/identity";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { createSignedStorageUrl } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Revisar verificación",
@@ -29,19 +31,24 @@ export default async function ReviewVerificationPage() {
   if (!current) redirect("/login?next=/verificacion/revisar");
 
   const draft = await getOrCreateDraftVerification(current.profile.id);
-  if (draft.status === "PENDING" || draft.status === "VERIFIED") {
-    redirect(draft.status === "VERIFIED" ? "/vender" : "/verificacion/enviada");
-  }
+  const locked = verificationLockedPath(draft.status);
+  if (locked) redirect(locked);
   if (!draft.selfieImageUrl) redirect("/verificacion/selfie");
+
+  const [frontImageUrl, backImageUrl, selfieImageUrl] = await Promise.all([
+    createSignedStorageUrl(draft.frontImageUrl),
+    createSignedStorageUrl(draft.backImageUrl),
+    createSignedStorageUrl(draft.selfieImageUrl),
+  ]);
 
   return (
     <AppShell mainClassName="max-w-lg">
       <VerificationShell step={5} title="Revisa y envía">
         <ReviewSubmitForm
           documentLast4={draft.documentNumberLast4}
-          hasFront={Boolean(draft.frontImageUrl)}
-          hasBack={Boolean(draft.backImageUrl)}
-          hasSelfie={Boolean(draft.selfieImageUrl)}
+          frontImageUrl={frontImageUrl}
+          backImageUrl={backImageUrl}
+          selfieImageUrl={selfieImageUrl}
         />
       </VerificationShell>
     </AppShell>

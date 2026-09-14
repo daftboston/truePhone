@@ -8,20 +8,24 @@ import { Prisma, type OrderStatus } from "@prisma/client";
 
 import {
   authorizeCancelMoney,
+  authorizeRefundAfterSellerAbandon,
   canCancelPaidOrder,
   computeOrderFees,
+  FeeEntitlementConflictError,
   feeRateBpsFromKind,
   feeRateFromKind,
+  orderStatusWhereForCancelCommit,
   PAID_ORDER_CANCEL_BLOCKED_ERROR,
+  PRE_PAYMENT_CANCEL_LOST_RACE_ERROR,
   releaseFeeEntitlementForOrder,
   reserveFeeEntitlement,
   resolveFeeKindForBuyer,
+  sellerPaidSelfCancelBlocker,
 } from "@/lib/financial-core";
 import { prisma } from "@/lib/db";
 import { formatOrderMoney } from "@/lib/format-money";
 import {
   ACTIVE_ORDER_STATUSES,
-  cancelOpenPaymentsForOrder,
   getLatestPaymentForOrder,
 } from "@/lib/payments";
 
@@ -44,6 +48,9 @@ const orderListInclude = {
       fullName: true,
       username: true,
       avatarUrl: true,
+      sellerRating: true,
+      createdAt: true,
+      verifikStatus: true,
     },
   },
   seller: {
@@ -53,6 +60,9 @@ const orderListInclude = {
       username: true,
       avatarUrl: true,
       city: true,
+      sellerRating: true,
+      createdAt: true,
+      verifikStatus: true,
     },
   },
   payments: {
@@ -77,6 +87,14 @@ const orderListInclude = {
       },
     },
     orderBy: { createdAt: "asc" as const },
+  },
+  feeEntitlementSource: {
+    select: {
+      id: true,
+      status: true,
+      expiresAt: true,
+      feeRateBps: true,
+    },
   },
 } satisfies Prisma.OrderInclude;
 
@@ -238,7 +256,8 @@ export async function getPendingOrderForBuyerOnListing(
 }
 
 type CreateOrderResult =
-  { ok: true; orderId: string } | { ok: false; error: string };
+  | { ok: true; orderId: string; listingSlug: string | null }
+  | { ok: false; error: string };
 
 /**
  * createOrderAndReserveListing
@@ -328,12 +347,15 @@ export async function createOrderAndReserveListing(input: {
         });
       }
 
-      return created;
+      return { id: created.id, listingSlug: listing.slug };
     });
 
-    return { ok: true, orderId: order.id };
+    return { ok: true, orderId: order.id, listingSlug: order.listingSlug };
   } catch (error) {
     if (error instanceof OrderError) {
+      return { ok: false, error: error.message };
+    }
+    if (error instanceof FeeEntitlementConflictError) {
       return { ok: false, error: error.message };
     }
     if (
@@ -350,8 +372,9 @@ export async function createOrderAndReserveListing(input: {
  * cancelOrder
  *
  * Cancels an order via Financial Core money rules and releases the listing when needed.
+ * Sellers cannot self-cancel PAID orders; pass asOpsSellerAbandon only from REVIEWER/ADMIN ops actions.
  *
- * @param input - orderId, actorId, reason, siteOrigin.
+ * @param input - orderId, actorId, reason, siteOrigin; optional asOpsSellerAbandon for ops.
  * @returns Cancel result.
  * @calledBy Order cancel actions
  */
@@ -360,28 +383,60 @@ export async function cancelOrder(input: {
   actorId: string;
   reason?: string | null;
   siteOrigin: string;
-}): Promise<{ ok: true; message?: string } | { ok: false; error: string }> {
-  const { orderId, actorId, reason, siteOrigin } = input;
+  /** Ops-only paid seller-abandon; caller must gate REVIEWER/ADMIN. */
+  asOpsSellerAbandon?: boolean;
+}): Promise<
+  | {
+      ok: true;
+      message?: string;
+      listingId?: string;
+      listingSlug?: string | null;
+    }
+  | { ok: false; error: string }
+> {
+  const { orderId, actorId, reason, siteOrigin, asOpsSellerAbandon } = input;
 
   try {
+    // Defend API: reject seller self-cancel on PAID before money side effects.
+    const existing = await prisma.order.findFirst({
+      where: { id: orderId },
+      select: { status: true, sellerId: true },
+    });
+    if (!existing) {
+      return { ok: false, error: "Pedido no encontrado." };
+    }
+    const sellerPaidBlock = sellerPaidSelfCancelBlocker({
+      orderStatus: existing.status,
+      actorId,
+      sellerId: existing.sellerId,
+      asOpsSellerAbandon,
+    });
+    if (sellerPaidBlock) {
+      return { ok: false, error: sellerPaidBlock };
+    }
+
     const money = await authorizeCancelMoney({
       orderId,
       actorId,
       reason,
       siteOrigin,
+      asOpsSellerAbandon,
     });
     if (!money.ok) {
       return { ok: false, error: money.error };
     }
 
-    if (money.mode === "pre_payment") {
-      await cancelOpenPaymentsForOrder(orderId);
-    }
-
     const now = new Date();
+    let listingId: string | undefined;
+    let listingSlug: string | null | undefined;
     await prisma.$transaction(async (tx) => {
-      const order = await tx.order.findFirst({ where: { id: orderId } });
+      const order = await tx.order.findFirst({
+        where: { id: orderId },
+        include: { listing: { select: { slug: true } } },
+      });
       if (!order) throw new OrderError("Pedido no encontrado.");
+      listingId = order.listingId;
+      listingSlug = order.listing.slug;
       if (order.status !== "AWAITING_PAYMENT" && order.status !== "PAID") {
         throw new OrderError("Este pedido ya no se puede cancelar.");
       }
@@ -390,13 +445,32 @@ export async function cancelOrder(input: {
       }
 
       if (money.mode === "pre_payment") {
+        if (order.status === "PAID") {
+          throw new OrderError(PRE_PAYMENT_CANCEL_LOST_RACE_ERROR);
+        }
+        const succeededPayment = await tx.payment.findFirst({
+          where: { orderId, status: "SUCCEEDED" },
+          select: { id: true },
+        });
+        if (succeededPayment) {
+          throw new OrderError(PRE_PAYMENT_CANCEL_LOST_RACE_ERROR);
+        }
+        // Same transaction as the order CANCELLED write so capture cannot
+        // SUCCEEDED a payment we already cancelled, or vice versa.
+        await tx.payment.updateMany({
+          where: {
+            orderId,
+            status: { in: ["PENDING", "REQUIRES_ACTION"] },
+          },
+          data: { status: "CANCELLED" },
+        });
         await releaseFeeEntitlementForOrder(tx, orderId);
       }
 
       const cancelled = await tx.order.updateMany({
         where: {
           id: orderId,
-          status: { in: ["AWAITING_PAYMENT", "PAID"] },
+          ...orderStatusWhereForCancelCommit(money.mode),
         },
         data: {
           status: "CANCELLED",
@@ -406,30 +480,79 @@ export async function cancelOrder(input: {
         },
       });
       if (cancelled.count !== 1) {
-        throw new OrderError("Este pedido ya no se puede cancelar.");
+        throw new OrderError(
+          money.mode === "pre_payment"
+            ? PRE_PAYMENT_CANCEL_LOST_RACE_ERROR
+            : "Este pedido ya no se puede cancelar.",
+        );
       }
 
-      await tx.listing.updateMany({
-        where: { id: order.listingId, status: "RESERVED" },
-        data: { status: "PUBLISHED" },
-      });
+      // Buyer / unpaid cancel republishes; approved seller abandon permanently archives.
+      if (money.mode === "seller_abandon_entitlement") {
+        const archived = await tx.listing.updateMany({
+          where: { id: order.listingId, status: "RESERVED" },
+          data: {
+            status: "ARCHIVED",
+          },
+        });
+        if (archived.count !== 1) {
+          throw new OrderError(
+            "El anuncio cambió mientras se aprobaba la cancelación. La solicitud requiere revisión manual.",
+          );
+        }
+        await tx.shipment.updateMany({
+          where: {
+            orderId: order.id,
+            status: { notIn: ["CANCELLED", "DELIVERED", "RETURNED"] },
+          },
+          data: { status: "CANCELLED" },
+        });
+      } else {
+        await tx.listing.updateMany({
+          where: { id: order.listingId, status: "RESERVED" },
+          data: { status: "PUBLISHED" },
+        });
+      }
     });
 
     if (money.mode === "seller_abandon_entitlement") {
       return {
         ok: true,
+        listingId,
+        listingSlug,
         message:
-          "Cancelación del vendedor registrada. El comprador puede elegir reembolso o una compra de reemplazo con 8% de comisión (una sola vez).",
+          "Cancelación del vendedor registrada. El anuncio quedó archivado. El comprador puede elegir reembolso o una compra de reemplazo con 8% de protección (una sola vez).",
       };
     }
 
-    return { ok: true };
+    return { ok: true, listingId, listingSlug };
   } catch (error) {
     if (error instanceof OrderError) {
       return { ok: false, error: error.message };
     }
     throw error;
   }
+}
+
+/**
+ * chooseRefundAfterSellerAbandon
+ *
+ * Buyer opts for a full refund instead of the one-time 8% replacement purchase.
+ *
+ * @param input.orderId - Source order UUID.
+ * @param input.buyerId - Buyer profile UUID.
+ * @param input.siteOrigin - Origin for payment provider resolution.
+ * @returns Success or Spanish error from Financial Core.
+ * @calledBy chooseRefundAfterSellerAbandonAction
+ */
+export async function chooseRefundAfterSellerAbandon(input: {
+  orderId: string;
+  buyerId: string;
+  siteOrigin: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const money = await authorizeRefundAfterSellerAbandon(input);
+  if (!money.ok) return { ok: false, error: money.error };
+  return { ok: true };
 }
 
 /**
@@ -517,7 +640,7 @@ export function buildOrderTimeline(
   if (order.status === "CANCELLED" && order.cancelledAt) {
     events.push({
       id: "cancelled",
-      label: "Pedido cancelado · anuncio publicado de nuevo",
+      label: "Pedido cancelado",
       at: order.cancelledAt,
       done: true,
     });

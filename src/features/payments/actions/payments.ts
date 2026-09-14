@@ -28,12 +28,24 @@ import { isMockPaymentsEnabled } from "@/lib/payments/resolve-provider";
  * @param orderId - Order whose detail pages should revalidate.
  * @calledBy startCheckoutAction, confirmMockPaymentAction
  */
-function revalidatePaymentPaths(orderId: string) {
+function revalidatePaymentPaths(orderId: string, listingSlug?: string | null) {
   revalidatePath("/compras");
   revalidatePath("/ventas");
   revalidatePath(`/compras/${orderId}`);
   revalidatePath(`/ventas/${orderId}`);
   revalidatePath("/revision/pagos");
+  if (listingSlug) {
+    revalidatePath(`/anuncios/${listingSlug}`);
+  }
+  revalidatePath("/", "layout");
+}
+
+async function listingSlugForOrder(orderId: string) {
+  const row = await prisma.order.findFirst({
+    where: { id: orderId },
+    select: { listing: { select: { slug: true } } },
+  });
+  return row?.listing.slug ?? null;
 }
 
 /**
@@ -77,7 +89,10 @@ export async function startCheckoutAction(
     return { ok: false, error: result.error };
   }
 
-  revalidatePaymentPaths(parsed.data.orderId);
+  revalidatePaymentPaths(
+    parsed.data.orderId,
+    await listingSlugForOrder(parsed.data.orderId),
+  );
   redirect(result.checkoutUrl);
 }
 
@@ -137,6 +152,9 @@ export async function confirmMockPaymentAction(
     return { ok: false, error: payment.error };
   }
 
-  revalidatePaymentPaths(payment.orderId);
+  revalidatePaymentPaths(
+    payment.orderId,
+    await listingSlugForOrder(payment.orderId),
+  );
   redirect(`/compras/${payment.orderId}?pago=ok`);
 }

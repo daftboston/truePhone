@@ -18,6 +18,7 @@ import {
   createListingAction,
   updateListingDetailsAction,
 } from "@/features/listings/actions/listings";
+import { LISTING_WIZARD_FORM_IDS } from "@/features/listings/lib/listing-wizard-intent";
 import {
   BUYER_PROTECTION_FEE_RATE,
   computeFees,
@@ -180,6 +181,7 @@ export function DeviceDetailsForm({
 
   return (
     <form
+      id={LISTING_WIZARD_FORM_IDS.device}
       action={formAction}
       className="grid gap-6 lg:grid-cols-2 lg:items-start"
     >

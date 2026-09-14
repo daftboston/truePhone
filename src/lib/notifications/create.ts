@@ -1,7 +1,7 @@
 /**
  * @file create.ts
  * @description Creates idempotent in-app notifications and optional email delivery.
- * @dependencies @prisma/client, prisma, email, preferences, resolve-email
+ * @dependencies @prisma/client, prisma, email, email-template, preferences, resolve-email
  */
 
 import type { NotificationType } from "@prisma/client";
@@ -9,6 +9,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 import { sendNotificationEmail } from "@/lib/notifications/email";
+import { renderNotificationEmailHtml } from "@/lib/notifications/email-template";
 import {
   getNotificationPreferences,
   wantsEmailOrderUpdates,
@@ -129,11 +130,20 @@ export async function createNotification(
         input.emailText ??
         (absoluteHref ? `${input.body}\n\n${absoluteHref}` : input.body);
       const subject = input.emailSubject ?? input.title;
+      const html =
+        input.emailHtml ??
+        renderNotificationEmailHtml({
+          title: input.title,
+          body: input.body,
+          siteOrigin: input.siteOrigin ?? "",
+          href: input.href,
+          ctaLabel: absoluteHref ? "Abrir en TruePhone" : undefined,
+        });
       const result = await sendNotificationEmail({
         to,
         subject,
         text,
-        html: input.emailHtml,
+        html,
       });
       if (result.ok && notificationId) {
         emailSent = true;

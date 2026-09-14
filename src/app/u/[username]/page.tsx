@@ -9,12 +9,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { EmptyState } from "@/components/empty-state";
+import { ListingCard } from "@/components/listing-card";
 import { ReviewCard } from "@/components/review-card";
 import { Button } from "@/components/ui/button";
+import { conditionLabels } from "@/features/listings/schemas/listing";
 import { ProfileHeader } from "@/features/profile/components/profile-header";
 import { ShareProfileButton } from "@/features/profile/components/share-profile-button";
 import { getAuthUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import {
+  listPublishedListings,
+  primaryGalleryUrl,
+  publicListingPath,
+} from "@/lib/listings-marketplace";
+import { getPublicActivityCounts } from "@/lib/profile-activity";
 import { listVisibleReviewsForUser, reviewAuthorName } from "@/lib/reviews";
 
 type PublicProfilePageProps = {
@@ -62,9 +71,11 @@ export default async function PublicProfilePage({
     notFound();
   }
 
-  const [user, reviews] = await Promise.all([
+  const [user, reviews, activity, shop] = await Promise.all([
     getAuthUser(),
     listVisibleReviewsForUser(profile.id, 12),
+    getPublicActivityCounts(profile.id),
+    listPublishedListings({ sellerId: profile.id, take: 12 }),
   ]);
   const isOwner = user?.id === profile.authUserId;
   const sharePath = `/u/${profile.username}`;
@@ -84,6 +95,7 @@ export default async function PublicProfilePage({
         isTrustedSeller={profile.isTrustedSeller}
         verifikStatus={profile.verifikStatus}
         createdAt={profile.createdAt}
+        activity={activity}
       />
 
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -98,6 +110,43 @@ export default async function PublicProfilePage({
         ) : null}
       </div>
 
+      <section id="anuncios-activos" className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="text-foreground text-sm font-semibold">
+            Anuncios activos
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            iPhones publicados y revisados de este vendedor.
+          </p>
+        </div>
+        {shop.length === 0 ? (
+          <EmptyState
+            title="Sin anuncios activos"
+            description="Cuando un anuncio pase la revisión, aparecerá aquí."
+            action={
+              <Button asChild variant="outline">
+                <Link href="/explorar">Explorar iPhones</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+            {shop.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                href={publicListingPath(listing.slug)}
+                title={listing.title}
+                imageUrl={primaryGalleryUrl(listing)}
+                price={listing.finalPrice ?? listing.price}
+                batteryHealth={listing.batteryHealth ?? undefined}
+                verified
+                conditionLabel={conditionLabels[listing.condition]}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
       <section className="space-y-3">
         <div className="space-y-1">
           <h2 className="text-foreground text-sm font-semibold">
@@ -108,9 +157,29 @@ export default async function PublicProfilePage({
           </p>
         </div>
         {reviews.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            Aún no hay reseñas públicas.
-          </p>
+          <EmptyState
+            title="Aún no hay reseñas"
+            description={
+              isOwner
+                ? "Las reseñas aparecen cuando cierras una venta en TruePhone."
+                : "Cuando alguien compre y califique a este vendedor, la reseña se verá aquí."
+            }
+            action={
+              isOwner ? (
+                <Button asChild variant="outline">
+                  <Link href="/vender">Publicar un iPhone</Link>
+                </Button>
+              ) : shop.length > 0 ? (
+                <Button asChild variant="outline">
+                  <Link href="#anuncios-activos">Ver anuncios activos</Link>
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link href="/explorar">Explorar iPhones</Link>
+                </Button>
+              )
+            }
+          />
         ) : (
           <ul className="space-y-3">
             {reviews.map((review) => (

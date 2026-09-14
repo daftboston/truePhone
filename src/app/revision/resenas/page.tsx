@@ -9,6 +9,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { EmptyState } from "@/components/empty-state";
+import { QueueTabs } from "@/components/queue-tabs";
 import { ReviewCard } from "@/components/review-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,14 @@ import {
   getCurrentProfile,
   roleLabel,
 } from "@/lib/auth/session";
-import { listOpenReviewReports, reviewAuthorName } from "@/lib/reviews";
+import {
+  countOpenReviewReports,
+  countResolvedReviewReports,
+  listOpenReviewReports,
+  listResolvedReviewReports,
+  reviewAuthorName,
+} from "@/lib/reviews";
+import { publicListingPath } from "@/lib/listings-marketplace";
 
 export const metadata: Metadata = {
   title: "Reseñas reportadas",
@@ -39,7 +47,11 @@ function formatWhen(date: Date) {
  *
  * @returns Review reports queue.
  */
-export default async function ReviewReportsPage() {
+type PageProps = {
+  searchParams: Promise<{ tab?: string }>;
+};
+
+export default async function ReviewReportsPage({ searchParams }: PageProps) {
   const current = await getCurrentProfile();
   if (!current) redirect("/login?next=/revision/resenas");
 
@@ -59,7 +71,15 @@ export default async function ReviewReportsPage() {
     );
   }
 
-  const reports = await listOpenReviewReports(80);
+  const params = await searchParams;
+  const tab = params.tab === "resueltos" ? "resueltos" : "abiertos";
+  const [reports, openCount, resolvedCount] = await Promise.all([
+    tab === "resueltos"
+      ? listResolvedReviewReports(80)
+      : listOpenReviewReports(80),
+    countOpenReviewReports(),
+    countResolvedReviewReports(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -75,10 +95,42 @@ export default async function ReviewReportsPage() {
         </p>
       </div>
 
+      <QueueTabs
+        active={tab}
+        ariaLabel="Filtros de reseñas"
+        tabs={[
+          {
+            id: "abiertos",
+            label: "Abiertos",
+            href: "/revision/resenas",
+            count: openCount,
+          },
+          {
+            id: "resueltos",
+            label: "Resueltos",
+            href: "/revision/resenas?tab=resueltos",
+            count: resolvedCount,
+          },
+        ]}
+      />
+
       {reports.length === 0 ? (
         <EmptyState
-          title="Sin reportes abiertos"
-          description="Cuando alguien reporte una reseña, aparecerá aquí."
+          title={
+            tab === "resueltos"
+              ? "Sin reportes resueltos"
+              : "Sin reportes abiertos"
+          }
+          description={
+            tab === "resueltos"
+              ? "Cuando ocultes o descartes un reporte, aparecerá aquí."
+              : "Cuando alguien reporte una reseña, aparecerá aquí."
+          }
+          action={
+            <Button asChild variant="outline">
+              <Link href="/revision">Volver al centro</Link>
+            </Button>
+          }
         />
       ) : (
         <ul className="space-y-4">
@@ -108,11 +160,22 @@ export default async function ReviewReportsPage() {
               />
               <p className="text-muted-foreground text-xs">
                 Sobre {reviewAuthorName(report.review.reviewedUser)} · pedido{" "}
-                <span className="font-mono">
-                  {report.review.order.id.slice(0, 8)}
+                <span className="font-mono break-all">
+                  {report.review.order.id}
                 </span>
               </p>
-              <ReviewModerationActions reviewId={report.review.id} />
+              {report.review.order.listing.slug ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link
+                    href={publicListingPath(report.review.order.listing.slug)}
+                  >
+                    Ver anuncio
+                  </Link>
+                </Button>
+              ) : null}
+              {tab === "abiertos" ? (
+                <ReviewModerationActions reviewId={report.review.id} />
+              ) : null}
             </li>
           ))}
         </ul>

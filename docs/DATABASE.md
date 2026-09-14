@@ -2,7 +2,7 @@
 
 **Project:** TruePhone  
 **Version:** 1.0  
-**Last Updated:** August 2026  
+**Last Updated:** September 2026  
 **Source of schema:** `prisma/schema.prisma`
 
 ---
@@ -21,16 +21,19 @@ When schema and this doc disagree, update both in the same change.
 - **Prisma** ORM (`prisma/` + `prisma.config.ts`)
 - Runtime URL: `DATABASE_URL` (pooler)
 - Migrate / push URL: `DIRECT_URL` (direct)
+- `prisma.config.ts` prefers `DIRECT_URL`, then `POSTGRES_URL_NON_POOLING`, then `DATABASE_URL` / `POSTGRES_*` so Vercel Production still migrates if only the pooled URL is set
 
 ---
 
 # Migration Policy
 
 - Prefer `prisma migrate` for shared / production schema changes
-- Vercel `npm run build` runs `prisma migrate deploy` against `DIRECT_URL` so preview/production stay in sync
+- Vercel `npm run build` runs `prisma migrate deploy` via `prisma.config.ts` so preview/production stay in sync
+- Put `DATABASE_URL` and `DIRECT_URL` on **Production**, not Preview-only — Preview-only secrets make `main` deploys fail while PR previews succeed
 - `prisma db push` is acceptable for early local prototyping only
 - Always run `prisma generate` after schema changes
 - Never commit `.env`
+- **CI (plain Postgres):** GitHub Actions runs `scripts/ci/prepare-supabase-compat.sql` before `npm run build` so migrations that reference Supabase roles (`authenticated`, `anon`) or `auth.uid()` can apply on the service database. The script creates NOLOGIN role stubs and a stub `auth.uid()` returning NULL. Production Supabase keeps the real roles and function — never remove the CI prep step or rewrite applied migration checksums for CI convenience.
 
 ---
 
@@ -56,6 +59,10 @@ Guests are unauthenticated users (no enum value).
 | `REJECTED`       | Review failed (may return to draft after edits)                    |
 | `ARCHIVED`       | Soft-retired from active marketplace                               |
 
+**Seller hub (Anuncios activos / Archivados):** Active shows `DRAFT`, `SUBMITTED`, `PENDING_REVIEW`, `APPROVED`, `PUBLISHED`, `REJECTED`, and `RESERVED`. Archivados shows `ARCHIVED` and `SOLD`. Soft-deleted drafts (`deletedAt` set) are hidden from both.
+
+**Seller archive vs system archive:** A seller may archive only a `PUBLISHED` listing (`status = ARCHIVED`, `deletedAt` stays null). Relist restores `PUBLISHED` immediately when no related order ever reached payment (`PAID` / `COMPLETED` or `fundsHeldAt` set). That blocks relist after seller-abandon cancellation or chargeback. Unpaid checkout cancels do not block relist. Draft discard still sets `deletedAt` and is not listed under Archivados.
+
 **V1 review → publish:** reviewer approve sets `status = PUBLISHED` (and `approvedAt`) in one step. Do not require a separate `APPROVED` hop before public browse. The `APPROVED` enum value remains for history tabs / reopen edge cases that may still see old rows.
 
 Listings must not skip forward states in product workflows. Public browse only shows `PUBLISHED` (and optionally `RESERVED` with clear UI once Orders exist).
@@ -78,9 +85,19 @@ Listings must not skip forward states in product workflows. Public browse only s
 
 ## NotificationType
 
-`BUYER_RECEIVED_CONFIRM` | `BUYER_CONFIRM_REMINDER`
+Settlement, marketplace, order-support, and listing Q&A events. Phase 8b additions:
 
-Settlement-critical types first (Phase 12). Additional event types can extend the enum later.
+`LISTING_QUESTION_NEW` | `LISTING_QUESTION_ANSWERED`
+
+## OrderSupportCaseType
+
+`SELLER_CANCELLATION` | `FULFILLMENT_EXCEPTION` | `GENERAL_SUPPORT`
+
+## OrderSupportCaseStatus
+
+`PENDING` | `IN_REVIEW` | `NEEDS_SELLER_RESPONSE` | `ESCALATED` | `APPROVED` | `REJECTED` | `RESOLVED` | `WITHDRAWN`
+
+Terminal states are `APPROVED`, `REJECTED`, `RESOLVED`, and `WITHDRAWN`. An approved seller-cancellation case is private operations evidence; it is never a public profile counter or buyer review.
 
 ---
 
@@ -116,12 +133,14 @@ Numbered models (12–17, including `e` variants), the SE line, and iPhone Air a
 | Field         | Meaning                                                              |
 | ------------- | -------------------------------------------------------------------- |
 | `productLine` | Independent commercial line                                          |
-| `generation`  | Generation **within that line** (SE 2/3, numbered 12–17, Air 1)      |
+| `generation`  | Generation **within that line** (SE 3/4, numbered 12–17, Air 1)      |
 | `variantType` | `STANDARD` \| `MINI` \| `PLUS` \| `PRO` \| `PRO_MAX` \| `E` \| `AIR` |
 | `releaseYear` | Commercial introduction year                                         |
 | `sortOrder`   | Stable catalog order (1 = oldest in the 2020+ set)                   |
 
-Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts` and are applied by `prisma/seed.ts`.
+Unique on `(productLine, generation, variantType)`. Canonical 28 models from 2020 onward live in `src/lib/iphone-catalog-data.ts`. Retired slugs (currently `iphone-se-2`) stay in Postgres for legacy listings but are filtered out of Explorar and new sell pickers via `IPHONE_CATALOG_RETIRED_SLUGS`. Apply the catalog with `npm run db:seed` (local / first provision). Browse and sell also backfill missing slugs via `ensureIphoneCatalog` so `/explorar` does not stay on the original 13-model seed. Production `npm run build` migrates only — it does not seed.
+
+Explorar product shots (front/back hover flip) are static files in `public/catalog/` named `{slug}-front.webp` and `{slug}-back.webp`. See `public/catalog/README.md`. Seller listing photos stay in the Supabase `listing-images` bucket.
 
 **`IphoneModelColor`** joins models to their allowed colors so `/vender` only offers colors that belong to the selected model.
 
@@ -133,9 +152,25 @@ Core marketplace entity. Includes pricing, IMEI hash/last4, Activation Lock flag
 
 **Public browse (Phase 7):** only `status = PUBLISHED` and `deletedAt IS NULL`. Helpers live in `src/lib/listings-marketplace.ts` (`listFeaturedListings`, `listPublishedListings`, `getPublishedListingBySlug`).
 
+`Listing.views` is a denormalized unique-visitor-day count from `ListingViewEvent` (Phase **15**). It is **ops-only** — never shown on public profiles or order party cards. Seller private “views per listing” remains Phase **24**.
+
+## ListingViewEvent
+
+Durable listing view log (`listing_view_events`). One row per visitor per listing per UTC day.
+
+| Field       | Notes                                                     |
+| ----------- | --------------------------------------------------------- |
+| `listingId` | FK → `Listing` (cascade)                                  |
+| `viewerId`  | Optional FK → `Profile`; null for guests                  |
+| `dedupeKey` | `u:{profileId}` or `h:{sha256 prefix}` of IP + User-Agent |
+| `viewedOn`  | UTC date; unique with `(listingId, dedupeKey)`            |
+| `createdAt` | First recorded instant for that day                       |
+
+Seller self-views and crawler/preview User-Agents are skipped. Recorded from `/anuncios/[slug]` via `recordListingView`. Ops dashboard: `/revision/analitica`.
+
 ## ListingImage
 
-Ordered images per listing (`imageType`: `gallery` | `possession`).
+Ordered images per listing (`imageType`: `gallery` | `possession`). Gallery `displayOrder` **0–7** maps 1:1 to the eight guided slots (Frente → IMEI). Deleting a guided photo leaves a gap so other angles do not shift. Indexes **8–11** are optional extras.
 
 ## DevicePossessionChallenge
 
@@ -144,6 +179,42 @@ One-time possession code + photo proving the seller has the physical device (Pha
 - Linked 1:1 to a listing
 - `code` shown to seller; `photoUrl` after upload
 - Required before submit for review
+
+## ListingQuestion / ListingQuestionAnswer / ListingQuestionReport
+
+Public listing Q&A (Phase **8b**). Separate from private `Message` threads.
+
+**ListingQuestion** (`listing_questions`)
+
+| Field                     | Notes                                    |
+| ------------------------- | ---------------------------------------- |
+| `listingId`               | FK → `Listing` (cascade)                 |
+| `askerId`                 | FK → `Profile` (`ListingQuestionsAsked`) |
+| `body`                    | Plain text question                      |
+| `hiddenAt` / `hiddenById` | Soft-hide after staff moderation         |
+| `createdAt` / `updatedAt` | Timestamps                               |
+
+**ListingQuestionAnswer** (`listing_question_answers`)
+
+| Field                     | Notes                                               |
+| ------------------------- | --------------------------------------------------- |
+| `questionId`              | Unique FK → `ListingQuestion` (one official answer) |
+| `sellerId`                | Listing owner                                       |
+| `body`                    | Plain text answer                                   |
+| `hiddenAt` / `hiddenById` | Soft-hide after staff moderation                    |
+
+**ListingQuestionReport** (`listing_question_reports`)
+
+Report a question **or** an answer (`questionId` XOR `answerId`, enforced in SQL). Staff hide or dismiss (`resolvedAt` / `resolvedById`). Queue: `/revision/preguntas`.
+
+**Rules:**
+
+- Guests may read visible threads; asking requires a signed-in profile who is not the seller
+- Ask only while listing `PUBLISHED`; seller may answer while `PUBLISHED` or `RESERVED`
+- Hidden questions (and their answers) are omitted from public listing pages
+- Do not store Q&A in `messages`
+
+**Indexes:** `(listingId, createdAt)`, `askerId`; unique `questionId` on answers; report indexes on `questionId`, `answerId`, `reporterId`, `resolvedAt`.
 
 ## Message
 
@@ -231,6 +302,26 @@ Purchase / reserve / payment lifecycle (Phases 9–10b).
 
 Table: `orders`.
 
+## OrderSupportCase / OrderSupportMessage
+
+Seller-created support workflow for a paid order. This domain is separate from listing-scoped `Message`, because staff need workflow state, assignment, internal notes, and durable decision evidence.
+
+| Field                       | Notes                                                                    |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `orderId` / `sellerId`      | The affected order and its seller; both are re-checked on every mutation |
+| `type`                      | Cancellation, fulfillment exception, or general support                  |
+| `status`                    | Queue lifecycle from `PENDING` to a terminal decision                    |
+| `initialReason`             | Required seller explanation                                              |
+| `assignedStaffId`           | REVIEWER/ADMIN currently responsible                                     |
+| `decisionNote`              | Required staff rationale for terminal decisions                          |
+| `reviewedAt` / `resolvedAt` | First review and terminal timestamps                                     |
+
+Messages belong to one case and one sender. `isInternal = true` is visible only to REVIEWER/ADMIN and is never included in the seller transcript.
+
+Active seller-cancellation cases are unique per order through a partial unique database index. Resolved history remains available for audit. Queue indexes cover status/time, type/status/time, order/status, and assignee/status.
+
+Table: `order_support_cases`, `order_support_messages`.
+
 ## Payment
 
 Compra Garantizada checkout (Phase 10). Buyer is charged `amount` = order `totalPrice` (includes snapshotted marketplace fee).
@@ -289,14 +380,14 @@ Table: `fee_entitlements`.
 
 Device fulfillment (Phase 10c). One shipment per paid order. Shipping never authorizes payouts/refunds.
 
-| Field                          | Notes                                                                                                           |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `orderId`                      | Unique FK → Order                                                                                               |
-| `method`                       | `PREMIUM_BOGOTA` \| `CARRIER`                                                                                   |
-| `status`                       | `METHOD_SELECTED` \| `AWAITING_PICKUP` \| `INSPECTION` \| `IN_TRANSIT` \| `DELIVERED` \| `FAILED` \| `RETURNED` |
-| `carrierName` / `trackingCode` | Required for Carrier before buyer can mark received; visible to buyer                                           |
-| `premiumFeeCop`                | `20000` when Premium selected; `0` for Carrier                                                                  |
-| `deliveredAt`                  | Buyer receipt ack; Financial Core sets `buyerConfirmDeadlineAt` (+24h)                                          |
+| Field                          | Notes                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `orderId`                      | Unique FK → Order                                                                                                              |
+| `method`                       | `PREMIUM_BOGOTA` \| `CARRIER`                                                                                                  |
+| `status`                       | `METHOD_SELECTED` \| `AWAITING_PICKUP` \| `INSPECTION` \| `IN_TRANSIT` \| `DELIVERED` \| `CANCELLED` \| `FAILED` \| `RETURNED` |
+| `carrierName` / `trackingCode` | Required for Carrier before buyer can mark received; visible to buyer                                                          |
+| `premiumFeeCop`                | `20000` when Premium selected; `0` for Carrier                                                                                 |
+| `deliveredAt`                  | Buyer receipt ack; Financial Core sets `buyerConfirmDeadlineAt` (+24h)                                                         |
 
 Table: `shipments`.
 
@@ -352,7 +443,7 @@ Table: `notification_preferences`.
 
 # Planned schema (not yet in Prisma)
 
-Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`):
+Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.md`, `docs/plan.md`):
 
 - **AuditLog** — reviewer and admin actions
 - **Dispute** — first-class dispute entity (MVP freeze is `Order.payoutFrozen` + Ledger; ops UI at `/revision/disputas`)
@@ -362,11 +453,13 @@ Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.
 # Indexes and search
 
 - Unique constraints: `profiles.authUserId`, `listings.slug`, `listings.imeiHash`
-- Listing: `@@index([status])`, `@@index([sellerId])`
+- Listing: `@@index([status])`, `@@index([sellerId])`, `@@index([views])`
+- ListingViewEvent: unique `(listingId, dedupeKey, viewedOn)`; indexes `(listingId, createdAt)`, `createdAt`, `viewerId`
 - RecommendedPrice: unique `(iphoneModelId, iphoneStorageId, condition)`; indexes on `iphoneModelId`, `condition`
 - Notification: unique `dedupeKey`; indexes `(userId, createdAt)`, `(userId, readAt)`, `orderId`
 - Message / block / report: see **Message**, **UserBlock**, **ConversationReport** above
 - Order: `(buyerId, createdAt)`, `(sellerId, createdAt)`, `listingId`, `status`; partial unique on `listingId` where `AWAITING_PAYMENT` \| `PAID`
+- Order support: queue/status/order/assignee indexes; partial unique active seller cancellation per order
 - Payment: `reference` unique; `(orderId, createdAt)`, `(buyerId, createdAt)`, `status`, provider ids
 - Webhook events: unique `(provider, externalEventKey)`
 - V1 search: Prisma filters + `searchVector` maintenance (trigger or app-side update)

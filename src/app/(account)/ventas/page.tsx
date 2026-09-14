@@ -49,6 +49,11 @@ export default async function SalesPage() {
               <Link href="/vender">Mis anuncios</Link>
             </Button>
           }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda#vender">Cómo vender</Link>
+            </Button>
+          }
         />
       ) : (
         <ul className="space-y-3">

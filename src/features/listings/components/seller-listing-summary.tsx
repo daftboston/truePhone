@@ -1,7 +1,7 @@
 /**
  * @file seller-listing-summary.tsx
  * @description SellerListingSummary component for the listings feature.tsx.
- * @dependencies next/image, next/link, @prisma/client, @/components/price-display, @/components/ui/badge
+ * @dependencies next/image, next/link, @prisma/client, PriceDisplay, Badge, listing helpers, review-wait-copy
  */
 
 import Image from "next/image";
@@ -11,15 +11,18 @@ import type { ListingStatus } from "@prisma/client";
 import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SellerListingQaHint } from "@/features/listing-qa/components/seller-listing-qa-hint";
 import { ReopenRejectedListingButton } from "@/features/listings/components/reopen-rejected-listing-button";
 import {
   conditionLabels,
   listingStatusLabel,
 } from "@/features/listings/schemas/listing";
+import { gallerySlotTitle } from "@/features/listings/types";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { formatStorageLabel } from "@/lib/iphone-catalog";
 import type { getOwnedListing } from "@/lib/listings";
 import { prisma } from "@/lib/db";
+import { listingPendingReviewDescription } from "@/lib/review-wait-copy";
 
 type OwnedListing = NonNullable<Awaited<ReturnType<typeof getOwnedListing>>>;
 
@@ -30,17 +33,17 @@ type SellerListingSummaryProps = {
 /**
  * statusDescription
  *
- * Supports listings by implementing statusDescription.
+ * Maps listing status to seller-facing Spanish copy.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy listings UI and related modules
+ * @param status - Current listing status.
+ * @returns One-line explanation of what happens next.
+ * @calledBy SellerListingSummary
  */
 function statusDescription(status: ListingStatus) {
   switch (status) {
     case "PENDING_REVIEW":
     case "SUBMITTED":
-      return "Un revisor de TruePhone está validando las fotos, el IMEI y la prueba de posesión.";
+      return listingPendingReviewDescription();
     case "APPROVED":
       return "Tu anuncio fue aprobado. En TruePhone la aprobación lo deja público.";
     case "PUBLISHED":
@@ -61,11 +64,11 @@ function statusDescription(status: ListingStatus) {
 /**
  * getLatestOrderIdForListing
  *
- * Supports listings by implementing getLatestOrderIdForListing.
+ * Loads the newest order for a reserved or sold listing.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy listings UI and related modules
+ * @param listingId - Listing UUID.
+ * @returns Latest order id and status, or null.
+ * @calledBy SellerListingSummary
  */
 async function getLatestOrderIdForListing(listingId: string) {
   const order = await prisma.order.findFirst({
@@ -137,18 +140,21 @@ export async function SellerListingSummary({
         <section className="space-y-2">
           <h2 className="text-foreground text-sm font-semibold">Fotos</h2>
           <ul className="grid grid-cols-3 gap-2 lg:grid-cols-4">
-            {gallery.map((image, index) => (
+            {gallery.map((image) => (
               <li
                 key={image.id}
                 className="bg-muted relative aspect-square overflow-hidden rounded-lg"
               >
                 <Image
                   src={image.imageUrl}
-                  alt={`Foto ${index + 1}`}
+                  alt={gallerySlotTitle(image.displayOrder)}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 30vw, 180px"
                 />
+                <span className="bg-background/80 text-foreground pointer-events-none absolute inset-x-0 bottom-0 truncate px-1 py-0.5 text-center text-[10px]">
+                  {gallerySlotTitle(image.displayOrder)}
+                </span>
               </li>
             ))}
           </ul>
@@ -254,6 +260,15 @@ export async function SellerListingSummary({
           </Button>
         </div>
       </div>
+
+      {listing.status === "PUBLISHED" || listing.status === "RESERVED" ? (
+        <SellerListingQaHint
+          listingId={listing.id}
+          listingSlug={listing.slug}
+          listingStatus={listing.status}
+          sellerId={listing.sellerId}
+        />
+      ) : null}
     </div>
   );
 }

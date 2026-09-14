@@ -4,12 +4,13 @@
 
 Version 1.3
 
-**Engineering status:** Phases **7–11 + 10b–10d closed**. Active line: `mvp/phases-12-13` (Phase 12 settlement reminders + Phase 13 price table / Phase 5 seller guide). See [ROADMAP.md](./ROADMAP.md).
+**Engineering status:** Phases **0–11 + 10b–10d closed**. Phase **8b** public listing Q&A, Phase **12** marketplace notifications, Phase **15** ops analytics, and Phase **19** mobile web landed with UX polish. Phase **23** FAQ, legal pages, branded emails, and production fail-closed guards are in code. Paid seller cancellation now uses an in-app request/review workflow; accepted cases archive the listing and expose the buyer’s 8%-or-refund remedy. See [ROADMAP.md](./ROADMAP.md).
 
 **Visual design reference:** [Figma](https://www.figma.com/design/nloCtrpFAgGr85fhmFoHzJ/Untitled?node-id=0-1) (tokens / look only)  
 **Brand:** TruePhone (former working name iPhoneSeguro is retired)  
 **Business logic source:** this file + `docs/PRD.md` — not Figma  
-**Changelog (v1.3):** Chosen next auth = Apple + WhatsApp + Facebook; profile counters locked to Swappa-style public display (incl. order parties); removed user self-serve analytics (Phase 15 = admin/reviewer only).
+**Changelog (v1.3):** Chosen next auth = Apple + WhatsApp + Facebook; profile counters locked to Swappa-style public display (incl. order parties); removed user self-serve analytics (Phase 15 = admin/reviewer only).  
+**Changelog (v1.3.1):** Seller private listing-view analytics (views per listing) deferred to **Phase 24**; Phase **15** may instrument listing views for ops only.
 
 ---
 
@@ -216,7 +217,7 @@ These are **not** “social login.” They add a second check or replace passwor
 - Do not expose phone numbers on public profiles by default (same rule as messaging).
 - Prefer a small set of well-supported methods (email + Google + Apple + WhatsApp + Facebook) over many half-integrated providers.
 
-Status: V1 complete (email + Google). Chosen next: Apple, WhatsApp, Facebook (not blocking MVP).
+Status: V1 complete (email + Google). Enable Google in Supabase using [AUTH_SOCIAL.md](./AUTH_SOCIAL.md). Apple, WhatsApp, and Facebook remain post-MVP.
 
 ---
 
@@ -252,11 +253,14 @@ This is **not** a private analytics dashboard. It is a **public trust strip** on
 
 Do **not** show private funnels (views, conversion, payout math) to other users. Counts come from listings + orders tables, never hand-edited fields. Spanish UI example: `Anuncios: 3 en total, 0 activos, 1 comprado`.
 
+**Seller listing views** (how many times each of _their_ listings was viewed) are **not** part of this public strip. That private seller tool is **Phase 24** (see below); Phase **15** may collect view events for ops dashboards first.
+
 ### Pending follow-up
 
-| Item                                          | Status  | When                           | Notes                                                                       |
-| --------------------------------------------- | ------- | ------------------------------ | --------------------------------------------------------------------------- |
-| **Public counters (total / active / bought)** | Pending | ASAP on Phase 3 + order detail | Profile pages + order party cards; reuse one small presentational component |
+| Item                                          | Status   | When                   | Notes                                                                  |
+| --------------------------------------------- | -------- | ---------------------- | ---------------------------------------------------------------------- |
+| **Public counters (total / active / bought)** | **Done** | Phase 3 + order detail | Profile pages + order party cards; `PublicActivityStrip` / `PartyCard` |
+| **Seller views-per-listing analytics**        | Planned  | **Phase 24**           | Private seller surface; Phase 15 view events already exist             |
 
 Result: Professional user identities with transparent public activity stats.
 
@@ -438,7 +442,7 @@ Goal: Every **published** listing has a **public** question thread so prospectiv
 
 Result: Transparent pre-purchase answers on every listing.
 
-Status: Not started.
+Status: **Landed** — public Preguntas on `/anuncios/[slug]`; guests read; signed-in non-owners ask; seller posts one official answer; report + `/revision/preguntas`; Phase 12 alerts on new question and answer.
 
 ---
 
@@ -495,7 +499,7 @@ Features
 - Hold after `PaymentApproved`
 - Fee engine: 10% / 8% snapshots; Wompi 2.75%+IVA and 0.45%+IVA cost lines; **no** IVA on TruePhone’s % fee
 - Buyer confirm + **24h auto-release** after buyer marks received
-- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship** → buyer chooses **one-time 8% replacement purchase** OR **refund** (not auto-refund)
+- Cancel rules: buyer cancel absorbs Wompi collection fee; **seller cancel / no-ship after pay** → seller submits an in-app order-support request; **REVIEWER/ADMIN** decide only submitted cases (`/revision/soporte-pedidos`); accepted cancellation archives the listing and privately records the incident; buyer chooses **one-time 8% replacement** OR **refund** (not auto-refund)
 - Battery policy (≤1% not refundable; >1% return full refund or keep)
 - Chargebacks / failed payouts: TruePhone absorbs (Ledger + ops)
 - Payouts: **Wompi Cuenta → seller bank account**; **MVP dispersion is manual in Wompi** (ops supervision after Financial Core authorizes)
@@ -584,7 +588,7 @@ Features
 
 Result: Users stay informed.
 
-Status: **Settlement slice landed** (in-app + email on buyer «Ya recibí»; hourly cron reminders within 6h of deadline; `/notificaciones` activity center + preferences). Push and non-settlement event types remain future work.
+Status: **Landed** (in-app + email on buyer «Ya recibí»; hourly cron reminders within 6h of deadline; `/notificaciones` activity center + preferences; listing/identity/sale/message/shipping/payout types; header unread bell). Push remains future work.
 
 ---
 
@@ -629,7 +633,7 @@ Result: Faster marketplace discovery (beyond V1 Postgres search).
 
 # Phase 15 — Analytics
 
-**Audience: ADMIN and REVIEWER / ops only.** There is **no** buyer/seller self-serve analytics dashboard. Everyday users get public **activity counters** on profiles and order cards (Phase 3) — not charts or funnels.
+**Audience: ADMIN and REVIEWER / ops only.** There is **no** buyer/seller self-serve analytics dashboard in this phase. Everyday users get public **activity counters** on profiles and order cards (Phase 3) — not charts or funnels. Seller-facing listing performance (views per listing) is **Phase 24**.
 
 Features (ops / admin / reviewer)
 
@@ -639,12 +643,13 @@ Features (ops / admin / reviewer)
 - User / seller growth
 - Search analytics
 - Reviewer queue health (throughput, rejection reasons) — useful on `/revision` and admin dashboards (Phase 13)
+- **Listing view instrumentation** (recommended in this phase): record views per listing (and aggregates useful to ops). This feeds ops intelligence **and** unlocks Phase 24 seller analytics without a second tracking redesign. Views must **not** appear on public profiles or party cards.
 
-Instrumentation for product decisions still follows PRD §54 (events), but surfaces belong to ops — not Mi TruePhone for buyers/sellers.
+Instrumentation for product decisions still follows PRD §54 (events), but Phase 15 **surfaces** belong to ops — not Mi TruePhone for buyers/sellers.
 
-Result: Business / ops intelligence.
+Result: Business / ops intelligence (+ durable listing-view events for later seller tools).
 
-Status: Not started.
+Status: **Landed** — unique listing views (`ListingViewEvent` + `Listing.views`) on `/anuncios/[slug]`; ops dashboard at `/revision/analitica` (GMV, queues, approval rate, popular models). Views stay off public profiles and party cards. Search analytics wait for Phase 14. Seller views-per-listing remains Phase **24**.
 
 ---
 
@@ -721,7 +726,7 @@ Sellers in Colombia often create listings on the phone they are selling. Phase 5
 
 **How to implement (acceptance)**
 
-- Two visible Spanish actions on each photo step: **Elegir de la galería** and **Tomar foto**. Never a single control that sometimes opens the camera.
+- Two visible Spanish actions on **each photo slot**: **Elegir de la galería** and **Tomar foto**. Never a single control that sometimes opens the camera.
 - Hide native browser chrome (**Choose File** / **no file selected**). Copy stays Spanish (`lang="es"`).
 - On iOS/Android Safari/Chrome, **Tomar foto** must open the system camera (HTML `capture` on a dedicated input is enough if both actions exist).
 - Gallery must always remain available. Do not force camera-only.
@@ -739,7 +744,7 @@ Sellers in Colombia often create listings on the phone they are selling. Phase 5
 
 Result: Excellent mobile web UX, including camera capture for sell + KYC photos.
 
-Status: Not started as a dedicated polish pass (baseline responsive exists from earlier phases). **Tomar foto** is specified here; implement when Phase 19 is the active line.
+Status: **Landed** as a dedicated polish pass: **Tomar foto** vs galería on sell / posesión / cédula / selfie; account nav drawer; mobile filter sheet; listing gallery swipe. Native apps stay Phase **24**.
 
 ---
 
@@ -785,15 +790,15 @@ Result: Operational visibility.
 
 Tasks
 
-- Privacy / Terms / Cookie policies
-- **Support center / FAQ page** (canonical `/ayuda` or `/faq` — see below)
-- Email templates / legal pages
-- Production database / storage / domains
-- Final QA / load testing
+- Privacy / Terms / Cookie policies — **landed** at `/privacidad`, `/terminos`, `/cookies`
+- **Support center / FAQ page** — **thin slice shipped** at `/ayuda` (clusters below)
+- Email templates — **landed** (branded HTML via Resend wrapper; Auth emails stay in Supabase)
+- Production database / storage / domains — **code guards landed**; live keys / buckets / domain are ops
+- Final QA / load testing — checklist below; Playwright e2e stays Phase 20
 
 ### FAQ page (canonical)
 
-**Already planned here** (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Ship a dedicated FAQ page before public launch marketing.
+**Thin FAQ shipped** at `/ayuda` (also teaser FAQ on Home per PRD §29; Help Center outline PRD §41). Privacy, terms, cookies, and branded emails are live; remaining launch work is live env values and sandbox QA.
 
 Suggested FAQ clusters (Spanish copy; English only in docs):
 
@@ -805,9 +810,22 @@ Suggested FAQ clusters (Spanish copy; English only in docs):
 6. **Seguridad** — IMEI, Activation Lock, fraud reporting
 7. **Cuenta** — login methods, verification, deleting account
 
-Link FAQ from footer, Help, and key empty states. Keep answers short; deep policy lives on legal pages.
+Link FAQ from footer, Help, and key empty states. Keep answers short; deep policy lives on `/privacidad`, `/terminos`, and `/cookies`.
 
 Result: Launch-ready platform.
+
+Status: **Legal pages landed** (`/privacidad`, `/terminos`, `/cookies`; footer, signup, KYC, and FAQ wired). **Branded notification emails landed** (Resend HTML wrapper). Production refuse-closed: no MOCK payments / noop email when `VERCEL_ENV=production`. Remaining: live env values + sandbox QA (see Launch QA below).
+
+### Launch QA checklist
+
+Run on staging / Wompi sandbox before first real traffic:
+
+1. Register → KYC submit → reviewer approve → create listing → reviewer publish
+2. Buyer pays with Wompi sandbox → seller chooses Carrier or Premium → tracking or inspection → buyer «Ya recibí» → confirm or wait for 24h cron
+3. Ops marks payout in `/revision/pagos` after Financial Core authorizes
+4. Seller-cancel via support → staff accept → buyer chooses 8% replacement or refund
+5. Cron dry-run: `GET /api/cron/buyer-confirm-expiry` and `GET /api/cron/settlement-reminders` with `CRON_SECRET`
+6. Confirm a marketplace email arrives branded (not raw text) when `RESEND_API_KEY` is set
 
 ---
 
@@ -816,6 +834,7 @@ Result: Launch-ready platform.
 Future features
 
 - **Automated seller payouts via Wompi Pagos a Terceros API** (`POST /payouts` lotes + payout webhooks). MVP pays sellers **manually in the Wompi dashboard** after Financial Core authorizes — human supervision by design. Automation is feasible (API + keys already stubbed in code) when volume justifies removing the ops step; keep Ledger authorization as the only money gate either way.
+- **Seller listing-view analytics (recommended growth tool):** private seller surface (e.g. ventas / mis anuncios) showing **how many views each of their listings has received** — every listing they own, with clear totals (and optional simple trends later). Not public trust data; only the listing owner (and ops) may see it. Prefer shipping **after Phase 15** has listing-view instrumentation so sellers see real traffic once the marketplace has volume. Keep scope thin at first: views per listing only — not full conversion funnels or competitor benchmarks.
 - Wishlist / price alerts / offers
 - BRE-B seller payouts (MVP is bank-only via Wompi Cuenta)
 - Trade-in programs

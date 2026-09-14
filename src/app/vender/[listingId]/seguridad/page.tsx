@@ -10,6 +10,8 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ListingWizardShell } from "@/features/listings/components/listing-wizard-shell";
 import { SecurityForm } from "@/features/listings/components/security-form";
+import { LISTING_WIZARD_FORM_IDS } from "@/features/listings/lib/listing-wizard-intent";
+import { activationLockFormValue } from "@/features/listings/schemas/listing";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getOwnedListing } from "@/lib/listings";
@@ -48,11 +50,13 @@ export default async function ListingSecurityPage({ params }: PageProps) {
         title="IMEI y Activation Lock"
         listingId={listing.id}
         rejectionReason={listing.rejectionReason}
+        formId={LISTING_WIZARD_FORM_IDS.security}
       >
         <SecurityForm
           listingId={listing.id}
           defaults={{
             imeiLast4: listing.imeiLast4,
+            activationLocked: activationLockFormValue(listing),
             unlocked: listing.unlocked,
             carrier: listing.carrier,
           }}

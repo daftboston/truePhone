@@ -10,8 +10,10 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { CedulaFrontForm } from "@/features/verification/components/cedula-front-form";
 import { VerificationShell } from "@/features/verification/components/verification-shell";
+import { verificationLockedPath } from "@/features/verification/types";
 import { getOrCreateDraftVerification } from "@/lib/auth/identity";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { createSignedStorageUrl } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Cédula — frente",
@@ -29,15 +31,19 @@ export default async function CedulaFrontPage() {
   if (!current) redirect("/login?next=/verificacion/cedula-frente");
 
   const draft = await getOrCreateDraftVerification(current.profile.id);
-  if (draft.status === "PENDING" || draft.status === "VERIFIED") {
-    redirect(draft.status === "VERIFIED" ? "/vender" : "/verificacion/enviada");
-  }
+  const locked = verificationLockedPath(draft.status);
+  if (locked) redirect(locked);
   if (!draft.privacyAcceptedAt) redirect("/verificacion");
+
+  const existingImageUrl = await createSignedStorageUrl(draft.frontImageUrl);
 
   return (
     <AppShell mainClassName="max-w-lg">
       <VerificationShell step={2} title="Frente de tu cédula">
-        <CedulaFrontForm />
+        <CedulaFrontForm
+          existingImageUrl={existingImageUrl}
+          documentLast4={draft.documentNumberLast4}
+        />
       </VerificationShell>
     </AppShell>
   );

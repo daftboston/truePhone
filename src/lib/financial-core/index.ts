@@ -35,21 +35,34 @@ export {
   markFeeEntitlementUsed,
   reserveFeeEntitlement,
   releaseFeeEntitlementForOrder,
+  FeeEntitlementConflictError,
 } from "@/lib/financial-core/entitlements";
 export {
   authorizeCancelMoney,
   authorizeRefundAfterSellerAbandon,
 } from "@/lib/financial-core/cancel";
+export { buyerCanChooseRefundOrLoyalty } from "@/lib/financial-core/buyer-abandon-choice";
 export { cancelOpenPayouts } from "@/lib/financial-core/open-payouts";
 export {
+  buyerProblemReportBlocker,
   canCancelPaidOrder,
   manualPayoutCompletionBlocker,
+  orderStatusWhereForCancelCommit,
   PAID_ORDER_CANCEL_BLOCKED_ERROR,
+  PRE_PAYMENT_CANCEL_LOST_RACE_ERROR,
+  sellerPaidSelfCancelBlocker,
+  shouldReleaseSupportCasePayoutFreeze,
+  SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR,
+  BUYER_PROBLEM_REPORT_AFTER_CONFIRM_ERROR,
+  BUYER_PROBLEM_REPORT_NOT_RECEIVED_ERROR,
+  BUYER_PROBLEM_REPORT_WINDOW_CLOSED_ERROR,
+  type CancelMoneyMode,
 } from "@/lib/financial-core/settlement-guards";
 export {
   onBuyerMarkedReceived,
   confirmOrderByBuyer,
   freezePayout,
+  freezePayoutForBuyerProblem,
   unfreezePayout,
   authorizeAndSubmitPayout,
   confirmManualPayoutCompleted,

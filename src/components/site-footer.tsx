@@ -1,75 +1,21 @@
 /**
  * @file site-footer.tsx
- * @description Marketing footer with trust pillars, support links, and brand mark.
- * @dependencies next/link, lucide-react, @/lib/utils
+ * @description Slim marketing footer with legal links and brand mark.
+ * @dependencies next/link, @/lib/legal, @/lib/utils
  */
 
 import Link from "next/link";
-import {
-  BadgeCheck,
-  Handshake,
-  MessageCircle,
-  ScanLine,
-  ShieldCheck,
-  Wallet,
-} from "lucide-react";
 
+import { LEGAL_CONTACT_MAILTO, LEGAL_PATHS } from "@/lib/legal";
 import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
-const pillars = [
-  {
-    title: "Revisión manual",
-    description:
-      "Cada anuncio lo valida un revisor de TruePhone antes de publicarse.",
-    href: "/explorar",
-    linkLabel: "Ver anuncios",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Vendedores verificados",
-    description:
-      "Quien vende confirma identidad con cédula y selfie revisadas.",
-    href: "/verificacion",
-    linkLabel: "Cómo verificar",
-    icon: BadgeCheck,
-  },
-  {
-    title: "Compra garantizada",
-    description:
-      "Compras con protección TruePhone y transparencia en el precio.",
-    href: "/explorar",
-    linkLabel: "Explorar iPhones",
-    icon: Handshake,
-  },
-  {
-    title: "Fees claros",
-    description:
-      "Ves el precio del equipo y la protección por separado, sin sorpresas.",
-    href: "/explorar",
-    linkLabel: "Ver precios",
-    icon: Wallet,
-  },
-  {
-    title: "IMEI y posesión",
-    description: "Validamos IMEI y pedimos prueba de posesión del dispositivo.",
-    href: "/vender",
-    linkLabel: "Vender con confianza",
-    icon: ScanLine,
-  },
-  {
-    title: "Soporte humano",
-    description: "Si algo no cuadra, hablas con personas — no solo con un bot.",
-    href: "mailto:hola@truephone.co",
-    linkLabel: "Contactar",
-    icon: MessageCircle,
-  },
-] as const;
-
 const legalLinks = [
-  { href: "/#privacidad", label: "Privacidad" },
-  { href: "/#terminos", label: "Términos" },
-  { href: "/#proteccion", label: "Protección al comprador" },
-  { href: "mailto:hola@truephone.co", label: "Contacto" },
+  { href: LEGAL_PATHS.help, label: "Ayuda" },
+  { href: LEGAL_PATHS.privacy, label: "Privacidad" },
+  { href: LEGAL_PATHS.terms, label: "Términos" },
+  { href: LEGAL_PATHS.cookies, label: "Cookies" },
+  { href: `${LEGAL_PATHS.help}#comprar`, label: "Protección al comprador" },
+  { href: LEGAL_CONTACT_MAILTO, label: "Contacto" },
 ] as const;
 
 type SiteFooterProps = {
@@ -79,64 +25,18 @@ type SiteFooterProps = {
 /**
  * SiteFooter
  *
- * Renders home/marketing footer content: pillars, links, and copyright.
+ * Renders legal links and copyright. Trust pillars live on the home trust strip
+ * so this footer does not repeat them.
  *
  * @param props.className - Optional footer className.
  * @returns Site footer element.
- * @calledBy HomePage and other marketing layouts
+ * @calledBy HomePage, ayuda, and legal layouts
  */
 export function SiteFooter({ className }: SiteFooterProps) {
   const year = new Date().getFullYear();
 
   return (
     <footer className={cn("bg-background border-border border-t", className)}>
-      <section className="bg-muted/60 border-border border-b">
-        <div
-          className={cn(
-            "mx-auto px-4 py-12 md:px-6 md:py-16",
-            SHELL_WIDTH_CLASS,
-          )}
-        >
-          <div className="mx-auto max-w-2xl space-y-2 text-center">
-            <h2 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
-              Por qué TruePhone
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base">
-              El marketplace más confiable para comprar y vender iPhones usados
-              en Colombia.
-            </p>
-          </div>
-
-          <ul className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-10">
-            {pillars.map((pillar) => {
-              const Icon = pillar.icon;
-              return (
-                <li
-                  key={pillar.title}
-                  className="flex flex-col items-center space-y-3 text-center"
-                >
-                  <span className="bg-trust/10 text-trust flex size-12 items-center justify-center rounded-full">
-                    <Icon className="size-6" aria-hidden />
-                  </span>
-                  <h3 className="text-foreground text-base font-semibold">
-                    {pillar.title}
-                  </h3>
-                  <p className="text-muted-foreground max-w-xs text-sm leading-relaxed">
-                    {pillar.description}
-                  </p>
-                  <Link
-                    href={pillar.href}
-                    className="text-trust text-sm font-medium underline-offset-4 hover:underline"
-                  >
-                    {pillar.linkLabel}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </section>
-
       <div
         className={cn(
           "mx-auto flex w-full flex-col gap-6 px-4 py-8 pb-24 md:flex-row md:items-end md:justify-between md:px-6 md:pb-10",
@@ -148,8 +48,8 @@ export function SiteFooter({ className }: SiteFooterProps) {
             TruePhone
           </p>
           <p className="text-muted-foreground text-xs md:text-sm">
-            © {year} TruePhone · El marketplace confiable de iPhones en
-            Colombia.
+            © {year} TruePhone · Cada anuncio es revisado manualmente antes de
+            publicarse.
           </p>
         </div>
         <nav

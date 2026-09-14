@@ -74,6 +74,11 @@ html.disable-transitions *::after {
   --sidebar-accent-foreground: #1e3a8a;
   --sidebar-border: #e4e4e7;
   --sidebar-ring: #2563eb;
+
+  /* Explorar glyph/stage — first color-mix stop is the Lightning CSS fallback */
+  --glyph-glass: color-mix(in oklab, var(--background) 88%, var(--foreground));
+  --phone-stage: color-mix(in oklab, var(--muted) 72%, var(--card));
+  --phone-stage-glow: rgb(0 0 0 / 0.06);
 }
 
 .dark {
@@ -133,6 +138,11 @@ html.disable-transitions *::after {
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #272a33;
   --sidebar-ring: #3b82f6;
+
+  /* Lead with foreground so Lightning's color-mix fallback stays light */
+  --glyph-glass: color-mix(in oklab, var(--foreground) 62%, var(--muted));
+  --phone-stage: color-mix(in oklab, var(--card) 78%, var(--foreground));
+  --phone-stage-glow: rgb(255 255 255 / 0.2);
 }
 
 @theme inline {
@@ -200,6 +210,34 @@ html.disable-transitions *::after {
   box-shadow: var(--shadow-card);
 }
 
+/*
+  TruePhone Liquid Glass — token-based chrome only (header, bottom nav,
+  sticky bars). Background lives here; blur is applied with Tailwind
+  `backdrop-blur-md` because Lightning CSS strips backdrop-filter from
+  custom rules. Never use on listing/explore cards.
+*/
+.tp-glass {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+}
+
+.tp-glass-header {
+  background: color-mix(in oklab, var(--background) 82%, transparent);
+  border-bottom-color: color-mix(in oklab, var(--border) 50%, transparent);
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-glass,
+  .tp-glass-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--background);
+  }
+}
+
 /* Home hero — wide premium banner (theme tokens) */
 .home-hero-panel {
   background: color-mix(in oklab, var(--background) 78%, var(--muted));
@@ -223,4 +261,189 @@ html.disable-transitions *::after {
 .dark .home-hero-phones {
   filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.4))
     drop-shadow(0 3px 8px rgb(0 0 0 / 0.25));
+}
+
+/* Explorar — studio product cards */
+.explore-phone-stage {
+  background-color: var(--phone-stage);
+  background-image: radial-gradient(
+    ellipse 62% 48% at 50% 42%,
+    var(--phone-stage-glow),
+    transparent 72%
+  );
+}
+
+.explore-phone-glyph {
+  color: var(--foreground);
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 0.16))
+    drop-shadow(0 2px 6px rgb(0 0 0 / 0.08));
+  transform-origin: 50% 70%;
+}
+
+.dark .explore-phone-glyph {
+  filter: drop-shadow(0 14px 22px rgb(0 0 0 / 0.45))
+    drop-shadow(0 3px 8px rgb(0 0 0 / 0.28));
+}
+
+.explore-model-card,
+.listing-card {
+  transition:
+    transform 280ms ease,
+    border-color 280ms ease,
+    box-shadow 280ms ease;
+}
+
+/* Keep a 3D containing block so overflow-hidden cards can still flip without hover. */
+.explore-model-card--flip {
+  transform: translateZ(0);
+}
+
+.explore-model-card .explore-phone-glyph {
+  transition: transform 280ms ease;
+}
+
+.explore-model-card:hover,
+.explore-model-card:focus-visible,
+.listing-card:hover,
+.listing-card:focus-visible {
+  border-color: color-mix(in oklab, var(--trust) 45%, var(--border));
+  box-shadow: var(--shadow-card);
+}
+
+.explore-phone-flip {
+  position: absolute;
+  inset: 0;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.explore-phone-flip-inner {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 480ms ease;
+}
+
+.explore-phone-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.explore-phone-face-back {
+  transform: rotateY(180deg);
+}
+
+@keyframes explore-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .explore-model-item {
+    animation: explore-card-enter 0.45s ease-out backwards;
+    animation-delay: calc(var(--explore-stagger, 0) * 45ms);
+  }
+
+  .explore-model-card:hover,
+  .explore-model-card:focus-visible,
+  .listing-card:hover,
+  .listing-card:focus-visible {
+    transform: translateY(-4px);
+  }
+
+  .explore-model-card:hover .explore-phone-glyph,
+  .explore-model-card:focus-visible .explore-phone-glyph {
+    transform: translateY(-6px) scale(1.04);
+  }
+}
+
+.explore-show-backs .explore-model-card--flip .explore-phone-flip-inner {
+  transform: none;
+}
+
+.explore-show-backs .explore-model-card--flip .explore-phone-face {
+  transition: opacity 280ms ease;
+}
+
+.explore-show-backs .explore-model-card--flip .explore-phone-face-front {
+  opacity: 0;
+}
+
+.explore-show-backs .explore-model-card--flip .explore-phone-face-back {
+  transform: none;
+  opacity: 1;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  z-index: 1;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .explore-model-card--flip:hover .explore-phone-flip-inner,
+  .explore-model-card--flip:focus-visible .explore-phone-flip-inner {
+    transform: rotateY(180deg);
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-flip-inner,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-flip-inner {
+    transform: none;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-front,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-front {
+    opacity: 1;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-back,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-back {
+    opacity: 0;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .explore-model-card--flip .explore-phone-face {
+    transition: opacity 200ms ease;
+  }
+
+  .explore-model-card--flip .explore-phone-face-back {
+    transform: none;
+    opacity: 0;
+  }
+
+  .explore-model-card--flip:hover .explore-phone-face-front,
+  .explore-model-card--flip:focus-visible .explore-phone-face-front {
+    opacity: 0;
+  }
+
+  .explore-model-card--flip:hover .explore-phone-face-back,
+  .explore-model-card--flip:focus-visible .explore-phone-face-back {
+    opacity: 1;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-front,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-front {
+    opacity: 1;
+  }
+
+  .explore-show-backs .explore-model-card--flip:hover .explore-phone-face-back,
+  .explore-show-backs
+    .explore-model-card--flip:focus-visible
+    .explore-phone-face-back {
+    opacity: 0;
+  }
 }

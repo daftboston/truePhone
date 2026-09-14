@@ -1,6 +1,6 @@
 /**
  * @file layout.tsx
- * @description Root HTML layout: fonts, metadata, theme boot script, ThemeProvider.
+ * @description Root HTML layout: fonts, metadata (including metadataBase), theme boot script, ThemeProvider.
  * @dependencies next/font, next/script, ThemeProvider, globals.css
  */
 
@@ -22,13 +22,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+
 export const metadata: Metadata = {
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: {
     default: "TruePhone",
     template: "%s · TruePhone",
   },
   description:
-    "El marketplace más confiable para comprar y vender iPhones usados en Colombia.",
+    "Compra y vende iPhones usados en Colombia. Cada anuncio es revisado manualmente antes de publicarse.",
 };
 
 const THEME_BOOT_SCRIPT = `(function(){try{var t=localStorage.getItem("theme")||"system";var r=t==="system"?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.classList.toggle("dark",r==="dark");}catch(e){}})();`;

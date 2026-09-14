@@ -37,9 +37,7 @@ export function NotificationPreferencesForm({
   return (
     <form action={action} className="space-y-4">
       <fieldset className="space-y-3">
-        <legend className="text-foreground text-sm font-semibold">
-          Preferencias
-        </legend>
+        <legend className="sr-only">Canales de aviso</legend>
         <label className="flex items-start gap-2.5 text-sm">
           <input
             type="checkbox"

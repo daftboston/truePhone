@@ -16,8 +16,12 @@ import {
 } from "@/features/listings/schemas/review";
 import type { ListingActionState } from "@/features/listings/types";
 import { fieldErrorsFromZod } from "@/features/listings/types";
-import { getCurrentProfile } from "@/lib/auth/session";
+import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import {
+  notifyListingReviewed,
+  safeNotify,
+} from "@/lib/notifications/marketplace";
 
 /**
  * requireReviewer
@@ -219,6 +223,15 @@ export async function approveListingAction(
   ]);
 
   revalidateListingReview(listing.id);
+  revalidatePath("/notificaciones");
+  revalidatePath("/", "layout");
+  await safeNotify(
+    notifyListingReviewed({
+      listingId: listing.id,
+      approved: true,
+      siteOrigin: await getRequestOrigin(),
+    }),
+  );
   return {
     ok: true,
     message: wasAlreadyApproved
@@ -279,6 +292,16 @@ export async function rejectListingAction(
   });
 
   revalidateListingReview(listing.id);
+  revalidatePath("/notificaciones");
+  revalidatePath("/", "layout");
+  await safeNotify(
+    notifyListingReviewed({
+      listingId: listing.id,
+      approved: false,
+      rejectionReason: parsed.data.rejectionReason,
+      siteOrigin: await getRequestOrigin(),
+    }),
+  );
   return {
     ok: true,
     message: wasAlreadyRejected

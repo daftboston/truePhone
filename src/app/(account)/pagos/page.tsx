@@ -5,6 +5,7 @@
  */
 
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { SellerBankForm } from "@/features/payouts/components/seller-bank-form";
 import { requireCurrentProfile } from "@/lib/auth/session";
@@ -15,15 +16,22 @@ export const metadata: Metadata = {
   description: "Cuenta bancaria para recibir el pago de tus ventas.",
 };
 
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
 /**
  * SellerPagosPage
  *
  * Lets sellers set the default bank account used when TruePhone pays them.
  *
+ * @param props.searchParams.guardado - Success flag after save.
  * @returns Pagos settings page.
  */
-export default async function SellerPagosPage() {
+export default async function SellerPagosPage({ searchParams }: PageProps) {
   const current = await requireCurrentProfile("/pagos");
+  const params = await searchParams;
+  const justSaved = params.guardado === "1";
 
   const account = await prisma.sellerBankAccount.findFirst({
     where: { profileId: current.profile.id, isDefault: true },
@@ -36,10 +44,32 @@ export default async function SellerPagosPage() {
           Pagos
         </h1>
         <p className="text-muted-foreground text-sm">
-          Agrega la cuenta donde TruePhone te pagará después de que el comprador
-          confirme el iPhone (o pasen 24 horas desde que marcó que lo recibió).
+          Esta cuenta es para recibir el pago de una venta. Si compraste un
+          iPhone, el cobro está en{" "}
+          <Link
+            href="/compras"
+            className="text-foreground font-medium underline-offset-4 hover:underline"
+          >
+            Compras
+          </Link>
+          .
+        </p>
+        <p className="text-muted-foreground text-sm">
+          TruePhone te paga aquí después de que el comprador confirme el iPhone
+          (o pasen 24 horas desde que marcó que lo recibió).
         </p>
       </div>
+
+      {justSaved && account ? (
+        <p
+          className="border-border bg-muted/50 text-trust rounded-xl border px-4 py-3 text-sm"
+          role="status"
+        >
+          Cuenta lista. TruePhone te pagará a{" "}
+          {account.bankName ?? account.bankCode} · ***
+          {account.accountNumber.slice(-4)} cuando se libere la venta.
+        </p>
+      ) : null}
 
       <section className="border-border space-y-4 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">

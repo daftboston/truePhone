@@ -122,6 +122,27 @@ export function reviewStatusLabel(listing: {
 }
 
 /**
+ * reviewStatusBadgeVariant
+ *
+ * Picks a Badge variant that matches queue status meaning.
+ *
+ * @param listing - Listing status and reviewerId fields.
+ * @returns Badge variant for ReviewQueueRow.
+ * @calledBy ListingReviewQueuePage
+ */
+export function reviewStatusBadgeVariant(listing: {
+  status: string;
+  reviewerId: string | null;
+}) {
+  const label = reviewStatusLabel(listing);
+  if (label === "Pendiente") return "warning" as const;
+  if (label === "En revisión") return "secondary" as const;
+  if (label === "Aprobado") return "success" as const;
+  if (label === "Rechazado") return "destructive" as const;
+  return "outline" as const;
+}
+
+/**
  * reviewQueueTabForListing
  *
  * Maps a listing to the reviewer queue tab it belongs in.
@@ -290,6 +311,55 @@ export async function findPossibleDuplicateListings(listing: {
     take: 8,
     orderBy: { updatedAt: "desc" },
   });
+}
+
+/**
+ * matchesListingQueueQuery
+ *
+ * Title, seller, or assignee match for the listing queue search box.
+ *
+ * @param listing - Queue row fields used for search.
+ * @param query - Raw search string from `?q=`.
+ * @returns True when the query is blank or a field contains it.
+ * @calledBy ListingReviewQueuePage
+ */
+export function matchesListingQueueQuery(
+  listing: {
+    title: string;
+    seller: { fullName: string | null; username: string | null };
+    reviewer: { fullName: string | null; username: string | null } | null;
+  },
+  query: string,
+): boolean {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return true;
+  const haystack = [
+    listing.title,
+    sellerDisplayName(listing.seller),
+    listing.reviewer ? sellerDisplayName(listing.reviewer) : "",
+  ]
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(needle);
+}
+
+/**
+ * formatQueueWait
+ *
+ * Compact Spanish age for ops queues (hours, then days).
+ *
+ * @param from - Submission or last-update timestamp.
+ * @param now - Comparison instant; defaults to now.
+ * @returns Copy like `Hace 3 h` or `Hace 2 días`.
+ * @calledBy ListingReviewQueuePage
+ */
+export function formatQueueWait(from: Date, now: Date = new Date()): string {
+  const elapsedMs = Math.max(0, now.getTime() - from.getTime());
+  const hours = Math.floor(elapsedMs / 3_600_000);
+  if (hours < 1) return "Hace menos de 1 h";
+  if (hours < 24) return `Hace ${hours} h`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "Hace 1 día" : `Hace ${days} días`;
 }
 
 /**

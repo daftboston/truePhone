@@ -456,13 +456,59 @@ export async function listOpenReviewReports(take = 50) {
           order: {
             select: {
               id: true,
-              listing: { select: { title: true } },
+              listing: { select: { title: true, slug: true } },
             },
           },
         },
       },
     },
     orderBy: { createdAt: "asc" },
+    take,
+  });
+}
+
+/**
+ * countResolvedReviewReports
+ *
+ * Counts closed review reports for the moderation tabs.
+ *
+ * @returns Resolved report count.
+ * @calledBy Review reports page
+ */
+export async function countResolvedReviewReports() {
+  return prisma.reviewReport.count({
+    where: { resolvedAt: { not: null } },
+  });
+}
+
+/**
+ * listResolvedReviewReports
+ *
+ * Lists recently resolved review reports for the moderation queue.
+ *
+ * @param take - Max rows; defaults to 50.
+ * @returns Report rows with review includes.
+ * @calledBy Review reports page
+ */
+export async function listResolvedReviewReports(take = 50) {
+  return prisma.reviewReport.findMany({
+    where: { resolvedAt: { not: null } },
+    include: {
+      reporter: { select: reviewAuthorSelect },
+      review: {
+        include: {
+          reviewer: { select: reviewAuthorSelect },
+          reviewedUser: { select: reviewAuthorSelect },
+          order: {
+            select: {
+              id: true,
+              listing: { select: { title: true, slug: true } },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { resolvedAt: "desc" },
     take,
   });
 }

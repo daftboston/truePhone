@@ -10,9 +10,11 @@ import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { DeviceDetailsForm } from "@/features/listings/components/device-details-form";
 import { ListingWizardShell } from "@/features/listings/components/listing-wizard-shell";
+import { LISTING_WIZARD_FORM_IDS } from "@/features/listings/lib/listing-wizard-intent";
 import { isSellerIdentityVerified } from "@/features/verification/types";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getCatalog, getOwnedListing } from "@/lib/listings";
+import { isRetiredCatalogSlug } from "@/lib/iphone-catalog-data";
 import { getSellerPriceGuideMap } from "@/lib/recommended-prices";
 
 type PageProps = {
@@ -47,6 +49,12 @@ export default async function EditDevicePage({ params }: PageProps) {
     getSellerPriceGuideMap(),
   ]);
 
+  const models =
+    isRetiredCatalogSlug(listing.iphoneModel.slug) &&
+    !catalog.models.some((model) => model.id === listing.iphoneModelId)
+      ? [...catalog.models, listing.iphoneModel]
+      : catalog.models;
+
   return (
     <AppShell mainClassName="gap-4 md:gap-6">
       <ListingWizardShell
@@ -54,9 +62,10 @@ export default async function EditDevicePage({ params }: PageProps) {
         title="Datos del dispositivo"
         listingId={listing.id}
         rejectionReason={listing.rejectionReason}
+        formId={LISTING_WIZARD_FORM_IDS.device}
       >
         <DeviceDetailsForm
-          models={catalog.models}
+          models={models}
           colors={catalog.colors}
           storages={catalog.storages}
           colorIdsByModelId={catalog.colorIdsByModelId}

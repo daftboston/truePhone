@@ -9,8 +9,10 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
+import { CompensationBanner } from "@/features/orders/components/compensation-banner";
 import { OrderCard } from "@/features/orders/components/order-card";
 import { requireCurrentProfile } from "@/lib/auth/session";
+import { findActiveFeeEntitlement } from "@/lib/financial-core/entitlements";
 import { listOrdersForBuyer } from "@/lib/orders";
 
 export const metadata: Metadata = {
@@ -27,7 +29,10 @@ export const metadata: Metadata = {
  */
 export default async function PurchasesPage() {
   const current = await requireCurrentProfile("/compras");
-  const orders = await listOrdersForBuyer(current.profile.id);
+  const [orders, compensation] = await Promise.all([
+    listOrdersForBuyer(current.profile.id),
+    findActiveFeeEntitlement(current.profile.id),
+  ]);
 
   return (
     <>
@@ -40,6 +45,13 @@ export default async function PurchasesPage() {
         </p>
       </div>
 
+      {compensation ? (
+        <CompensationBanner
+          sourceOrderId={compensation.sourceOrderId}
+          showAction
+        />
+      ) : null}
+
       {orders.length === 0 ? (
         <EmptyState
           title="Aún no hay compras"
@@ -47,6 +59,11 @@ export default async function PurchasesPage() {
           action={
             <Button asChild>
               <Link href="/explorar">Explorar</Link>
+            </Button>
+          }
+          secondaryAction={
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/ayuda#comprar">Cómo comprar</Link>
             </Button>
           }
         />

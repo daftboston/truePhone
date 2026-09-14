@@ -2,8 +2,10 @@
 
 /**
  * @file order-status-actions.tsx
- * @description OrderStatusActions component for the orders feature.tsx.
- * @dependencies react, next/navigation, @/components/ui/button, @/components/ui/textarea, @/features/orders/actions/orders
+ * @description Self-cancel confirmation for unpaid orders and eligible paid buyers.
+ * @dependencies react, next/navigation, @/components/ui/button,
+ *   @/components/ui/textarea, @/features/orders/actions/orders
+ * @changelog 2026-08-26 — Paid seller assistance moved to OrderSupportPanel.
  */
 
 import { useActionState, useEffect, useState } from "react";
@@ -18,7 +20,6 @@ type OrderStatusActionsProps = {
   orderId: string;
   canCancel: boolean;
   isPaid?: boolean;
-  isSeller?: boolean;
 };
 
 const initial: OrderActionState = null;
@@ -26,17 +27,18 @@ const initial: OrderActionState = null;
 /**
  * OrderStatusActions
  *
- * Renders the Order Status Actions UI for orders.
+ * Renders cancel confirmation for unpaid orders and eligible paid buyers.
  *
- * @param props - OrderStatusActions props.
- * @returns OrderStatusActions React element.
- * @calledBy orders pages and parent components
+ * @param props.orderId - Order to cancel.
+ * @param props.canCancel - Whether self-cancel is allowed for this actor/status.
+ * @param props.isPaid - Order is in PAID status (custody active).
+ * @returns Cancel action panel or null.
+ * @calledBy OrderDetailView
  */
 export function OrderStatusActions({
   orderId,
   canCancel,
   isPaid = false,
-  isSeller = false,
 }: OrderStatusActionsProps) {
   const router = useRouter();
   const [showCancel, setShowCancel] = useState(false);
@@ -55,18 +57,11 @@ export function OrderStatusActions({
 
   return (
     <div className="space-y-3">
-      {isPaid && !isSeller ? (
+      {isPaid ? (
         <p className="text-muted-foreground text-xs">
           Fondos en custodia de TruePhone. El vendedor recibe el pago solo
           después de que marques recepción y confirmes que está correcto (o 24
           horas sin reporte).
-        </p>
-      ) : null}
-      {isPaid && isSeller ? (
-        <p className="text-muted-foreground text-xs">
-          Usa la sección Envío para elegir transportadora o Premium Bogotá.
-          TruePhone libera tu pago tras la recepción del comprador y su
-          confirmación (o 24h).
         </p>
       ) : null}
 
@@ -86,17 +81,10 @@ export function OrderStatusActions({
             className="border-border space-y-2 rounded-xl border p-3"
           >
             <input type="hidden" name="orderId" value={orderId} />
-            {isPaid && !isSeller ? (
+            {isPaid ? (
               <p className="text-muted-foreground text-xs">
                 Al cancelar, el reembolso descuenta la comisión de procesamiento
                 de Wompi (ya cobrada).
-              </p>
-            ) : null}
-            {isPaid && isSeller ? (
-              <p className="text-muted-foreground text-xs">
-                Si cancelas después del pago, el comprador podrá elegir
-                reembolso o una compra de reemplazo con 8% de comisión (una sola
-                vez). No se reembolsa automáticamente.
               </p>
             ) : null}
             <label

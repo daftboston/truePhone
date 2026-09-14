@@ -1,7 +1,8 @@
 /**
  * @file order-detail-view.tsx
- * @description OrderDetailView component for the orders feature.tsx.
+ * @description OrderDetailView component for the orders feature.
  * @dependencies next/link, price-display, order actions, financial-core settlement-guards
+ * @changelog 2026-09-10 — Unpaid buyer view is a checkout hero with shipping copy.
  */
 
 import Link from "next/link";
@@ -9,17 +10,25 @@ import Link from "next/link";
 import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BuyerAbandonChoice } from "@/features/orders/components/buyer-abandon-choice";
+import { OrderSupportPanel } from "@/features/orders/components/order-support-panel";
 import { OrderStatusActions } from "@/features/orders/components/order-status-actions";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
 import { PayOrderButton } from "@/features/payments/components/pay-order-button";
+import { sellerOrderNextAction } from "@/features/orders/lib/seller-order-next-action";
+import { PartyCard } from "@/features/profile/components/party-card";
 import { OrderReviewsSection } from "@/features/reviews/components/order-reviews-section";
 import { OrderShippingPanel } from "@/features/shipping/components/order-shipping-panel";
+import { buyerCanChooseRefundOrLoyalty } from "@/lib/financial-core/buyer-abandon-choice";
 import { canCancelPaidOrder } from "@/lib/financial-core/settlement-guards";
 import {
   formatOrderMoney,
   orderStatusLabel,
   type OrderDetail,
 } from "@/lib/orders";
+import { classifyOrderSupportOptions } from "@/lib/orders/order-support";
+import type { SellerOrderSupportCase } from "@/lib/orders/order-support-service";
+import type { PublicActivityCounts } from "@/lib/profile-activity";
 import { paymentStatusLabel } from "@/lib/payments";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { canAccessReviewPortal } from "@/lib/auth/session";
@@ -34,29 +43,19 @@ type OrderDetailViewProps = {
   paymentNotice?: string | null;
   /** Seller has no default bank yet — show payout destination reminder. */
   needsBankAccount?: boolean;
+  buyerActivity: PublicActivityCounts;
+  sellerActivity: PublicActivityCounts;
+  supportCases?: SellerOrderSupportCase[];
 };
-
-/**
- * partyName
- *
- * Supports orders by implementing partyName.
- *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy orders UI and related modules
- */
-function partyName(party: OrderDetail["buyer"] | OrderDetail["seller"]) {
-  return party.fullName?.trim() || party.username || "Usuario TruePhone";
-}
 
 /**
  * formatWhen
  *
- * Formats a display value for orders UI.
+ * Formats an order timestamp for es-CO display.
  *
- * @param args - Function arguments.
- * @returns Function result.
- * @calledBy orders UI and related modules
+ * @param date - Instant to format.
+ * @returns Localized date and time string.
+ * @calledBy OrderDetailView
  */
 function formatWhen(date: Date) {
   return new Intl.DateTimeFormat("es-CO", {
@@ -85,6 +84,9 @@ function paymentStatusCopy(order: OrderDetail) {
     if (latest?.status === "REFUNDED") {
       return "Reembolsado";
     }
+    if (latest?.status === "SUCCEEDED") {
+      return "Pagado · compensación pendiente";
+    }
     return "Cancelado · sin cobro";
   }
   if (latest?.status === "FAILED") {
@@ -110,6 +112,9 @@ function paymentStatusCopy(order: OrderDetail) {
  * @param props.backLabel - Back link label.
  * @param props.paymentNotice - Optional post-checkout status banner.
  * @param props.needsBankAccount - Seller missing default bank destination.
+ * @param props.buyerActivity - Public listing/purchase counters for the buyer.
+ * @param props.sellerActivity - Public listing/purchase counters for the seller.
+ * @param props.supportCases - Seller-safe order support history.
  * @returns Order detail layout.
  * @calledBy `/compras/[orderId]`, `/ventas/[orderId]`
  */
@@ -122,13 +127,15 @@ export function OrderDetailView({
   backLabel,
   paymentNotice,
   needsBankAccount = false,
+  buyerActivity,
+  sellerActivity,
+  supportCases = [],
 }: OrderDetailViewProps) {
   const isBuyer = perspective === "buyer";
-  const other = isBuyer ? order.seller : order.buyer;
-  const otherLabel = isBuyer ? "Vendedor" : "Comprador";
+  // Sellers on paid orders must contact support (no self-cancel); unpaid still can.
   const canCancel =
     order.status === "AWAITING_PAYMENT" ||
-    (order.status === "PAID" && canCancelPaidOrder(order));
+    (isBuyer && order.status === "PAID" && canCancelPaidOrder(order));
   const canPay = isBuyer && order.status === "AWAITING_PAYMENT";
   const feePercent = Math.round(order.feeRateBps / 100);
   const listingHref =
@@ -138,25 +145,52 @@ export function OrderDetailView({
         ? null
         : `/vender/${order.listingId}`;
   const isOps = canAccessReviewPortal(currentUserRole ?? "");
+  const showAbandonChoice = buyerCanChooseRefundOrLoyalty({
+    orderStatus: order.status,
+    isBuyer,
+    entitlement: order.feeEntitlementSource,
+  });
   const showBankReminder =
     !isBuyer &&
     needsBankAccount &&
     order.status === "PAID" &&
     !order.payoutCompletedAt;
+  const sellerNext = !isBuyer
+    ? sellerOrderNextAction({
+        status: order.status,
+        needsBankAccount,
+        payoutCompletedAt: order.payoutCompletedAt,
+        shipment: order.shipment
+          ? {
+              method: order.shipment.method,
+              trackingCode: order.shipment.trackingCode,
+            }
+          : null,
+      })
+    : null;
+  const showSellerHero = Boolean(sellerNext);
+
+  const coverUrl = order.listing.images[0]?.imageUrl ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className={canPay ? "space-y-6 pb-32 md:pb-0" : "space-y-6"}>
       <div className="space-y-3">
         <Button asChild variant="outline" size="sm">
           <Link href={backHref}>{backLabel}</Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-foreground text-xl font-semibold tracking-tight">
-            Pedido
+            {canPay
+              ? "Completa tu compra"
+              : showSellerHero
+                ? "Siguiente paso"
+                : "Pedido"}
           </h1>
           <Badge variant="outline">{orderStatusLabel(order.status)}</Badge>
         </div>
-        <p className="text-muted-foreground text-sm">{order.listing.title}</p>
+        {showSellerHero ? null : (
+          <p className="text-muted-foreground text-sm">{order.listing.title}</p>
+        )}
         {paymentNotice ? (
           <p
             className="text-foreground bg-muted/60 rounded-lg px-3 py-2 text-sm"
@@ -165,7 +199,7 @@ export function OrderDetailView({
             {paymentNotice}
           </p>
         ) : null}
-        {showBankReminder ? (
+        {showBankReminder && !showSellerHero ? (
           <p
             className="text-foreground bg-muted/60 rounded-lg px-3 py-2 text-sm"
             role="status"
@@ -180,51 +214,42 @@ export function OrderDetailView({
         ) : null}
       </div>
 
-      <section className="border-border space-y-3 rounded-xl border p-4">
-        <h2 className="text-foreground text-sm font-semibold">Resumen</h2>
-        <PriceDisplay
-          price={order.totalPrice}
-          equipmentPrice={order.equipmentPrice}
-          protectionFee={order.platformFee}
-          currency={order.currency}
-          className="[&>p]:text-xl"
-        />
-        <dl className="text-muted-foreground grid gap-2 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt>{otherLabel}</dt>
-            <dd className="text-foreground font-medium">{partyName(other)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt>Creado</dt>
-            <dd className="text-foreground">{formatWhen(order.createdAt)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt>Pago</dt>
-            <dd className="text-foreground">{paymentStatusCopy(order)}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt>Total</dt>
-            <dd className="text-foreground font-semibold">
-              {formatOrderMoney(order.totalPrice, order.currency)}
-            </dd>
-          </div>
-        </dl>
-        {listingHref ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={listingHref}>Ver anuncio</Link>
-          </Button>
-        ) : null}
-      </section>
-
       {canPay ? (
-        <section className="border-border space-y-3 rounded-xl border p-4">
-          <h2 className="text-foreground text-sm font-semibold">
-            Compra Garantizada
-          </h2>
+        <section className="border-border space-y-4 rounded-xl border p-4">
+          <div className="flex gap-3">
+            {coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={coverUrl}
+                alt=""
+                className="size-20 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="bg-muted size-20 shrink-0 rounded-lg" />
+            )}
+            <div className="min-w-0">
+              <h2 className="text-foreground text-sm font-semibold">
+                {order.listing.title}
+              </h2>
+              <p className="text-muted-foreground text-xs">
+                Compra Garantizada
+              </p>
+            </div>
+          </div>
+          <PriceDisplay
+            price={order.totalPrice}
+            equipmentPrice={order.equipmentPrice}
+            protectionFee={order.platformFee}
+            currency={order.currency}
+            className="[&>p]:text-xl"
+          />
           <p className="text-muted-foreground text-sm">
-            Paga el total ya mostrado (equipo + protección {feePercent}%). Sin
-            cargos sorpresa. TruePhone retiene el pago hasta que confirmes el
-            iPhone, o hasta 24 horas después de marcar «Ya recibí».
+            TruePhone retiene el pago hasta que confirmes el iPhone, o hasta 24
+            horas después de marcar «Ya recibí».
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Este pago no incluye envío. El vendedor cubre el transporte (carrier
+            o Premium Bogotá).
           </p>
           <PayOrderButton
             orderId={order.id}
@@ -232,9 +257,141 @@ export function OrderDetailView({
             platformFee={order.platformFee}
             feePercent={feePercent}
             currency={order.currency}
+            disclosure="fee"
           />
         </section>
       ) : null}
+
+      {showSellerHero && sellerNext ? (
+        <section className="border-border space-y-4 rounded-xl border p-4">
+          <div className="flex gap-3">
+            {coverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={coverUrl}
+                alt=""
+                className="size-20 shrink-0 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="bg-muted size-20 shrink-0 rounded-lg" />
+            )}
+            <div className="min-w-0">
+              <h2 className="text-foreground text-sm font-semibold">
+                {order.listing.title}
+              </h2>
+              <p className="text-muted-foreground text-xs">
+                Compra Garantizada
+              </p>
+            </div>
+          </div>
+          <PriceDisplay
+            price={order.totalPrice}
+            equipmentPrice={order.equipmentPrice}
+            protectionFee={order.platformFee}
+            currency={order.currency}
+            className="[&>p]:text-xl"
+          />
+          <p className="text-muted-foreground text-sm">
+            TruePhone retiene el pago. Tras «Ya recibí» el comprador tiene 24
+            horas para confirmar o reportar.
+          </p>
+          <Button asChild fullWidth>
+            <Link href={sellerNext.href}>{sellerNext.label}</Link>
+          </Button>
+        </section>
+      ) : null}
+
+      <section
+        className="grid gap-3 sm:grid-cols-2"
+        aria-label="Vendedor y comprador"
+      >
+        <PartyCard
+          roleLabel="Vendedor"
+          fullName={order.seller.fullName}
+          username={order.seller.username}
+          avatarUrl={order.seller.avatarUrl}
+          createdAt={order.seller.createdAt}
+          sellerRating={order.seller.sellerRating}
+          verifikStatus={order.seller.verifikStatus}
+          activity={sellerActivity}
+        />
+        <PartyCard
+          roleLabel="Comprador"
+          fullName={order.buyer.fullName}
+          username={order.buyer.username}
+          avatarUrl={order.buyer.avatarUrl}
+          createdAt={order.buyer.createdAt}
+          sellerRating={order.buyer.sellerRating}
+          verifikStatus={order.buyer.verifikStatus}
+          activity={buyerActivity}
+        />
+      </section>
+
+      {showAbandonChoice ? <BuyerAbandonChoice orderId={order.id} /> : null}
+
+      {canPay || showSellerHero ? (
+        <div className="flex flex-wrap gap-2">
+          {listingHref ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={listingHref}>Ver anuncio</Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="ghost" size="sm">
+            <Link
+              href={
+                isBuyer
+                  ? `/mensajes/${order.listingId}`
+                  : `/mensajes/${order.listingId}?con=${order.buyer.id}`
+              }
+            >
+              {isBuyer ? "Contactar vendedor" : "Contactar comprador"}
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        <section className="border-border space-y-3 rounded-xl border p-4">
+          <h2 className="text-foreground text-sm font-semibold">Resumen</h2>
+          <PriceDisplay
+            price={order.totalPrice}
+            equipmentPrice={order.equipmentPrice}
+            protectionFee={order.platformFee}
+            currency={order.currency}
+            className="[&>p]:text-xl"
+          />
+          <dl className="text-muted-foreground grid gap-2 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt>Creado</dt>
+              <dd className="text-foreground">{formatWhen(order.createdAt)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt>Pago</dt>
+              <dd className="text-foreground">{paymentStatusCopy(order)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt>Total</dt>
+              <dd className="text-foreground font-semibold">
+                {formatOrderMoney(order.totalPrice, order.currency)}
+              </dd>
+            </div>
+          </dl>
+          {listingHref ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={listingHref}>Ver anuncio</Link>
+            </Button>
+          ) : null}
+          <Button asChild variant="outline" size="sm">
+            <Link
+              href={
+                isBuyer
+                  ? `/mensajes/${order.listingId}`
+                  : `/mensajes/${order.listingId}?con=${order.buyer.id}`
+              }
+            >
+              {isBuyer ? "Contactar vendedor" : "Contactar comprador"}
+            </Link>
+          </Button>
+        </section>
+      )}
 
       <section className="border-border space-y-3 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">Timeline</h2>
@@ -254,6 +411,14 @@ export function OrderDetailView({
         premiumShippingFeePesos={order.premiumShippingFeePesos}
         currency={order.currency}
       />
+
+      {!isBuyer && (order.status === "PAID" || supportCases.length > 0) ? (
+        <OrderSupportPanel
+          orderId={order.id}
+          classification={classifyOrderSupportOptions(order)}
+          cases={supportCases}
+        />
+      ) : null}
 
       <section className="border-border space-y-3 rounded-xl border p-4">
         <h2 className="text-foreground text-sm font-semibold">Recibo</h2>
@@ -327,7 +492,6 @@ export function OrderDetailView({
         orderId={order.id}
         canCancel={canCancel}
         isPaid={order.status === "PAID"}
-        isSeller={!isBuyer}
       />
 
       <OrderReviewsSection
@@ -338,6 +502,22 @@ export function OrderDetailView({
         currentUserId={currentUserId}
         reviews={order.reviews}
       />
+
+      {canPay ? (
+        <div className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden">
+          <p className="text-muted-foreground mb-2 text-center text-[11px]">
+            Sin envío en este cobro · retención 24h
+          </p>
+          <PayOrderButton
+            orderId={order.id}
+            totalPrice={order.totalPrice}
+            platformFee={order.platformFee}
+            feePercent={feePercent}
+            currency={order.currency}
+            disclosure="none"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

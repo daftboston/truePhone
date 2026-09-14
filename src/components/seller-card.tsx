@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * @file seller-card.tsx
  * @description Compact seller summary with avatar, name, and optional trust badge.
@@ -70,7 +72,7 @@ export function SellerCard({
           <p className="text-foreground truncate text-sm font-semibold">
             {name}
           </p>
-          {verified && <TrustBadge />}
+          {verified && <TrustBadge label="Verificado" />}
         </div>
         {subtitle && (
           <p className="text-muted-foreground text-xs">{subtitle}</p>

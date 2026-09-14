@@ -207,8 +207,10 @@ export function evaluateListingMessageSendAccess(input: {
   userId: string;
   otherUserId: string;
   hasExistingThread: boolean;
+  isOrderParty?: boolean;
 }): { ok: true } | { ok: false; error: string } {
   const { listing, userId, otherUserId, hasExistingThread } = input;
+  const isOrderParty = Boolean(input.isOrderParty);
 
   if (userId === otherUserId) {
     return { ok: false, error: "No puedes enviarte mensajes a ti mismo." };
@@ -231,6 +233,16 @@ export function evaluateListingMessageSendAccess(input: {
       return {
         ok: false,
         error: "Solo puedes responder a compradores que te escribieron.",
+      };
+    }
+    return { ok: true };
+  }
+
+  if (listing.status === "RESERVED" || listing.status === "SOLD") {
+    if (!isOrderParty || !pair.has(listing.sellerId)) {
+      return {
+        ok: false,
+        error: "Este anuncio ya no acepta mensajes.",
       };
     }
     return { ok: true };
@@ -282,11 +294,26 @@ export async function canSendInListingThread(
     existing = await hasExistingThread(listing.id, userId, otherUserId);
   }
 
+  const orderParty =
+    listing.status === "RESERVED" || listing.status === "SOLD"
+      ? await prisma.order.findFirst({
+          where: {
+            listingId: listing.id,
+            OR: [
+              { buyerId: userId, sellerId: otherUserId },
+              { buyerId: otherUserId, sellerId: userId },
+            ],
+          },
+          select: { id: true },
+        })
+      : null;
+
   return evaluateListingMessageSendAccess({
     listing,
     userId,
     otherUserId,
     hasExistingThread: existing,
+    isOrderParty: Boolean(orderParty),
   });
 }
 

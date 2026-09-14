@@ -1,8 +1,10 @@
 /**
  * @file email.ts
  * @description Transactional email delivery for notifications (Resend or console noop).
- * @dependencies fetch, process.env
+ * @dependencies fetch, process.env, @/lib/env
  */
+
+import { isVercelProduction } from "@/lib/env";
 
 export type SendEmailInput = {
   to: string;
@@ -18,8 +20,8 @@ export type SendEmailResult =
 /**
  * sendNotificationEmail
  *
- * Delivers a transactional email via Resend when `RESEND_API_KEY` is set;
- * otherwise logs and returns noop success so local/dev never blocks settlement.
+ * Delivers a transactional email via Resend when `RESEND_API_KEY` is set.
+ * Local and Preview log a noop. Production refuses to send without the key.
  *
  * @param input.to - Recipient email address.
  * @param input.subject - Email subject line.
@@ -37,6 +39,12 @@ export async function sendNotificationEmail(
     process.env.RESEND_FROM_EMAIL?.trim() || "TruePhone <noreply@truephone.co>";
 
   if (!apiKey) {
+    if (isVercelProduction()) {
+      return {
+        ok: false,
+        error: "RESEND_API_KEY is required in production.",
+      };
+    }
     console.info("[notifications:email:noop]", {
       to: input.to,
       subject: input.subject,

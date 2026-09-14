@@ -82,7 +82,27 @@ export function isSellerIdentityVerified(verifikStatus: string) {
  * @calledBy verification UI and related modules
  */
 export function canContinueVerification(status: IdentityVerificationStatus) {
-  return status === "DRAFT" || status === "REJECTED";
+  return status === "DRAFT";
+}
+
+/**
+ * verificationLockedPath
+ *
+ * Returns a redirect target when the seller should not edit the wizard.
+ *
+ * @param status - Current identity verification status.
+ * @returns Path to redirect, or null when DRAFT is editable.
+ * @calledBy Identity wizard pages
+ */
+export function verificationLockedPath(
+  status: IdentityVerificationStatus,
+): string | null {
+  if (status === "VERIFIED") return "/verificacion";
+  if (status === "PENDING" || status === "IN_REVIEW") {
+    return "/verificacion/enviada";
+  }
+  if (status === "REJECTED") return "/verificacion";
+  return null;
 }
 
 /**
@@ -153,6 +173,9 @@ export function verificationNavHref(input: {
   }
   if (input.verifikStatus === "pending") {
     return "/verificacion/enviada";
+  }
+  if (input.verifikStatus === "rejected") {
+    return "/verificacion";
   }
   return input.verification
     ? nextVerificationPath(input.verification)
