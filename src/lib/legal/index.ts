@@ -17,13 +17,6 @@ export {
   LEGAL_PHONE,
   LEGAL_RAZON_SOCIAL,
 } from "./constants";
-export {
-  currentLegalVersionIds,
-  isLegalAcceptedValue,
-  LEGAL_SIGNUP_PENDING_COOKIE,
-  recordLegalAcceptance,
-} from "./acceptance";
-export { getRequestAuditMeta } from "./request-meta";
 export { COOKIES_DOCUMENT } from "./cookies";
 export { PRIVACY_DOCUMENT } from "./privacy";
 export { TERMS_DOCUMENT } from "./terms";

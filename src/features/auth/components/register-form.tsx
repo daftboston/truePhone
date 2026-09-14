@@ -8,7 +8,6 @@
  */
 
 import { useActionState, useState } from "react";
-import Link from "next/link";
 
 import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
 import { registerAction } from "@/features/auth/actions/auth";
@@ -17,8 +16,6 @@ import type { AuthActionState } from "@/features/auth/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LEGAL_PATHS } from "@/lib/legal";
-
 /**
  * RegisterForm
  *
@@ -157,23 +154,6 @@ export function RegisterForm() {
         >
           Crear cuenta
         </Button>
-        <p className="text-muted-foreground text-center text-xs leading-relaxed">
-          Al crear una cuenta aceptas los{" "}
-          <Link
-            href={LEGAL_PATHS.terms}
-            className="text-foreground font-medium underline-offset-2 hover:underline"
-          >
-            Términos
-          </Link>{" "}
-          y la{" "}
-          <Link
-            href={LEGAL_PATHS.privacy}
-            className="text-foreground font-medium underline-offset-2 hover:underline"
-          >
-            Privacidad
-          </Link>
-          .
-        </p>
       </form>
     </div>
   );

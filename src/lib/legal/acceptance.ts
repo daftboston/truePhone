@@ -1,6 +1,7 @@
 /**
  * @file acceptance.ts
- * @description Ley 527 electronic acceptance persistence and version helpers.
+ * @description Ley 527 electronic acceptance persistence (server-only).
+ *   Import from this module in Server Actions / Route Handlers — not from @/lib/legal.
  * @dependencies @/lib/db, @/lib/legal/constants, @prisma/client
  */
 
