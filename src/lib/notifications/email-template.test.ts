@@ -7,6 +7,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { LEGAL_CONTACT_EMAIL } from "@/lib/legal";
 import {
   absoluteEmailUrl,
   buildNotificationEmail,
@@ -70,7 +71,7 @@ describe("email-template", () => {
       built.emailHtml.includes("https://truephone.co/cookies"),
       true,
     );
-    assert.equal(built.emailHtml.includes("hola@truephone.co"), true);
+    assert.equal(built.emailHtml.includes(LEGAL_CONTACT_EMAIL), true);
     assert.equal(
       built.emailHtml.includes("Confirmar o reportar un problema"),
       true,
