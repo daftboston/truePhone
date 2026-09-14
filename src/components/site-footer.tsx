@@ -2,20 +2,16 @@
  * @file site-footer.tsx
  * @description Slim marketing footer with legal links and brand mark.
  * @dependencies next/link, @/lib/legal, @/lib/utils
- * @changelog 2026-09-14 — Colombia contact line; optional entity slots when filled.
+ * @changelog 2026-09-14 — Visible operator identity line from legal constants.
  */
 
 import Link from "next/link";
 
 import {
-  LEGAL_CONTACT_EMAIL,
+  formatOperatorIdentityFooterLine,
   LEGAL_CONTACT_MAILTO,
-  LEGAL_JUDICIAL_ADDRESS,
   LEGAL_JURISDICTION,
-  LEGAL_NIT,
   LEGAL_PATHS,
-  LEGAL_PHONE,
-  LEGAL_RAZON_SOCIAL,
 } from "@/lib/legal";
 import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
@@ -44,12 +40,7 @@ type SiteFooterProps = {
  */
 export function SiteFooter({ className }: SiteFooterProps) {
   const year = new Date().getFullYear();
-  const entityLines = [
-    LEGAL_RAZON_SOCIAL,
-    LEGAL_NIT ? `NIT ${LEGAL_NIT}` : "",
-    LEGAL_JUDICIAL_ADDRESS,
-    LEGAL_PHONE,
-  ].filter(Boolean);
+  const operatorIdentityLine = formatOperatorIdentityFooterLine();
 
   return (
     <footer className={cn("bg-background border-border border-t", className)}>
@@ -64,11 +55,11 @@ export function SiteFooter({ className }: SiteFooterProps) {
             TruePhone
           </p>
           <p className="text-muted-foreground text-xs md:text-sm">
-            TruePhone · {LEGAL_JURISDICTION} · {LEGAL_CONTACT_EMAIL}
+            TruePhone · {LEGAL_JURISDICTION}
           </p>
-          {entityLines.length > 0 ? (
-            <p className="text-muted-foreground text-xs md:text-sm">
-              {entityLines.join(" · ")}
+          {operatorIdentityLine ? (
+            <p className="text-foreground text-xs md:text-sm">
+              {operatorIdentityLine}
             </p>
           ) : null}
           <p className="text-muted-foreground text-xs md:text-sm">

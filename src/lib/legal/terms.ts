@@ -12,6 +12,7 @@ import {
   LEGAL_JURISDICTION,
   LEGAL_OPERATOR_NAME,
 } from "./constants";
+import { formatOperatorIdentityLegalParagraph } from "./operator-identity";
 import type { LegalDocument } from "./types";
 
 const premiumShippingFeeLabel = formatOrderMoney(PREMIUM_SHIPPING_FEE_PESOS);
@@ -27,6 +28,11 @@ export const TERMS_DOCUMENT: LegalDocument = {
   title: "Términos y condiciones",
   description: `Reglas para comprar y vender iPhones usados en ${LEGAL_OPERATOR_NAME}.`,
   sections: [
+    {
+      id: "identidad-operador",
+      title: "Identidad del operador",
+      paragraphs: [formatOperatorIdentityLegalParagraph()],
+    },
     {
       id: "servicio",
       title: "Qué es TruePhone",
