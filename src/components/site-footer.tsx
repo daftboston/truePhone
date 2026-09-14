@@ -20,6 +20,7 @@ const legalLinks = [
   { href: LEGAL_PATHS.privacy, label: "Privacidad" },
   { href: LEGAL_PATHS.terms, label: "Términos" },
   { href: LEGAL_PATHS.cookies, label: "Cookies" },
+  { href: LEGAL_PATHS.pqr, label: "PQR" },
   { href: `${LEGAL_PATHS.help}#comprar`, label: "Protección al comprador" },
   { href: LEGAL_CONTACT_MAILTO, label: "Contacto" },
 ] as const;

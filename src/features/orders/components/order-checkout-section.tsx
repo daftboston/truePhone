@@ -11,6 +11,7 @@ import { useState } from "react";
 import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
 import { MarketplaceRoleNotice } from "@/components/marketplace-role-notice";
 import { PriceDisplay } from "@/components/price-display";
+import { RetractoNotice } from "@/components/retracto-notice";
 import { PayOrderButton } from "@/features/payments/components/pay-order-button";
 
 type OrderCheckoutSectionProps = {
@@ -102,6 +103,7 @@ export function OrderCheckoutSection({
         currency={currency}
       />
       <MarketplaceRoleNotice />
+      <RetractoNotice />
       <LegalAcceptanceField
         checked={legalAccepted}
         onCheckedChange={setLegalAccepted}

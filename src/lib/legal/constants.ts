@@ -45,4 +45,9 @@ export const LEGAL_PATHS = {
   privacy: "/privacidad",
   terms: "/terminos",
   cookies: "/cookies",
+  pqr: "/pqr",
 } as const;
+
+/** Checkout/listing microcopy — statutory retracto notice (Ley 1480). */
+export const RETRACTO_CHECKOUT_NOTICE =
+  "Puedes tener derecho de retracto de 5 días hábiles desde la entrega (Ley 1480). Detalles en Términos y en /pqr.";

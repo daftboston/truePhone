@@ -81,12 +81,27 @@ export const TERMS_DOCUMENT: LegalDocument = {
       ],
     },
     {
+      id: "derecho-retracto",
+      title: "Derecho de retracto",
+      paragraphs: [
+        "Cuando la compra se celebra a distancia a través de TruePhone (comercio electrónico), el comprador consumidor puede ejercer el derecho de retracto previsto en el artículo 47 de la Ley 1480 de 2011, en los casos en que la ley lo permita.",
+        "Plazo: cinco (5) días hábiles contados a partir de la entrega del iPhone (o desde que el comprador marca «Ya recibí» si esa fecha es la evidencia de entrega en la plataforma). No necesitas justificar el retracto.",
+        `Cómo ejercerlo: radica la solicitud en /pqr (tipo Retracto) o escribe a ${LEGAL_CONTACT_EMAIL} indicando el número de pedido y que ejerces retracto. Te daremos instrucciones de devolución.`,
+        "Obligaciones del comprador: devolver el iPhone por los mismos medios y en las mismas condiciones en que lo recibió. Los costos de transporte y demás gastos de la devolución corren por cuenta del comprador, salvo que la ley o TruePhone indiquen otra cosa en un caso concreto.",
+        "Reembolso: se devolverán todas las sumas pagadas por el comprador en ese pedido (precio del iPhone + protección TruePhone cobrada), sin descuentos ni retenciones por el retracto. En comercio electrónico, el reembolso se hará en un máximo de quince (15) días calendario desde que ejerciste el retracto y cumpliste con (i) suministrar los datos correctos para el retorno y (ii) devolver el producto en los términos de este artículo. El reembolso se aplica al medio de pago usado o al medio que acordemos contigo.",
+        "Quién interviene: el vendedor es quien vende el iPhone. TruePhone, al retener el pago, gestiona la retención/liberación de fondos y coordina el proceso de retracto y el reembolso al comprador. TruePhone puede exigir al vendedor la cooperación y, si el vendedor no colabora, aplicar las medidas de cuenta y anuncio previstas en estos términos.",
+        "Esto es distinto de la Compra Garantizada y del plazo de 24 horas después de «Ya recibí» para reportar que el equipo no coincide con el anuncio. Ese mecanismo contractual no elimina ni reduce el retracto legal cuando este aplique.",
+        "Si en un caso concreto una excepción legal del artículo 47 resultara aplicable, te lo informaremos con fundamento. TruePhone no usa de forma genérica la excepción de «bienes de uso personal» para iPhones.",
+      ],
+    },
+    {
       id: "veinticuatro-horas",
       title: "Las 24 horas después de «Ya recibí»",
       paragraphs: [
         "Solo el comprador inicia el reloj al marcar «Ya recibí el iPhone» en el pedido. El rastreo o la entrega Premium no inician ese plazo.",
         "Tienes 24 horas para revisar el iPhone y, en la página del pedido, confirmar que coincide con el anuncio o reportar un problema. Si no reportas nada, pagamos al vendedor.",
         "Una caída de batería de 1 punto porcentual o menos respecto al anuncio no es motivo de reclamo. Si baja más de 1 punto, puedes pedir devolver el equipo y un reembolso, o quedártelo sin reembolso.",
+        "Este plazo de 24 horas regula reclamos de Compra Garantizada por no conformidad con el anuncio. No sustituye el derecho de retracto del apartado anterior.",
       ],
     },
     {
@@ -94,6 +109,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
       title: "Envíos",
       paragraphs: [
         "El vendedor elige el envío después del pago. El comprador no paga envío en el checkout.",
+        "El vendedor debe entregar el paquete a la transportadora (o a TruePhone Premium, si aplica) dentro de seis (6) días calendario contados desde el pago exitoso, incluidos fines de semana y festivos en Colombia. Se considera cumplido cuando el vendedor hace la entrega al carrier o a Premium, no cuando aparece el primer escaneo. Si no hay entrega en ese plazo ni otro plazo informado y aceptado, el comprador puede pedir cancelación y reembolso conforme a estos términos y a la ley (incluida la facultad de resolver ante demoras excesivas en comercio electrónico).",
       ],
       bullets: [
         `TruePhone Premium (solo Bogotá ciudad): recogemos, revisamos y entregamos. El vendedor paga ${premiumShippingFeeLabel}, descontados de su liquidación.`,
