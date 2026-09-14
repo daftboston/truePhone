@@ -65,7 +65,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
       paragraphs: [
         "El pago se hace en TruePhone, con tarjeta a través de Wompi. El dinero no pasa directo al vendedor.",
         "Flujo: el comprador paga → TruePhone retiene → el equipo se envía → el comprador marca «Ya recibí» → el comprador confirma que está correcto, o pasan 24 horas sin reportar un problema → entonces TruePhone paga al vendedor en la cuenta bancaria que registró.",
-        "En el MVP un operador envía el desembolso en Wompi después de que TruePhone lo autoriza. El pedido se completa cuando el vendedor recibe ese pago.",
+        "Un operador de TruePhone envía el desembolso en Wompi después de que TruePhone lo autoriza. El pedido se completa cuando el vendedor recibe ese pago.",
         "No pidas ni aceptes pago fuera de TruePhone. Quien lo haga puede perder la protección y que cerremos la cuenta.",
       ],
     },
@@ -101,7 +101,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
       id: "cancelaciones",
       title: "Cancelaciones después del pago",
       paragraphs: [
-        "Si el comprador cancela un pedido ya pagado, asume el costo de procesamiento del cobro. El reembolso es el total cobrado menos esa comisión de Wompi.",
+        "Si el comprador cancela un pedido ya pagado, asume el costo de procesamiento del cobro de Wompi (2,75% + IVA). El reembolso es el total cobrado menos esa comisión.",
         "El vendedor no cancela solo un pedido pagado. Abre una solicitud de soporte. Un revisor o administrador decide. Si la acepta, el anuncio queda archivado (no vuelve al mercado) y el comprador elige reembolso o la compra de reemplazo al 8%.",
         "Si ya hay envío en curso, la solicitud es por un problema de envío: el desembolso se congela hasta que soporte resuelva.",
       ],
