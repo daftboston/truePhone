@@ -101,7 +101,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
       id: "cancelaciones",
       title: "Cancelaciones después del pago",
       paragraphs: [
-        "Si el comprador cancela un pedido ya pagado, asume el costo de procesamiento del cobro. El reembolso es el total cobrado menos esa comisión de Wompi.",
+        "Si el comprador cancela un pedido ya pagado, asume el costo de procesamiento del cobro de Wompi (2,75% + IVA). El reembolso es el total cobrado menos esa comisión.",
         "El vendedor no cancela solo un pedido pagado. Abre una solicitud de soporte. Un revisor o administrador decide. Si la acepta, el anuncio queda archivado (no vuelve al mercado) y el comprador elige reembolso o la compra de reemplazo al 8%.",
         "Si ya hay envío en curso, la solicitud es por un problema de envío: el desembolso se congela hasta que soporte resuelva.",
       ],
