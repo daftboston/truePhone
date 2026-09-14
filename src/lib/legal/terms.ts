@@ -65,7 +65,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
       paragraphs: [
         "El pago se hace en TruePhone, con tarjeta a través de Wompi. El dinero no pasa directo al vendedor.",
         "Flujo: el comprador paga → TruePhone retiene → el equipo se envía → el comprador marca «Ya recibí» → el comprador confirma que está correcto, o pasan 24 horas sin reportar un problema → entonces TruePhone paga al vendedor en la cuenta bancaria que registró.",
-        "En el MVP un operador envía el desembolso en Wompi después de que TruePhone lo autoriza. El pedido se completa cuando el vendedor recibe ese pago.",
+        "Un operador de TruePhone envía el desembolso en Wompi después de que TruePhone lo autoriza. El pedido se completa cuando el vendedor recibe ese pago.",
         "No pidas ni aceptes pago fuera de TruePhone. Quien lo haga puede perder la protección y que cerremos la cuenta.",
       ],
     },

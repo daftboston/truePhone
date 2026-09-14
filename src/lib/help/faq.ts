@@ -118,7 +118,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Cómo recibe el vendedor su dinero?",
         answer:
-          "En la cuenta bancaria que registre en Pagos. TruePhone autoriza el desembolso cuando el pedido se completa; en el MVP un operador lo envía desde Wompi.",
+          "En la cuenta bancaria que registre en Pagos. Cuando el pedido se completa, TruePhone autoriza el desembolso y un operador lo envía desde Wompi.",
       },
     ],
   },
