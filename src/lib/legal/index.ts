@@ -19,6 +19,11 @@ export {
   LEGAL_PHONE,
   LEGAL_RAZON_SOCIAL,
 } from "./constants";
+export {
+  formatOperatorIdentityFooterLine,
+  formatOperatorIdentityLegalParagraph,
+  hasOperatorIdentity,
+} from "./operator-identity";
 export { COOKIES_DOCUMENT } from "./cookies";
 export { PRIVACY_DOCUMENT } from "./privacy";
 export { TERMS_DOCUMENT } from "./terms";

@@ -9,6 +9,7 @@ import {
   LEGAL_JURISDICTION,
   LEGAL_OPERATOR_NAME,
 } from "./constants";
+import { formatOperatorIdentityLegalParagraph } from "./operator-identity";
 import type { LegalDocument } from "./types";
 
 /**
@@ -37,7 +38,8 @@ export const PRIVACY_DOCUMENT: LegalDocument = {
       title: "Quién trata tus datos",
       paragraphs: [
         `${LEGAL_OPERATOR_NAME} opera el marketplace de iPhones usados en ${LEGAL_JURISDICTION} y es responsable de los datos personales que nos das al crear una cuenta, verificar identidad, publicar, comprar o recibir un desembolso.`,
-        `Si tienes una pregunta sobre tus datos, escríbenos a ${LEGAL_CONTACT_EMAIL}. Cuando registremos la razón social y el NIT, los publicaremos aquí.`,
+        formatOperatorIdentityLegalParagraph(),
+        `Si tienes una pregunta sobre tus datos, escríbenos a ${LEGAL_CONTACT_EMAIL}.`,
       ],
     },
     {
