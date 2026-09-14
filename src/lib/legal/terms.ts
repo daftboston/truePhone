@@ -31,9 +31,9 @@ export const TERMS_DOCUMENT: LegalDocument = {
       id: "servicio",
       title: "Qué es TruePhone",
       paragraphs: [
-        `${LEGAL_OPERATOR_NAME} es un marketplace en ${LEGAL_JURISDICTION} para comprar y vender iPhones usados. Cada anuncio lo revisa una persona antes de publicarse.`,
-        "No somos un clasificado abierto. No compramos ni revendemos el inventario: ponemos en contacto a compradores y vendedores, revisamos anuncios y retenemos el pago hasta que el pedido se complete.",
-        "En envío Premium Bogotá podemos recoger, revisar y entregar el equipo. Eso es logística, no una compra del iPhone por parte de TruePhone.",
+        "TruePhone opera un marketplace C2C en Colombia para la compraventa de iPhones usados entre personas. TruePhone no es el vendedor del iPhone: no compra ni adquiere la propiedad del equipo, salvo que en un caso concreto se indique lo contrario por escrito.",
+        "TruePhone provee la infraestructura de la plataforma, la verificación y moderación de anuncios, la coordinación del pago a través del proveedor de pagos (hoy Wompi), la retención/liberación de fondos según estas reglas, la mediación de disputas y, cuando el vendedor elige TruePhone Premium Bogotá, un servicio logístico de recogida, revisión y entrega. Ese servicio Premium es logística y control de calidad del envío; no convierte a TruePhone en comprador ni en propietario del iPhone.",
+        "Al intervenir en el cobro, la retención de fondos, las reglas de la transacción y (en Premium) la logística, TruePhone asume las obligaciones de información, transparencia y atención al consumidor que le correspondan como operador de la plataforma bajo la ley colombiana. No somos un mero «portal de contacto» que solo facilita el chat entre las partes.",
       ],
     },
     {

@@ -11,10 +11,10 @@ import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BuyerAbandonChoice } from "@/features/orders/components/buyer-abandon-choice";
+import { OrderCheckoutSection } from "@/features/orders/components/order-checkout-section";
 import { OrderSupportPanel } from "@/features/orders/components/order-support-panel";
 import { OrderStatusActions } from "@/features/orders/components/order-status-actions";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
-import { PayOrderButton } from "@/features/payments/components/pay-order-button";
 import { sellerOrderNextAction } from "@/features/orders/lib/seller-order-next-action";
 import { PartyCard } from "@/features/profile/components/party-card";
 import { OrderReviewsSection } from "@/features/reviews/components/order-reviews-section";
@@ -138,6 +138,10 @@ export function OrderDetailView({
     (isBuyer && order.status === "PAID" && canCancelPaidOrder(order));
   const canPay = isBuyer && order.status === "AWAITING_PAYMENT";
   const feePercent = Math.round(order.feeRateBps / 100);
+  const protectionLabel =
+    order.feeRateBps === 800
+      ? "Protección TruePhone 8% por compensación"
+      : undefined;
   const listingHref =
     order.listing.status === "PUBLISHED"
       ? publicListingPath(order.listing.slug)
@@ -215,51 +219,17 @@ export function OrderDetailView({
       </div>
 
       {canPay ? (
-        <section className="border-border space-y-4 rounded-xl border p-4">
-          <div className="flex gap-3">
-            {coverUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={coverUrl}
-                alt=""
-                className="size-20 shrink-0 rounded-lg object-cover"
-              />
-            ) : (
-              <div className="bg-muted size-20 shrink-0 rounded-lg" />
-            )}
-            <div className="min-w-0">
-              <h2 className="text-foreground text-sm font-semibold">
-                {order.listing.title}
-              </h2>
-              <p className="text-muted-foreground text-xs">
-                Compra Garantizada
-              </p>
-            </div>
-          </div>
-          <PriceDisplay
-            price={order.totalPrice}
-            equipmentPrice={order.equipmentPrice}
-            protectionFee={order.platformFee}
-            currency={order.currency}
-            className="[&>p]:text-xl"
-          />
-          <p className="text-muted-foreground text-sm">
-            TruePhone retiene el pago hasta que confirmes el iPhone, o hasta 24
-            horas después de marcar «Ya recibí».
-          </p>
-          <p className="text-muted-foreground text-sm">
-            Este pago no incluye envío. El vendedor cubre el transporte (carrier
-            o Premium Bogotá).
-          </p>
-          <PayOrderButton
-            orderId={order.id}
-            totalPrice={order.totalPrice}
-            platformFee={order.platformFee}
-            feePercent={feePercent}
-            currency={order.currency}
-            disclosure="fee"
-          />
-        </section>
+        <OrderCheckoutSection
+          orderId={order.id}
+          listingTitle={order.listing.title}
+          coverUrl={coverUrl}
+          totalPrice={order.totalPrice}
+          equipmentPrice={order.equipmentPrice}
+          platformFee={order.platformFee}
+          feePercent={feePercent}
+          protectionLabel={protectionLabel}
+          currency={order.currency}
+        />
       ) : null}
 
       {showSellerHero && sellerNext ? (
@@ -505,16 +475,17 @@ export function OrderDetailView({
 
       {canPay ? (
         <div className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden">
-          <p className="text-muted-foreground mb-2 text-center text-[11px]">
-            Sin envío en este cobro · retención 24h
-          </p>
-          <PayOrderButton
+          <OrderCheckoutSection
+            compact
             orderId={order.id}
+            listingTitle={order.listing.title}
+            coverUrl={coverUrl}
             totalPrice={order.totalPrice}
+            equipmentPrice={order.equipmentPrice}
             platformFee={order.platformFee}
             feePercent={feePercent}
+            protectionLabel={protectionLabel}
             currency={order.currency}
-            disclosure="none"
           />
         </div>
       ) : null}

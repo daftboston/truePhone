@@ -2,11 +2,21 @@
  * @file site-footer.tsx
  * @description Slim marketing footer with legal links and brand mark.
  * @dependencies next/link, @/lib/legal, @/lib/utils
+ * @changelog 2026-09-14 — Colombia contact line; optional entity slots when filled.
  */
 
 import Link from "next/link";
 
-import { LEGAL_CONTACT_MAILTO, LEGAL_PATHS } from "@/lib/legal";
+import {
+  LEGAL_CONTACT_EMAIL,
+  LEGAL_CONTACT_MAILTO,
+  LEGAL_JUDICIAL_ADDRESS,
+  LEGAL_JURISDICTION,
+  LEGAL_NIT,
+  LEGAL_PATHS,
+  LEGAL_PHONE,
+  LEGAL_RAZON_SOCIAL,
+} from "@/lib/legal";
 import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
 const legalLinks = [
@@ -34,6 +44,12 @@ type SiteFooterProps = {
  */
 export function SiteFooter({ className }: SiteFooterProps) {
   const year = new Date().getFullYear();
+  const entityLines = [
+    LEGAL_RAZON_SOCIAL,
+    LEGAL_NIT ? `NIT ${LEGAL_NIT}` : "",
+    LEGAL_JUDICIAL_ADDRESS,
+    LEGAL_PHONE,
+  ].filter(Boolean);
 
   return (
     <footer className={cn("bg-background border-border border-t", className)}>
@@ -47,6 +63,14 @@ export function SiteFooter({ className }: SiteFooterProps) {
           <p className="text-foreground text-base font-semibold tracking-tight">
             TruePhone
           </p>
+          <p className="text-muted-foreground text-xs md:text-sm">
+            TruePhone · {LEGAL_JURISDICTION} · {LEGAL_CONTACT_EMAIL}
+          </p>
+          {entityLines.length > 0 ? (
+            <p className="text-muted-foreground text-xs md:text-sm">
+              {entityLines.join(" · ")}
+            </p>
+          ) : null}
           <p className="text-muted-foreground text-xs md:text-sm">
             © {year} TruePhone · Cada anuncio es revisado manualmente antes de
             publicarse.

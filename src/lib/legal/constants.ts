@@ -18,10 +18,22 @@ export const LEGAL_CONTACT_MAILTO = `mailto:${LEGAL_CONTACT_EMAIL}`;
 export const LEGAL_JURISDICTION = "Colombia";
 
 /** ISO date for last-updated stamps (YYYY-MM-DD). */
-export const LEGAL_LAST_UPDATED_ISO = "2026-09-06";
+export const LEGAL_LAST_UPDATED_ISO = "2026-09-14";
 
 /** Spanish last-updated label shown on legal pages. */
-export const LEGAL_LAST_UPDATED_LABEL = "6 de septiembre de 2026";
+export const LEGAL_LAST_UPDATED_LABEL = "14 de septiembre de 2026";
+
+/** Registered company name — fill when legal entity is registered. */
+export const LEGAL_RAZON_SOCIAL = "";
+
+/** Company NIT — fill when available. */
+export const LEGAL_NIT = "";
+
+/** Judicial / domicile address — fill when available. */
+export const LEGAL_JUDICIAL_ADDRESS = "";
+
+/** Public business phone — fill when available. */
+export const LEGAL_PHONE = "";
 
 /**
  * Public legal and help paths.

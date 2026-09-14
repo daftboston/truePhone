@@ -4,6 +4,7 @@
  * @file pay-order-button.tsx
  * @description Client button that starts Guaranteed Purchase checkout.
  * @dependencies react, startCheckoutAction, formatOrderMoney, Button
+ * @changelog 2026-09-14 — Requires Ley 527 legal acceptance before checkout.
  */
 
 import { useState, useTransition } from "react";
@@ -19,6 +20,8 @@ type PayOrderButtonProps = {
   platformFee: number;
   feePercent?: number;
   currency?: string;
+  /** Must be true before checkout can start (Ley 527). */
+  legalAccepted: boolean;
   /** `fee` shows total + protection amount; `none` is the button only. */
   disclosure?: "fee" | "none";
 };
@@ -26,16 +29,17 @@ type PayOrderButtonProps = {
 /**
  * PayOrderButton
  *
- * Invokes startCheckoutAction and optionally shows fee microcopy.
+ * Invokes startCheckoutAction after legal acceptance and optionally shows fee microcopy.
  *
  * @param props.orderId - Order to pay.
  * @param props.totalPrice - Buyer total including platform fee.
  * @param props.platformFee - TruePhone protection fee amount.
  * @param props.feePercent - Fee percent shown in helper copy (default 10).
  * @param props.currency - Currency code for money formatting (default COP).
+ * @param props.legalAccepted - Checkbox state from parent; blocks pay when false.
  * @param props.disclosure - Helper copy under the button.
  * @returns Pay button with error alert and optional fee explanation.
- * @calledBy OrderDetailView
+ * @calledBy OrderCheckoutSection, OrderDetailView
  */
 export function PayOrderButton({
   orderId,
@@ -43,6 +47,7 @@ export function PayOrderButton({
   platformFee,
   feePercent = 10,
   currency = "COP",
+  legalAccepted,
   disclosure = "fee",
 }: PayOrderButtonProps) {
   const [pending, startTransition] = useTransition();
@@ -54,10 +59,18 @@ export function PayOrderButton({
    * Starts checkout in a transition; rethrows Next.js redirect errors.
    */
   function onPay() {
+    if (!legalAccepted) {
+      setError("Debes aceptar los Términos y la Política de Privacidad.");
+      return;
+    }
+
     setError(null);
     startTransition(async () => {
       try {
-        const result = await startCheckoutAction(orderId);
+        const result = await startCheckoutAction({
+          orderId,
+          legalAccepted: true,
+        });
         if (result && !result.ok) {
           setError(result.error);
         }
@@ -70,7 +83,13 @@ export function PayOrderButton({
 
   return (
     <div className="space-y-2">
-      <Button type="button" fullWidth loading={pending} onClick={onPay}>
+      <Button
+        type="button"
+        fullWidth
+        loading={pending}
+        disabled={!legalAccepted}
+        onClick={onPay}
+      >
         Pagar Compra Garantizada
       </Button>
       {error ? (

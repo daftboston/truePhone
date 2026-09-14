@@ -82,7 +82,8 @@ export function CreateOrderButton({
       ) : null}
       {disclosure === "fee" ? (
         <p className="text-muted-foreground text-center text-xs">
-          Sin envío en este cobro. Retención 24h tras «Ya recibí».
+          El desglose de precio y protección aparece arriba. Sin envío en este
+          cobro.
         </p>
       ) : null}
     </div>

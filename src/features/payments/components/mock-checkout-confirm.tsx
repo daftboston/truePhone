@@ -3,11 +3,13 @@
 /**
  * @file mock-checkout-confirm.tsx
  * @description Dev-only form that simulates an approved mock payment.
- * @dependencies react, confirmMockPaymentAction, formatOrderMoney, Button
+ * @dependencies react, confirmMockPaymentAction, formatOrderMoney, Button, LegalAcceptanceField
+ * @changelog 2026-09-14 — Ley 527 checkbox before mock payment confirmation.
  */
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
+import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
 import { Button } from "@/components/ui/button";
 import { confirmMockPaymentAction } from "@/features/payments/actions/payments";
 import type { PaymentActionState } from "@/features/payments/schemas/payment";
@@ -40,6 +42,7 @@ export function MockCheckoutConfirm({
   currency,
   listingTitle,
 }: MockCheckoutConfirmProps) {
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [state, action, pending] = useActionState(
     confirmMockPaymentAction,
     initial,
@@ -48,18 +51,31 @@ export function MockCheckoutConfirm({
   return (
     <form action={action} className="space-y-4">
       <input type="hidden" name="reference" value={reference} />
+      {legalAccepted ? (
+        <input type="hidden" name="legalAccepted" value="true" />
+      ) : null}
       <div className="space-y-1">
         <p className="text-foreground text-sm font-semibold">{listingTitle}</p>
         <p className="text-muted-foreground text-sm">
           Simulación de pago · {formatOrderMoney(amount, currency)}
         </p>
       </div>
+      <LegalAcceptanceField
+        checked={legalAccepted}
+        onCheckedChange={setLegalAccepted}
+        id="mockCheckoutLegalAccepted"
+      />
       {state && !state.ok ? (
         <p className="text-destructive text-sm" role="alert">
           {state.error}
         </p>
       ) : null}
-      <Button type="submit" fullWidth loading={pending}>
+      <Button
+        type="submit"
+        fullWidth
+        loading={pending}
+        disabled={!legalAccepted}
+      >
         Simular pago aprobado
       </Button>
       <p className="text-muted-foreground text-center text-xs">

@@ -6,6 +6,7 @@
  * @dependencies next/cache, next/navigation, payment schemas, @/lib/payments
  */
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -17,6 +18,11 @@ import {
 } from "@/features/payments/schemas/payment";
 import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import {
+  isLegalAcceptedValue,
+  recordLegalAcceptance,
+} from "@/lib/legal/acceptance";
+import { getRequestAuditMeta } from "@/lib/legal/request-meta";
 import { confirmMockPayment, startCheckoutForOrder } from "@/lib/payments";
 import { isMockPaymentsEnabled } from "@/lib/payments/resolve-provider";
 
@@ -52,14 +58,17 @@ async function listingSlugForOrder(orderId: string) {
  * startCheckoutAction
  *
  * Starts provider checkout for the authenticated buyer and redirects to checkout URL.
+ * Records Ley 527 checkout acceptance before redirecting to the PSP.
  *
- * @param orderId - Order to pay.
+ * @param input.orderId - Order to pay.
+ * @param input.legalAccepted - Must be true (checkbox on checkout).
  * @returns PaymentActionState on auth/validation/provider errors; redirects on success.
  * @calledBy PayOrderButton
  */
-export async function startCheckoutAction(
-  orderId: string,
-): Promise<PaymentActionState> {
+export async function startCheckoutAction(input: {
+  orderId: string;
+  legalAccepted: boolean;
+}): Promise<PaymentActionState> {
   const current = await getCurrentProfile();
   if (!current) {
     return {
@@ -69,14 +78,30 @@ export async function startCheckoutAction(
     };
   }
 
-  const parsed = startCheckoutSchema.safeParse({ orderId });
+  const parsed = startCheckoutSchema.safeParse({
+    orderId: input.orderId,
+    legalAccepted: isLegalAcceptedValue(input.legalAccepted)
+      ? true
+      : (false as unknown as true),
+  });
   if (!parsed.success) {
+    const message =
+      parsed.error.issues.find((issue) => issue.path[0] === "legalAccepted")
+        ?.message ?? "Pedido inválido.";
     return {
       ok: false,
-      error: "Pedido inválido.",
+      error: message,
       fieldErrors: fieldErrorsFromZod(parsed.error),
     };
   }
+
+  const audit = getRequestAuditMeta(await headers());
+  await recordLegalAcceptance({
+    userId: current.profile.id,
+    source: "checkout",
+    ipAddress: audit.ipAddress,
+    userAgent: audit.userAgent,
+  });
 
   const result = await startCheckoutForOrder({
     orderId: parsed.data.orderId,
@@ -125,14 +150,28 @@ export async function confirmMockPaymentAction(
 
   const parsed = confirmMockPaymentSchema.safeParse({
     reference: formData.get("reference"),
+    legalAccepted: isLegalAcceptedValue(formData)
+      ? true
+      : (false as unknown as true),
   });
   if (!parsed.success) {
+    const message =
+      parsed.error.issues.find((issue) => issue.path[0] === "legalAccepted")
+        ?.message ?? "Referencia inválida.";
     return {
       ok: false,
-      error: "Referencia inválida.",
+      error: message,
       fieldErrors: fieldErrorsFromZod(parsed.error),
     };
   }
+
+  const audit = getRequestAuditMeta(await headers());
+  await recordLegalAcceptance({
+    userId: current.profile.id,
+    source: "checkout",
+    ipAddress: audit.ipAddress,
+    userAgent: audit.userAgent,
+  });
 
   const row = await prisma.payment.findFirst({
     where: { reference: parsed.data.reference, provider: "MOCK" },

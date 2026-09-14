@@ -4,58 +4,29 @@
  * @file register-form.tsx
  * @description Client form for email/password registration with Google OAuth option.
  * @dependencies react, next/link, registerAction, GoogleSignInButton, @/lib/legal, design-system inputs
+ * @changelog 2026-09-14 — Ley 527 checkbox required for email and Google signup.
  */
 
-import { useActionState } from "react";
-import Link from "next/link";
+import { useActionState, useState } from "react";
 
+import { LegalAcceptanceField } from "@/components/legal-acceptance-field";
 import { registerAction } from "@/features/auth/actions/auth";
 import { GoogleSignInButton } from "@/features/auth/components/google-sign-in-button";
 import type { AuthActionState } from "@/features/auth/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LEGAL_PATHS } from "@/lib/legal";
-
-/**
- * SignupLegalNotice
- *
- * States that creating an account accepts terms and privacy.
- *
- * @returns Compact Spanish notice with legal links.
- * @calledBy RegisterForm
- */
-function SignupLegalNotice() {
-  return (
-    <p className="text-muted-foreground text-center text-xs leading-relaxed">
-      Al crear una cuenta aceptas los{" "}
-      <Link
-        href={LEGAL_PATHS.terms}
-        className="text-foreground font-medium underline-offset-2 hover:underline"
-      >
-        Términos
-      </Link>{" "}
-      y la{" "}
-      <Link
-        href={LEGAL_PATHS.privacy}
-        className="text-foreground font-medium underline-offset-2 hover:underline"
-      >
-        Privacidad
-      </Link>
-      .
-    </p>
-  );
-}
-
 /**
  * RegisterForm
  *
  * Collects signup fields and submits to registerAction.
+ * Requires explicit terms/privacy acceptance before email or Google signup.
  *
  * @returns Registration UI, or a check-email success message after signup.
  * @calledBy src/app/(auth)/register/page.tsx
  */
 export function RegisterForm() {
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [state, formAction, pending] = useActionState<
     AuthActionState,
     FormData
@@ -72,9 +43,17 @@ export function RegisterForm() {
 
   return (
     <div className="space-y-5">
+      <LegalAcceptanceField
+        checked={legalAccepted}
+        onCheckedChange={setLegalAccepted}
+        id="registerLegalAccepted"
+      />
+
       <div className="space-y-2">
-        <GoogleSignInButton next="/perfil" />
-        <SignupLegalNotice />
+        <GoogleSignInButton
+          next="/perfil"
+          signupLegalAccepted={legalAccepted}
+        />
       </div>
 
       <div className="relative">
@@ -89,6 +68,10 @@ export function RegisterForm() {
       </div>
 
       <form action={formAction} className="space-y-4">
+        {legalAccepted ? (
+          <input type="hidden" name="legalAccepted" value="true" />
+        ) : null}
+
         <div className="space-y-2">
           <Label htmlFor="fullName">Nombre</Label>
           <Input
@@ -163,10 +146,14 @@ export function RegisterForm() {
           </p>
         ) : null}
 
-        <Button type="submit" fullWidth loading={pending}>
+        <Button
+          type="submit"
+          fullWidth
+          loading={pending}
+          disabled={!legalAccepted}
+        >
           Crear cuenta
         </Button>
-        <SignupLegalNotice />
       </form>
     </div>
   );
