@@ -9,7 +9,7 @@
 export const LEGAL_OPERATOR_NAME = "TruePhone";
 
 /** Support and habeas-data contact. */
-export const LEGAL_CONTACT_EMAIL = "hola@truephone.co";
+export const LEGAL_CONTACT_EMAIL = "truephonecol@gmail.com";
 
 /** mailto: href for LEGAL_CONTACT_EMAIL. */
 export const LEGAL_CONTACT_MAILTO = `mailto:${LEGAL_CONTACT_EMAIL}`;

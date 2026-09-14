@@ -133,8 +133,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       },
       {
         question: "¿Qué hago si sospecho fraude?",
-        answer:
-          "No completes el pago fuera de TruePhone. Reporta el pedido o escríbenos a hola@truephone.co. Nunca pedimos tu contraseña de Apple ni códigos de verificación por chat.",
+        answer: `No completes el pago fuera de TruePhone. Reporta el pedido o escríbenos a ${LEGAL_CONTACT_EMAIL}. Nunca pedimos tu contraseña de Apple ni códigos de verificación por chat.`,
       },
     ],
   },
