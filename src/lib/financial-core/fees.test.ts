@@ -32,25 +32,25 @@ describe("Financial Core fee engine", () => {
   it("deducts Premium Bogotá fee from seller amount", () => {
     const fees = computeOrderFees({
       salePrice: 2_000_000,
-      premiumShippingFeePesos: 20_000,
+      premiumShippingFeePesos: 25_000,
     });
 
     assert.equal(fees.buyerTotal, 2_200_000);
-    assert.equal(fees.sellerAmountPesos, 1_980_000);
-    assert.equal(fees.wompiPayoutPesos, 10_603);
+    assert.equal(fees.sellerAmountPesos, 1_975_000);
+    assert.equal(fees.wompiPayoutPesos, 10_577);
   });
 
   it("clears Premium fee snapshot when switching back to Carrier", () => {
     const withPremium = computeOrderFees({
       salePrice: 2_000_000,
-      premiumShippingFeePesos: 20_000,
+      premiumShippingFeePesos: 25_000,
     });
     const afterSwitch = computeOrderFees({
       salePrice: 2_000_000,
       premiumShippingFeePesos: 0,
     });
 
-    assert.equal(withPremium.sellerAmountPesos, 1_980_000);
+    assert.equal(withPremium.sellerAmountPesos, 1_975_000);
     assert.equal(afterSwitch.premiumShippingFeePesos, 0);
     assert.equal(afterSwitch.sellerAmountPesos, 2_000_000);
     assert.equal(afterSwitch.wompiPayoutPesos, 10_710);

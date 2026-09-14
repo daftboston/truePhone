@@ -281,7 +281,7 @@ These users will not be part of Version 1.
 
 **0% marketplace commission** on sale price for MVP.
 
-On Carrier shipping the seller receives the full **Sale Price**. If they choose **Premium Bogotá**, they pay **$20,000 COP** logistics (deducted at payout) — not a marketplace commission.
+On Carrier shipping the seller receives the full **Sale Price**. If they choose **Premium Bogotá**, they pay **$25,000 COP** logistics (deducted at payout) — not a marketplace commission.
 
 TruePhone growth monetization is primarily **buyer-funded** (10% fee).
 
@@ -297,7 +297,7 @@ Paid sellers cannot cancel immediately. They open an in-app, order-scoped suppor
 
 Shipping / logistics:
 
-- **Premium Bogotá:** seller pays **$20,000 COP** (deducted at payout); TruePhone pickup + inspect + deliver.
+- **Premium Bogotá:** seller pays **$25,000 COP** (deducted at payout); TruePhone pickup + inspect + deliver.
 - **Carrier:** seller ships via Servientrega / Envía / other and uploads tracking (buyer can see the code). Required outside Bogotá; optional in Bogotá instead of Premium.
 
 See `docs/SHIPPING.md`.
@@ -329,7 +329,7 @@ Buyer pays via Wompi Checkout (cards enabled for growth). Funds are held under F
 
 At purchase the buyer **must see** the **24-hour** rule: after they mark that they received the phone, they have 24 hours on the order page to report if it is not correct; otherwise TruePhone pays the seller.
 
-Seller fulfills via **Premium Bogotá** or **Carrier** (`docs/SHIPPING.md`). Buyer marks received → confirms or 24h elapses → TruePhone pays seller (bank from Wompi Cuenta; minus $20,000 if Premium).
+Seller fulfills via **Premium Bogotá** or **Carrier** (`docs/SHIPPING.md`). Buyer marks received → confirms or 24h elapses → TruePhone pays seller (bank from Wompi Cuenta; minus $25,000 if Premium).
 
 **Seller “mark complete” / seller “mark delivered” is not settlement.**
 
@@ -1053,7 +1053,7 @@ TruePhone holds funds (seller not paid yet).
 
 ↓
 
-Seller fulfills: **Premium Bogotá** ($20,000 seller) or **Carrier** (upload tracking; buyer can see code).
+Seller fulfills: **Premium Bogotá** ($25,000 seller) or **Carrier** (upload tracking; buyer can see code).
 
 ↓
 

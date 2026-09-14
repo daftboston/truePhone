@@ -25,7 +25,7 @@ export const WOMPI_PAYOUT_RATE = 0.0045;
 export const WOMPI_IVA_RATE = 0.19;
 
 /** Premium Bogotá logistics fee deducted from seller at payout (COP). */
-export const PREMIUM_SHIPPING_FEE_PESOS = 20_000;
+export const PREMIUM_SHIPPING_FEE_PESOS = 25_000;
 
 export type FeeRateKind = "default" | "loyalty";
 

@@ -29,14 +29,14 @@ The **Shipping module** owns method selection, tracking evidence, inspection che
 
 | ID               | Name                                   | Who can use it                                                            | Who pays logistics                   | Custody                                                   |
 | ---------------- | -------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------ | --------------------------------------------------------- |
-| `PREMIUM_BOGOTA` | TruePhone Premium                      | Seller **in Bogotá** (optional)                                           | **Seller** — fixed **$20,000 COP**   | TruePhone picks up, inspects, delivers to buyer           |
+| `PREMIUM_BOGOTA` | TruePhone Premium                      | Seller **in Bogotá** (optional)                                           | **Seller** — fixed **$25,000 COP**   | TruePhone picks up, inspects, delivers to buyer           |
 | `CARRIER`        | Carrier (Servientrega / Envía / other) | **All** sellers (required outside Bogotá; optional alternative in Bogotá) | **Seller** pays the carrier directly | Seller → carrier → buyer; TruePhone never holds the phone |
 
 ### Selection rules (locked)
 
 | Seller location                                                                                                | Options                                                                        |
 | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **Bogotá (city only)**                                                                                         | Choose **Premium** ($20,000 to TruePhone) **or** **Carrier** (upload tracking) |
+| **Bogotá (city only)**                                                                                         | Choose **Premium** ($25,000 to TruePhone) **or** **Carrier** (upload tracking) |
 | **Outside Bogotá** (other cities, municipalities, and areas that are not Bogotá city — e.g. neighboring towns) | **Carrier only** — must ship with a transporter and upload the tracking code   |
 
 **Geo rule (LOCKED):** Premium is available **only** when the seller’s profile city is **`Bogotá`**, which is auto-set when department is **`Bogotá D.C.`**. **`Alrededores de Bogotá`** / free-text towns (Soacha, etc.) and **`Otra`** are Carrier-only.
@@ -56,8 +56,8 @@ Bogotá sellers may **switch Premium ↔ Carrier** until the chosen path is comm
 | **Carrier → Premium** | Bogotá; no tracking code saved; not in transit / delivered / failed                             | Tracking uploaded (or logistics past method-selected)      |
 | **Premium → Carrier** | Bogotá; inspection not `PASSED` / `FAILED`; status still `AWAITING_PICKUP` or `METHOD_SELECTED` | Ops inspection passed (or failed / in transit / delivered) |
 
-On **Premium → Carrier**: clear `premiumShippingFeePesos` (set to `0`), recalc `sellerAmountPesos` / Wompi projections, remove or abandon the pending inspection row, and append a reversing `PREMIUM_SHIPPING_FEE` ledger note (cancel the $20,000 deduction).  
-On **Carrier → Premium**: apply the $20,000 fee snapshot + ledger line as on first Premium select.
+On **Premium → Carrier**: clear `premiumShippingFeePesos` (set to `0`), recalc `sellerAmountPesos` / Wompi projections, remove or abandon the pending inspection row, and append a reversing `PREMIUM_SHIPPING_FEE` ledger note (cancel the $25,000 deduction).  
+On **Carrier → Premium**: apply the $25,000 fee snapshot + ledger line as on first Premium select.
 
 ### Order support by custody stage (locked)
 
@@ -69,9 +69,9 @@ Support cases never authorize money by themselves. Financial Core remains the on
 
 ### Premium fee
 
-- Amount: **20,000 COP** (fixed for MVP).
+- Amount: **25,000 COP** (fixed for MVP).
 - Payer: **seller**.
-- Settlement: deduct from seller payout (`Seller Amount = Sale Price − 20,000` when Premium was used). Ledger line `PREMIUM_SHIPPING_FEE`.
+- Settlement: deduct from seller payout (`Seller Amount = Sale Price − 25,000` when Premium was used). Ledger line `PREMIUM_SHIPPING_FEE`.
 - Not part of the buyer’s 10% marketplace fee.
 
 ### Carrier cost
@@ -86,7 +86,7 @@ Support cases never authorize money by themselves. Financial Core remains the on
 
 **Positioning:** Highest trust in Bogotá. Founder/ops can pick up, inspect, and hand-deliver.
 
-**Price:** **$20,000 COP** charged to the **seller** (deducted at payout).
+**Price:** **$25,000 COP** charged to the **seller** (deducted at payout).
 
 ## Workflow
 
@@ -166,7 +166,7 @@ Support cases never authorize money by themselves. Financial Core remains the on
 | ------------------------------------------------- | ------------------------------------------------------------------------- |
 | Create shipment, store tracking, logistics status | Call Wompi payout/refund                                                  |
 | Store Premium inspection results                  | Release seller funds                                                      |
-| Emit shipping domain events                       | Change Ledger balances (Financial Core records the $20,000 fee at payout) |
+| Emit shipping domain events                       | Change Ledger balances (Financial Core records the $25,000 fee at payout) |
 
 ## 6.2 Custody
 
@@ -209,7 +209,7 @@ At **purchase / checkout** (and on the order page):
 - `method` (`PREMIUM_BOGOTA` | `CARRIER`)
 - Status timeline
 - For Carrier: `carrierName`, `trackingCode` (required), optional evidence URLs
-- For Premium: inspection checklist + readings; `premiumFeeCop = 20000`
+- For Premium: inspection checklist + readings; `premiumFeeCop = 25000`
 - `deliveredAt`
 - Seller city / Bogotá eligibility flag
 
@@ -229,6 +229,6 @@ Schema: update `docs/DATABASE.md` when implementing Phase 10c.
 # 9. Implementation order (Phase 10c)
 
 1. **Carrier** — tracking upload + buyer-visible code + delivered (unblocks national MVP).
-2. **Premium Bogotá** — admin/ops pickup + inspection + $20,000 seller fee at payout.
+2. **Premium Bogotá** — admin/ops pickup + inspection + $25,000 seller fee at payout.
 
 Drop-off: not in this phase.

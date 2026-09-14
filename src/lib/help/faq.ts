@@ -4,7 +4,11 @@
  * @dependencies @/lib/legal
  */
 
+import { PREMIUM_SHIPPING_FEE_PESOS } from "@/lib/financial-core/fees";
+import { formatOrderMoney } from "@/lib/format-money";
 import { LEGAL_CONTACT_EMAIL, LEGAL_PATHS } from "@/lib/legal";
+
+const premiumShippingFeeLabel = formatOrderMoney(PREMIUM_SHIPPING_FEE_PESOS);
 
 export type FaqItemLink = {
   href: string;
@@ -97,7 +101,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
       {
         question: "¿Cómo llega el iPhone?",
         answer:
-          "El vendedor elige el envío después del pago. En Bogotá ciudad puede usar TruePhone Premium (recogemos, revisamos y entregamos; el vendedor paga $20.000) o transportadora. Fuera de Bogotá solo hay transportadora: el vendedor envía y sube el código de rastreo.",
+          `El vendedor elige el envío después del pago. En Bogotá ciudad puede usar TruePhone Premium (recogemos, revisamos y entregamos; el vendedor paga ${premiumShippingFeeLabel}) o transportadora. Fuera de Bogotá solo hay transportadora: el vendedor envía y sube el código de rastreo.`,
       },
       {
         question: "¿El comprador paga el envío?",

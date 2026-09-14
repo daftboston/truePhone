@@ -39,7 +39,7 @@ The **10%** is the only buyer-facing **marketplace** fee. It must be shown clear
 
 Separate from the 10%:
 
-- **TruePhone Premium shipping** (Bogotá): **$20,000 COP** paid by the **seller** (deducted from payout) — see `docs/SHIPPING.md`.
+- **TruePhone Premium shipping** (Bogotá): **$25,000 COP** paid by the **seller** (deducted from payout) — see `docs/SHIPPING.md`.
 - **Carrier shipping:** seller pays Servientrega / Envía / other directly (not through TruePhone checkout).
 
 That 10% **includes**:
@@ -59,7 +59,7 @@ Seller Amount (target) = Sale Price − PremiumShippingFee
 ```
 
 - Default (Carrier): `PremiumShippingFee = 0` → seller receives full **Sale Price** `S`.
-- Premium Bogotá: `PremiumShippingFee = 20_000` COP → seller receives `S − 20_000`.
+- Premium Bogotá: `PremiumShippingFee = 25_000` COP → seller receives `S − 25_000`.
 - If a Bogotá seller switches **Premium → Carrier** before inspection commitment, clear the fee (`PremiumShippingFee = 0`), recalc seller/Wompi snapshots, and append a reversing ledger note — see `docs/SHIPPING.md` §2 method switch.
 
 Seller still does **not** receive the buyer’s 10% fee pool. Funds release only when Financial Core authorizes payout after the canonical flow.
@@ -101,7 +101,7 @@ TruePhoneRevenue    = F − WompiCollection − WompiPayout
 ```
 
 Happy path (Carrier): `SellerAmount = S`.  
-Premium Bogotá: `SellerAmount = S − 20_000`. Wompi payout % applies to `SellerAmount` dispersed.
+Premium Bogotá: `SellerAmount = S − 25_000`. Wompi payout % applies to `SellerAmount` dispersed.
 
 All Ledger amounts are **integer COP pesos**. Provider payloads use **cents** only at the adapter boundary. Never use floating point for money.
 
@@ -124,16 +124,16 @@ Buyer side unchanged. Seller side:
 | Line                                | COP                           |
 | ----------------------------------- | ----------------------------- |
 | Sale Price `S`                      | 2,000,000                     |
-| Premium shipping fee (seller)       | 20,000                        |
-| Amount dispersed to seller          | 1,980,000                     |
-| TruePhone Premium logistics revenue | 20,000 (separate Ledger line) |
+| Premium shipping fee (seller)       | 25,000                        |
+| Amount dispersed to seller          | 1,975,000                     |
+| TruePhone Premium logistics revenue | 25,000 (separate Ledger line) |
 
 ### Display vs Ledger
 
 | Audience     | What they see                                                                                                          |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | Buyer        | Sale price + **10%** marketplace fee; **24h confirm policy** (after buyer marks received); how shipping/tracking works |
-| Seller       | Expected net (`S` or `S − 20_000` if Premium); carrier costs they pay outside the platform                             |
+| Seller       | Expected net (`S` or `S − 25_000` if Premium); carrier costs they pay outside the platform                             |
 | Ops / Ledger | Fee pool split, Premium fee, holds, refunds, chargebacks, failed payouts                                               |
 
 Do **not** expose Wompi’s internal % to buyers unless legal/support requires it.
@@ -156,18 +156,18 @@ For a **trust-first used iPhone C2C** marketplace in Colombia, **10% buyer-side 
 **Yes, later — carefully.** Raising buyer fee (e.g. 12%) is easier on margin than on conversion. Prefer:
 
 1. Keep **10%** for MVP to learn conversion and dispute rates.
-2. Add **paid shipping upgrades** (Premium Bogotá **$20,000** to seller) rather than inflating the base % first.
+2. Add **paid shipping upgrades** (Premium Bogotá **$25,000** to seller) rather than inflating the base % first.
 3. Raise base % only with clear proof (low refund rate, strong brand, waitlist demand).
 
 Do **not** jump to a high % before hold + payout + shipping trust is real in the product; otherwise the fee feels like a tax without protection.
 
 ### Future seller fee (e.g. 2%)
 
-**Allowed as a post-MVP monetization option**, not MVP. Distinct from Premium shipping ($20,000), which is a **logistics** fee already in MVP.
+**Allowed as a post-MVP monetization option**, not MVP. Distinct from Premium shipping ($25,000), which is a **logistics** fee already in MVP.
 
 | Phase                 | Buyer fee                                                                      | Seller marketplace fee | Premium Bogotá       | Seller receives (Carrier)             |
 | --------------------- | ------------------------------------------------------------------------------ | ---------------------- | -------------------- | ------------------------------------- |
-| **MVP (locked)**      | 10% (or **one-time 8%** only on a replacement buy after seller cancel/no-ship) | **0%**                 | optional **$20,000** | Full `S` (or `S − 20_000` if Premium) |
+| **MVP (locked)**      | 10% (or **one-time 8%** only on a replacement buy after seller cancel/no-ship) | **0%**                 | optional **$25,000** | Full `S` (or `S − 25_000` if Premium) |
 | **Future (optional)** | may stay 10% or adjust                                                         | e.g. **2%** of `S`     | as product allows    | `S − sellerFee − premiumIfAny`        |
 
 Guidance if you introduce ~2% seller fee later:
@@ -305,7 +305,7 @@ Implement as a single-use `FeeEntitlement` linked to the failed `orderId` (see D
 
 **Shipping fees on cancel:**
 
-- **Premium $20,000:** do not deduct if pickup never happened; if already picked up / in TruePhone custody, ops + Ledger decide (default: fee earned / non-refundable to seller).
+- **Premium $25,000:** do not deduct if pickup never happened; if already picked up / in TruePhone custody, ops + Ledger decide (default: fee earned / non-refundable to seller).
 - **Carrier:** seller’s payment to Servientrega/Envía is outside TruePhone; not refunded by TruePhone.
 
 ## 5.2b Premium inspection fail (LOCKED)
@@ -463,7 +463,7 @@ Do not mark marketplace order fully **completed** until payout succeeds (or an e
 2. Production checkout UX: keep Payment Links vs move to Widget (integrity secret already available as `WOMPI_INTEGRITY_SECRET`).
 3. Reconcile Wompi **contract** rates vs dashboard list prices for Cuenta dispersion.
 4. Ops window: how long the single-use 8% entitlement stays open before we nudge refund / expire (default: keep refund available until used or buyer closes case).
-5. **Post-MVP only:** whether/when to introduce a small **seller marketplace fee** (e.g. 2%) — see §2.4. Not in MVP. Premium $20,000 is already in MVP as logistics.
+5. **Post-MVP only:** whether/when to introduce a small **seller marketplace fee** (e.g. 2%) — see §2.4. Not in MVP. Premium $25,000 is already in MVP as logistics.
 
 ---
 

@@ -386,7 +386,7 @@ Device fulfillment (Phase 10c). One shipment per paid order. Shipping never auth
 | `method`                       | `PREMIUM_BOGOTA` \| `CARRIER`                                                                                                  |
 | `status`                       | `METHOD_SELECTED` \| `AWAITING_PICKUP` \| `INSPECTION` \| `IN_TRANSIT` \| `DELIVERED` \| `CANCELLED` \| `FAILED` \| `RETURNED` |
 | `carrierName` / `trackingCode` | Required for Carrier before buyer can mark received; visible to buyer                                                          |
-| `premiumFeeCop`                | `20000` when Premium selected; `0` for Carrier                                                                                 |
+| `premiumFeeCop`                | `25000` when Premium selected (current fee; snapshot at selection); `0` for Carrier                                            |
 | `deliveredAt`                  | Buyer receipt ack; Financial Core sets `buyerConfirmDeadlineAt` (+24h)                                                         |
 
 Table: `shipments`.
