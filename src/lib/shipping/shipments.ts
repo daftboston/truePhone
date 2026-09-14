@@ -246,8 +246,7 @@ export async function switchCarrierToPremium(input: {
 
     return {
       ok: true,
-      message:
-        `Cambiaste a TruePhone Premium. Coordinaremos la recogida en Bogotá (${premiumShippingFeeLabel} se descontarán de tu pago).`,
+      message: `Cambiaste a TruePhone Premium. Coordinaremos la recogida en Bogotá (${premiumShippingFeeLabel} se descontarán de tu pago).`,
     };
   } catch (error) {
     if (error instanceof ShippingError) {
@@ -353,8 +352,7 @@ export async function switchPremiumToCarrier(input: {
 
     return {
       ok: true,
-      message:
-        `Cambiaste a transportadora. Ya no se descontarán ${premiumShippingFeeLabel} de Premium; sube el código de seguimiento cuando envíes.`,
+      message: `Cambiaste a transportadora. Ya no se descontarán ${premiumShippingFeeLabel} de Premium; sube el código de seguimiento cuando envíes.`,
     };
   } catch (error) {
     if (error instanceof ShippingError) {

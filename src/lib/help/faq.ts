@@ -100,8 +100,7 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
     items: [
       {
         question: "¿Cómo llega el iPhone?",
-        answer:
-          `El vendedor elige el envío después del pago. En Bogotá ciudad puede usar TruePhone Premium (recogemos, revisamos y entregamos; el vendedor paga ${premiumShippingFeeLabel}) o transportadora. Fuera de Bogotá solo hay transportadora: el vendedor envía y sube el código de rastreo.`,
+        answer: `El vendedor elige el envío después del pago. En Bogotá ciudad puede usar TruePhone Premium (recogemos, revisamos y entregamos; el vendedor paga ${premiumShippingFeeLabel}) o transportadora. Fuera de Bogotá solo hay transportadora: el vendedor envía y sube el código de rastreo.`,
       },
       {
         question: "¿El comprador paga el envío?",
