@@ -1,8 +1,9 @@
 /**
  * @file settlement-guards.ts
  * @description Pure Financial Core guards so cancel/refund cannot race with seller payout,
- * buyer problem reports cannot freeze after the 24h window, and support-case
- * unfreeze cannot drop a chargeback or buyer-dispute freeze.
+ * unpaid cancel cannot overwrite a concurrent capture, buyer problem reports cannot
+ * freeze after the 24h window, and support-case unfreeze cannot drop a chargeback
+ * or buyer-dispute freeze.
  * @dependencies none
  */
 
@@ -49,6 +50,33 @@ export function canCancelPaidOrder(order: PaidOrderCancelSnapshot): boolean {
 
 export const PAID_ORDER_CANCEL_BLOCKED_ERROR =
   "Ya no puedes cancelar este pedido. Si el iPhone no coincide, reporta un problema para congelar el pago al vendedor.";
+
+/** Spanish copy when unpaid cancel loses a race with payment capture. */
+export const PRE_PAYMENT_CANCEL_LOST_RACE_ERROR =
+  "El pago se acaba de confirmar. Recarga la página e intenta cancelar de nuevo para solicitar el reembolso.";
+
+export type CancelMoneyMode =
+  "pre_payment" | "buyer_refund" | "seller_abandon_entitlement";
+
+/**
+ * orderStatusWhereForCancelCommit
+ *
+ * Optimistic-lock filter for the cancel commit. Unpaid cancel may only match
+ * AWAITING_PAYMENT so a concurrent Wompi APPROVED cannot be overwritten to
+ * CANCELLED without a refund. Paid cancel/abandon may only match PAID.
+ *
+ * @param mode - Financial Core cancel money mode already authorized.
+ * @returns Prisma `status` where clause for `order.updateMany`.
+ * @calledBy cancelOrder
+ */
+export function orderStatusWhereForCancelCommit(mode: CancelMoneyMode): {
+  status: "AWAITING_PAYMENT" | "PAID";
+} {
+  if (mode === "pre_payment") {
+    return { status: "AWAITING_PAYMENT" };
+  }
+  return { status: "PAID" };
+}
 
 /**
  * Spanish error when a seller tries to self-cancel a PAID order.

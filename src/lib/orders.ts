@@ -14,7 +14,9 @@ import {
   FeeEntitlementConflictError,
   feeRateBpsFromKind,
   feeRateFromKind,
+  orderStatusWhereForCancelCommit,
   PAID_ORDER_CANCEL_BLOCKED_ERROR,
+  PRE_PAYMENT_CANCEL_LOST_RACE_ERROR,
   releaseFeeEntitlementForOrder,
   reserveFeeEntitlement,
   resolveFeeKindForBuyer,
@@ -24,7 +26,6 @@ import { prisma } from "@/lib/db";
 import { formatOrderMoney } from "@/lib/format-money";
 import {
   ACTIVE_ORDER_STATUSES,
-  cancelOpenPaymentsForOrder,
   getLatestPaymentForOrder,
 } from "@/lib/payments";
 
@@ -425,10 +426,6 @@ export async function cancelOrder(input: {
       return { ok: false, error: money.error };
     }
 
-    if (money.mode === "pre_payment") {
-      await cancelOpenPaymentsForOrder(orderId);
-    }
-
     const now = new Date();
     let listingId: string | undefined;
     let listingSlug: string | null | undefined;
@@ -449,26 +446,31 @@ export async function cancelOrder(input: {
 
       if (money.mode === "pre_payment") {
         if (order.status === "PAID") {
-          throw new OrderError(
-            "El pago se acaba de confirmar. Recarga la página e intenta cancelar de nuevo para solicitar el reembolso.",
-          );
+          throw new OrderError(PRE_PAYMENT_CANCEL_LOST_RACE_ERROR);
         }
         const succeededPayment = await tx.payment.findFirst({
           where: { orderId, status: "SUCCEEDED" },
           select: { id: true },
         });
         if (succeededPayment) {
-          throw new OrderError(
-            "El pago se acaba de confirmar. Recarga la página e intenta cancelar de nuevo para solicitar el reembolso.",
-          );
+          throw new OrderError(PRE_PAYMENT_CANCEL_LOST_RACE_ERROR);
         }
+        // Same transaction as the order CANCELLED write so capture cannot
+        // SUCCEEDED a payment we already cancelled, or vice versa.
+        await tx.payment.updateMany({
+          where: {
+            orderId,
+            status: { in: ["PENDING", "REQUIRES_ACTION"] },
+          },
+          data: { status: "CANCELLED" },
+        });
         await releaseFeeEntitlementForOrder(tx, orderId);
       }
 
       const cancelled = await tx.order.updateMany({
         where: {
           id: orderId,
-          status: { in: ["AWAITING_PAYMENT", "PAID"] },
+          ...orderStatusWhereForCancelCommit(money.mode),
         },
         data: {
           status: "CANCELLED",
@@ -478,7 +480,11 @@ export async function cancelOrder(input: {
         },
       });
       if (cancelled.count !== 1) {
-        throw new OrderError("Este pedido ya no se puede cancelar.");
+        throw new OrderError(
+          money.mode === "pre_payment"
+            ? PRE_PAYMENT_CANCEL_LOST_RACE_ERROR
+            : "Este pedido ya no se puede cancelar.",
+        );
       }
 
       // Buyer / unpaid cancel republishes; approved seller abandon permanently archives.

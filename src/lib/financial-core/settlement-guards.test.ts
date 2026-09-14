@@ -1,7 +1,8 @@
 /**
  * @file settlement-guards.test.ts
- * @description Unit tests for PAID-order cancel cutoff, buyer 24h problem-report
- * window, manual payout completion, support-case unfreeze, and ops queue filter.
+ * @description Unit tests for PAID-order cancel cutoff, unpaid-cancel vs capture
+ * commit filter, buyer 24h problem-report window, manual payout completion,
+ * support-case unfreeze, and ops queue filter.
  * @dependencies node:test, settlement-guards, ops-payouts
  */
 
@@ -12,6 +13,7 @@ import {
   buyerProblemReportBlocker,
   canCancelPaidOrder,
   manualPayoutCompletionBlocker,
+  orderStatusWhereForCancelCommit,
   sellerPaidSelfCancelBlocker,
   shouldReleaseSupportCasePayoutFreeze,
   SELLER_PAID_SELF_CANCEL_BLOCKED_ERROR,
@@ -68,6 +70,14 @@ describe("canCancelPaidOrder", () => {
       }),
       false,
     );
+  });
+});
+
+describe("orderStatusWhereForCancelCommit", () => {
+  it("does not let unpaid cancel match a PAID order", () => {
+    assert.deepEqual(orderStatusWhereForCancelCommit("pre_payment"), {
+      status: "AWAITING_PAYMENT",
+    });
   });
 });
 
