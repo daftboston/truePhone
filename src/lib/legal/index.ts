@@ -7,12 +7,23 @@
 export {
   LEGAL_CONTACT_EMAIL,
   LEGAL_CONTACT_MAILTO,
+  LEGAL_JUDICIAL_ADDRESS,
   LEGAL_JURISDICTION,
   LEGAL_LAST_UPDATED_ISO,
   LEGAL_LAST_UPDATED_LABEL,
+  LEGAL_NIT,
   LEGAL_OPERATOR_NAME,
   LEGAL_PATHS,
+  LEGAL_PHONE,
+  LEGAL_RAZON_SOCIAL,
 } from "./constants";
+export {
+  currentLegalVersionIds,
+  isLegalAcceptedValue,
+  LEGAL_SIGNUP_PENDING_COOKIE,
+  recordLegalAcceptance,
+} from "./acceptance";
+export { getRequestAuditMeta } from "./request-meta";
 export { COOKIES_DOCUMENT } from "./cookies";
 export { PRIVACY_DOCUMENT } from "./privacy";
 export { TERMS_DOCUMENT } from "./terms";

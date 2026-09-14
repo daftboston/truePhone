@@ -6,14 +6,20 @@
 
 import { z } from "zod";
 
-/** Validates order id when starting checkout. */
+/** Validates order id and Ley 527 acceptance when starting checkout. */
 export const startCheckoutSchema = z.object({
   orderId: z.string().min(1, "Pedido inválido."),
+  legalAccepted: z.literal(true, {
+    error: "Debes aceptar los Términos y la Política de Privacidad.",
+  }),
 });
 
-/** Validates payment reference for mock provider confirmation. */
+/** Validates payment reference and legal acceptance for mock confirmation. */
 export const confirmMockPaymentSchema = z.object({
   reference: z.string().min(1, "Referencia inválida."),
+  legalAccepted: z.literal(true, {
+    error: "Debes aceptar los Términos y la Política de Privacidad.",
+  }),
 });
 
 /**

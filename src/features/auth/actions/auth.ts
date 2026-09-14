@@ -6,6 +6,7 @@
  * @dependencies next/navigation, auth schemas/types, ensureProfile, Supabase server client
  */
 
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import {
@@ -21,6 +22,12 @@ import {
 } from "@/features/auth/types";
 import { ensureProfile } from "@/lib/auth/profile";
 import { getRequestOrigin } from "@/lib/auth/session";
+import {
+  isLegalAcceptedValue,
+  LEGAL_SIGNUP_PENDING_COOKIE,
+  recordLegalAcceptance,
+} from "@/lib/legal/acceptance";
+import { getRequestAuditMeta } from "@/lib/legal/request-meta";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -124,6 +131,18 @@ export async function registerAction(
     };
   }
 
+  if (!isLegalAcceptedValue(formData)) {
+    return {
+      ok: false,
+      error: "Debes aceptar los Términos y la Política de Privacidad.",
+      fieldErrors: {
+        legalAccepted: [
+          "Debes aceptar los Términos y la Política de Privacidad.",
+        ],
+      },
+    };
+  }
+
   const origin = await getRequestOrigin();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
@@ -141,9 +160,17 @@ export async function registerAction(
 
   // Mirror auth user into application profiles table
   if (data.user) {
-    await ensureProfile({
+    const profile = await ensureProfile({
       authUserId: data.user.id,
       fullName: parsed.data.fullName,
+    });
+
+    const audit = getRequestAuditMeta(await headers());
+    await recordLegalAcceptance({
+      userId: profile.id,
+      source: "signup",
+      ipAddress: audit.ipAddress,
+      userAgent: audit.userAgent,
     });
   }
 
@@ -266,7 +293,22 @@ export async function updatePasswordAction(
  * @returns Error object when OAuth URL cannot be created; otherwise redirects.
  * @calledBy signInWithGoogleAction, signInWithAppleAction
  */
-async function startOAuthSignIn(provider: "google" | "apple", next?: string) {
+async function startOAuthSignIn(
+  provider: "google" | "apple",
+  next?: string,
+  options?: { recordSignupLegalAcceptance?: boolean },
+) {
+  if (options?.recordSignupLegalAcceptance) {
+    const cookieStore = await cookies();
+    cookieStore.set(LEGAL_SIGNUP_PENDING_COOKIE, "1", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 10,
+      path: "/",
+    });
+  }
+
   const origin = await getRequestOrigin();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -292,8 +334,11 @@ async function startOAuthSignIn(provider: "google" | "apple", next?: string) {
  * @returns Error object when OAuth URL cannot be created; otherwise redirects.
  * @calledBy GoogleSignInButton
  */
-export async function signInWithGoogleAction(next?: string) {
-  return startOAuthSignIn("google", next);
+export async function signInWithGoogleAction(
+  next?: string,
+  options?: { recordSignupLegalAcceptance?: boolean },
+) {
+  return startOAuthSignIn("google", next, options);
 }
 
 /**

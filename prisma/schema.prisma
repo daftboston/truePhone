@@ -198,6 +198,12 @@ enum OrderSupportCaseStatus {
   WITHDRAWN
 }
 
+/// Ley 527 electronic acceptance audit trail source.
+enum LegalAcceptanceSource {
+  signup
+  checkout
+}
+
 // Models
 model Profile {
   id                 String    @id @default(cuid())
@@ -248,8 +254,27 @@ model Profile {
   orderSupportCasesAsSeller OrderSupportCase[]      @relation("OrderSupportSeller")
   assignedOrderSupportCases OrderSupportCase[]      @relation("OrderSupportAssignee")
   orderSupportMessages      OrderSupportMessage[]   @relation("OrderSupportMessageSender")
+  legalAcceptances          LegalAcceptance[]
 
   @@map("profiles")
+}
+
+/// Electronic acceptance of terms and privacy (Ley 527 audit trail).
+model LegalAcceptance {
+  id               String                @id @default(cuid())
+  userId           String                @map("user_id")
+  user             Profile               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  termsVersionId   String                @map("terms_version_id")
+  privacyVersionId String                @map("privacy_version_id")
+  acceptedAt       DateTime              @default(now()) @map("accepted_at")
+  source           LegalAcceptanceSource
+  ipAddress        String?               @map("ip_address")
+  userAgent        String?               @map("user_agent")
+
+  @@index([userId])
+  @@index([userId, source])
+  @@index([acceptedAt])
+  @@map("legal_acceptances")
 }
 
 model IdentityVerification {

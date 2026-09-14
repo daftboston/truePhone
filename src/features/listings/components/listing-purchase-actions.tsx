@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 
+import { MarketplaceRoleNotice } from "@/components/marketplace-role-notice";
 import { Button } from "@/components/ui/button";
 import { FavoriteButton } from "@/features/listings/components/favorite-button";
 import { ShareListingButton } from "@/features/listings/components/share-listing-button";
@@ -69,44 +70,46 @@ export function ListingPurchaseActions({
       ) : isAuthenticated ? (
         <>
           {compact ? (
-            <div className="flex items-end justify-between gap-3">
-              <p className="text-foreground text-lg font-semibold tracking-tight">
-                {formatOrderMoney(totalPrice)}
-              </p>
-              <div className="min-w-0 flex-1">
-                {pendingOrderId ? (
-                  <Button fullWidth asChild>
-                    <Link href={`/compras/${pendingOrderId}`}>
-                      Ver mi pedido
-                    </Link>
-                  </Button>
-                ) : (
-                  <CreateOrderButton
-                    listingId={listingId}
-                    loginHref={loginHref}
-                    fullWidth
-                    disclosure="none"
-                  />
-                )}
+            <>
+              <MarketplaceRoleNotice className="text-[11px] leading-snug" />
+              <div className="flex items-end justify-between gap-3">
+                <p className="text-foreground text-lg font-semibold tracking-tight">
+                  {formatOrderMoney(totalPrice)}
+                </p>
+                <div className="min-w-0 flex-1">
+                  {pendingOrderId ? (
+                    <Button fullWidth asChild>
+                      <Link href={`/compras/${pendingOrderId}`}>
+                        Ver mi pedido
+                      </Link>
+                    </Button>
+                  ) : (
+                    <CreateOrderButton
+                      listingId={listingId}
+                      loginHref={loginHref}
+                      fullWidth
+                      disclosure="none"
+                    />
+                  )}
+                </div>
               </div>
-            </div>
+            </>
           ) : pendingOrderId ? (
             <Button fullWidth asChild>
               <Link href={`/compras/${pendingOrderId}`}>Ver mi pedido</Link>
             </Button>
           ) : (
-            <CreateOrderButton
-              listingId={listingId}
-              loginHref={loginHref}
-              fullWidth
-              disclosure="fee"
-            />
+            <>
+              <MarketplaceRoleNotice />
+              <CreateOrderButton
+                listingId={listingId}
+                loginHref={loginHref}
+                fullWidth
+                disclosure="none"
+              />
+            </>
           )}
-          {compact ? (
-            <p className="text-muted-foreground text-[11px]">
-              Sin envío en este cobro · retención 24h
-            </p>
-          ) : (
+          {compact ? null : (
             <Button fullWidth asChild variant="ghost">
               <Link href={contactHref}>{contactLabel}</Link>
             </Button>
@@ -115,24 +118,23 @@ export function ListingPurchaseActions({
       ) : (
         <>
           {compact ? (
-            <div className="flex items-end justify-between gap-3">
-              <p className="text-foreground text-lg font-semibold tracking-tight">
-                {formatOrderMoney(totalPrice)}
-              </p>
-              <Button fullWidth asChild className="min-w-0 flex-1">
-                <Link href={loginHref}>Iniciar sesión</Link>
-              </Button>
-            </div>
+            <>
+              <MarketplaceRoleNotice className="text-[11px] leading-snug" />
+              <div className="flex items-end justify-between gap-3">
+                <p className="text-foreground text-lg font-semibold tracking-tight">
+                  {formatOrderMoney(totalPrice)}
+                </p>
+                <Button fullWidth asChild className="min-w-0 flex-1">
+                  <Link href={loginHref}>Iniciar sesión</Link>
+                </Button>
+              </div>
+            </>
           ) : (
             <Button fullWidth asChild>
               <Link href={loginHref}>Iniciar sesión para comprar</Link>
             </Button>
           )}
-          {compact ? (
-            <p className="text-muted-foreground text-[11px]">
-              Sin envío en este cobro · retención 24h
-            </p>
-          ) : (
+          {compact ? null : (
             <Button fullWidth asChild variant="ghost">
               <Link href={messageLoginHref}>Iniciar sesión para contactar</Link>
             </Button>

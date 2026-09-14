@@ -14,6 +14,7 @@ import { AppShell } from "@/components/app-shell";
 import { GuaranteeBanner } from "@/components/guarantee-banner";
 import { ListingCard } from "@/components/listing-card";
 import { ListingGallery } from "@/components/listing-gallery";
+import { MarketplaceRoleNotice } from "@/components/marketplace-role-notice";
 import { PriceDisplay } from "@/components/price-display";
 import { SellerCard } from "@/components/seller-card";
 import { TrustBadge } from "@/components/trust-badge";
@@ -35,6 +36,7 @@ import { isListingFavorited } from "@/lib/favorites";
 import { findActiveFeeEntitlementForSource } from "@/lib/financial-core/entitlements";
 import {
   computeOrderFees,
+  feePercentLabel,
   LOYALTY_FEE_RATE_BPS,
 } from "@/lib/financial-core/fees";
 import { formatStorageLabel } from "@/lib/iphone-catalog";
@@ -157,12 +159,21 @@ export default async function PublicListingPage({
           requestedCompensation,
         )
       : null;
-  const compensationFees = compensation
-    ? computeOrderFees({
-        salePrice: listing.price,
-        feeRateBps: LOYALTY_FEE_RATE_BPS,
-      })
-    : null;
+  const listingFees = computeOrderFees({
+    salePrice: listing.price,
+    feeRateBps: compensation ? LOYALTY_FEE_RATE_BPS : undefined,
+  });
+  const compensationFees = compensation ? listingFees : null;
+  const platformFee =
+    compensationFees?.platformFee ??
+    listing.platformFee ??
+    listingFees.platformFee;
+  const feePercent = feePercentLabel(
+    compensationFees?.feeRateBps ?? listingFees.feeRateBps,
+  );
+  const protectionLabel = compensation
+    ? "Protección TruePhone 8% por compensación"
+    : undefined;
   const related = await listRelatedPublishedListings(listing);
   const gallery = listing.images.filter(
     (image) => image.imageType === "gallery",
@@ -252,21 +263,14 @@ export default async function PublicListingPage({
           <PriceDisplay
             price={buyerTotal}
             equipmentPrice={listing.price}
-            protectionFee={
-              compensationFees?.platformFee ?? listing.platformFee ?? undefined
-            }
-            protectionLabel={
-              compensationFees
-                ? "Protección TruePhone 8% por compensación"
-                : undefined
-            }
+            protectionFee={platformFee}
+            feePercent={feePercent}
+            protectionLabel={protectionLabel}
+            variant="checkout"
           />
 
           <GuaranteeBanner />
-          <p className="text-muted-foreground text-sm">
-            El vendedor cubre el envío (transportadora o Premium Bogotá). Este
-            cobro es el equipo y la protección; no incluye flete.
-          </p>
+          <MarketplaceRoleNotice />
 
           {sellerHref ? (
             <Link href={sellerHref} className="block">

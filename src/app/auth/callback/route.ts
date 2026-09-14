@@ -1,19 +1,26 @@
 /**
  * @file route.ts
  * @description Supabase Auth code exchange callback; ensures Profile then redirects.
- * @dependencies ensureProfile, safeNextPath, createClient
+ * @dependencies ensureProfile, safeNextPath, createClient, legal acceptance
  */
 
+import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { ensureProfile } from "@/lib/auth/profile";
 import { safeNextPath } from "@/features/auth/types";
+import { ensureProfile, getProfileByAuthUserId } from "@/lib/auth/profile";
+import {
+  LEGAL_SIGNUP_PENDING_COOKIE,
+  recordLegalAcceptance,
+} from "@/lib/legal/acceptance";
+import { getRequestAuditMeta } from "@/lib/legal/request-meta";
 import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET
  *
  * Exchanges ?code for a session, mirrors the user into Profile, redirects to next.
+ * Records signup legal acceptance when the register-flow cookie is present.
  *
  * @param request - Callback request with code and optional next query params.
  * @returns Redirect to next path or /login?error=auth_callback.
@@ -42,10 +49,27 @@ export async function GET(request: Request) {
             ? meta.name.trim()
             : combinedName || null;
 
-      await ensureProfile({
-        authUserId: data.user.id,
-        fullName,
-      });
+      const existingProfile = await getProfileByAuthUserId(data.user.id);
+      const profile =
+        existingProfile ??
+        (await ensureProfile({
+          authUserId: data.user.id,
+          fullName,
+        }));
+
+      const cookieStore = await cookies();
+      const pendingSignupLegal =
+        cookieStore.get(LEGAL_SIGNUP_PENDING_COOKIE)?.value === "1";
+      if (pendingSignupLegal) {
+        const audit = getRequestAuditMeta(await headers());
+        await recordLegalAcceptance({
+          userId: profile.id,
+          source: "signup",
+          ipAddress: audit.ipAddress,
+          userAgent: audit.userAgent,
+        });
+        cookieStore.delete(LEGAL_SIGNUP_PENDING_COOKIE);
+      }
 
       return NextResponse.redirect(new URL(next, origin));
     }
