@@ -1,6 +1,8 @@
 /**
  * @file index.ts
- * @description Public exports for legal copy and operator constants.
+ * @description Client-safe legal exports (constants, documents). Server-only
+ *   acceptance helpers live in ./acceptance.ts — import that path directly from
+ *   Server Actions / Route Handlers, not from this barrel.
  * @dependencies ./constants, ./cookies, ./privacy, ./terms, ./types
  */
 
