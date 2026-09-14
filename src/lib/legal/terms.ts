@@ -4,12 +4,17 @@
  * @dependencies ./constants, ./types
  */
 
+import { PREMIUM_SHIPPING_FEE_PESOS } from "@/lib/financial-core/fees";
+import { formatOrderMoney } from "@/lib/format-money";
+
 import {
   LEGAL_CONTACT_EMAIL,
   LEGAL_JURISDICTION,
   LEGAL_OPERATOR_NAME,
 } from "./constants";
 import type { LegalDocument } from "./types";
+
+const premiumShippingFeeLabel = formatOrderMoney(PREMIUM_SHIPPING_FEE_PESOS);
 
 /**
  * TERMS_DOCUMENT
@@ -55,7 +60,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
       paragraphs: [
         "El comprador paga el precio del equipo más la protección TruePhone (Compra Garantizada): 10% sobre el precio del anuncio.",
         "Esa protección cubre la revisión del anuncio, el cobro seguro y retener el dinero hasta que el pedido se complete. Ves el precio del equipo y la protección por separado. No añadimos IVA encima de ese 10%.",
-        "El vendedor no paga comisión sobre la venta. Recibe el precio del equipo, menos $20.000 si eligió envío Premium Bogotá. La transportadora la paga el vendedor directo al operador.",
+        `El vendedor no paga comisión sobre la venta. Recibe el precio del equipo, menos ${premiumShippingFeeLabel} si eligió envío Premium Bogotá. La transportadora la paga el vendedor directo al operador.`,
         "Si un vendedor cancela después del pago y soporte acepta el caso, el comprador elige: reembolso, o una compra de reemplazo con 8% de protección una sola vez. Después de esa compra (o si pide el reembolso), el 10% vuelve a aplicar.",
       ],
     },
@@ -85,7 +90,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
         "El vendedor elige el envío después del pago. El comprador no paga envío en el checkout.",
       ],
       bullets: [
-        "TruePhone Premium (solo Bogotá ciudad): recogemos, revisamos y entregamos. El vendedor paga $20.000, descontados de su liquidación.",
+        `TruePhone Premium (solo Bogotá ciudad): recogemos, revisamos y entregamos. El vendedor paga ${premiumShippingFeeLabel}, descontados de su liquidación.`,
         "Transportadora (todo el país; también opción en Bogotá): el vendedor envía por Servientrega, Envía u otra, paga al operador y debe subir el código de rastreo. El comprador lo ve en el pedido.",
         "Fuera de Bogotá ciudad (incluye alrededores) solo hay transportadora.",
       ],

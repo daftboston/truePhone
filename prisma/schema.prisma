@@ -762,7 +762,7 @@ model Shipment {
   trackingCode String?
   evidenceUrl  String?
 
-  /// Premium Bogotá: fee snapshot at method selection (always 20000 when Premium).
+  /// Premium Bogotá: fee snapshot at method selection (current fee when Premium).
   premiumFeeCop Int @default(0)
 
   methodSelectedAt   DateTime  @default(now())

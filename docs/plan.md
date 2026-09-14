@@ -78,7 +78,7 @@ MVP is complete when Phases **0–11** plus **Financial Core settlement**, **Shi
 - Buyers can purchase devices (**10%** marketplace fee; cards via Wompi)
 - Buyer selects / understands fulfillment (**Premium Bogotá** or **Carrier** — see `docs/SHIPPING.md`)
 - Funds held until buyer confirm **or 24h after buyer marks received** (**24h rule disclosed at purchase**)
-- Sellers receive payout to **bank account** from **Wompi Cuenta** after successful completion (minus **$20,000** if Premium). **MVP:** ops pays manually in Wompi after Financial Core authorizes; **Phase 24:** automated Pagos a Terceros API.
+- Sellers receive payout to **bank account** from **Wompi Cuenta** after successful completion (minus **$25,000** if Premium). **MVP:** ops pays manually in Wompi after Financial Core authorizes; **Phase 24:** automated Pagos a Terceros API.
 - Sellers see **recommended price references** (model + storage + condition) while pricing; admins maintain the table
 - Both parties can review each other
 - Important actions are logged (including Ledger)
@@ -519,7 +519,7 @@ Goal: Device moves seller → buyer. Canonical rules: `docs/SHIPPING.md`.
 
 ### Methods (MVP)
 
-1. **TruePhone Premium** — Bogotá only; TruePhone picks up, inspects, delivers; **seller pays $20,000 COP** (deducted at payout).
+1. **TruePhone Premium** — Bogotá only; TruePhone picks up, inspects, delivers; **seller pays $25,000 COP** (deducted at payout).
 2. **Carrier** — Servientrega / Envía / other; seller pays carrier; **must upload tracking code** (visible to buyer). Required outside Bogotá; optional alternative inside Bogotá.
 
 Drop-off points: **post-MVP**.
@@ -528,13 +528,13 @@ Drop-off points: **post-MVP**.
 
 - Seller chooses method after payment (Bogotá: Premium or Carrier; else Carrier only); may switch Premium ↔ Carrier until tracking/inspection commitment (fee snapshot + ledger updated)
 - Carrier: tracking code upload + buyer-visible tracking on order
-- Premium: ops/admin pickup → inspection checklist → deliver; fee snapshot `20000`
+- Premium: ops/admin pickup → inspection checklist → deliver; fee snapshot `25000`
 - Shipment states + `deliveredAt` (buyer receipt ack; starts 24h clock)
 - Events into Financial Core / Notifications
 
 Suggested build order: **Carrier first** (national), then **Premium Bogotá**.
 
-Status: **Landed** (Shipment + inspection models; seller method select + Premium↔Carrier switch until committed; Carrier tracking upload + buyer-visible code; buyer “Ya recibí” → 24h window; Premium ops inspection + $20k fee snapshot; buyer confirm / report).
+Status: **Landed** (Shipment + inspection models; seller method select + Premium↔Carrier switch until committed; Carrier tracking upload + buyer-visible code; buyer “Ya recibí” → 24h window; Premium ops inspection + $25k fee snapshot; buyer confirm / report).
 
 ---
 

@@ -11,6 +11,7 @@ import {
   computeOrderFees,
   PREMIUM_SHIPPING_FEE_PESOS,
 } from "@/lib/financial-core";
+import { formatOrderMoney } from "@/lib/format-money";
 import { onBuyerMarkedReceived } from "@/lib/financial-core/settlement";
 import { prisma } from "@/lib/db";
 import {
@@ -19,6 +20,8 @@ import {
   canSwitchPremiumToCarrier,
   type ShippingMethodOption,
 } from "@/lib/shipping/eligibility";
+const premiumShippingFeeLabel = formatOrderMoney(PREMIUM_SHIPPING_FEE_PESOS);
+
 class ShippingError extends Error {
   constructor(message: string) {
     super(message);
@@ -147,7 +150,7 @@ export async function selectShippingMethod(input: {
       ok: true,
       message:
         input.method === "PREMIUM_BOGOTA"
-          ? "Elegiste TruePhone Premium. Coordinaremos la recogida en Bogotá ($20.000 se descontarán de tu pago)."
+          ? `Elegiste TruePhone Premium. Coordinaremos la recogida en Bogotá (${premiumShippingFeeLabel} se descontarán de tu pago).`
           : "Elegiste transportadora. Sube el nombre y el código de seguimiento.",
     };
   } catch (error) {
@@ -243,8 +246,7 @@ export async function switchCarrierToPremium(input: {
 
     return {
       ok: true,
-      message:
-        "Cambiaste a TruePhone Premium. Coordinaremos la recogida en Bogotá ($20.000 se descontarán de tu pago).",
+      message: `Cambiaste a TruePhone Premium. Coordinaremos la recogida en Bogotá (${premiumShippingFeeLabel} se descontarán de tu pago).`,
     };
   } catch (error) {
     if (error instanceof ShippingError) {
@@ -259,7 +261,7 @@ export async function switchCarrierToPremium(input: {
  *
  * Bogotá sellers who picked Premium may switch to Carrier until inspection passes
  * or logistics leave awaiting-pickup / method-selected.
- * Clears the $20,000 premium fee snapshot and appends a reversing ledger note.
+ * Clears the Premium fee snapshot and appends a reversing ledger note.
  *
  * @param input.orderId - Paid order id
  * @param input.sellerId - Must be the order seller
@@ -350,8 +352,7 @@ export async function switchPremiumToCarrier(input: {
 
     return {
       ok: true,
-      message:
-        "Cambiaste a transportadora. Ya no se descontarán $20.000 de Premium; sube el código de seguimiento cuando envíes.",
+      message: `Cambiaste a transportadora. Ya no se descontarán ${premiumShippingFeeLabel} de Premium; sube el código de seguimiento cuando envíes.`,
     };
   } catch (error) {
     if (error instanceof ShippingError) {
