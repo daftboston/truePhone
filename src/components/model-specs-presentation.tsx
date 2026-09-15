@@ -2,7 +2,7 @@
  * @file model-specs-presentation.tsx
  * @description Shared Apple-style spec blocks and icons for browse and compare UIs.
  * @dependencies lucide-react, iphone-catalog, iphone-catalog-specs
- * @changelog 2026-09-15 — SpecBlock icon/copy wrappers shrink and wrap correctly in horizontal grids.
+ * @changelog 2026-09-15 — Dropped video-playback battery splitter; browse uses mAh only.
  */
 
 import type { ReactNode } from "react";
@@ -51,25 +51,6 @@ export function compactDetailLines(lines: string[], maxLines = 2): string[] {
     ...lines.slice(0, maxLines - 1),
     lines.slice(maxLines - 1).join(" · "),
   ];
-}
-
-/**
- * splitBatteryPrimary
- *
- * Breaks long Apple battery playback copy into a compact primary/secondary pair.
- *
- * @param label - Battery primary label from catalog specs.
- * @returns Primary headline and optional trailing clause.
- */
-export function splitBatteryPrimary(label: string): {
-  primary: string;
-  trailing?: string;
-} {
-  const match = label.match(
-    /^(Hasta [\d.,]+ horas)( de reproducción de video)$/i,
-  );
-  if (!match) return { primary: label };
-  return { primary: match[1]!, trailing: match[2]!.trim() };
 }
 
 /**

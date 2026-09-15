@@ -2,6 +2,7 @@
  * @file model-compare-view.tsx
  * @description Side-by-side Apple-style hardware comparison for two catalog models.
  * @dependencies lucide-react, model-specs-presentation, iphone-catalog-specs
+ * @changelog 2026-09-15 — Battery compare row shows mAh only.
  */
 
 import {
@@ -20,7 +21,6 @@ import {
   RearCameraIcon,
   compactDetailLines,
   formatStorageRange,
-  splitBatteryPrimary,
 } from "@/components/model-specs-presentation";
 import type { CatalogModelSpecs } from "@/lib/iphone-catalog-specs";
 import { formatCatalogDisplaySize } from "@/lib/iphone-catalog-specs";
@@ -42,8 +42,6 @@ type ModelCompareViewProps = {
 type ModelSpecPresentation = {
   displaySize: string;
   storageRange: string;
-  batteryPrimary: string;
-  batterySecondary?: string;
   frontCameraDetails?: string[];
 };
 
@@ -58,19 +56,9 @@ type ModelSpecPresentation = {
 function buildModelSpecPresentation(
   entry: CompareModelEntry,
 ): ModelSpecPresentation {
-  const batteryCopy = splitBatteryPrimary(entry.specs.batteryPrimaryLabel);
-  const batterySecondary = [
-    batteryCopy.trailing,
-    entry.specs.batterySecondaryLabel,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
   return {
     displaySize: formatCatalogDisplaySize(entry.specs.displaySizeInches),
     storageRange: formatStorageRange(entry.storageGb),
-    batteryPrimary: batteryCopy.primary,
-    batterySecondary: batterySecondary || undefined,
     frontCameraDetails: entry.specs.frontCameraDetails
       ? compactDetailLines(entry.specs.frontCameraDetails, 1)
       : undefined,
@@ -196,13 +184,11 @@ export function ModelCompareView({
         <CompareSpecRow
           left={{
             icon: <Battery className="size-7 stroke-[1.5]" aria-hidden />,
-            primary: leftPresentation.batteryPrimary,
-            secondary: leftPresentation.batterySecondary,
+            primary: left.specs.batteryPrimaryLabel,
           }}
           right={{
             icon: <Battery className="size-7 stroke-[1.5]" aria-hidden />,
-            primary: rightPresentation.batteryPrimary,
-            secondary: rightPresentation.batterySecondary,
+            primary: right.specs.batteryPrimaryLabel,
           }}
         />
 

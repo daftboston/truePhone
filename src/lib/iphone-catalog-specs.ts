@@ -2,6 +2,7 @@
  * @file iphone-catalog-specs.ts
  * @description Published hardware specifications keyed by catalog model slug for browse UI.
  * @dependencies iphone-catalog-data
+ * @changelog 2026-09-15 — Canonical unique-feature names; battery cell shows mAh only.
  */
 
 import { IPHONE_CATALOG_MODELS } from "@/lib/iphone-catalog-data";
@@ -30,38 +31,6 @@ export type CatalogModelSpecs = CatalogModelSpecsSeed & {
   frontCameraDetails?: string[];
   batteryPrimaryLabel: string;
   batterySecondaryLabel?: string;
-};
-
-/** Apple-published video playback hours from official tech specs. */
-const BATTERY_VIDEO_HOURS: Record<string, number> = {
-  "iphone-12-mini": 15,
-  "iphone-12": 17,
-  "iphone-12-pro": 17,
-  "iphone-12-pro-max": 20,
-  "iphone-13-mini": 17,
-  "iphone-13": 19,
-  "iphone-13-pro": 22,
-  "iphone-13-pro-max": 28,
-  "iphone-se-3": 15,
-  "iphone-se-4": 26,
-  "iphone-14": 20,
-  "iphone-14-plus": 26,
-  "iphone-14-pro": 23,
-  "iphone-14-pro-max": 29,
-  "iphone-15": 20,
-  "iphone-15-plus": 26,
-  "iphone-15-pro": 23,
-  "iphone-15-pro-max": 29,
-  "iphone-16": 22,
-  "iphone-16-plus": 27,
-  "iphone-16-pro": 27,
-  "iphone-16-pro-max": 33,
-  "iphone-16e": 26,
-  "iphone-17": 30,
-  "iphone-air": 27,
-  "iphone-17-pro": 33,
-  "iphone-17-pro-max": 39,
-  "iphone-17e": 26,
 };
 
 const DISPLAY_MARKETING: Record<string, string> = {
@@ -341,30 +310,17 @@ function buildFrontCameraPresentation(slug: string): {
 /**
  * buildBatteryPresentation
  *
- * Prefers Apple video-playback hours; falls back to published mAh capacity.
+ * Shows published battery capacity as a compact mAh headline.
  *
- * @param slug - Catalog model slug.
  * @param batteryMah - Optional published battery capacity.
- * @returns Battery headline and secondary label.
+ * @returns Battery headline for browse and compare UIs.
  */
 function buildBatteryPresentation(
-  slug: string,
   batteryMah?: number,
 ): Pick<CatalogModelSpecs, "batteryPrimaryLabel" | "batterySecondaryLabel"> {
-  const videoHours = BATTERY_VIDEO_HOURS[slug];
-  if (videoHours) {
-    return {
-      batteryPrimaryLabel: `Hasta ${videoHours.toLocaleString("es-CO")} horas de reproducción de video`,
-      batterySecondaryLabel: batteryMah
-        ? `${batteryMah.toLocaleString("es-CO")} mAh`
-        : undefined,
-    };
-  }
-
   if (batteryMah) {
     return {
       batteryPrimaryLabel: `${batteryMah.toLocaleString("es-CO")} mAh`,
-      batterySecondaryLabel: "Capacidad de batería",
     };
   }
 
@@ -387,7 +343,7 @@ function enrichCatalogModelSpecs(
   seed: CatalogModelSpecsSeed,
 ): CatalogModelSpecs {
   const camera = buildCameraPresentation(slug, seed.cameras);
-  const battery = buildBatteryPresentation(slug, seed.batteryMah);
+  const battery = buildBatteryPresentation(seed.batteryMah);
 
   return {
     ...seed,
@@ -411,7 +367,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 2227,
     uniqueFeatures: [
       "Formato compacto de 5,4″",
-      "Ceramic Shield y MagSafe",
+      "Ceramic Shield",
+      "MagSafe",
       "5G",
     ],
   },
@@ -424,7 +381,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 2815,
     uniqueFeatures: [
       "Pantalla Super Retina XDR de 6,1″",
-      "Ceramic Shield y MagSafe",
+      "Ceramic Shield",
+      "MagSafe",
       "5G",
     ],
   },
@@ -450,7 +408,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 3687,
     uniqueFeatures: [
       "Mayor autonomía de la serie 12",
-      "Teleobjetivo con zoom óptico 2,5×",
+      "Zoom óptico 2,5×",
       "ProRAW y Apple ProRes",
     ],
   },
@@ -464,7 +422,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     uniqueFeatures: [
       "Último iPhone mini",
       "Modo Cine y Fotográficos",
-      "Ceramic Shield y MagSafe",
+      "Ceramic Shield",
+      "MagSafe",
     ],
   },
   "iphone-13": {
@@ -476,7 +435,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 3227,
     uniqueFeatures: [
       "Modo Cine y Fotográficos",
-      "Ceramic Shield y MagSafe",
+      "Ceramic Shield",
+      "MagSafe",
       "5G",
     ],
   },
@@ -490,7 +450,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     uniqueFeatures: [
       "ProMotion hasta 120 Hz",
       "Always-On display",
-      "Macro photography",
+      "Fotografía macro",
     ],
   },
   "iphone-13-pro-max": {
@@ -503,7 +463,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     uniqueFeatures: [
       "ProMotion hasta 120 Hz",
       "Always-On display",
-      "Teleobjetivo con zoom óptico 3×",
+      "Zoom óptico 3×",
       "Mayor autonomía de la serie 13",
     ],
   },
@@ -529,8 +489,9 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 4005,
     uniqueFeatures: [
       "Cuarta generación de la línea SE",
-      "Face ID y pantalla OLED a pantalla completa",
-      "Botón de Acción y USB-C",
+      "Face ID",
+      "Botón de Acción",
+      "USB-C",
     ],
   },
   "iphone-14": {
@@ -662,7 +623,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Triple 48 MP + escáner LiDAR",
     batteryMah: 3582,
     uniqueFeatures: [
-      "Diseño de titanio",
+      "Titanio",
       "Control de Cámara",
       "Botón de Acción",
       "ProMotion hasta 120 Hz",
@@ -676,7 +637,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Triple 48 MP + escáner LiDAR",
     batteryMah: 4685,
     uniqueFeatures: [
-      "Diseño de titanio",
+      "Titanio",
       "Control de Cámara",
       "Botón de Acción",
       "Pantalla Pro Max de 6,9″",
@@ -692,7 +653,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 4005,
     uniqueFeatures: [
       "Opción asequible con pantalla OLED",
-      "Face ID y Botón de Acción",
+      "Face ID",
+      "Botón de Acción",
       "USB-C",
     ],
   },
@@ -719,7 +681,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 3149,
     uniqueFeatures: [
       "Diseño ultradelgado de 5,6 mm",
-      "Marco de titanio",
+      "Titanio",
       "ProMotion hasta 120 Hz",
       "Control de Cámara",
       "Botón de Acción",
@@ -737,7 +699,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Control de Cámara",
       "Botón de Acción",
       "ProMotion hasta 120 Hz",
-      "Zoom óptico hasta 8×",
+      "Zoom óptico 8×",
     ],
   },
   "iphone-17-pro-max": {
@@ -764,7 +726,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 4005,
     uniqueFeatures: [
       "Botón de Acción",
-      "MagSafe de 15 W",
+      "MagSafe",
       "Ceramic Shield 2",
       "Opción asequible con chip A19",
     ],

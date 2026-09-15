@@ -4,7 +4,7 @@
  * @file model-specs-card.tsx
  * @description Collapsible Apple-style hardware specs for model-scoped browse pages.
  * @dependencies lucide-react, model-specs-presentation, iphone-catalog-specs
- * @changelog 2026-09-15 — Desktop uses a horizontal spec grid instead of a tall stacked column.
+ * @changelog 2026-09-15 — Desktop uses a horizontal spec grid; battery cell shows mAh only.
  */
 
 import {
@@ -24,7 +24,6 @@ import {
   SpecBlock,
   compactDetailLines,
   formatStorageRange,
-  splitBatteryPrimary,
 } from "@/components/model-specs-presentation";
 import type { CatalogModelSpecs } from "@/lib/iphone-catalog-specs";
 import { formatCatalogDisplaySize } from "@/lib/iphone-catalog-specs";
@@ -77,7 +76,6 @@ export function ModelSpecsCard({
 }: ModelSpecsCardProps) {
   const displaySize = formatCatalogDisplaySize(specs.displaySizeInches);
   const storageRange = formatStorageRange(storageGb);
-  const batteryCopy = splitBatteryPrimary(specs.batteryPrimaryLabel);
   const frontCameraDetails = specs.frontCameraDetails
     ? compactDetailLines(specs.frontCameraDetails, 1)
     : undefined;
@@ -115,12 +113,7 @@ export function ModelSpecsCard({
           <SpecBlock
             className={specBrowseCellClass("full")}
             icon={<Battery className="size-7 stroke-[1.5]" aria-hidden />}
-            primary={batteryCopy.primary}
-            secondary={
-              [batteryCopy.trailing, specs.batterySecondaryLabel]
-                .filter(Boolean)
-                .join(" · ") || undefined
-            }
+            primary={specs.batteryPrimaryLabel}
           />
 
           <SpecBlock
