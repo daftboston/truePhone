@@ -163,20 +163,19 @@ export function ModelSpecsCard({
           />
 
           {specs.uniqueFeatures.length > 0 ? (
-            <div className="border-border col-span-2 px-2 py-2.5 text-center md:col-span-4 md:flex md:items-start md:gap-3 md:border-t md:px-3 md:py-3 md:text-left">
-              <div className="text-muted-foreground mb-1 flex justify-center md:mb-0 md:shrink-0">
-                <Sparkles className="size-7 stroke-[1.5]" aria-hidden />
-              </div>
-              <div className="min-w-0 md:flex-1">
-                <p className="text-foreground mb-1 text-sm font-semibold">
-                  Características únicas
-                </p>
-                <ul className="text-muted-foreground mx-auto grid max-w-sm grid-cols-2 gap-x-2 gap-y-0.5 text-left text-[11px] leading-snug md:mx-0 md:max-w-none md:grid-cols-3 lg:grid-cols-4">
-                  {specs.uniqueFeatures.map((feature) => (
-                    <li key={feature}>{feature}</li>
-                  ))}
-                </ul>
-              </div>
+            <div className="border-border col-span-2 px-2 py-2.5 text-center md:col-span-4 md:flex md:flex-wrap md:items-center md:gap-x-4 md:gap-y-1 md:border-t md:px-3 md:py-2.5 md:text-left">
+              <p className="text-foreground mb-1 flex items-center justify-center gap-2 text-sm font-semibold md:mb-0">
+                <Sparkles
+                  className="text-muted-foreground size-5 stroke-[1.5]"
+                  aria-hidden
+                />
+                Características únicas
+              </p>
+              <ul className="text-muted-foreground mx-auto flex max-w-sm flex-wrap justify-center gap-x-4 gap-y-0.5 text-[11px] leading-snug md:mx-0 md:max-w-none md:justify-start">
+                {specs.uniqueFeatures.map((feature) => (
+                  <li key={feature}>{feature}</li>
+                ))}
+              </ul>
             </div>
           ) : null}
         </div>
