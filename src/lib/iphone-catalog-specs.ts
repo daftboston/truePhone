@@ -20,6 +20,7 @@ type CatalogModelSpecsSeed = {
 };
 
 export type CatalogModelSpecs = CatalogModelSpecsSeed & {
+  uniqueFeatures: string[];
   displayMarketingName: string;
   chipBadge: string;
   chipHeadline: string;
