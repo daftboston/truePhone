@@ -19,7 +19,7 @@ const ITEMS = [
     icon: ShieldCheck,
     label: "Compra Garantizada",
     detail:
-      "Retenemos el pago. Tras «Ya recibí» tienes 24 horas para confirmar o reportar.",
+      "TruePhone asegura tu pago. Una vez recibas tu iPhone, tienes hasta 24 horas para confirmar que tu teléfono esté bien.",
   },
   {
     icon: ScanLine,
