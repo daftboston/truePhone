@@ -41,6 +41,10 @@ describe("iphone catalog specs", () => {
       assert.ok(specs.chip.length > 0, model.slug);
       assert.ok(specs.cameras.length > 0, model.slug);
       assert.ok(specs.uniqueFeatures.length > 0, model.slug);
+      assert.ok(specs.displayMarketingName.length > 0, model.slug);
+      assert.ok(specs.chipBadge.length > 0, model.slug);
+      assert.ok(specs.cameraHeadline.length > 0, model.slug);
+      assert.ok(specs.batteryPrimaryLabel.length > 0, model.slug);
     }
   });
 
@@ -51,5 +55,9 @@ describe("iphone catalog specs", () => {
     assert.equal(specs.chip, "Apple A14 Bionic");
     assert.equal(specs.ramGb, 4);
     assert.equal(specs.batteryMah, 2227);
+    assert.equal(specs.displayMarketingName, "Pantalla Super Retina XDR");
+    assert.equal(specs.chipBadge, "A14");
+    assert.match(specs.batteryPrimaryLabel, /15 horas/);
+    assert.equal(specs.cameraModuleVariant, "dual");
   });
 });
