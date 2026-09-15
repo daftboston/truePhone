@@ -59,7 +59,7 @@ describe("iphone catalog specs", () => {
     assert.equal(specs.displayMarketingName, "Pantalla Super Retina XDR");
     assert.equal(specs.chipBadge, "A14");
     assert.equal(specs.batteryPrimaryLabel, "2.227 mAh");
-    assert.equal(specs.batterySecondaryLabel, undefined);
+    assert.equal(specs.batterySecondaryLabel, "Capacidad de la batería");
     assert.equal(specs.cameraModuleVariant, "dual");
   });
 
@@ -101,7 +101,7 @@ describe("iphone catalog specs", () => {
       const specs = getRequiredCatalogModelSpecs(model.slug);
       assert.match(specs.batteryPrimaryLabel, /^\d{1,3}(?:\.\d{3})* mAh$/);
       assert.doesNotMatch(specs.batteryPrimaryLabel, /hasta/i);
-      assert.equal(specs.batterySecondaryLabel, undefined);
+      assert.equal(specs.batterySecondaryLabel, "Capacidad de la batería");
     }
   });
 

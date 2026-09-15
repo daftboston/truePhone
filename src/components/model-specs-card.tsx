@@ -114,6 +114,7 @@ export function ModelSpecsCard({
             className={specBrowseCellClass("full")}
             icon={<Battery className="size-7 stroke-[1.5]" aria-hidden />}
             primary={specs.batteryPrimaryLabel}
+            secondary={specs.batterySecondaryLabel}
           />
 
           <SpecBlock

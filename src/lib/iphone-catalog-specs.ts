@@ -310,10 +310,10 @@ function buildFrontCameraPresentation(slug: string): {
 /**
  * buildBatteryPresentation
  *
- * Shows published battery capacity as a compact mAh headline.
+ * Shows published battery capacity as a compact mAh headline with a caption.
  *
  * @param batteryMah - Optional published battery capacity.
- * @returns Battery headline for browse and compare UIs.
+ * @returns Battery headline and "Capacidad de la batería" caption.
  */
 function buildBatteryPresentation(
   batteryMah?: number,
@@ -321,6 +321,7 @@ function buildBatteryPresentation(
   if (batteryMah) {
     return {
       batteryPrimaryLabel: `${batteryMah.toLocaleString("es-CO")} mAh`,
+      batterySecondaryLabel: "Capacidad de la batería",
     };
   }
 

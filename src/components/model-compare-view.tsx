@@ -185,10 +185,12 @@ export function ModelCompareView({
           left={{
             icon: <Battery className="size-7 stroke-[1.5]" aria-hidden />,
             primary: left.specs.batteryPrimaryLabel,
+            secondary: left.specs.batterySecondaryLabel,
           }}
           right={{
             icon: <Battery className="size-7 stroke-[1.5]" aria-hidden />,
             primary: right.specs.batteryPrimaryLabel,
+            secondary: right.specs.batterySecondaryLabel,
           }}
         />
 
