@@ -70,32 +70,42 @@ export default async function ExplorePage({ searchParams }: PageProps) {
         <CompensationBanner sourceOrderId={compensation.sourceOrderId} />
       ) : null}
 
-      <div className="mx-auto max-w-xl space-y-4 text-center">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
-          Explorar iPhones
-        </h1>
-        <p className="text-muted-foreground text-sm md:text-base">
-          Elige un modelo. Solo verás anuncios revisados por TruePhone.
-        </p>
-        {publishedCount > 0 ? (
-          <div className="flex justify-center">
-            <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
-              <ShieldCheck className="text-trust size-3.5" aria-hidden />
-              {publishedCount === 1
-                ? "1 anuncio publicado"
-                : `${publishedCount} anuncios publicados`}
-            </p>
-          </div>
-        ) : modelCount > 0 ? (
-          <p className="text-muted-foreground text-xs font-medium">
-            {modelCount === 1 ? "1 modelo" : `${modelCount} modelos`}
+      <div className="space-y-4">
+        <div className="flex items-baseline justify-between gap-4">
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight md:text-3xl">
+            Explorar iPhones
+          </h1>
+          <Link
+            href="/comparar"
+            className="text-primary shrink-0 text-sm font-medium underline-offset-4 hover:underline md:text-base"
+          >
+            Comparar
+          </Link>
+        </div>
+        <div className="mx-auto max-w-xl space-y-4 text-center">
+          <p className="text-muted-foreground text-sm md:text-base">
+            Elige un modelo. Solo verás anuncios revisados por TruePhone.
           </p>
-        ) : null}
-        <ModelSearch
-          models={catalog.models}
-          placeholder="Ej. iPhone 14, 15 Pro…"
-          compensationId={compensation?.sourceOrderId}
-        />
+          {publishedCount > 0 ? (
+            <div className="flex justify-center">
+              <p className="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
+                <ShieldCheck className="text-trust size-3.5" aria-hidden />
+                {publishedCount === 1
+                  ? "1 anuncio publicado"
+                  : `${publishedCount} anuncios publicados`}
+              </p>
+            </div>
+          ) : modelCount > 0 ? (
+            <p className="text-muted-foreground text-xs font-medium">
+              {modelCount === 1 ? "1 modelo" : `${modelCount} modelos`}
+            </p>
+          ) : null}
+          <ModelSearch
+            models={catalog.models}
+            placeholder="Ej. iPhone 14, 15 Pro…"
+            compensationId={compensation?.sourceOrderId}
+          />
+        </div>
       </div>
 
       {seriesList.length === 0 ? (
