@@ -4,6 +4,7 @@
  * @file model-specs-card.tsx
  * @description Collapsible Apple-style hardware specs for model-scoped browse pages.
  * @dependencies lucide-react, model-specs-presentation, iphone-catalog-specs
+ * @changelog 2026-09-15 — Desktop uses a horizontal spec grid; battery cell shows mAh only.
  */
 
 import {
@@ -21,10 +22,8 @@ import {
   FrontCameraIcon,
   RearCameraIcon,
   SpecBlock,
-  SpecPairRow,
   compactDetailLines,
   formatStorageRange,
-  splitBatteryPrimary,
 } from "@/components/model-specs-presentation";
 import type { CatalogModelSpecs } from "@/lib/iphone-catalog-specs";
 import { formatCatalogDisplaySize } from "@/lib/iphone-catalog-specs";
@@ -36,6 +35,26 @@ type ModelSpecsCardProps = {
   releaseYear: number;
   className?: string;
 };
+
+type SpecCellSpan = "half" | "full";
+
+/**
+ * specBrowseCellClass
+ *
+ * Builds grid + alignment classes so spec cells stack in pairs on mobile
+ * and sit in a compact horizontal row on desktop.
+ *
+ * @param span - `full` stretches the cell on mobile; `half` shares a 2-col row.
+ * @returns Tailwind class string for one browse spec cell.
+ * @calledBy ModelSpecsCard
+ */
+function specBrowseCellClass(span: SpecCellSpan): string {
+  return cn(
+    "border-border border-b md:border-0",
+    span === "full" && "col-span-2 md:col-span-1",
+    "md:flex-row md:items-start md:justify-start md:gap-3 md:px-3 md:py-3 md:text-left",
+  );
+}
 
 /**
  * ModelSpecsCard
@@ -57,7 +76,6 @@ export function ModelSpecsCard({
 }: ModelSpecsCardProps) {
   const displaySize = formatCatalogDisplaySize(specs.displaySizeInches);
   const storageRange = formatStorageRange(storageGb);
-  const batteryCopy = splitBatteryPrimary(specs.batteryPrimaryLabel);
   const frontCameraDetails = specs.frontCameraDetails
     ? compactDetailLines(specs.frontCameraDetails, 1)
     : undefined;
@@ -76,39 +94,38 @@ export function ModelSpecsCard({
           aria-hidden
         />
       </summary>
-      <div className="border-border border-t px-1 pb-1.5 sm:px-2">
-        <div className="divide-border mx-auto flex max-w-md flex-col divide-y">
-          <SpecPairRow
-            left={{
-              icon: <Smartphone className="size-7 stroke-[1.5]" aria-hidden />,
-              primary: displaySize,
-              secondary: specs.displayMarketingName,
-              details: [specs.resolution],
-            }}
-            right={{
-              icon: <HardDrive className="size-7 stroke-[1.5]" aria-hidden />,
-              primary: storageRange,
-              secondary: "Almacenamiento",
-            }}
+      <div className="border-border border-t px-1 pb-1.5 sm:px-2 md:px-2 md:pb-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 [&>*:last-child]:border-b-0">
+          <SpecBlock
+            className={specBrowseCellClass("half")}
+            icon={<Smartphone className="size-7 stroke-[1.5]" aria-hidden />}
+            primary={displaySize}
+            secondary={specs.displayMarketingName}
+            details={[specs.resolution]}
+          />
+          <SpecBlock
+            className={specBrowseCellClass("half")}
+            icon={<HardDrive className="size-7 stroke-[1.5]" aria-hidden />}
+            primary={storageRange}
+            secondary="Almacenamiento"
           />
 
           <SpecBlock
+            className={specBrowseCellClass("full")}
             icon={<Battery className="size-7 stroke-[1.5]" aria-hidden />}
-            primary={batteryCopy.primary}
-            secondary={
-              [batteryCopy.trailing, specs.batterySecondaryLabel]
-                .filter(Boolean)
-                .join(" · ") || undefined
-            }
+            primary={specs.batteryPrimaryLabel}
+            secondary={specs.batterySecondaryLabel}
           />
 
           <SpecBlock
+            className={specBrowseCellClass("full")}
             icon={<ChipBadgeIcon label={specs.chipBadge} />}
             primary={specs.chipHeadline}
             secondary={specs.chipDetail}
           />
 
           <SpecBlock
+            className={specBrowseCellClass("full")}
             icon={<RearCameraIcon variant={specs.cameraModuleVariant} />}
             primary={specs.cameraHeadline}
             details={specs.cameraDetails}
@@ -116,6 +133,7 @@ export function ModelSpecsCard({
 
           {specs.frontCameraHeadline ? (
             <SpecBlock
+              className={specBrowseCellClass("full")}
               icon={<FrontCameraIcon />}
               primary={specs.frontCameraHeadline}
               details={frontCameraDetails}
@@ -123,37 +141,31 @@ export function ModelSpecsCard({
           ) : null}
 
           {specs.ramGb ? (
-            <SpecPairRow
-              left={{
-                icon: (
-                  <MemoryStick className="size-7 stroke-[1.5]" aria-hidden />
-                ),
-                primary: `${specs.ramGb} GB`,
-                secondary: "Memoria RAM",
-              }}
-              right={{
-                icon: <Calendar className="size-7 stroke-[1.5]" aria-hidden />,
-                primary: String(releaseYear),
-                secondary: "Año de lanzamiento",
-              }}
-            />
-          ) : (
             <SpecBlock
-              icon={<Calendar className="size-7 stroke-[1.5]" aria-hidden />}
-              primary={String(releaseYear)}
-              secondary="Año de lanzamiento"
+              className={specBrowseCellClass("half")}
+              icon={<MemoryStick className="size-7 stroke-[1.5]" aria-hidden />}
+              primary={`${specs.ramGb} GB`}
+              secondary="Memoria RAM"
             />
-          )}
+          ) : null}
+
+          <SpecBlock
+            className={specBrowseCellClass(specs.ramGb ? "half" : "full")}
+            icon={<Calendar className="size-7 stroke-[1.5]" aria-hidden />}
+            primary={String(releaseYear)}
+            secondary="Año de lanzamiento"
+          />
 
           {specs.uniqueFeatures.length > 0 ? (
-            <div className="px-2 py-2.5 text-center">
-              <div className="text-muted-foreground mb-1 flex justify-center">
-                <Sparkles className="size-7 stroke-[1.5]" aria-hidden />
-              </div>
-              <p className="text-foreground mb-1 text-sm font-semibold">
-                Características únicas
+            <div className="border-border col-span-2 px-2 py-2.5 text-center md:col-span-4 md:flex md:flex-wrap md:items-center md:gap-x-4 md:gap-y-1 md:border-t md:px-3 md:py-2.5 md:text-left">
+              <p className="text-foreground mb-1 flex items-center justify-center gap-2 text-sm font-semibold md:mb-0">
+                <Sparkles
+                  className="text-muted-foreground size-5 stroke-[1.5]"
+                  aria-hidden
+                />
+                Características destacadas
               </p>
-              <ul className="text-muted-foreground mx-auto grid max-w-sm grid-cols-2 gap-x-2 gap-y-0.5 text-left text-[11px] leading-snug">
+              <ul className="text-muted-foreground mx-auto flex max-w-sm flex-wrap justify-center gap-x-4 gap-y-0.5 text-[11px] leading-snug md:mx-0 md:max-w-none md:justify-start">
                 {specs.uniqueFeatures.map((feature) => (
                   <li key={feature}>{feature}</li>
                 ))}

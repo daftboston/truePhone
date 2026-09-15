@@ -2,6 +2,7 @@
  * @file model-specs-presentation.tsx
  * @description Shared Apple-style spec blocks and icons for browse and compare UIs.
  * @dependencies lucide-react, iphone-catalog, iphone-catalog-specs
+ * @changelog 2026-09-15 — Dropped video-playback battery splitter; browse uses mAh only.
  */
 
 import type { ReactNode } from "react";
@@ -53,25 +54,6 @@ export function compactDetailLines(lines: string[], maxLines = 2): string[] {
 }
 
 /**
- * splitBatteryPrimary
- *
- * Breaks long Apple battery playback copy into a compact primary/secondary pair.
- *
- * @param label - Battery primary label from catalog specs.
- * @returns Primary headline and optional trailing clause.
- */
-export function splitBatteryPrimary(label: string): {
-  primary: string;
-  trailing?: string;
-} {
-  const match = label.match(
-    /^(Hasta [\d.,]+ horas)( de reproducción de video)$/i,
-  );
-  if (!match) return { primary: label };
-  return { primary: match[1]!, trailing: match[2]!.trim() };
-}
-
-/**
  * SpecBlock
  *
  * Renders one compact Apple-compare-style spec block.
@@ -80,7 +62,8 @@ export function splitBatteryPrimary(label: string): {
  * @param props.primary - Headline value.
  * @param props.secondary - Supporting line under the headline.
  * @param props.details - Optional extra lines (e.g. camera lenses).
- * @param props.className - Optional wrapper classes.
+ * @param props.className - Optional wrapper classes. Browse uses this to switch
+ *   to a left-aligned horizontal cell on desktop.
  * @returns Centered spec block.
  */
 export function SpecBlock({
@@ -99,10 +82,10 @@ export function SpecBlock({
         className,
       )}
     >
-      <div className="text-muted-foreground flex min-h-7 items-center justify-center">
+      <div className="text-muted-foreground flex min-h-7 shrink-0 items-center justify-center">
         {icon}
       </div>
-      <div className="space-y-0.5">
+      <div className="min-w-0 space-y-0.5">
         <div className="text-foreground text-base leading-tight font-semibold tracking-tight">
           {primary}
         </div>
