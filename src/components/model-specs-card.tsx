@@ -163,7 +163,7 @@ export function ModelSpecsCard({
                   className="text-muted-foreground size-5 stroke-[1.5]"
                   aria-hidden
                 />
-                Características únicas
+                Características destacadas
               </p>
               <ul className="text-muted-foreground mx-auto flex max-w-sm flex-wrap justify-center gap-x-4 gap-y-0.5 text-[11px] leading-snug md:mx-0 md:max-w-none md:justify-start">
                 {specs.uniqueFeatures.map((feature) => (

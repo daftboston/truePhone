@@ -2,7 +2,7 @@
  * @file iphone-catalog-specs.test.ts
  * @description Ensures every active catalog model has published hardware specs.
  * @dependencies node:test, node:assert/strict, iphone-catalog-data, iphone-catalog-specs
- * @changelog 2026-09-15 — Assert canonical unique-feature names and mAh-only battery copy.
+ * @changelog 2026-09-15 — Canonical names, mAh caption, sibling unique-feature alignment.
  */
 
 import assert from "node:assert/strict";
@@ -14,6 +14,7 @@ import {
 } from "@/lib/iphone-catalog-data";
 import {
   CATALOG_SPECS_SLUGS,
+  alignUniqueFeatures,
   getCatalogModelSpecs,
   getRequiredCatalogModelSpecs,
 } from "@/lib/iphone-catalog-specs";
@@ -103,6 +104,65 @@ describe("iphone catalog specs", () => {
       assert.doesNotMatch(specs.batteryPrimaryLabel, /hasta/i);
       assert.equal(specs.batterySecondaryLabel, "Capacidad de la batería");
     }
+  });
+
+  it("aligns 17 Pro and 17 Pro Max on the same notable features", () => {
+    const pro = getRequiredCatalogModelSpecs("iphone-17-pro").uniqueFeatures;
+    const proMax =
+      getRequiredCatalogModelSpecs("iphone-17-pro-max").uniqueFeatures;
+    assert.deepEqual(pro, proMax);
+    assert.ok(pro.includes("ProMotion hasta 120 Hz"));
+    assert.ok(pro.includes("Zoom óptico 8×"));
+    assert.ok(
+      !pro.some((feature) => /autonomía|Pantalla Pro Max/i.test(feature)),
+    );
+  });
+
+  it("does not repeat display size or battery in unique features", () => {
+    for (const model of IPHONE_CATALOG_MODELS) {
+      const features = getRequiredCatalogModelSpecs(model.slug).uniqueFeatures;
+      for (const feature of features) {
+        assert.doesNotMatch(
+          feature,
+          /autonomía|Pantalla Pro Max|Pantalla grande de|Pantalla Super Retina XDR de|Formato compacto de/i,
+          `${model.slug}: ${feature}`,
+        );
+      }
+    }
+  });
+
+  it("keeps Always-On off iPhone 13 Pro models", () => {
+    for (const slug of ["iphone-13-pro", "iphone-13-pro-max"]) {
+      assert.equal(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "Always-On display",
+        ),
+        false,
+        slug,
+      );
+    }
+  });
+
+  it("aligns shared unique features on the same compare row", () => {
+    const rows = alignUniqueFeatures(
+      ["Chasis unibody de aluminio", "Zoom óptico 8×", "Botón de Acción"],
+      [
+        "Botón de Acción",
+        "Chasis unibody de aluminio",
+        "Pantalla Pro Max de 6,9″",
+      ],
+    );
+    const chassis = rows.find(
+      (row) => row.left === "Chasis unibody de aluminio",
+    );
+    assert.deepEqual(chassis, {
+      left: "Chasis unibody de aluminio",
+      right: "Chasis unibody de aluminio",
+    });
+    const zoom = rows.find((row) => row.left === "Zoom óptico 8×");
+    assert.deepEqual(zoom, { left: "Zoom óptico 8×", right: "—" });
+    const screen = rows.find((row) => row.right === "Pantalla Pro Max de 6,9″");
+    assert.deepEqual(screen, { left: "—", right: "Pantalla Pro Max de 6,9″" });
   });
 
   it("uses one canonical name when models share the same unique feature", () => {

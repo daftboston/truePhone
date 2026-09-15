@@ -2,7 +2,7 @@
  * @file iphone-catalog-specs.ts
  * @description Published hardware specifications keyed by catalog model slug for browse UI.
  * @dependencies iphone-catalog-data
- * @changelog 2026-09-15 — Canonical unique-feature names; battery cell shows mAh only.
+ * @changelog 2026-09-15 — Canonical unique-feature names; battery mAh caption; sibling highlights aligned.
  */
 
 import { IPHONE_CATALOG_MODELS } from "@/lib/iphone-catalog-data";
@@ -366,12 +366,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A14 Bionic",
     cameras: "Dual 12 MP (gran angular + ultra gran angular)",
     batteryMah: 2227,
-    uniqueFeatures: [
-      "Formato compacto de 5,4″",
-      "Ceramic Shield",
-      "MagSafe",
-      "5G",
-    ],
+    uniqueFeatures: ["Ceramic Shield", "MagSafe", "5G"],
   },
   "iphone-12": {
     displaySizeInches: 6.1,
@@ -380,12 +375,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A14 Bionic",
     cameras: "Dual 12 MP (gran angular + ultra gran angular)",
     batteryMah: 2815,
-    uniqueFeatures: [
-      "Pantalla Super Retina XDR de 6,1″",
-      "Ceramic Shield",
-      "MagSafe",
-      "5G",
-    ],
+    uniqueFeatures: ["Ceramic Shield", "MagSafe", "5G"],
   },
   "iphone-12-pro": {
     displaySizeInches: 6.1,
@@ -398,6 +388,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Acero inoxidable",
       "Modo Noche en todas las cámaras",
       "ProRAW y Apple ProRes",
+      "Zoom óptico 2×",
     ],
   },
   "iphone-12-pro-max": {
@@ -408,9 +399,10 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Triple 12 MP + escáner LiDAR",
     batteryMah: 3687,
     uniqueFeatures: [
-      "Mayor autonomía de la serie 12",
-      "Zoom óptico 2,5×",
+      "Acero inoxidable",
+      "Modo Noche en todas las cámaras",
       "ProRAW y Apple ProRes",
+      "Zoom óptico 2,5×",
     ],
   },
   "iphone-13-mini": {
@@ -448,11 +440,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A15 Bionic",
     cameras: "Triple 12 MP + escáner LiDAR",
     batteryMah: 3095,
-    uniqueFeatures: [
-      "ProMotion hasta 120 Hz",
-      "Always-On display",
-      "Fotografía macro",
-    ],
+    uniqueFeatures: ["ProMotion hasta 120 Hz", "Fotografía macro", "MagSafe"],
   },
   "iphone-13-pro-max": {
     displaySizeInches: 6.7,
@@ -463,9 +451,9 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 4352,
     uniqueFeatures: [
       "ProMotion hasta 120 Hz",
-      "Always-On display",
+      "Fotografía macro",
+      "MagSafe",
       "Zoom óptico 3×",
-      "Mayor autonomía de la serie 13",
     ],
   },
   "iphone-se-3": {
@@ -488,12 +476,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A18",
     cameras: "48 MP Fusion",
     batteryMah: 4005,
-    uniqueFeatures: [
-      "Cuarta generación de la línea SE",
-      "Face ID",
-      "Botón de Acción",
-      "USB-C",
-    ],
+    uniqueFeatures: ["Face ID", "Botón de Acción", "USB-C", "MagSafe"],
   },
   "iphone-14": {
     displaySizeInches: 6.1,
@@ -516,8 +499,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Dual 12 MP (gran angular + ultra gran angular)",
     batteryMah: 4325,
     uniqueFeatures: [
-      "Pantalla grande de 6,7″",
       "Detección de choque y SOS de emergencia",
+      "Modo Acción en vídeo",
       "MagSafe",
     ],
   },
@@ -545,7 +528,6 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Dynamic Island",
       "Always-On display",
       "ProMotion hasta 120 Hz",
-      "Mayor autonomía de la serie 14 Pro",
     ],
   },
   "iphone-15": {
@@ -564,7 +546,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A16 Bionic",
     cameras: "Dual 48 MP (gran angular + ultra gran angular)",
     batteryMah: 4383,
-    uniqueFeatures: ["Pantalla grande de 6,7″", "Dynamic Island", "USB-C"],
+    uniqueFeatures: ["Dynamic Island", "USB-C", "Retratos de nueva generación"],
   },
   "iphone-15-pro": {
     displaySizeInches: 6.1,
@@ -573,7 +555,12 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A17 Pro",
     cameras: "Triple 48 MP + escáner LiDAR",
     batteryMah: 3274,
-    uniqueFeatures: ["Titanio", "Botón de Acción", "USB-C con Thunderbolt"],
+    uniqueFeatures: [
+      "Titanio",
+      "Botón de Acción",
+      "USB-C con Thunderbolt",
+      "Zoom óptico 3×",
+    ],
   },
   "iphone-15-pro-max": {
     displaySizeInches: 6.7,
@@ -610,7 +597,6 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Dual 48 MP Fusion (gran angular + ultra gran angular)",
     batteryMah: 4674,
     uniqueFeatures: [
-      "Pantalla grande de 6,7″",
       "Control de Cámara",
       "Botón de Acción",
       "Apple Intelligence",
@@ -628,6 +614,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Control de Cámara",
       "Botón de Acción",
       "ProMotion hasta 120 Hz",
+      "Apple Intelligence",
     ],
   },
   "iphone-16-pro-max": {
@@ -641,8 +628,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Titanio",
       "Control de Cámara",
       "Botón de Acción",
-      "Pantalla Pro Max de 6,9″",
-      "Mayor autonomía de la serie 16 Pro",
+      "ProMotion hasta 120 Hz",
+      "Apple Intelligence",
     ],
   },
   "iphone-16e": {
@@ -652,12 +639,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A18",
     cameras: "48 MP Fusion",
     batteryMah: 4005,
-    uniqueFeatures: [
-      "Opción asequible con pantalla OLED",
-      "Face ID",
-      "Botón de Acción",
-      "USB-C",
-    ],
+    uniqueFeatures: ["Face ID", "Botón de Acción", "USB-C", "MagSafe"],
   },
   "iphone-17": {
     displaySizeInches: 6.3,
@@ -671,6 +653,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Ceramic Shield 2",
       "Control de Cámara",
       "Botón de Acción",
+      "ProMotion hasta 120 Hz",
     ],
   },
   "iphone-air": {
@@ -714,8 +697,8 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Chasis unibody de aluminio",
       "Control de Cámara",
       "Botón de Acción",
-      "Pantalla Pro Max de 6,9″",
-      "Mayor autonomía de la serie 17 Pro",
+      "ProMotion hasta 120 Hz",
+      "Zoom óptico 8×",
     ],
   },
   "iphone-17e": {
@@ -725,12 +708,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A19",
     cameras: "48 MP Fusion",
     batteryMah: 4005,
-    uniqueFeatures: [
-      "Botón de Acción",
-      "MagSafe",
-      "Ceramic Shield 2",
-      "Opción asequible con chip A19",
-    ],
+    uniqueFeatures: ["Ceramic Shield 2", "Botón de Acción", "MagSafe", "USB-C"],
   },
 };
 
@@ -771,3 +749,79 @@ export function getRequiredCatalogModelSpecs(slug: string): CatalogModelSpecs {
 export const CATALOG_SPECS_SLUGS = IPHONE_CATALOG_MODELS.map(
   (model) => model.slug,
 );
+
+/**
+ * Stable compare order for notable features. Shared names stay on the same row.
+ */
+const UNIQUE_FEATURE_ORDER = [
+  "Chasis unibody de aluminio",
+  "Titanio",
+  "Acero inoxidable",
+  "Diseño ultradelgado de 5,6 mm",
+  "Diseño compacto clásico",
+  "Último iPhone mini",
+  "Ceramic Shield 2",
+  "Ceramic Shield",
+  "Dynamic Island",
+  "Always-On display",
+  "ProMotion hasta 120 Hz",
+  "Control de Cámara",
+  "Botón de Acción",
+  "Fotografía macro",
+  "Zoom óptico 2×",
+  "Zoom óptico 2,5×",
+  "Zoom óptico 3×",
+  "Zoom óptico 5×",
+  "Zoom óptico 8×",
+  "ProRAW y Apple ProRes",
+  "Modo Noche en todas las cámaras",
+  "Modo Cine y Fotográficos",
+  "Modo Acción en vídeo",
+  "Retratos de nueva generación",
+  "USB-C con Thunderbolt",
+  "USB-C",
+  "MagSafe",
+  "Apple Intelligence",
+  "Face ID",
+  "Touch ID en botón Inicio",
+  "5G",
+  "Detección de choque y SOS de emergencia",
+] as const;
+
+export type AlignedUniqueFeature = {
+  left: string;
+  right: string;
+};
+
+/**
+ * alignUniqueFeatures
+ *
+ * Lines up notable features for the two-column compare table.
+ *
+ * @param left - Unique features for the left model.
+ * @param right - Unique features for the right model.
+ * @returns One row per feature name, with "—" when a model lacks it.
+ * @calledBy UniqueFeaturesCompareRow
+ */
+export function alignUniqueFeatures(
+  left: string[],
+  right: string[],
+): AlignedUniqueFeature[] {
+  const rank = new Map<string, number>(
+    UNIQUE_FEATURE_ORDER.map((name, index) => [name, index]),
+  );
+  const union = [...new Set([...left, ...right])];
+  union.sort((a, b) => {
+    const leftRank = rank.get(a) ?? 1000;
+    const rightRank = rank.get(b) ?? 1000;
+    if (leftRank !== rightRank) return leftRank - rightRank;
+    return a.localeCompare(b, "es");
+  });
+
+  const leftSet = new Set(left);
+  const rightSet = new Set(right);
+  return union.map((feature) => ({
+    left: leftSet.has(feature) ? feature : "—",
+    right: rightSet.has(feature) ? feature : "—",
+  }));
+}
