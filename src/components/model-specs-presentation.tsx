@@ -2,6 +2,7 @@
  * @file model-specs-presentation.tsx
  * @description Shared Apple-style spec blocks and icons for browse and compare UIs.
  * @dependencies lucide-react, iphone-catalog, iphone-catalog-specs
+ * @changelog 2026-09-15 — SpecBlock icon/copy wrappers shrink and wrap correctly in horizontal grids.
  */
 
 import type { ReactNode } from "react";
@@ -80,7 +81,8 @@ export function splitBatteryPrimary(label: string): {
  * @param props.primary - Headline value.
  * @param props.secondary - Supporting line under the headline.
  * @param props.details - Optional extra lines (e.g. camera lenses).
- * @param props.className - Optional wrapper classes.
+ * @param props.className - Optional wrapper classes. Browse uses this to switch
+ *   to a left-aligned horizontal cell on desktop.
  * @returns Centered spec block.
  */
 export function SpecBlock({
@@ -99,10 +101,10 @@ export function SpecBlock({
         className,
       )}
     >
-      <div className="text-muted-foreground flex min-h-7 items-center justify-center">
+      <div className="text-muted-foreground flex min-h-7 shrink-0 items-center justify-center">
         {icon}
       </div>
-      <div className="space-y-0.5">
+      <div className="min-w-0 space-y-0.5">
         <div className="text-foreground text-base leading-tight font-semibold tracking-tight">
           {primary}
         </div>
