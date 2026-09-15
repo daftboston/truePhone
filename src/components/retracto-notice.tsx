@@ -32,7 +32,7 @@ export function RetractoNotice() {
         href={LEGAL_PATHS.pqr}
         className="text-foreground font-medium underline-offset-2 hover:underline"
       >
-        /pqr
+        PQR
       </Link>
       .
     </p>

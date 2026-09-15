@@ -81,9 +81,10 @@ export default async function PqrPage() {
             </h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               TruePhone responderá tu PQR en un máximo de quince (15) días
-              hábiles contados desde la radicación. Si la respuesta inicial no
-              resuelve tu solicitud, la ley prevé un plazo adicional de quince
-              (15) días hábiles para la respuesta definitiva cuando aplique.
+              hábiles contados a partir del día siguiente a la radicación. Si
+              necesitamos información adicional, te lo pediremos y el plazo
+              podrá ampliarse hasta por quince (15) días hábiles más,
+              informándote previamente.
             </p>
           </section>
 
