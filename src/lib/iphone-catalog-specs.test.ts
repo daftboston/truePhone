@@ -3,6 +3,7 @@
  * @description Ensures every active catalog model has published hardware specs.
  * @dependencies node:test, node:assert/strict, iphone-catalog-data, iphone-catalog-specs
  * @changelog 2026-09-15 — Canonical names, mAh caption, sibling unique-feature alignment.
+ * @changelog 2026-09-15 — Unique features follow a shared capability matrix.
  */
 
 import assert from "node:assert/strict";
@@ -91,7 +92,7 @@ describe("iphone catalog specs", () => {
       const count = getRequiredCatalogModelSpecs(model.slug).uniqueFeatures
         .length;
       assert.ok(
-        count >= 3 && count <= 5,
+        count >= 2 && count <= 14,
         `${model.slug} has ${count} unique feature bullets`,
       );
     }
@@ -138,6 +139,128 @@ describe("iphone catalog specs", () => {
           "Always-On display",
         ),
         false,
+        slug,
+      );
+    }
+  });
+
+  it("lists ProMotion on every model that ships with a ProMotion display", () => {
+    const promotionSlugs = [
+      "iphone-13-pro",
+      "iphone-13-pro-max",
+      "iphone-14-pro",
+      "iphone-14-pro-max",
+      "iphone-15-pro",
+      "iphone-15-pro-max",
+      "iphone-16-pro",
+      "iphone-16-pro-max",
+      "iphone-17",
+      "iphone-air",
+      "iphone-17-pro",
+      "iphone-17-pro-max",
+    ];
+    for (const slug of promotionSlugs) {
+      assert.ok(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "ProMotion hasta 120 Hz",
+        ),
+        slug,
+      );
+    }
+
+    for (const slug of [
+      "iphone-13",
+      "iphone-15",
+      "iphone-15-plus",
+      "iphone-16",
+      "iphone-16-plus",
+      "iphone-16e",
+      "iphone-17e",
+    ]) {
+      assert.equal(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "ProMotion hasta 120 Hz",
+        ),
+        false,
+        slug,
+      );
+    }
+  });
+
+  it("lists 15 Pro hardware that 16 Pro also has, and Camera Control only on 16 Pro", () => {
+    const fifteenPro =
+      getRequiredCatalogModelSpecs("iphone-15-pro").uniqueFeatures;
+    const sixteenPro =
+      getRequiredCatalogModelSpecs("iphone-16-pro").uniqueFeatures;
+
+    for (const feature of [
+      "Titanio",
+      "Dynamic Island",
+      "Always-On display",
+      "ProMotion hasta 120 Hz",
+      "Botón de Acción",
+      "Fotografía macro",
+      "USB-C con Thunderbolt",
+      "MagSafe",
+      "Apple Intelligence",
+    ]) {
+      assert.ok(fifteenPro.includes(feature), `15 Pro missing ${feature}`);
+      assert.ok(sixteenPro.includes(feature), `16 Pro missing ${feature}`);
+    }
+
+    assert.ok(fifteenPro.includes("Zoom óptico 3×"));
+    assert.ok(sixteenPro.includes("Zoom óptico 5×"));
+    assert.equal(fifteenPro.includes("Control de Cámara"), false);
+    assert.ok(sixteenPro.includes("Control de Cámara"));
+    assert.equal(fifteenPro.includes("Apple Intelligence"), true);
+
+    const rows = alignUniqueFeatures(fifteenPro, sixteenPro);
+    assert.deepEqual(
+      rows.find((row) => row.left === "ProMotion hasta 120 Hz"),
+      {
+        left: "ProMotion hasta 120 Hz",
+        right: "ProMotion hasta 120 Hz",
+      },
+    );
+    assert.deepEqual(
+      rows.find((row) => row.right === "Control de Cámara"),
+      { left: "—", right: "Control de Cámara" },
+    );
+    assert.deepEqual(
+      rows.find((row) => row.left === "USB-C con Thunderbolt"),
+      {
+        left: "USB-C con Thunderbolt",
+        right: "USB-C con Thunderbolt",
+      },
+    );
+  });
+
+  it("does not list Camera Control on 16e or Apple Intelligence on iPhone 15", () => {
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-16e").uniqueFeatures.includes(
+        "Control de Cámara",
+      ),
+      false,
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-15").uniqueFeatures.includes(
+        "Apple Intelligence",
+      ),
+      false,
+    );
+    assert.ok(
+      getRequiredCatalogModelSpecs("iphone-15").uniqueFeatures.includes(
+        "Dynamic Island",
+      ),
+    );
+  });
+
+  it("gives 13 Pro the same 3× zoom as 13 Pro Max", () => {
+    for (const slug of ["iphone-13-pro", "iphone-13-pro-max"]) {
+      assert.ok(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "Zoom óptico 3×",
+        ),
         slug,
       );
     }
@@ -190,8 +313,6 @@ describe("iphone catalog specs", () => {
       "Always-On display",
       "Dynamic Island",
       "Apple Intelligence",
-      "Face ID",
-      "5G",
     ];
 
     const catalogFeatures = IPHONE_CATALOG_MODELS.flatMap(
