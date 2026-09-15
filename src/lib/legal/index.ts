@@ -18,6 +18,7 @@ export {
   LEGAL_PATHS,
   LEGAL_PHONE,
   LEGAL_RAZON_SOCIAL,
+  RETRACTO_CHECKOUT_NOTICE,
 } from "./constants";
 export {
   formatOperatorIdentityFooterLine,

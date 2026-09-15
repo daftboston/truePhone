@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   CreditCard,
+  FileText,
   Heart,
   HelpCircle,
   KeyRound,
@@ -173,6 +174,11 @@ function buildGroups(
         href: "/revision/soporte-pedidos",
         label: "Soporte de pedidos",
         icon: LifeBuoy,
+      },
+      {
+        href: "/revision/pqr",
+        label: "PQR",
+        icon: FileText,
       },
       {
         href: "/revision/analitica",

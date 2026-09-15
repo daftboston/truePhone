@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ClipboardList,
   CreditCard,
+  FileText,
   LifeBuoy,
   MessageSquareWarning,
   ShieldAlert,
@@ -34,6 +35,7 @@ import { countOpsDisputeQueue } from "@/lib/payments/ops-disputes";
 import { countAuthorizedPayouts } from "@/lib/payments/ops-payouts";
 import { countRecommendedPrices } from "@/lib/recommended-prices";
 import { countActionableOrderSupportCases } from "@/lib/orders/order-support-service";
+import { countActionablePqrCases } from "@/lib/pqr/pqr-service";
 import { countOpenListingQuestionReports } from "@/lib/listing-qa";
 import { countOpenReviewReports } from "@/lib/reviews";
 import { cn } from "@/lib/utils";
@@ -182,6 +184,7 @@ export default async function ReviewHubPage() {
     reviewReportsOpen,
     questionReportsOpen,
     orderSupportCount,
+    pqrCount,
   ] = await Promise.all([
     countListingsForReview(),
     countPendingIdentityVerifications(),
@@ -191,6 +194,7 @@ export default async function ReviewHubPage() {
     countOpenReviewReports(),
     countOpenListingQuestionReports(),
     countActionableOrderSupportCases(),
+    countActionablePqrCases(),
   ]);
 
   const firstName =
@@ -201,6 +205,7 @@ export default async function ReviewHubPage() {
     listingCounts.enRevision +
     identityPending +
     orderSupportCount +
+    pqrCount +
     reviewReportsOpen +
     questionReportsOpen +
     (isAdmin ? authorizedPayoutCount + disputeQueueCount : 0);
@@ -235,6 +240,11 @@ export default async function ReviewHubPage() {
       href: "/revision/soporte-pedidos?tab=pendientes",
       label: "Ir a soporte de pedidos",
       count: orderSupportCount,
+    },
+    {
+      href: "/revision/pqr?tab=pendientes",
+      label: "Ir a PQR",
+      count: pqrCount,
     },
     ...(isAdmin
       ? [
@@ -328,6 +338,14 @@ export default async function ReviewHubPage() {
             count={orderSupportCount}
             icon={LifeBuoy}
             emphasized={hottestWorkHref.startsWith("/revision/soporte-pedidos")}
+          />
+          <QueueCard
+            href="/revision/pqr?tab=pendientes"
+            title="PQR"
+            description="Peticiones, quejas, reclamos y retracto de consumidores."
+            count={pqrCount}
+            icon={FileText}
+            emphasized={hottestWorkHref.startsWith("/revision/pqr")}
           />
         </div>
       </section>

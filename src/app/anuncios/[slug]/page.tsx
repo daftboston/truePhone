@@ -16,6 +16,7 @@ import { ListingCard } from "@/components/listing-card";
 import { ListingGallery } from "@/components/listing-gallery";
 import { MarketplaceRoleNotice } from "@/components/marketplace-role-notice";
 import { PriceDisplay } from "@/components/price-display";
+import { RetractoNotice } from "@/components/retracto-notice";
 import { SellerCard } from "@/components/seller-card";
 import { TrustBadge } from "@/components/trust-badge";
 import { Badge } from "@/components/ui/badge";
@@ -271,6 +272,7 @@ export default async function PublicListingPage({
 
           <GuaranteeBanner />
           <MarketplaceRoleNotice />
+          <RetractoNotice />
 
           {sellerHref ? (
             <Link href={sellerHref} className="block">

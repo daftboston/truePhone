@@ -204,6 +204,24 @@ enum LegalAcceptanceSource {
   checkout
 }
 
+/// Public PQR channel case type (Peticiones, quejas y reclamos).
+enum PqrCaseType {
+  PETICION
+  QUEJA
+  RECLAMO
+  RETRACTO
+  HABEAS_DATA
+  OTRO
+}
+
+/// Lifecycle for a consumer PQR case reviewed by staff.
+enum PqrCaseStatus {
+  PENDING
+  IN_REVIEW
+  RESPONDED
+  CLOSED
+}
+
 // Models
 model Profile {
   id                 String    @id @default(cuid())
@@ -254,6 +272,9 @@ model Profile {
   orderSupportCasesAsSeller OrderSupportCase[]      @relation("OrderSupportSeller")
   assignedOrderSupportCases OrderSupportCase[]      @relation("OrderSupportAssignee")
   orderSupportMessages      OrderSupportMessage[]   @relation("OrderSupportMessageSender")
+  pqrCasesSubmitted         PqrCase[]               @relation("PqrCaseSubmitter")
+  assignedPqrCases          PqrCase[]               @relation("PqrCaseAssignee")
+  pqrCasesResponded         PqrCase[]               @relation("PqrCaseResponder")
   legalAcceptances          LegalAcceptance[]
 
   @@map("profiles")
@@ -722,6 +743,7 @@ model Order {
   feeEntitlementUsed   FeeEntitlement?    @relation("FeeEntitlementUsedOrder")
   notifications        Notification[]
   supportCases         OrderSupportCase[]
+  pqrCases             PqrCase[]
 
   @@index([buyerId, createdAt])
   @@index([sellerId, createdAt])
@@ -772,6 +794,35 @@ model OrderSupportMessage {
   @@index([caseId, createdAt])
   @@index([senderId, createdAt])
   @@map("order_support_messages")
+}
+
+/// Consumer PQR case (retracto, quejas, peticiones) with readable radicado id.
+model PqrCase {
+  id              String        @id @default(cuid())
+  radicado        String        @unique
+  tipo            PqrCaseType
+  status          PqrCaseStatus @default(PENDING)
+  fullName        String
+  email           String
+  userId          String?
+  user            Profile?      @relation("PqrCaseSubmitter", fields: [userId], references: [id], onDelete: SetNull)
+  orderId         String?
+  order           Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  body            String
+  attachments     Json?
+  respuesta       String?
+  respondedAt     DateTime?
+  respondedById   String?
+  respondedBy     Profile?      @relation("PqrCaseResponder", fields: [respondedById], references: [id], onDelete: SetNull)
+  assignedStaffId String?
+  assignedStaff   Profile?      @relation("PqrCaseAssignee", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([tipo, status, createdAt])
+  @@index([assignedStaffId, status])
+  @@map("pqr_cases")
 }
 
 /// Device fulfillment (Phase 10c). One shipment per order. Does not authorize money.
