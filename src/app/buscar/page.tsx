@@ -13,6 +13,7 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { GuaranteeBanner } from "@/components/guarantee-banner";
 import { ListingCard } from "@/components/listing-card";
+import { ModelSpecsCard } from "@/components/model-specs-card";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { BrowseFilters } from "@/features/listings/components/browse-filters";
@@ -29,6 +30,8 @@ import {
 import { conditionLabels } from "@/features/listings/schemas/listing";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { findActiveFeeEntitlementForSource } from "@/lib/financial-core/entitlements";
+import { IPHONE_CATALOG_MODELS } from "@/lib/iphone-catalog-data";
+import { getCatalogModelSpecs } from "@/lib/iphone-catalog-specs";
 import { getModelSeriesKey } from "@/lib/iphone-catalog";
 import { getCatalog } from "@/lib/listings";
 import {
@@ -110,6 +113,13 @@ export default async function SearchPage({ searchParams }: PageProps) {
         ? `Resultados para “${query.q}”`
         : "Anuncios";
 
+  const selectedModelSeed = selectedModel
+    ? IPHONE_CATALOG_MODELS.find((model) => model.slug === selectedModel.slug)
+    : null;
+  const selectedModelSpecs = selectedModel
+    ? getCatalogModelSpecs(selectedModel.slug)
+    : null;
+
   const sidebarStorageIds = new Set(
     sidebarModels.flatMap(
       (model) => catalog.storageIdsByModelId[model.id] ?? [],
@@ -181,6 +191,15 @@ export default async function SearchPage({ searchParams }: PageProps) {
         <p className="text-muted-foreground text-sm">
           Solo anuncios revisados y publicados por TruePhone.
         </p>
+        {selectedModel && selectedModelSeed && selectedModelSpecs ? (
+          <ModelSpecsCard
+            specs={selectedModelSpecs}
+            storageGb={selectedModelSeed.storageGb}
+            releaseYear={
+              selectedModel.releaseYear ?? selectedModelSeed.releaseYear
+            }
+          />
+        ) : null}
         <GuaranteeBanner />
       </div>
 
