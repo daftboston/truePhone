@@ -410,7 +410,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Dual 12 MP (gran angular + ultra gran angular)",
     batteryMah: 2227,
     uniqueFeatures: [
-      "Formato mini de la generación 12",
+      "Formato compacto de 5,4″",
       "Ceramic Shield y MagSafe",
       "5G",
     ],
@@ -450,7 +450,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 3687,
     uniqueFeatures: [
       "Mayor autonomía de la serie 12",
-      "Sensor principal con estabilización",
+      "Teleobjetivo con zoom óptico 2,5×",
       "ProRAW y Apple ProRes",
     ],
   },
@@ -503,6 +503,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     uniqueFeatures: [
       "ProMotion hasta 120 Hz",
       "Always-On display",
+      "Teleobjetivo con zoom óptico 3×",
       "Mayor autonomía de la serie 13",
     ],
   },
@@ -581,6 +582,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     uniqueFeatures: [
       "Dynamic Island",
       "Always-On display",
+      "ProMotion hasta 120 Hz",
       "Mayor autonomía de la serie 14 Pro",
     ],
   },
@@ -618,7 +620,12 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     chip: "Apple A17 Pro",
     cameras: "Triple 48 MP + escáner LiDAR",
     batteryMah: 4441,
-    uniqueFeatures: ["Titanio", "Zoom óptico 5×", "USB-C con Thunderbolt"],
+    uniqueFeatures: [
+      "Titanio",
+      "Botón de Acción",
+      "Zoom óptico 5×",
+      "USB-C con Thunderbolt",
+    ],
   },
   "iphone-16": {
     displaySizeInches: 6.1,
@@ -643,6 +650,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     uniqueFeatures: [
       "Pantalla grande de 6,7″",
       "Control de Cámara",
+      "Botón de Acción",
       "Apple Intelligence",
     ],
   },
@@ -654,8 +662,9 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Triple 48 MP + escáner LiDAR",
     batteryMah: 3582,
     uniqueFeatures: [
-      "Pantalla Pro de 6,3″",
+      "Diseño de titanio",
       "Control de Cámara",
+      "Botón de Acción",
       "ProMotion hasta 120 Hz",
     ],
   },
@@ -667,8 +676,10 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Triple 48 MP + escáner LiDAR",
     batteryMah: 4685,
     uniqueFeatures: [
-      "Pantalla Pro Max de 6,9″",
+      "Diseño de titanio",
       "Control de Cámara",
+      "Botón de Acción",
+      "Pantalla Pro Max de 6,9″",
       "Mayor autonomía de la serie 16 Pro",
     ],
   },
@@ -696,6 +707,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
       "Always-On display",
       "Ceramic Shield 2",
       "Control de Cámara",
+      "Botón de Acción",
     ],
   },
   "iphone-air": {
@@ -707,8 +719,10 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 3149,
     uniqueFeatures: [
       "Diseño ultradelgado de 5,6 mm",
+      "Marco de titanio",
       "ProMotion hasta 120 Hz",
-      "Línea iPhone Air independiente",
+      "Control de Cámara",
+      "Botón de Acción",
     ],
   },
   "iphone-17-pro": {
@@ -720,8 +734,10 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     batteryMah: 4252,
     uniqueFeatures: [
       "Chasis unibody de aluminio",
+      "Control de Cámara",
+      "Botón de Acción",
       "ProMotion hasta 120 Hz",
-      "Zoom óptico avanzado",
+      "Zoom óptico hasta 8×",
     ],
   },
   "iphone-17-pro-max": {
@@ -732,9 +748,11 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "Triple 48 MP + escáner LiDAR",
     batteryMah: 5088,
     uniqueFeatures: [
-      "Mayor autonomía de la serie 17 Pro",
+      "Chasis unibody de aluminio",
+      "Control de Cámara",
+      "Botón de Acción",
       "Pantalla Pro Max de 6,9″",
-      "ProMotion hasta 120 Hz",
+      "Mayor autonomía de la serie 17 Pro",
     ],
   },
   "iphone-17e": {
@@ -745,6 +763,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     cameras: "48 MP Fusion",
     batteryMah: 4005,
     uniqueFeatures: [
+      "Botón de Acción",
       "MagSafe de 15 W",
       "Ceramic Shield 2",
       "Opción asequible con chip A19",

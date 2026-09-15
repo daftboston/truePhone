@@ -60,4 +60,40 @@ describe("iphone catalog specs", () => {
     assert.match(specs.batteryPrimaryLabel, /15 horas/);
     assert.equal(specs.cameraModuleVariant, "dual");
   });
+
+  it("lists titanium, Camera Control, and Action Button on iPhone 16 Pro models", () => {
+    for (const slug of ["iphone-16-pro", "iphone-16-pro-max"]) {
+      const features = getRequiredCatalogModelSpecs(slug).uniqueFeatures;
+      assert.ok(
+        features.some((feature) => /titanio/i.test(feature)),
+        slug,
+      );
+      assert.ok(features.includes("Control de Cámara"), slug);
+      assert.ok(features.includes("Botón de Acción"), slug);
+    }
+  });
+
+  it("keeps Action Button on iPhone 15 Pro Max and iPhone 16 Plus", () => {
+    assert.ok(
+      getRequiredCatalogModelSpecs("iphone-15-pro-max").uniqueFeatures.includes(
+        "Botón de Acción",
+      ),
+    );
+    assert.ok(
+      getRequiredCatalogModelSpecs("iphone-16-plus").uniqueFeatures.includes(
+        "Botón de Acción",
+      ),
+    );
+  });
+
+  it("keeps every active model within the compare feature bullet range", () => {
+    for (const model of IPHONE_CATALOG_MODELS) {
+      const count = getRequiredCatalogModelSpecs(model.slug).uniqueFeatures
+        .length;
+      assert.ok(
+        count >= 3 && count <= 5,
+        `${model.slug} has ${count} unique feature bullets`,
+      );
+    }
+  });
 });
