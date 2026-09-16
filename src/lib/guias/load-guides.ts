@@ -28,28 +28,48 @@ function stripNotesSection(content: string): string {
 }
 
 /**
- * extractHeading
+ * stripBodyH1
  *
- * Pulls the first markdown H1 for the page title and removes it from the body.
+ * Removes a leading markdown H1 from the body when it duplicates front matter.
  *
  * @param content - Markdown body after notes are stripped.
- * @param fallbackTitle - Front matter title when no H1 exists.
- * @returns Heading text and remaining markdown.
+ * @returns Body without a leading `#` line.
  */
-function extractHeading(
+function stripBodyH1(content: string): string {
+  return content.replace(/^#\s+.+\n?/, "").trim();
+}
+
+/**
+ * resolveHeading
+ *
+ * Resolves display H1 and body using `h1` front matter, body `#`, or `title`.
+ *
+ * @param content - Markdown body after notes are stripped.
+ * @param options.h1 - Optional `h1` from front matter (shape A).
+ * @param options.title - Front matter `title` fallback.
+ * @returns Heading text and markdown body without a duplicate H1.
+ */
+function resolveHeading(
   content: string,
-  fallbackTitle: string,
+  options: { h1?: string; title: string },
 ): { heading: string; body: string } {
+  if (options.h1) {
+    return {
+      heading: options.h1,
+      body: stripBodyH1(content),
+    };
+  }
+
   const match = content.match(/^#\s+(.+)$/m);
 
   if (!match) {
-    return { heading: fallbackTitle, body: content.trim() };
+    return { heading: options.title, body: content.trim() };
   }
 
-  const heading = match[1].trim();
-  const body = content.replace(/^#\s+.+\n?/, "").trim();
-
-  return { heading, body };
+  return {
+    heading: match[1].trim(),
+    body: stripBodyH1(content),
+  };
 }
 
 /**
@@ -60,25 +80,33 @@ function extractHeading(
  * @param data - Parsed YAML front matter.
  * @returns Normalized front matter object.
  */
-function normalizeFrontMatter(data: Record<string, unknown>): GuideFrontMatter {
+function normalizeFrontMatter(
+  data: Record<string, unknown>,
+): GuideFrontMatter & { h1?: string } {
   const secondaryKeywords = Array.isArray(data.secondaryKeywords)
     ? data.secondaryKeywords.filter(
         (keyword): keyword is string => typeof keyword === "string",
       )
     : [];
 
+  const h1 =
+    typeof data.h1 === "string" && data.h1.trim().length > 0
+      ? data.h1.trim()
+      : undefined;
+
   return {
     title: String(data.title ?? ""),
     metaTitle: String(data.metaTitle ?? data.title ?? ""),
-    metaDescription: String(data.metaDescription ?? ""),
+    metaDescription: String(data.metaDescription ?? data.description ?? ""),
     slug: String(data.slug ?? ""),
     locale: String(data.locale ?? "es-CO"),
-    published: data.published === true,
+    published: data.published !== false,
     publishedAt: String(data.publishedAt ?? ""),
     updatedAt: String(data.updatedAt ?? data.publishedAt ?? ""),
     author: String(data.author ?? "TruePhone"),
     primaryKeyword: String(data.primaryKeyword ?? ""),
     secondaryKeywords,
+    h1,
   };
 }
 
@@ -93,19 +121,18 @@ function normalizeFrontMatter(data: Record<string, unknown>): GuideFrontMatter {
 function parseGuideFile(filePath: string): Guide | null {
   const raw = fs.readFileSync(filePath, "utf8");
   const { data, content } = matter(raw);
-  const frontMatter = normalizeFrontMatter(
-    data as Record<string, unknown>,
-  );
+  const normalized = normalizeFrontMatter(data as Record<string, unknown>);
+  const { h1, ...frontMatter } = normalized;
 
   if (!frontMatter.slug || !frontMatter.title) {
     return null;
   }
 
   const withoutNotes = stripNotesSection(content);
-  const { heading, body } = extractHeading(
-    withoutNotes,
-    frontMatter.title,
-  );
+  const { heading, body } = resolveHeading(withoutNotes, {
+    h1,
+    title: frontMatter.title,
+  });
 
   return {
     ...frontMatter,
@@ -169,9 +196,9 @@ export function getPublishedGuides(): Guide[] {
  */
 export function getPublishedGuideSummaries(): GuideSummary[] {
   return getPublishedGuides().map(
-    ({ slug, title, metaDescription, publishedAt, updatedAt }) => ({
+    ({ slug, heading, metaDescription, publishedAt, updatedAt }) => ({
       slug,
-      title,
+      heading,
       metaDescription,
       publishedAt,
       updatedAt,

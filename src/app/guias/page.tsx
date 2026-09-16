@@ -69,7 +69,7 @@ export default function GuiasIndexPage() {
                   className="border-border bg-card hover:bg-muted/40 block rounded-xl border p-5 transition-colors"
                 >
                   <h2 className="text-foreground text-base font-semibold tracking-tight">
-                    {guide.title}
+                    {guide.heading}
                   </h2>
                   <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
                     {guide.metaDescription}

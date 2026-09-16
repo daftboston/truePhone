@@ -4,7 +4,10 @@
  * @dependencies none
  */
 
-/** Front matter fields for a guide markdown file. */
+/**
+ * Normalized front matter after merging shape A (title, description, h1)
+ * and shape B (metaTitle, metaDescription, published, keywords).
+ */
 export type GuideFrontMatter = {
   title: string;
   metaTitle: string;
@@ -23,12 +26,12 @@ export type GuideFrontMatter = {
 export type Guide = GuideFrontMatter & {
   /** Markdown body with NOTES section and leading H1 removed. */
   content: string;
-  /** Display heading from the first `#` in the body, or `title`. */
+  /** Display H1: `h1` front matter, first `#` in body, or `title`. */
   heading: string;
 };
 
 /** Minimal guide row for index cards. */
 export type GuideSummary = Pick<
   Guide,
-  "slug" | "title" | "metaDescription" | "publishedAt" | "updatedAt"
+  "slug" | "heading" | "metaDescription" | "publishedAt" | "updatedAt"
 >;

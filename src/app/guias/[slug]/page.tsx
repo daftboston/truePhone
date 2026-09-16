@@ -150,7 +150,7 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
                       href={`/guias/${entry.slug}`}
                       className="text-trust text-sm font-medium underline-offset-4 hover:underline"
                     >
-                      {entry.title}
+                      {entry.heading}
                     </Link>
                   </li>
                 ))}
