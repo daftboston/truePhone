@@ -17,6 +17,7 @@ import { cn, SHELL_WIDTH_CLASS } from "@/lib/utils";
 
 const legalLinks = [
   { href: LEGAL_PATHS.help, label: "Ayuda" },
+  { href: LEGAL_PATHS.guides, label: "Guías" },
   { href: LEGAL_PATHS.privacy, label: "Privacidad" },
   { href: LEGAL_PATHS.terms, label: "Términos" },
   { href: LEGAL_PATHS.cookies, label: "Cookies" },
