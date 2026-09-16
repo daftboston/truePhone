@@ -176,17 +176,20 @@ El objetivo de esta guía es **prevenir** y evitar un segundo pago por pánico.
 Úsala el día del encuentro. Complementa con nuestra futura checklist de compra de iPhone usado.
 
 **Antes de salir**
+
 - [ ] Precio contrastado con 3–5 anuncios similares
 - [ ] Lugar público acordado
 - [ ] Datos del anuncio guardados (capturas)
 
 **En el encuentro**
+
 - [ ] Prueba funcional completa
 - [ ] IMEI consultado y coincidente
 - [ ] Sin Activation Lock tras restablecer
 - [ ] Find My desactivado / sesión Apple cerrada
 
 **Antes de pagar**
+
 - [ ] Sin anticipos previos
 - [ ] Fondos/método de pago bajo tu control
 - [ ] Comprobante básico de compraventa (recomendado)
@@ -219,4 +222,4 @@ Explora [truephone.shop](https://www.truephone.shop/) con calma — y si compras
 
 ---
 
-*Artículo informativo para compradores en Colombia. Verifica con fuentes oficiales (IMEI Colombia / MinTIC-CRC) y con el dispositivo en mano. TruePhone no sustituye denuncias ni asesoría legal.*
+_Artículo informativo para compradores en Colombia. Verifica con fuentes oficiales (IMEI Colombia / MinTIC-CRC) y con el dispositivo en mano. TruePhone no sustituye denuncias ni asesoría legal._

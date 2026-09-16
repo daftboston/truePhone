@@ -12,10 +12,7 @@ import { AppShell } from "@/components/app-shell";
 import { SiteFooter } from "@/components/site-footer";
 import { GuideMarkdown } from "@/features/guias/components/guide-markdown";
 import { formatGuideDate } from "@/lib/guias/format-guide-date";
-import {
-  getGuideBySlug,
-  getPublishedGuides,
-} from "@/lib/guias/load-guides";
+import { getGuideBySlug, getPublishedGuides } from "@/lib/guias/load-guides";
 import { LEGAL_PATHS } from "@/lib/legal";
 
 type GuiaDetailPageProps = {
@@ -91,8 +88,7 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
             {guide.metaDescription}
           </p>
           <p className="text-muted-foreground text-xs">
-            Por {guide.author} · Actualizado:{" "}
-            {formatGuideDate(guide.updatedAt)}
+            Por {guide.author} · Actualizado: {formatGuideDate(guide.updatedAt)}
           </p>
         </header>
 

@@ -15,9 +15,7 @@ type GuideMarkdownProps = {
 
 const markdownComponents: Components = {
   h2: ({ children }) => (
-    <h2
-      className="text-foreground mt-10 scroll-mt-36 text-lg font-semibold tracking-tight first:mt-0 md:scroll-mt-40"
-    >
+    <h2 className="text-foreground mt-10 scroll-mt-36 text-lg font-semibold tracking-tight first:mt-0 md:scroll-mt-40">
       {children}
     </h2>
   ),
@@ -104,7 +102,10 @@ const markdownComponents: Components = {
 export function GuideMarkdown({ content }: GuideMarkdownProps) {
   return (
     <article className="tp-prose mx-auto w-full max-w-2xl space-y-4">
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={markdownComponents}
+      >
         {content}
       </ReactMarkdown>
     </article>
