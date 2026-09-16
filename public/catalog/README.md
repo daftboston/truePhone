@@ -70,8 +70,12 @@ iPhone 17 series (display diagonal → body):
 | iPhone 17 Pro Max | 6.9"    | 163.4 mm    | 1320 px (max)       |
 | iPhone 17e        | 6.1"    | 146.7 mm    | ~1185 px            |
 | iPhone Air        | 6.5"    | 156.2 mm    | ~1262 px            |
+| iPhone SE (3.ª)   | 4.7"    | 138.4 mm    | ~1118 px            |
+| iPhone SE (4.ª)   | 6.1"    | 146.7 mm    | ~1185 px            |
 
 The 6.5" phone in Apple's 17-family size chart is **Air**, not 17e.
+
+SE (4.ª) shares the iPhone 14 chassis height (146.7 mm), not the compact SE (3.ª) body (138.4 mm).
 
 Use this scale for every later model. Do not draw all phones the same size.
 
