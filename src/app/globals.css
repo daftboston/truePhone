@@ -413,6 +413,15 @@ html.disable-transitions *::after {
   }
 }
 
+/* Public guide prose — mirrors legal/help typography tokens */
+.tp-prose > :first-child {
+  margin-top: 0;
+}
+
+.tp-prose > :last-child {
+  margin-bottom: 0;
+}
+
 @media (hover: hover) and (prefers-reduced-motion: reduce) {
   .explore-model-card--flip .explore-phone-face {
     transition: opacity 200ms ease;

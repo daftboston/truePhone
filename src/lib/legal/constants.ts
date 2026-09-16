@@ -42,6 +42,7 @@ export const LEGAL_PHONE = "3214527399";
  */
 export const LEGAL_PATHS = {
   help: "/ayuda",
+  guides: "/guias",
   privacy: "/privacidad",
   terms: "/terminos",
   cookies: "/cookies",
