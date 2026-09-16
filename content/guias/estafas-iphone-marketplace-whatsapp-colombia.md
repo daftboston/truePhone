@@ -1,23 +1,11 @@
 ---
-title: "Señales de estafa al comprar iPhone usado en Marketplace y WhatsApp"
-metaTitle: "Estafas iPhone Marketplace: señales en WhatsApp"
-metaDescription: "Detecta estafas al comprar iPhone usado en Marketplace y WhatsApp en Colombia: precios irreales, anticipos, tracking falso, verificar IMEI y Activation Lock."
+title: "Estafas iPhone Marketplace: señales en WhatsApp"
+description: "Detecta estafas al comprar iPhone usado en Marketplace y WhatsApp en Colombia: precios irreales, anticipos, tracking falso, verificar IMEI y Activation Lock."
+h1: "Señales de estafa al comprar iPhone usado en Marketplace y WhatsApp"
 slug: estafas-iphone-marketplace-whatsapp-colombia
-locale: es-CO
-published: true
 publishedAt: 2026-09-16
 updatedAt: 2026-09-16
-author: TruePhone
-primaryKeyword: "estafas iPhone Marketplace"
-secondaryKeywords:
-  - "señales de estafa iPhone WhatsApp Colombia"
-  - "iPhone usado confiable"
-  - "verificar IMEI"
-  - "Activation Lock"
-  - "comprar iPhone usado Colombia"
 ---
-
-# Señales de estafa al comprar iPhone usado en Marketplace y WhatsApp
 
 Comprar un **iPhone usado** en Facebook Marketplace o por WhatsApp puede ser una buena decisión… o un dolor de cabeza. En Colombia es habitual ver anuncios atractivos, chats rápidos y presión para “cerrar ya”. La buena noticia: la mayoría de las estafas siguen patrones repetibles. Si aprendes a reconocerlos, reduces mucho el riesgo.
 
