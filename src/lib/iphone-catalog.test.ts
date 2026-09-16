@@ -444,4 +444,13 @@ describe("catalogPhoneRenderHeight", () => {
     assert.ok(e < seventeen);
     assert.ok(seventeen < air && air < proMax);
   });
+
+  it("sizes SE (4.ª) on the iPhone 14 chassis, larger than SE (3.ª)", () => {
+    const se3 = catalogPhoneRenderHeight("iphone-se-3");
+    const se4 = catalogPhoneRenderHeight("iphone-se-4");
+    const fourteen = catalogPhoneRenderHeight("iphone-14");
+
+    assert.equal(se4, fourteen);
+    assert.ok(se4 > se3);
+  });
 });

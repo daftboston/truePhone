@@ -30,7 +30,7 @@ export const CATALOG_PHONE_BODY_MM: Record<string, number> = {
   "iphone-13-pro": 146.7,
   "iphone-13-pro-max": 160.8,
   "iphone-se-3": 138.4,
-  "iphone-se-4": 138.4,
+  "iphone-se-4": 146.7,
   "iphone-14": 146.7,
   "iphone-14-plus": 160.8,
   "iphone-14-pro": 147.5,
