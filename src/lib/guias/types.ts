@@ -20,6 +20,8 @@ export type GuideFrontMatter = {
   author: string;
   primaryKeyword: string;
   secondaryKeywords: string[];
+  /** Optional public path for hero/OG image (e.g. /guias/foo-hero.png). */
+  coverImage?: string;
 };
 
 /** Parsed guide ready for index/detail pages. */

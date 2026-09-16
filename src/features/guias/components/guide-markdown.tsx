@@ -73,6 +73,14 @@ const markdownComponents: Components = {
       {children}
     </blockquote>
   ),
+  img: ({ src, alt }) => (
+    // eslint-disable-next-line @next/next/no-img-element -- markdown hero from /public
+    <img
+      src={src}
+      alt={alt ?? ""}
+      className="border-border my-6 w-full rounded-xl border"
+    />
+  ),
   input: ({ type, checked, disabled }) => {
     if (type !== "checkbox") {
       return null;

@@ -14,6 +14,35 @@ import type { Guide, GuideFrontMatter, GuideSummary } from "@/lib/guias/types";
 const GUIDES_DIR = path.join(process.cwd(), "content/guias");
 
 const NOTES_SECTION_PATTERN = /^##\s+NOTES FOR DANIEL\b[\s\S]*/im;
+const ISO_DATE_PREFIX_PATTERN = /^(\d{4}-\d{2}-\d{2})/;
+
+/**
+ * coerceGuideDate
+ *
+ * Normalizes gray-matter date values to `YYYY-MM-DD` strings.
+ *
+ * @param value - YAML date (Date), ISO string, or empty.
+ * @param fallback - Value when `value` is missing or invalid.
+ * @returns ISO date prefix suitable for `formatGuideDate`.
+ */
+function coerceGuideDate(value: unknown, fallback = ""): string {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const match = trimmed.match(ISO_DATE_PREFIX_PATTERN);
+
+    return match?.[1] ?? trimmed;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value).toISOString().slice(0, 10);
+  }
+
+  return fallback;
+}
 
 /**
  * stripNotesSection
@@ -94,6 +123,14 @@ function normalizeFrontMatter(
       ? data.h1.trim()
       : undefined;
 
+  const coverImage =
+    typeof data.coverImage === "string" && data.coverImage.trim().length > 0
+      ? data.coverImage.trim()
+      : undefined;
+
+  const publishedAt = coerceGuideDate(data.publishedAt);
+  const updatedAt = coerceGuideDate(data.updatedAt, publishedAt);
+
   return {
     title: String(data.title ?? ""),
     metaTitle: String(data.metaTitle ?? data.title ?? ""),
@@ -101,12 +138,13 @@ function normalizeFrontMatter(
     slug: String(data.slug ?? ""),
     locale: String(data.locale ?? "es-CO"),
     published: data.published !== false,
-    publishedAt: String(data.publishedAt ?? ""),
-    updatedAt: String(data.updatedAt ?? data.publishedAt ?? ""),
+    publishedAt,
+    updatedAt,
     author: String(data.author ?? "TruePhone"),
     primaryKeyword: String(data.primaryKeyword ?? ""),
     secondaryKeywords,
     h1,
+    coverImage,
   };
 }
 

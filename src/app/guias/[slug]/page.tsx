@@ -46,6 +46,13 @@ export async function generateMetadata({
   return {
     title: guide.metaTitle || guide.title,
     description: guide.metaDescription,
+    ...(guide.coverImage
+      ? {
+          openGraph: {
+            images: [{ url: guide.coverImage, alt: guide.heading }],
+          },
+        }
+      : {}),
   };
 }
 
