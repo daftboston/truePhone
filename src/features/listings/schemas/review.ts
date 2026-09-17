@@ -63,6 +63,7 @@ export const LISTING_QUALITY_CHECKLIST = [
   "Descripción precisa (sin promesas engañosas)",
   "IMEI / Activation Lock revisados",
   "Sin indicios claros de fraude o duplicado",
+  "Sin cuota de reposición, penalidad por arrepentimiento ni descuentos sobre el reembolso",
 ] as const;
 
 /** EDITABLE_REVIEW_STATUSES — validates input for related EDITABLE_REVIEW_STATUSES flows. */

@@ -4,13 +4,14 @@
  * @file pay-order-button.tsx
  * @description Client button that starts Guaranteed Purchase checkout.
  * @dependencies react, startCheckoutAction, formatOrderMoney, Button
- * @changelog 2026-09-14 — Requires Ley 527 legal acceptance before checkout.
+ * @changelog 2026-09-17 — Sends delivery address with checkout start.
  */
 
 import { useState, useTransition } from "react";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 import { Button } from "@/components/ui/button";
+import type { DeliveryAddressFieldValues } from "@/features/orders/components/delivery-address-fields";
 import { startCheckoutAction } from "@/features/payments/actions/payments";
 import { formatOrderMoney } from "@/lib/format-money";
 
@@ -22,6 +23,7 @@ type PayOrderButtonProps = {
   currency?: string;
   /** Must be true before checkout can start (Ley 527). */
   legalAccepted: boolean;
+  deliveryAddress: DeliveryAddressFieldValues;
   /** `fee` shows total + protection amount; `none` is the button only. */
   disclosure?: "fee" | "none";
 };
@@ -37,6 +39,7 @@ type PayOrderButtonProps = {
  * @param props.feePercent - Fee percent shown in helper copy (default 10).
  * @param props.currency - Currency code for money formatting (default COP).
  * @param props.legalAccepted - Checkbox state from parent; blocks pay when false.
+ * @param props.deliveryAddress - Delivery fields captured in checkout.
  * @param props.disclosure - Helper copy under the button.
  * @returns Pay button with error alert and optional fee explanation.
  * @calledBy OrderCheckoutSection, OrderDetailView
@@ -48,6 +51,7 @@ export function PayOrderButton({
   feePercent = 10,
   currency = "COP",
   legalAccepted,
+  deliveryAddress,
   disclosure = "fee",
 }: PayOrderButtonProps) {
   const [pending, startTransition] = useTransition();
@@ -70,6 +74,13 @@ export function PayOrderButton({
         const result = await startCheckoutAction({
           orderId,
           legalAccepted: true,
+          recipientName: deliveryAddress.recipientName,
+          phone: deliveryAddress.phone,
+          department: deliveryAddress.department,
+          cityOption: deliveryAddress.cityOption,
+          cityDetail: deliveryAddress.cityDetail,
+          addressLine: deliveryAddress.addressLine,
+          notes: deliveryAddress.notes,
         });
         if (result && !result.ok) {
           setError(result.error);

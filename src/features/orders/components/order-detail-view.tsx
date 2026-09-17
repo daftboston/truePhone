@@ -11,7 +11,8 @@ import { PriceDisplay } from "@/components/price-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BuyerAbandonChoice } from "@/features/orders/components/buyer-abandon-choice";
-import { OrderCheckoutSection } from "@/features/orders/components/order-checkout-section";
+import { BuyerCheckoutPanels } from "@/features/orders/components/buyer-checkout-panels";
+import { OrderDeliveryAddressPanel } from "@/features/orders/components/order-delivery-address-panel";
 import { OrderSupportPanel } from "@/features/orders/components/order-support-panel";
 import { OrderStatusActions } from "@/features/orders/components/order-status-actions";
 import { OrderTimeline } from "@/features/orders/components/order-timeline";
@@ -31,6 +32,7 @@ import type { SellerOrderSupportCase } from "@/lib/orders/order-support-service"
 import type { PublicActivityCounts } from "@/lib/profile-activity";
 import { paymentStatusLabel } from "@/lib/payments";
 import { publicListingPath } from "@/lib/listings-marketplace";
+import { resolveCityFormState } from "@/lib/locations/colombia-cities";
 import { canAccessReviewPortal } from "@/lib/auth/session";
 
 type OrderDetailViewProps = {
@@ -175,6 +177,20 @@ export function OrderDetailView({
   const showSellerHero = Boolean(sellerNext);
 
   const coverUrl = order.listing.images[0]?.imageUrl ?? null;
+  const deliveryPrefill = {
+    recipientName:
+      order.deliveryRecipientName ?? order.buyer.fullName ?? undefined,
+    phone: order.deliveryPhone ?? order.buyer.phone ?? undefined,
+    department: order.deliveryDepartment ?? order.buyer.department ?? undefined,
+    cityOption: order.deliveryCity ?? order.buyer.city ?? undefined,
+    addressLine: order.deliveryAddressLine ?? undefined,
+    notes: order.deliveryNotes ?? undefined,
+  };
+  const cityPrefill = resolveCityFormState(deliveryPrefill.cityOption);
+  if (cityPrefill.cityDetail) {
+    deliveryPrefill.cityOption = cityPrefill.cityOption;
+    Object.assign(deliveryPrefill, { cityDetail: cityPrefill.cityDetail });
+  }
 
   return (
     <div className={canPay ? "space-y-6 pb-32 md:pb-0" : "space-y-6"}>
@@ -219,7 +235,7 @@ export function OrderDetailView({
       </div>
 
       {canPay ? (
-        <OrderCheckoutSection
+        <BuyerCheckoutPanels
           orderId={order.id}
           listingTitle={order.listing.title}
           coverUrl={coverUrl}
@@ -229,6 +245,7 @@ export function OrderDetailView({
           feePercent={feePercent}
           protectionLabel={protectionLabel}
           currency={order.currency}
+          deliveryPrefill={deliveryPrefill}
         />
       ) : null}
 
@@ -368,6 +385,33 @@ export function OrderDetailView({
         <OrderTimeline order={order} />
       </section>
 
+      <OrderDeliveryAddressPanel
+        orderId={order.id}
+        orderStatus={order.status}
+        perspective={perspective}
+        delivery={{
+          deliveryRecipientName: order.deliveryRecipientName,
+          deliveryPhone: order.deliveryPhone,
+          deliveryCity: order.deliveryCity,
+          deliveryDepartment: order.deliveryDepartment,
+          deliveryAddressLine: order.deliveryAddressLine,
+          deliveryNotes: order.deliveryNotes,
+          deliveryAddressFrozenAt: order.deliveryAddressFrozenAt,
+        }}
+        shipment={
+          order.shipment
+            ? {
+                method: order.shipment.method,
+                status: order.shipment.status,
+                trackingCode: order.shipment.trackingCode,
+                trackingUploadedAt: order.shipment.trackingUploadedAt,
+                evidenceUrl: order.shipment.evidenceUrl,
+              }
+            : null
+        }
+        changes={order.deliveryAddressChanges}
+      />
+
       <OrderShippingPanel
         orderId={order.id}
         orderStatus={order.status}
@@ -472,23 +516,6 @@ export function OrderDetailView({
         currentUserId={currentUserId}
         reviews={order.reviews}
       />
-
-      {canPay ? (
-        <div className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden">
-          <OrderCheckoutSection
-            compact
-            orderId={order.id}
-            listingTitle={order.listing.title}
-            coverUrl={coverUrl}
-            totalPrice={order.totalPrice}
-            equipmentPrice={order.equipmentPrice}
-            platformFee={order.platformFee}
-            feePercent={feePercent}
-            protectionLabel={protectionLabel}
-            currency={order.currency}
-          />
-        </div>
-      ) : null}
     </div>
   );
 }
