@@ -47,6 +47,9 @@ const orderListInclude = {
       fullName: true,
       username: true,
       avatarUrl: true,
+      phone: true,
+      city: true,
+      department: true,
       sellerRating: true,
       createdAt: true,
       verifikStatus: true,
@@ -71,6 +74,18 @@ const orderListInclude = {
   shipment: {
     include: {
       inspection: true,
+    },
+  },
+  deliveryAddressChanges: {
+    orderBy: { createdAt: "desc" as const },
+    take: 10,
+    include: {
+      requestedBy: {
+        select: { id: true, fullName: true, username: true },
+      },
+      respondedBy: {
+        select: { id: true, fullName: true, username: true },
+      },
     },
   },
   reviews: {

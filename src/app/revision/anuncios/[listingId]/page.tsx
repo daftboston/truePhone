@@ -29,6 +29,10 @@ import {
   isEditableReviewStatus,
   sellerDisplayName,
 } from "@/lib/listings-review";
+import {
+  RESTOCKING_FEE_REJECTION_SUGGESTION,
+  scanListingForRestockingFeeLanguage,
+} from "@/lib/listings/restocking-fee-policy";
 
 type PageProps = {
   params: Promise<{ listingId: string }>;
@@ -101,6 +105,7 @@ export default async function ListingReviewDetailPage({ params }: PageProps) {
       : null);
 
   const canEditDecision = isEditableReviewStatus(listing.status);
+  const restockingFeeDetected = scanListingForRestockingFeeLanguage(listing);
 
   return (
     <div className="space-y-6">
@@ -206,6 +211,19 @@ export default async function ListingReviewDetailPage({ params }: PageProps) {
                 <p className="text-foreground font-medium">Descripción</p>
                 <p className="text-muted-foreground whitespace-pre-wrap">
                   {listing.description}
+                </p>
+              </div>
+            ) : null}
+            {restockingFeeDetected ? (
+              <div
+                className="border-destructive/40 bg-destructive/5 space-y-2 rounded-lg border p-3"
+                role="alert"
+              >
+                <p className="text-foreground text-sm font-semibold">
+                  Posible cuota de reposición
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {RESTOCKING_FEE_REJECTION_SUGGESTION}
                 </p>
               </div>
             ) : null}

@@ -23,6 +23,7 @@ import {
   recordLegalAcceptance,
 } from "@/lib/legal/acceptance";
 import { getRequestAuditMeta } from "@/lib/legal/request-meta";
+import { saveDeliveryAddressDraft } from "@/lib/orders/delivery-address-service";
 import { confirmMockPayment, startCheckoutForOrder } from "@/lib/payments";
 import { isMockPaymentsEnabled } from "@/lib/payments/resolve-provider";
 
@@ -68,6 +69,13 @@ async function listingSlugForOrder(orderId: string) {
 export async function startCheckoutAction(input: {
   orderId: string;
   legalAccepted: boolean;
+  recipientName: string;
+  phone: string;
+  department: string;
+  cityOption: string;
+  cityDetail?: string;
+  addressLine: string;
+  notes?: string;
 }): Promise<PaymentActionState> {
   const current = await getCurrentProfile();
   if (!current) {
@@ -83,11 +91,17 @@ export async function startCheckoutAction(input: {
     legalAccepted: isLegalAcceptedValue(input.legalAccepted)
       ? true
       : (false as unknown as true),
+    recipientName: input.recipientName,
+    phone: input.phone,
+    department: input.department,
+    cityOption: input.cityOption,
+    cityDetail: input.cityDetail,
+    addressLine: input.addressLine,
+    notes: input.notes,
   });
   if (!parsed.success) {
     const message =
-      parsed.error.issues.find((issue) => issue.path[0] === "legalAccepted")
-        ?.message ?? "Pedido inválido.";
+      parsed.error.issues[0]?.message ?? "Revisa la dirección de entrega.";
     return {
       ok: false,
       error: message,
@@ -102,6 +116,15 @@ export async function startCheckoutAction(input: {
     ipAddress: audit.ipAddress,
     userAgent: audit.userAgent,
   });
+
+  const saved = await saveDeliveryAddressDraft({
+    orderId: parsed.data.orderId,
+    buyerId: current.profile.id,
+    address: parsed.data,
+  });
+  if (!saved.ok) {
+    return { ok: false, error: saved.error };
+  }
 
   const result = await startCheckoutForOrder({
     orderId: parsed.data.orderId,

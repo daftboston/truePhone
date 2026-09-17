@@ -16,6 +16,8 @@ import {
   recordPaymentHold,
 } from "@/lib/financial-core";
 import { prisma } from "@/lib/db";
+import { isDeliveryAddressComplete } from "@/lib/orders/delivery-address";
+import { freezeDeliveryAddressOnPayment } from "@/lib/orders/delivery-address-service";
 import {
   notifySellerOrderPaid,
   safeNotify,
@@ -230,6 +232,11 @@ export async function startCheckoutForOrder(input: {
           : "Este pedido ya no se puede pagar.",
       );
     }
+    if (!isDeliveryAddressComplete(order)) {
+      throw new PaymentError(
+        "Completa la dirección de entrega antes de pagar.",
+      );
+    }
 
     const existing = await prisma.payment.findFirst({
       where: {
@@ -367,6 +374,8 @@ export async function markPaymentSucceeded(input: {
           },
         });
 
+        await freezeDeliveryAddressOnPayment(tx, payment.orderId, now);
+
         await recordPaymentHold(tx, {
           orderId: payment.orderId,
           paymentId: payment.id,
@@ -394,6 +403,9 @@ export async function markPaymentSucceeded(input: {
     return { ok: true };
   } catch (error) {
     if (error instanceof PaymentError) {
+      return { ok: false, error: error.message };
+    }
+    if (error instanceof Error && error.name === "DeliveryAddressError") {
       return { ok: false, error: error.message };
     }
     throw error;

@@ -73,6 +73,13 @@ enum OrderStatus {
   COMPLETED
 }
 
+/// Buyer-initiated delivery address change awaiting seller response.
+enum OrderDeliveryAddressChangeStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 enum PaymentStatus {
   PENDING
   REQUIRES_ACTION
@@ -276,6 +283,8 @@ model Profile {
   assignedPqrCases          PqrCase[]               @relation("PqrCaseAssignee")
   pqrCasesResponded         PqrCase[]               @relation("PqrCaseResponder")
   legalAcceptances          LegalAcceptance[]
+  deliveryAddressChangesRequested OrderDeliveryAddressChange[] @relation("DeliveryAddressChangeRequester")
+  deliveryAddressChangesResponded OrderDeliveryAddressChange[] @relation("DeliveryAddressChangeResponder")
 
   @@map("profiles")
 }
@@ -731,10 +740,20 @@ model Order {
   completedAt   DateTime?
   paidAt        DateTime?
 
+  /// Delivery snapshot (draft until payment; frozen at paidAt).
+  deliveryRecipientName   String?   @map("delivery_recipient_name")
+  deliveryPhone           String?   @map("delivery_phone")
+  deliveryCity            String?   @map("delivery_city")
+  deliveryDepartment      String?   @map("delivery_department")
+  deliveryAddressLine     String?   @map("delivery_address_line")
+  deliveryNotes           String?   @map("delivery_notes")
+  deliveryAddressFrozenAt DateTime? @map("delivery_address_frozen_at")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   reviews              Review[]
+  deliveryAddressChanges OrderDeliveryAddressChange[]
   payments             Payment[]
   ledgerEntries        LedgerEntry[]
   payouts              Payout[]
@@ -751,6 +770,40 @@ model Order {
   @@index([status])
   @@index([buyerConfirmDeadlineAt])
   @@map("orders")
+}
+
+/// Auditable buyer/seller delivery address change on a paid order.
+model OrderDeliveryAddressChange {
+  id      String                           @id @default(cuid())
+  orderId String                           @map("order_id")
+  order   Order                            @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  status  OrderDeliveryAddressChangeStatus @default(PENDING)
+
+  requestedById String  @map("requested_by_id")
+  requestedBy   Profile @relation("DeliveryAddressChangeRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  respondedById String? @map("responded_by_id")
+  respondedBy   Profile? @relation("DeliveryAddressChangeResponder", fields: [respondedById], references: [id], onDelete: SetNull)
+
+  oldRecipientName String  @map("old_recipient_name")
+  oldPhone         String  @map("old_phone")
+  oldCity          String  @map("old_city")
+  oldDepartment    String  @map("old_department")
+  oldAddressLine   String  @map("old_address_line")
+  oldNotes         String? @map("old_notes")
+
+  newRecipientName String  @map("new_recipient_name")
+  newPhone         String  @map("new_phone")
+  newCity          String  @map("new_city")
+  newDepartment    String  @map("new_department")
+  newAddressLine   String  @map("new_address_line")
+  newNotes         String? @map("new_notes")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  respondedAt DateTime? @map("responded_at")
+
+  @@index([orderId, status])
+  @@index([orderId, createdAt])
+  @@map("order_delivery_address_changes")
 }
 
 /// Seller-initiated, order-scoped support workflow reviewed by trusted staff.

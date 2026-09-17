@@ -58,6 +58,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
         "El vendedor declara que el iPhone es de su propiedad legal y que la descripción, fotos, IMEI, estado de batería y accesorios son verdaderos.",
         "Pedimos IMEI, confirmación de Activation Lock y una foto de posesión (el equipo junto al código que mostramos). Si algo no cuadra, el anuncio no se publica.",
         "TruePhone puede rechazar, ocultar o archivar un anuncio para proteger a compradores y vendedores. Un precio de referencia es solo una guía: el vendedor elige el precio.",
+        "Los vendedores no pueden cobrar cuotas de reposición, penalidades por arrepentimiento ni descuentos sobre el reembolso del comprador, salvo los costos de procesamiento de pago que estos Términos autoricen de forma expresa (por ejemplo, la comisión de Wompi cuando el comprador cancela un pedido ya pagado). Cuando proceda el derecho de retracto legal, el reembolso al comprador incluye todas las sumas pagadas en el pedido, sin cuota de reposición.",
       ],
     },
     {
@@ -109,6 +110,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
       title: "Envíos",
       paragraphs: [
         "El vendedor elige el envío después del pago. El comprador no paga envío en el checkout.",
+        "La dirección de entrega queda fijada al confirmarse el pago. No puede cambiarse de forma unilateral después. Un cambio solo procede si el comprador y el vendedor lo aceptan en la plataforma antes de entregar el paquete a la transportadora o a TruePhone Premium, y queda constancia de esa aceptación. TruePhone no cubre bajo Compra Garantizada un envío hecho a una dirección distinta de la registrada en el pedido sin ese acuerdo.",
         "El vendedor debe entregar el paquete a la transportadora (o a TruePhone Premium, si aplica) dentro de seis (6) días calendario contados desde el pago exitoso, incluidos fines de semana y festivos en Colombia. Se considera cumplido cuando el vendedor hace la entrega al carrier o a Premium, no cuando aparece el primer escaneo. Si no hay entrega en ese plazo ni otro plazo informado y aceptado, el comprador puede pedir cancelación y reembolso conforme a estos términos y a la ley (incluida la facultad de resolver ante demoras excesivas en comercio electrónico).",
       ],
       bullets: [
@@ -128,9 +130,11 @@ export const TERMS_DOCUMENT: LegalDocument = {
       id: "cancelaciones",
       title: "Cancelaciones después del pago",
       paragraphs: [
+        "Sin perjuicio del derecho de retracto cuando aplique según la ley y estos Términos, las reglas siguientes aplican a cancelaciones voluntarias en la plataforma.",
         "Si el comprador cancela un pedido ya pagado, asume el costo de procesamiento del cobro de Wompi (2,75% + IVA). El reembolso es el total cobrado menos esa comisión.",
         "El vendedor no cancela solo un pedido pagado. Abre una solicitud de soporte. Un revisor o administrador decide. Si la acepta, el anuncio queda archivado (no vuelve al mercado) y el comprador elige reembolso o la compra de reemplazo al 8%.",
         "Si ya hay envío en curso, la solicitud es por un problema de envío: el desembolso se congela hasta que soporte resuelva.",
+        "Cuando proceda el derecho de retracto legal, el reembolso al comprador incluye todas las sumas pagadas en el pedido, sin cuota de reposición. Las 24 horas después de «Ya recibí» regulan reclamos de Compra Garantizada por no conformidad con el anuncio; no sustituyen el retracto legal ni autorizan descuentos sobre el reembolso por arrepentimiento.",
       ],
     },
     {
@@ -142,6 +146,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
         "Mentir en fotos, IMEI, batería o estado.",
         "Pedir o enviar dinero, teléfonos o enlaces de pago fuera de TruePhone.",
         "Pedir contraseñas de Apple ni códigos de verificación por chat.",
+        "Cobrar cuota de reposición o penalidad por arrepentimiento.",
         "Acosar, hacer spam o usar la plataforma para fraude.",
       ],
     },
