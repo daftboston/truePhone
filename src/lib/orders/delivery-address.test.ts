@@ -25,6 +25,12 @@ describe("delivery address guards", () => {
     deliveryAddressFrozenAt: new Date("2026-09-17T12:00:00Z"),
   };
 
+  const paidGuardBase = {
+    orderStatus: "PAID" as const,
+    deliveryAddressFrozenAt: completeOrder.deliveryAddressFrozenAt,
+    hasPendingChange: false,
+  };
+
   it("detects complete delivery snapshots", () => {
     assert.equal(isDeliveryAddressComplete(completeOrder), true);
     assert.equal(
@@ -45,20 +51,17 @@ describe("delivery address guards", () => {
     ]);
   });
 
-  it("allows change before carrier tracking or Premium", () => {
+  it("allows change before carrier tracking", () => {
     assert.equal(
       canRequestDeliveryAddressChange({
-        orderStatus: "PAID",
-        deliveryAddressFrozenAt: completeOrder.deliveryAddressFrozenAt,
+        ...paidGuardBase,
         shipment: null,
-        hasPendingChange: false,
       }),
       true,
     );
     assert.equal(
       canRequestDeliveryAddressChange({
-        orderStatus: "PAID",
-        deliveryAddressFrozenAt: completeOrder.deliveryAddressFrozenAt,
+        ...paidGuardBase,
         shipment: {
           method: "CARRIER",
           status: "METHOD_SELECTED",
@@ -66,7 +69,23 @@ describe("delivery address guards", () => {
           trackingUploadedAt: null,
           evidenceUrl: null,
         },
-        hasPendingChange: false,
+      }),
+      true,
+    );
+  });
+
+  it("allows Premium method selected before handoff to TruePhone Premium", () => {
+    assert.equal(
+      canRequestDeliveryAddressChange({
+        ...paidGuardBase,
+        shipment: {
+          method: "PREMIUM_BOGOTA",
+          status: "AWAITING_PICKUP",
+          trackingCode: null,
+          trackingUploadedAt: null,
+          evidenceUrl: null,
+          inspection: { result: "PENDING" },
+        },
       }),
       true,
     );
@@ -74,8 +93,7 @@ describe("delivery address guards", () => {
 
   it("blocks change when tracking exists", () => {
     const reason = deliveryAddressChangeBlockedReason({
-      orderStatus: "PAID",
-      deliveryAddressFrozenAt: completeOrder.deliveryAddressFrozenAt,
+      ...paidGuardBase,
       shipment: {
         method: "CARRIER",
         status: "IN_TRANSIT",
@@ -83,31 +101,42 @@ describe("delivery address guards", () => {
         trackingUploadedAt: new Date(),
         evidenceUrl: null,
       },
-      hasPendingChange: false,
     });
     assert.match(reason ?? "", /rastreo|guía/i);
   });
 
-  it("blocks change when Premium is in progress", () => {
-    const reason = deliveryAddressChangeBlockedReason({
-      orderStatus: "PAID",
-      deliveryAddressFrozenAt: completeOrder.deliveryAddressFrozenAt,
+  it("blocks Premium change after inspection or transit progress", () => {
+    const afterInspection = deliveryAddressChangeBlockedReason({
+      ...paidGuardBase,
       shipment: {
         method: "PREMIUM_BOGOTA",
         status: "AWAITING_PICKUP",
         trackingCode: null,
         trackingUploadedAt: null,
         evidenceUrl: null,
+        inspection: { result: "PASSED" },
+        inspectionAt: new Date(),
       },
-      hasPendingChange: false,
     });
-    assert.match(reason ?? "", /Premium/i);
+    assert.match(afterInspection ?? "", /Premium/i);
+
+    const inTransit = deliveryAddressChangeBlockedReason({
+      ...paidGuardBase,
+      shipment: {
+        method: "PREMIUM_BOGOTA",
+        status: "IN_TRANSIT",
+        trackingCode: null,
+        trackingUploadedAt: null,
+        evidenceUrl: null,
+        inTransitAt: new Date(),
+      },
+    });
+    assert.match(inTransit ?? "", /avanzó/i);
   });
 
   it("blocks duplicate pending requests", () => {
     const reason = deliveryAddressChangeBlockedReason({
-      orderStatus: "PAID",
-      deliveryAddressFrozenAt: completeOrder.deliveryAddressFrozenAt,
+      ...paidGuardBase,
       shipment: null,
       hasPendingChange: true,
     });

@@ -30,11 +30,23 @@ describe("restocking fee policy detection", () => {
       ),
       true,
     );
+    assert.equal(
+      detectRestockingFeeLanguage("Cargo por devolución voluntaria del 15%"),
+      true,
+    );
   });
 
-  it("ignores neutral listing copy", () => {
+  it("ignores neutral listing copy and replacement-part wording", () => {
     assert.equal(
       detectRestockingFeeLanguage("iPhone en excelente estado, incluye caja."),
+      false,
+    );
+    assert.equal(
+      detectRestockingFeeLanguage("Pantalla de reposición recién cambiada."),
+      false,
+    );
+    assert.equal(
+      detectRestockingFeeLanguage("Batería de reposición al 92%."),
       false,
     );
   });
@@ -46,6 +58,13 @@ describe("restocking fee policy detection", () => {
         description: "Cargo por devolución voluntaria del 15%",
       }),
       true,
+    );
+    assert.equal(
+      scanListingForRestockingFeeLanguage({
+        title: "iPhone 13 · pantalla de reposición",
+        description: "Equipo en buen estado.",
+      }),
+      false,
     );
   });
 });

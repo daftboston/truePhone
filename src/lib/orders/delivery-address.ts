@@ -39,6 +39,10 @@ type ShipmentGuardSnapshot = {
   trackingCode: string | null;
   trackingUploadedAt: Date | null;
   evidenceUrl: string | null;
+  inspectionAt?: Date | null;
+  inTransitAt?: Date | null;
+  deliveredAt?: Date | null;
+  inspection?: { result: string } | null;
 } | null;
 
 type ChangeGuardInput = {
@@ -150,10 +154,16 @@ export function deliveryAddressChangeBlockedReason(
   if (shipment.evidenceUrl?.trim()) {
     return "No se puede cambiar: ya hay evidencia de envío registrada.";
   }
-  if (shipment.method === "PREMIUM_BOGOTA") {
-    return "No se puede cambiar: TruePhone Premium ya está en curso.";
+
+  const inspectionResult = shipment.inspection?.result;
+  if (inspectionResult === "PASSED" || inspectionResult === "FAILED") {
+    return "No se puede cambiar: TruePhone Premium ya recibió el paquete.";
+  }
+  if (shipment.inspectionAt || shipment.inTransitAt || shipment.deliveredAt) {
+    return "No se puede cambiar: el envío ya avanzó.";
   }
   if (
+    shipment.status === "INSPECTION" ||
     shipment.status === "IN_TRANSIT" ||
     shipment.status === "DELIVERED" ||
     shipment.status === "FAILED" ||

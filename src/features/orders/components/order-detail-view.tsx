@@ -406,6 +406,12 @@ export function OrderDetailView({
                 trackingCode: order.shipment.trackingCode,
                 trackingUploadedAt: order.shipment.trackingUploadedAt,
                 evidenceUrl: order.shipment.evidenceUrl,
+                inspectionAt: order.shipment.inspectionAt,
+                inTransitAt: order.shipment.inTransitAt,
+                deliveredAt: order.shipment.deliveredAt,
+                inspection: order.shipment.inspection
+                  ? { result: order.shipment.inspection.result }
+                  : null,
               }
             : null
         }

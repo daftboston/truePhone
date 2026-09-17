@@ -146,6 +146,7 @@ export const TERMS_DOCUMENT: LegalDocument = {
         "Mentir en fotos, IMEI, batería o estado.",
         "Pedir o enviar dinero, teléfonos o enlaces de pago fuera de TruePhone.",
         "Pedir contraseñas de Apple ni códigos de verificación por chat.",
+        "Cobrar cuota de reposición o penalidad por arrepentimiento.",
         "Acosar, hacer spam o usar la plataforma para fraude.",
       ],
     },

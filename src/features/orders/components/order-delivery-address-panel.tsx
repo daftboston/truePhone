@@ -62,6 +62,10 @@ type OrderDeliveryAddressPanelProps = {
     trackingCode: string | null;
     trackingUploadedAt: Date | null;
     evidenceUrl: string | null;
+    inspectionAt?: Date | null;
+    inTransitAt?: Date | null;
+    deliveredAt?: Date | null;
+    inspection?: { result: string } | null;
   } | null;
   changes: DeliveryAddressChangeRow[];
 };

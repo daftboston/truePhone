@@ -7,7 +7,6 @@
 /** Spanish-first patterns; includes English only for moderation detection. */
 const RESTOCKING_FEE_PATTERNS: RegExp[] = [
   /cuota\s+de\s+reposici[oó]n/i,
-  /\breposici[oó]n\b/i,
   /penalidad\s+por\s+arrepentimiento/i,
   /cargo\s+por\s+devoluci[oó]n\s+voluntaria/i,
   /descuento\s+sobre\s+el\s+reembolso/i,
