@@ -1,7 +1,8 @@
 /**
  * @file faq.ts
- * @description Spanish FAQ clusters for the public /ayuda page (Phase 23).
+ * @description Spanish FAQ clusters for the public /ayuda page (Phase 23 + Legal PR2).
  * @dependencies @/lib/legal
+ * @changelog 2026-09-17 — Legal PR2: cobros, dirección, retracto, reposición, impuestos.
  */
 
 import { PREMIUM_SHIPPING_FEE_PESOS } from "@/lib/financial-core/fees";
@@ -70,6 +71,43 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
         question: "¿Qué pasa si el vendedor cancela después de que pagué?",
         answer:
           "Soporte revisa primero la solicitud del vendedor. Si la acepta, te avisamos en TruePhone y en el pedido eliges: reembolso, o una compra de reemplazo con 8% de protección una sola vez. El reembolso sigue disponible mientras no uses esa compensación. El anuncio queda archivado y no vuelve al mercado.",
+      },
+    ],
+  },
+  {
+    id: "politicas",
+    title: "Cobros, retracto y políticas",
+    items: [
+      {
+        question: "¿Cómo se cobra en TruePhone?",
+        answer:
+          "El vendedor no paga comisión por vender. El comprador paga el precio del iPhone más la protección TruePhone (Compra Garantizada): 10% sobre el precio del anuncio (8% una sola vez si elige compra de reemplazo tras una cancelación de vendedor aceptada). Si el vendedor elige TruePhone Premium en Bogotá, se descuentan $25.000 de su liquidación. El pago se hace con Wompi. Si el comprador cancela un pedido ya pagado, el reembolso puede descontar el costo de procesamiento de Wompi (2,75% + IVA), según los Términos.",
+        links: [{ href: LEGAL_PATHS.terms, label: "Términos" }],
+      },
+      {
+        question: "¿Puedo cambiar la dirección después de pagar?",
+        answer:
+          "No de forma unilateral. La dirección queda fijada al pagar. Solo puede cambiarse si comprador y vendedor lo aceptan en TruePhone antes de entregar el paquete a la transportadora o a Premium. Queda registro del cambio. Si el envío ya inició, no se puede cambiar.",
+      },
+      {
+        question: "¿Puedo arrepentirme de la compra?",
+        answer:
+          "Depende del caso: (a) Derecho de retracto: en compras a distancia, cuando la ley lo permita, 5 días hábiles desde la entrega; se radica en PQR; el comprador asume el envío de devolución; reembolso de todo lo pagado en el pedido en los plazos legales/contractuales. (b) Compra Garantizada: 24 horas después de marcar «Ya recibí» para reportar que el equipo no coincide con el anuncio. (c) Cancelación del comprador fuera de esos casos: el vendedor no está obligado a aceptar un arrepentimiento tardío; si TruePhone procesa cancelación según Términos, puede aplicar el costo Wompi. El retracto legal no se elimina por las reglas de 24 horas.",
+        links: [
+          { href: LEGAL_PATHS.pqr, label: "PQR" },
+          { href: LEGAL_PATHS.terms, label: "Términos" },
+        ],
+      },
+      {
+        question: "¿Existe cuota de reposición?",
+        answer:
+          "No. Los vendedores no pueden cobrar cuota de reposición ni penalidad por arrepentimiento. En retracto legal el reembolso es completo.",
+      },
+      {
+        question:
+          '¿TruePhone cobra un impuesto tipo "sales tax" de Estados Unidos?',
+        answer:
+          "No. TruePhone opera en Colombia. En el checkout verás el precio del iPhone y la protección en pesos colombianos, desglosados. No aplicamos el esquema de impuestos de marketplace de EE.UU.",
       },
     ],
   },

@@ -15,7 +15,7 @@ import { LEGAL_CONTACT_EMAIL, LEGAL_CONTACT_MAILTO } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Ayuda",
   description:
-    "Preguntas frecuentes de TruePhone: comprar, vender, envíos, pagos y seguridad.",
+    "Preguntas frecuentes de TruePhone: cobros, retracto, comprar, vender, envíos, pagos y seguridad.",
 };
 
 /**
@@ -34,8 +34,8 @@ export default function AyudaPage() {
             Ayuda
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
-            Respuestas cortas sobre cómo funciona TruePhone. Si no encuentras lo
-            que buscas, escribe a{" "}
+            Respuestas sobre cómo funciona TruePhone: cobros, retracto, envíos y
+            más. Si no encuentras lo que buscas, escribe a{" "}
             <a
               href={LEGAL_CONTACT_MAILTO}
               className="text-foreground font-medium underline-offset-2 hover:underline"
