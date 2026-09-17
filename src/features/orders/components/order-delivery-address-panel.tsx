@@ -150,56 +150,77 @@ export function OrderDeliveryAddressPanel({
 
   return (
     <section className="border-border space-y-4 rounded-xl border p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-foreground text-sm font-semibold">
-          Dirección de entrega
-        </h2>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="space-y-1">
+          <h2 className="text-foreground text-sm font-semibold">
+            Dirección de entrega
+          </h2>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Al pagar, esta dirección queda fijada. Para cambiarla después, tú y
+            el vendedor deben aceptarlo aquí, antes de que el paquete vaya a la
+            transportadora o a TruePhone Premium.
+          </p>
+        </div>
         {delivery.deliveryAddressFrozenAt ? (
-          <Badge variant="secondary">Fijada al pagar</Badge>
+          <Badge variant="secondary" className="shrink-0">
+            Fijada al pagar
+          </Badge>
         ) : null}
       </div>
 
-      <p className="text-muted-foreground text-xs">
-        La dirección queda fijada al confirmarse el pago. Un cambio solo procede
-        si comprador y vendedor lo aceptan en la plataforma antes de entregar el
-        paquete a la transportadora o a TruePhone Premium.
-      </p>
-
-      <ul className="text-foreground space-y-1 text-sm">
-        {lines.map((line) => (
-          <li key={line}>{line}</li>
+      <div className="bg-muted/40 space-y-1 rounded-lg p-3">
+        {lines.map((line, index) => (
+          <p
+            key={line}
+            className={
+              index === 0
+                ? "text-foreground text-sm font-medium"
+                : "text-muted-foreground text-sm"
+            }
+          >
+            {line}
+          </p>
         ))}
-      </ul>
+      </div>
 
       {pendingChange ? (
-        <div className="bg-muted/50 space-y-3 rounded-lg p-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-foreground text-sm font-medium">
-              Solicitud de cambio pendiente
-            </p>
+        <div
+          className="border-border space-y-3 rounded-lg border p-4"
+          aria-live="polite"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-foreground text-sm font-semibold">
+              Solicitud pendiente
+            </h3>
             <Badge variant="warning">
               {deliveryAddressChangeStatusLabel(pendingChange.status)}
             </Badge>
           </div>
-          <ul className="text-muted-foreground space-y-1 text-xs">
+          <p className="text-muted-foreground text-xs">
+            {isBuyer
+              ? "Propusiste esta dirección. El vendedor debe aceptarla o rechazarla."
+              : "El comprador propone esta dirección:"}
+          </p>
+          <ul className="text-foreground space-y-1 text-sm">
             {formatAddressAuditBlock(pendingChange).map((line) => (
               <li key={line}>{line}</li>
             ))}
           </ul>
           {!isBuyer ? (
-            <div className="flex flex-wrap gap-2">
-              <form action={respondAction}>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <form action={respondAction} className="min-w-0 flex-1">
                 <input type="hidden" name="changeId" value={pendingChange.id} />
                 <input type="hidden" name="decision" value="accept" />
                 <ConfirmAction
                   type="submit"
                   idleLabel="Aceptar cambio"
                   confirmLabel="Confirmar dirección nueva"
+                  hint="La dirección del comprador se actualizará."
                   pending={respondPending}
                   variant="default"
                 />
               </form>
-              <form action={respondAction}>
+              <form action={respondAction} className="min-w-0 flex-1">
                 <input type="hidden" name="changeId" value={pendingChange.id} />
                 <input type="hidden" name="decision" value="reject" />
                 <ConfirmAction
@@ -212,30 +233,52 @@ export function OrderDeliveryAddressPanel({
               </form>
             </div>
           ) : (
-            <p className="text-muted-foreground text-xs">
-              Espera la respuesta del vendedor en la plataforma.
+            <p className="text-muted-foreground text-xs" role="status">
+              Tu solicitud está en revisión. Te avisaremos cuando el vendedor
+              responda.
             </p>
           )}
+          {respondState?.ok === true ? (
+            <p className="text-success text-xs" role="status">
+              {respondState.message}
+            </p>
+          ) : null}
+          {respondState?.ok === false ? (
+            <p className="text-destructive text-xs" role="alert">
+              {respondState.error}
+            </p>
+          ) : null}
         </div>
       ) : null}
 
       {canRequest ? (
-        <div className="space-y-3">
+        <div className="border-border space-y-3 rounded-lg border p-4">
           {!showRequestForm ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowRequestForm(true)}
-            >
-              Pedir cambio de dirección
-            </Button>
-          ) : (
-            <form action={requestAction} className="space-y-3">
-              <input type="hidden" name="orderId" value={orderId} />
-              <p className="text-foreground text-sm font-medium">
-                Propón la nueva dirección
+            <>
+              <p className="text-muted-foreground text-xs">
+                ¿Necesitas enviar el paquete a otra dirección? Pide un cambio y
+                espera la confirmación del vendedor.
               </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowRequestForm(true)}
+              >
+                Pedir cambio de dirección
+              </Button>
+            </>
+          ) : (
+            <form action={requestAction} className="space-y-4">
+              <input type="hidden" name="orderId" value={orderId} />
+              <div className="space-y-1">
+                <h3 className="text-foreground text-sm font-semibold">
+                  Nueva dirección propuesta
+                </h3>
+                <p className="text-muted-foreground text-xs">
+                  El vendedor debe aceptarla antes de que se aplique.
+                </p>
+              </div>
               <DeliveryAddressFields
                 idPrefix={`change-${orderId}`}
                 initialValues={initialChangeValues}
@@ -257,44 +300,38 @@ export function OrderDeliveryAddressPanel({
                   Cancelar
                 </Button>
               </div>
+              {requestState?.ok === true ? (
+                <p className="text-success text-xs" role="status">
+                  {requestState.message}
+                </p>
+              ) : null}
+              {requestState?.ok === false ? (
+                <p className="text-destructive text-xs" role="alert">
+                  {requestState.error}
+                </p>
+              ) : null}
             </form>
           )}
         </div>
       ) : null}
 
       {isBuyer && blockReason && !pendingChange && orderStatus === "PAID" ? (
-        <p className="text-muted-foreground text-xs">{blockReason}</p>
-      ) : null}
-
-      {requestState?.ok === true ? (
-        <p className="text-success text-xs" role="status">
-          {requestState.message}
-        </p>
-      ) : null}
-      {requestState?.ok === false ? (
-        <p className="text-destructive text-xs" role="alert">
-          {requestState.error}
-        </p>
-      ) : null}
-      {respondState?.ok === true ? (
-        <p className="text-success text-xs" role="status">
-          {respondState.message}
-        </p>
-      ) : null}
-      {respondState?.ok === false ? (
-        <p className="text-destructive text-xs" role="alert">
-          {respondState.error}
+        <p className="text-muted-foreground text-xs" role="status">
+          {blockReason}
         </p>
       ) : null}
 
       {auditRows.length > 0 ? (
-        <div className="border-border space-y-2 border-t pt-3">
-          <p className="text-foreground text-xs font-semibold tracking-wide uppercase">
-            Historial de cambios
-          </p>
-          <ul className="space-y-3 text-xs">
+        <div className="border-border space-y-3 border-t pt-4">
+          <h3 className="text-foreground text-xs font-semibold tracking-wide uppercase">
+            Historial
+          </h3>
+          <ul className="space-y-3">
             {auditRows.map((change) => (
-              <li key={change.id} className="text-muted-foreground space-y-1">
+              <li
+                key={change.id}
+                className="border-border space-y-2 rounded-lg border p-3"
+              >
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge
                     variant={
@@ -303,11 +340,15 @@ export function OrderDeliveryAddressPanel({
                   >
                     {deliveryAddressChangeStatusLabel(change.status)}
                   </Badge>
-                  <span>{formatWhen(change.createdAt)}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {formatWhen(change.createdAt)}
+                  </span>
                 </div>
-                {formatAddressAuditBlock(change).map((line) => (
-                  <p key={line}>{line}</p>
-                ))}
+                <ul className="text-muted-foreground space-y-1 text-xs">
+                  {formatAddressAuditBlock(change).map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>

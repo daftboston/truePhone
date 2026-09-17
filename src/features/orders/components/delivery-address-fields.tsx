@@ -128,7 +128,7 @@ export function DeliveryAddressFields({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4">
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}-recipientName`}>
           Nombre de quien recibe
@@ -140,13 +140,14 @@ export function DeliveryAddressFields({
           disabled={disabled}
           required
           autoComplete="name"
+          aria-invalid={Boolean(fieldErrors?.recipientName?.[0])}
           onChange={(event) => {
             setRecipientName(event.target.value);
             emitChange({ recipientName: event.target.value });
           }}
         />
         {fieldErrors?.recipientName?.[0] ? (
-          <p className="text-destructive text-xs">
+          <p className="text-destructive text-xs" role="alert">
             {fieldErrors.recipientName[0]}
           </p>
         ) : null}
@@ -162,75 +163,82 @@ export function DeliveryAddressFields({
           required
           autoComplete="tel"
           inputMode="tel"
+          aria-invalid={Boolean(fieldErrors?.phone?.[0])}
           onChange={(event) => {
             setPhone(event.target.value);
             emitChange({ phone: event.target.value });
           }}
         />
         {fieldErrors?.phone?.[0] ? (
-          <p className="text-destructive text-xs">{fieldErrors.phone[0]}</p>
-        ) : null}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-department`}>Departamento</Label>
-        <Select
-          id={`${idPrefix}-department`}
-          name="department"
-          value={departmentValue}
-          disabled={disabled}
-          onChange={(event) => onDepartmentChange(event.target.value)}
-        >
-          <option value="">Selecciona el departamento</option>
-          {COLOMBIA_DEPARTMENT_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </Select>
-        {fieldErrors?.department?.[0] ? (
-          <p className="text-destructive text-xs">
-            {fieldErrors.department[0]}
+          <p className="text-destructive text-xs" role="alert">
+            {fieldErrors.phone[0]}
           </p>
         ) : null}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}-cityOption`}>Ciudad</Label>
-        {isBogotaDc ? (
-          <>
-            <input type="hidden" name="cityOption" value={CITY_BOGOTA} />
-            <Input
-              id={`${idPrefix}-cityOption`}
-              value={CITY_BOGOTA}
-              disabled
-              readOnly
-            />
-          </>
-        ) : (
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-department`}>Departamento</Label>
           <Select
-            id={`${idPrefix}-cityOption`}
-            name="cityOption"
-            value={cityOption}
+            id={`${idPrefix}-department`}
+            name="department"
+            value={departmentValue}
             disabled={disabled}
-            onChange={(event) => {
-              setCityOption(event.target.value);
-              emitChange({ cityOption: event.target.value });
-            }}
+            aria-invalid={Boolean(fieldErrors?.department?.[0])}
+            onChange={(event) => onDepartmentChange(event.target.value)}
           >
-            <option value="">Selecciona la ciudad</option>
-            {COLOMBIA_CITY_OPTIONS.map((option) => (
+            <option value="">Selecciona el departamento</option>
+            {COLOMBIA_DEPARTMENT_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
             ))}
           </Select>
-        )}
-        {fieldErrors?.cityOption?.[0] ? (
-          <p className="text-destructive text-xs">
-            {fieldErrors.cityOption[0]}
-          </p>
-        ) : null}
+          {fieldErrors?.department?.[0] ? (
+            <p className="text-destructive text-xs" role="alert">
+              {fieldErrors.department[0]}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-cityOption`}>Ciudad</Label>
+          {isBogotaDc ? (
+            <>
+              <input type="hidden" name="cityOption" value={CITY_BOGOTA} />
+              <Input
+                id={`${idPrefix}-cityOption`}
+                value={CITY_BOGOTA}
+                disabled
+                readOnly
+              />
+            </>
+          ) : (
+            <Select
+              id={`${idPrefix}-cityOption`}
+              name="cityOption"
+              value={cityOption}
+              disabled={disabled}
+              aria-invalid={Boolean(fieldErrors?.cityOption?.[0])}
+              onChange={(event) => {
+                setCityOption(event.target.value);
+                emitChange({ cityOption: event.target.value });
+              }}
+            >
+              <option value="">Selecciona la ciudad</option>
+              {COLOMBIA_CITY_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
+          )}
+          {fieldErrors?.cityOption?.[0] ? (
+            <p className="text-destructive text-xs" role="alert">
+              {fieldErrors.cityOption[0]}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {needsCityDetail ? (
@@ -241,13 +249,14 @@ export function DeliveryAddressFields({
             name="cityDetail"
             value={cityDetail}
             disabled={disabled}
+            aria-invalid={Boolean(fieldErrors?.cityDetail?.[0])}
             onChange={(event) => {
               setCityDetail(event.target.value);
               emitChange({ cityDetail: event.target.value });
             }}
           />
           {fieldErrors?.cityDetail?.[0] ? (
-            <p className="text-destructive text-xs">
+            <p className="text-destructive text-xs" role="alert">
               {fieldErrors.cityDetail[0]}
             </p>
           ) : null}
@@ -268,13 +277,14 @@ export function DeliveryAddressFields({
           required
           autoComplete="street-address"
           placeholder="Calle, número, barrio, torre/apto"
+          aria-invalid={Boolean(fieldErrors?.addressLine?.[0])}
           onChange={(event) => {
             setAddressLine(event.target.value);
             emitChange({ addressLine: event.target.value });
           }}
         />
         {fieldErrors?.addressLine?.[0] ? (
-          <p className="text-destructive text-xs">
+          <p className="text-destructive text-xs" role="alert">
             {fieldErrors.addressLine[0]}
           </p>
         ) : null}
@@ -296,7 +306,9 @@ export function DeliveryAddressFields({
           }}
         />
         {fieldErrors?.notes?.[0] ? (
-          <p className="text-destructive text-xs">{fieldErrors.notes[0]}</p>
+          <p className="text-destructive text-xs" role="alert">
+            {fieldErrors.notes[0]}
+          </p>
         ) : null}
       </div>
     </div>

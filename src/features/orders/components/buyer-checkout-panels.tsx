@@ -65,7 +65,10 @@ export function BuyerCheckoutPanels(props: BuyerCheckoutPanelsProps) {
         legalAccepted={legalAccepted}
         onLegalAcceptedChange={setLegalAccepted}
       />
-      <div className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden">
+      <div
+        className="tp-glass border-border fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3 backdrop-blur-md backdrop-saturate-[1.1] motion-reduce:backdrop-blur-none md:hidden"
+        aria-label="Confirmar y pagar"
+      >
         <OrderCheckoutSection
           compact
           {...props}

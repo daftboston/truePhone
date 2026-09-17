@@ -64,7 +64,7 @@ export function OrderCheckoutSection({
 }: OrderCheckoutSectionProps) {
   if (compact) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
         <LegalAcceptanceField
           checked={legalAccepted}
           onCheckedChange={onLegalAcceptedChange}
@@ -85,7 +85,7 @@ export function OrderCheckoutSection({
   }
 
   return (
-    <section className="border-border space-y-4 rounded-xl border p-4">
+    <section className="border-border space-y-6 rounded-xl border p-4">
       <div className="flex gap-3">
         {coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -113,13 +113,16 @@ export function OrderCheckoutSection({
         variant="checkout"
         currency={currency}
       />
-      <div className="space-y-2">
-        <h3 className="text-foreground text-sm font-semibold">
-          Dirección de entrega
-        </h3>
-        <p className="text-muted-foreground text-xs">
-          Quedará fijada al confirmarse el pago. Revísala antes de pagar.
-        </p>
+      <div className="border-border space-y-4 border-t pt-4">
+        <div className="space-y-1">
+          <h3 className="text-foreground text-sm font-semibold">
+            Dirección de entrega
+          </h3>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Completa la dirección antes de pagar. Al confirmarse el pago, queda
+            fijada.
+          </p>
+        </div>
         <DeliveryAddressFields
           idPrefix={`checkout-${orderId}`}
           initialValues={deliveryPrefill}
