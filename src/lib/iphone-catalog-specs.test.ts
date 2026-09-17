@@ -4,6 +4,7 @@
  * @dependencies node:test, node:assert/strict, iphone-catalog-data, iphone-catalog-specs
  * @changelog 2026-09-15 — Canonical names, mAh caption, sibling unique-feature alignment.
  * @changelog 2026-09-15 — Unique features follow a shared capability matrix.
+ * @changelog 2026-09-17 — Camera and chip copy match unique-feature hardware.
  */
 
 import assert from "node:assert/strict";
@@ -264,6 +265,77 @@ describe("iphone catalog specs", () => {
         slug,
       );
     }
+  });
+
+  it("keeps Fusion branding and 48 MP ultra-wide on 16+ only", () => {
+    const fourteenPro = getRequiredCatalogModelSpecs("iphone-14-pro");
+    assert.equal(fourteenPro.cameraHeadline, "Sistema de cámaras Pro de 48 MP");
+    assert.ok(
+      fourteenPro.cameraDetails.includes("Ultra gran angular de 12 MP"),
+    );
+    assert.ok(fourteenPro.cameraDetails.some((line) => line.includes("(3×)")));
+
+    const fifteenPro = getRequiredCatalogModelSpecs("iphone-15-pro");
+    assert.equal(fifteenPro.cameraHeadline, "Sistema de cámaras Pro de 48 MP");
+    assert.doesNotMatch(fifteenPro.cameraHeadline, /Fusion/);
+    assert.ok(fifteenPro.cameraDetails.includes("Ultra gran angular de 12 MP"));
+    assert.ok(fifteenPro.cameraDetails.some((line) => line.includes("(3×)")));
+
+    const fifteenProMax = getRequiredCatalogModelSpecs("iphone-15-pro-max");
+    assert.ok(
+      fifteenProMax.cameraDetails.some((line) => line.includes("(5×)")),
+    );
+
+    const sixteen = getRequiredCatalogModelSpecs("iphone-16");
+    assert.match(sixteen.cameraHeadline, /Fusion/);
+    assert.ok(sixteen.cameraDetails.includes("Ultra gran angular de 12 MP"));
+
+    const sixteenPro = getRequiredCatalogModelSpecs("iphone-16-pro");
+    assert.match(sixteenPro.cameraHeadline, /Fusion/);
+    assert.ok(
+      sixteenPro.cameraDetails.includes("Fusion ultra gran angular de 48 MP"),
+    );
+    assert.ok(sixteenPro.cameraDetails.some((line) => line.includes("(5×)")));
+
+    const seventeen = getRequiredCatalogModelSpecs("iphone-17");
+    assert.ok(
+      seventeen.cameraDetails.includes("Fusion ultra gran angular de 48 MP"),
+    );
+
+    const seventeenPro = getRequiredCatalogModelSpecs("iphone-17-pro");
+    assert.ok(seventeenPro.cameraDetails.some((line) => line.includes("(8×)")));
+    assert.ok(seventeenPro.uniqueFeatures.includes("Zoom óptico 8×"));
+  });
+
+  it("uses the correct GPU core count for binned A18 and A19 chips", () => {
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-16").chipDetail,
+      "GPU de 5 núcleos",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-16e").chipDetail,
+      "GPU de 4 núcleos",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-se-4").chipDetail,
+      "GPU de 4 núcleos",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-17").chipDetail,
+      "GPU de 5 núcleos con Neural Accelerators",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-17e").chipDetail,
+      "GPU de 4 núcleos con Neural Accelerators",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-air").chipDetail,
+      "GPU de 5 núcleos con Neural Accelerators",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-17-pro").chipDetail,
+      "GPU de 6 núcleos con Neural Accelerators",
+    );
   });
 
   it("aligns shared unique features on the same compare row", () => {

@@ -4,6 +4,7 @@
  * @dependencies iphone-catalog-data
  * @changelog 2026-09-15 — Canonical unique-feature names; battery mAh caption; sibling highlights aligned.
  * @changelog 2026-09-15 — Unique features come from a shared capability matrix so compare stays factual.
+ * @changelog 2026-09-17 — Camera and chip copy match the same generation hardware as unique features.
  */
 
 import { IPHONE_CATALOG_MODELS } from "@/lib/iphone-catalog-data";
@@ -237,6 +238,21 @@ const OPTICAL_ZOOM_BY_SLUG: Record<string, string> = {
 };
 
 /**
+ * opticalZoomFactor
+ *
+ * Strips the shared "Zoom óptico" prefix so camera detail lines can reuse
+ * the same factor as unique-feature chips.
+ *
+ * @param slug - Catalog model slug.
+ * @returns Factor such as `5×`, or undefined when the model has no telephoto.
+ * @calledBy buildCameraPresentation
+ */
+function opticalZoomFactor(slug: string): string | undefined {
+  const label = OPTICAL_ZOOM_BY_SLUG[slug];
+  return label?.replace(/^Zoom óptico /, "");
+}
+
+/**
  * formatCatalogDisplaySize
  *
  * Formats a diagonal display size for Spanish UI copy.
@@ -289,15 +305,25 @@ function buildChipHeadline(chip: string): string {
  */
 function buildChipDetail(slug: string, chip: string): string | undefined {
   if (chip.includes("A19 Pro")) {
+    // Air ships a 5-core A19 Pro; 17 Pro / Pro Max use the 6-core bin
+    if (slug === "iphone-air") {
+      return "GPU de 5 núcleos con Neural Accelerators";
+    }
     return "GPU de 6 núcleos con Neural Accelerators";
   }
   if (chip.includes("A19")) {
-    return "GPU de 4 núcleos con Neural Accelerators";
+    if (slug === "iphone-17e") {
+      return "GPU de 4 núcleos con Neural Accelerators";
+    }
+    return "GPU de 5 núcleos con Neural Accelerators";
   }
   if (chip.includes("A18 Pro")) {
     return "GPU de 6 núcleos";
   }
   if (chip.includes("A18")) {
+    if (slug === "iphone-16e" || slug === "iphone-se-4") {
+      return "GPU de 4 núcleos";
+    }
     return "GPU de 5 núcleos";
   }
   if (chip.includes("A17 Pro")) {
@@ -376,62 +402,84 @@ function buildCameraPresentation(
     };
   }
 
+  const zoom = opticalZoomFactor(slug);
+
+  // 17 Pro: 48 MP Fusion on all three cameras; unique features use 8×
   if (slug.includes("17-pro")) {
     return {
       cameraHeadline: "Sistema de cámaras Pro Fusion de 48 MP",
       cameraDetails: [
         "Fusion principal de 48 MP (ƒ/1.78)",
         "Fusion ultra gran angular de 48 MP",
-        "Fusion teleobjetivo de 48 MP (4×) + escáner LiDAR",
+        `Fusion teleobjetivo de 48 MP (${zoom}) + escáner LiDAR`,
       ],
       cameraModuleVariant: "triple",
     };
   }
 
-  if (
-    slug.includes("16-pro") ||
-    slug.includes("15-pro") ||
-    slug.includes("14-pro") ||
-    slug.includes("13-pro") ||
-    slug.includes("12-pro")
-  ) {
-    const generation = slug.includes("12")
-      ? "12 MP"
-      : slug.includes("13")
-        ? "12 MP"
-        : "48 MP";
+  // 16 Pro: Fusion 48 MP main + ultra-wide, 12 MP 5× telephoto
+  if (slug.includes("16-pro")) {
     return {
-      cameraHeadline: `Sistema de cámaras Pro${generation === "48 MP" ? " Fusion" : ""} de ${generation}`,
-      cameraDetails:
-        generation === "48 MP"
-          ? [
-              "Fusion principal de 48 MP",
-              "Fusion ultra gran angular de 48 MP",
-              "Fusion teleobjetivo + escáner LiDAR",
-            ]
-          : [
-              "Teleobjetivo, gran angular y ultra gran angular de 12 MP",
-              "Escáner LiDAR",
-            ],
-      cameraModuleVariant: "triple",
-    };
-  }
-
-  if (slug === "iphone-17" || slug.includes("16") || slug.includes("15")) {
-    const usesFusion = slug.includes("16") || slug === "iphone-17";
-    return {
-      cameraHeadline:
-        slug === "iphone-17"
-          ? "Sistema Fusion dual de 48 MP"
-          : usesFusion
-            ? "Sistema Fusion de cámaras de 48 MP"
-            : "Sistema de cámaras de 48 MP",
+      cameraHeadline: "Sistema de cámaras Pro Fusion de 48 MP",
       cameraDetails: [
-        usesFusion ? "Fusion principal de 48 MP" : "Gran angular de 48 MP",
-        usesFusion
-          ? "Fusion ultra gran angular de 48 MP"
-          : "Ultra gran angular de 48 MP",
+        "Fusion principal de 48 MP",
+        "Fusion ultra gran angular de 48 MP",
+        `Teleobjetivo de 12 MP (${zoom}) + escáner LiDAR`,
       ],
+      cameraModuleVariant: "triple",
+    };
+  }
+
+  // 14/15 Pro: 48 MP main, 12 MP ultra-wide, 12 MP telephoto (Fusion starts at 16)
+  if (slug.includes("15-pro") || slug.includes("14-pro")) {
+    return {
+      cameraHeadline: "Sistema de cámaras Pro de 48 MP",
+      cameraDetails: [
+        "Principal de 48 MP",
+        "Ultra gran angular de 12 MP",
+        `Teleobjetivo de 12 MP (${zoom}) + escáner LiDAR`,
+      ],
+      cameraModuleVariant: "triple",
+    };
+  }
+
+  if (slug.includes("13-pro") || slug.includes("12-pro")) {
+    return {
+      cameraHeadline: "Sistema de cámaras Pro de 12 MP",
+      cameraDetails: [
+        "Gran angular y ultra gran angular de 12 MP",
+        `Teleobjetivo de 12 MP (${zoom}) + escáner LiDAR`,
+      ],
+      cameraModuleVariant: "triple",
+    };
+  }
+
+  if (slug === "iphone-17") {
+    return {
+      cameraHeadline: "Sistema Fusion dual de 48 MP",
+      cameraDetails: [
+        "Fusion principal de 48 MP",
+        "Fusion ultra gran angular de 48 MP",
+      ],
+      cameraModuleVariant: "dual",
+    };
+  }
+
+  if (slug === "iphone-16" || slug === "iphone-16-plus") {
+    return {
+      cameraHeadline: "Sistema Fusion de cámaras de 48 MP",
+      cameraDetails: [
+        "Fusion principal de 48 MP",
+        "Ultra gran angular de 12 MP",
+      ],
+      cameraModuleVariant: "dual",
+    };
+  }
+
+  if (slug === "iphone-15" || slug === "iphone-15-plus") {
+    return {
+      cameraHeadline: "Sistema de cámaras de 48 MP",
+      cameraDetails: ["Gran angular de 48 MP", "Ultra gran angular de 12 MP"],
       cameraModuleVariant: "dual",
     };
   }
@@ -731,7 +779,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     resolution: "2556 × 1179 píxeles (460 ppp)",
     ramGb: 6,
     chip: "Apple A16 Bionic",
-    cameras: "Dual 48 MP (gran angular + ultra gran angular)",
+    cameras: "Dual 48 MP + 12 MP (gran angular + ultra gran angular)",
     batteryMah: 3349,
   },
   "iphone-15-plus": {
@@ -739,7 +787,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     resolution: "2796 × 1290 píxeles (460 ppp)",
     ramGb: 6,
     chip: "Apple A16 Bionic",
-    cameras: "Dual 48 MP (gran angular + ultra gran angular)",
+    cameras: "Dual 48 MP + 12 MP (gran angular + ultra gran angular)",
     batteryMah: 4383,
   },
   "iphone-15-pro": {
@@ -763,7 +811,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     resolution: "2556 × 1179 píxeles (460 ppp)",
     ramGb: 8,
     chip: "Apple A18",
-    cameras: "Dual 48 MP Fusion (gran angular + ultra gran angular)",
+    cameras: "Dual 48 MP Fusion + 12 MP (gran angular + ultra gran angular)",
     batteryMah: 3561,
   },
   "iphone-16-plus": {
@@ -771,7 +819,7 @@ const SPECS_BY_SLUG: Record<string, CatalogModelSpecsSeed> = {
     resolution: "2796 × 1290 píxeles (460 ppp)",
     ramGb: 8,
     chip: "Apple A18",
-    cameras: "Dual 48 MP Fusion (gran angular + ultra gran angular)",
+    cameras: "Dual 48 MP Fusion + 12 MP (gran angular + ultra gran angular)",
     batteryMah: 4674,
   },
   "iphone-16-pro": {
