@@ -87,9 +87,9 @@ JSON-LD from a Server Component (`<script type="application/ld+json">`). Mark up
 | FAQ                                      | `src/lib/help/faq.ts` (`FAQ_CLUSTERS`) → `/ayuda`                                         |
 | Listing metadata                         | `src/app/anuncios/[slug]/page.tsx`                                                        |
 | Sitemap / robots                         | `src/app/sitemap.ts`, `src/app/robots.ts` (Phase 18; create if missing)                   |
-| Guides / landings                        | No route yet (Phase 18 "future"). Deliver Markdown/TSX draft; confirm the route with the user before adding one |
+| Guides                               | `content/guias/<slug>.md` + `src/app/guias/` (index + `[slug]`). Add a new `.md` file; `published: false` keeps it off the sitemap. Confirm the slug with the user before publishing. |
 
-Indexable: `/`, `/explorar`, `/buscar`, `/anuncios/[slug]`, `/u/[username]`, `/ayuda`.
+Indexable: `/`, `/explorar`, `/buscar`, `/anuncios/[slug]`, `/u/[username]`, `/ayuda`, `/guias`, `/guias/[slug]`.
 Never index: `(account)/*`, `/revision/*`, `/verificacion/*`, `/vender/[listingId]/*`, `/auth/*`, `(auth)/*`, `/api/*` → `robots: { index: false }`.
 
 Code rules: Server Components; `Metadata` API (no `next/head`); read `node_modules/next/dist/docs/` for the installed Next.js before using metadata/sitemap/robots APIs; follow `.agents/skills/code-documentation`; reuse `AppShell`, `SiteFooter`, existing cards — no duplicate components.

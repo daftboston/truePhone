@@ -39,10 +39,11 @@ Keep "iPhone" capitalized as Apple writes it. Model names as in `src/lib/iphone-
 
 | Intent examples | Page | Notes |
 | --------------- | ---- | ----- |
-| `cómo saber si un iPhone es robado`, `verificar IMEI Colombia`, `consultar IMEI` | Guide | Link to the official Colombian IMEI check after verifying the current URL with a live search |
+| `verificar IMEI Colombia`, `consultar IMEI` | Guide | Cite https://www.imeicolombia.com.co/ConsultaPublicaIMEI/ after a live re-check |
 | `qué es Activation Lock`, `iPhone bloqueado por iCloud comprar` | Guide | Explain in plain Spanish; cite Apple Support |
 | `salud de batería iPhone usado cuánto es bueno`, `batería 85% iPhone usado` | Guide | Mention the ≤ 1 point tolerance rule honestly |
-| `estafas iPhone usado`, `cómo evitar estafas comprando celular usado` | Guide + `/ayuda#seguridad` | Calm, factual; no fear-based headlines |
+| `estafas iPhone usado`, `cómo evitar estafas comprando celular usado` | `/guias/estafas-iphone-marketplace-whatsapp-colombia` + `/ayuda#seguridad` | Calm, factual; no fear-based headlines |
+| `cómo saber si la pantalla del iPhone es original`, `batería original iPhone usado` | Guide (backlog 9) | Distinct from battery %; Apple Parts and Service History |
 | `iPhone usado vs reacondicionado` | Guide | Informative; positions TruePhone accurately |
 | `revisar iPhone usado antes de comprar checklist` | Guide | Practical checklist; ties to the 24-hour window |
 

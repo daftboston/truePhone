@@ -55,7 +55,7 @@ Every claim below is sourced from `docs/`. When a doc changes, this file is wron
 
 | Fact | Value | Source |
 | ---- | ----- | ------ |
-| IMEI | Required on every listing; reviewers check it | PRD §21 |
+| IMEI | Required on every listing; reviewers check it. Public Colombia check: [consulta pública IMEI](https://www.imeicolombia.com.co/ConsultaPublicaIMEI/) (operators / CRC / MinTIC; re-verify before citing) | PRD §21 |
 | Activation Lock | Seller confirms the device is free of Activation Lock; listing is not published otherwise | PRD §20 Step 5, §21 |
 | Duplicate / fraud checks | Reviewers check duplicates, fraud indicators, price reasonableness | PRD §21 |
 | Messaging | On-platform; phone numbers not exposed by default | PRD §25 |
