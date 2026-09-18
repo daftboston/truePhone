@@ -287,7 +287,7 @@ describe("matchModelsForSearch", () => {
 });
 
 describe("getIphoneFaceStyle", () => {
-  it("uses a home button for SE, notch for 12–13 and 14/16e, island otherwise", () => {
+  it("uses a home button for SE 3, island for SE 4, notch for 12–13, 14, and e-series", () => {
     assert.equal(
       getIphoneFaceStyle({
         productLine: "IPHONE_SE",
@@ -295,6 +295,14 @@ describe("getIphoneFaceStyle", () => {
         variantType: "STANDARD",
       }),
       "home",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE_SE",
+        generation: 4,
+        variantType: "STANDARD",
+      }),
+      "island",
     );
     assert.equal(
       getIphoneFaceStyle({
@@ -316,6 +324,14 @@ describe("getIphoneFaceStyle", () => {
       getIphoneFaceStyle({
         productLine: "IPHONE",
         generation: 16,
+        variantType: "E",
+      }),
+      "notch",
+    );
+    assert.equal(
+      getIphoneFaceStyle({
+        productLine: "IPHONE",
+        generation: 17,
         variantType: "E",
       }),
       "notch",

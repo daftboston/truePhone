@@ -1,15 +1,17 @@
 /**
  * @file iphone-catalog-specs.test.ts
  * @description Ensures every active catalog model has published hardware specs.
- * @dependencies node:test, node:assert/strict, iphone-catalog-data, iphone-catalog-specs
+ * @dependencies node:test, node:assert/strict, iphone-catalog, iphone-catalog-data, iphone-catalog-specs
  * @changelog 2026-09-15 — Canonical names, mAh caption, sibling unique-feature alignment.
  * @changelog 2026-09-15 — Unique features follow a shared capability matrix.
  * @changelog 2026-09-17 — Camera and chip copy match unique-feature hardware.
+ * @changelog 2026-09-18 — Unique-feature pass for 17e, 16/17 macro, and MagSafe gaps.
  */
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { getIphoneFaceStyle } from "@/lib/iphone-catalog";
 import {
   IPHONE_CATALOG_MODELS,
   IPHONE_CATALOG_RETIRED_SLUGS,
@@ -253,6 +255,126 @@ describe("iphone catalog specs", () => {
       getRequiredCatalogModelSpecs("iphone-15").uniqueFeatures.includes(
         "Dynamic Island",
       ),
+    );
+  });
+
+  it("keeps Dynamic Island off e-series phones and Center Stage off 17e", () => {
+    for (const slug of ["iphone-16e", "iphone-17e"]) {
+      assert.equal(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "Dynamic Island",
+        ),
+        false,
+        slug,
+      );
+    }
+
+    const seventeenE = getRequiredCatalogModelSpecs("iphone-17e");
+    assert.equal(seventeenE.frontCameraHeadline, "Cámara TrueDepth de 12 MP");
+    assert.doesNotMatch(seventeenE.frontCameraHeadline ?? "", /Center Stage/);
+
+    const seventeen = getRequiredCatalogModelSpecs("iphone-17");
+    assert.equal(
+      seventeen.frontCameraHeadline,
+      "Cámara frontal Center Stage de 18 MP",
+    );
+    assert.ok(seventeen.uniqueFeatures.includes("Dynamic Island"));
+  });
+
+  it("lists macro on 16/17 dual cameras, not on 15, e-series, Air, or SE 4", () => {
+    for (const slug of [
+      "iphone-16",
+      "iphone-16-plus",
+      "iphone-16-pro",
+      "iphone-17",
+      "iphone-17-pro",
+    ]) {
+      assert.ok(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "Fotografía macro",
+        ),
+        slug,
+      );
+    }
+
+    for (const slug of [
+      "iphone-15",
+      "iphone-15-plus",
+      "iphone-16e",
+      "iphone-17e",
+      "iphone-air",
+      "iphone-se-4",
+    ]) {
+      assert.equal(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "Fotografía macro",
+        ),
+        false,
+        slug,
+      );
+    }
+  });
+
+  it("lists MagSafe only on chassis that ship the magnet array", () => {
+    for (const slug of ["iphone-se-3", "iphone-16e"]) {
+      assert.equal(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes("MagSafe"),
+        false,
+        slug,
+      );
+    }
+
+    for (const slug of [
+      "iphone-12",
+      "iphone-se-4",
+      "iphone-16",
+      "iphone-17e",
+      "iphone-air",
+    ]) {
+      assert.ok(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes("MagSafe"),
+        slug,
+      );
+    }
+  });
+
+  it("keeps Dynamic Island unique features in sync with island glyphs", () => {
+    for (const model of IPHONE_CATALOG_MODELS) {
+      const hasIslandFeature = getRequiredCatalogModelSpecs(
+        model.slug,
+      ).uniqueFeatures.includes("Dynamic Island");
+      const face = getIphoneFaceStyle(model);
+      assert.equal(
+        hasIslandFeature,
+        face === "island",
+        `${model.slug} uniqueFeatures=${hasIslandFeature} face=${face}`,
+      );
+    }
+  });
+
+  it("keeps Dynamic Island on SE 4 and aligns 16 vs 16 Pro macro on the same row", () => {
+    assert.ok(
+      getRequiredCatalogModelSpecs("iphone-se-4").uniqueFeatures.includes(
+        "Dynamic Island",
+      ),
+    );
+
+    const rows = alignUniqueFeatures(
+      getRequiredCatalogModelSpecs("iphone-16").uniqueFeatures,
+      getRequiredCatalogModelSpecs("iphone-16-pro").uniqueFeatures,
+    );
+    assert.deepEqual(
+      rows.find((row) => row.left === "Fotografía macro"),
+      { left: "Fotografía macro", right: "Fotografía macro" },
+    );
+
+    const islandRows = alignUniqueFeatures(
+      getRequiredCatalogModelSpecs("iphone-16").uniqueFeatures,
+      getRequiredCatalogModelSpecs("iphone-17e").uniqueFeatures,
+    );
+    assert.deepEqual(
+      islandRows.find((row) => row.left === "Dynamic Island"),
+      { left: "Dynamic Island", right: "—" },
     );
   });
 
