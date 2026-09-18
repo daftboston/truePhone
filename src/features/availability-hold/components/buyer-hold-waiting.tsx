@@ -15,7 +15,7 @@ import {
   BUYER_HOLD_EXPIRED_BODY,
   BUYER_HOLD_PENDING_INTRO,
   BUYER_HOLD_PENDING_PLAZO_LABEL,
-} from "@/lib/availability-hold";
+} from "@/lib/availability-hold/copy";
 import type { AvailabilityHoldStatus } from "@prisma/client";
 
 type BuyerHoldWaitingProps = {
