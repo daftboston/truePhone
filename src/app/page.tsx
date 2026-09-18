@@ -15,10 +15,7 @@ import { ListingCard } from "@/components/listing-card";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { RecentlyViewedSection } from "@/features/listings/components/recently-viewed-section";
-import {
-  HomeLandingPreference,
-  LandingPreferenceRecorder,
-} from "@/features/listings/components/landing-preference-sync";
+import { HomeLandingPreference } from "@/features/listings/components/landing-preference-sync";
 import { conditionLabels } from "@/features/listings/schemas/listing";
 import { getCurrentProfile } from "@/lib/auth/session";
 import {

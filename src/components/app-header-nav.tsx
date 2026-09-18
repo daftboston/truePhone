@@ -84,7 +84,7 @@ export function AppHeaderNav() {
   const pathname = usePathname();
   const explorarActive =
     pathname.startsWith("/explorar") || pathname.startsWith("/buscar");
-  const anunciosActive = pathname === "/anuncios";
+  const anunciosActive = pathname.startsWith("/anuncios");
 
   return (
     <nav className="flex items-center gap-6" aria-label="Principal">

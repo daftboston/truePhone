@@ -9,12 +9,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, PlusCircle, UserRound } from "lucide-react";
+import { LayoutGrid, Search, PlusCircle, UserRound } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const items = [
-  { href: "/?ref=inicio", label: "Inicio", icon: Home },
+  { href: "/anuncios", label: "Anuncios", icon: LayoutGrid },
   { href: "/explorar", label: "Explorar", icon: Search },
   { href: "/vender", label: "Vender", icon: PlusCircle },
   { href: "/perfil", label: "Perfil", icon: UserRound },
@@ -27,7 +27,7 @@ type BottomNavProps = {
 /**
  * BottomNav
  *
- * Highlights the active route among Inicio, Explorar, Vender, and Perfil.
+ * Highlights the active route among Anuncios, Explorar, Vender, and Perfil.
  *
  * @param props.className - Optional nav className.
  * @returns Fixed bottom nav for md:hidden viewports.
@@ -47,8 +47,8 @@ export function BottomNav({ className }: BottomNavProps) {
       <ul className="mx-auto grid max-w-lg grid-cols-4">
         {items.map(({ href, label, icon: Icon }) => {
           const active =
-            href === "/?ref=inicio"
-              ? pathname === "/"
+            href === "/anuncios"
+              ? pathname.startsWith("/anuncios")
               : href === "/explorar"
                 ? pathname.startsWith("/explorar") ||
                   pathname.startsWith("/buscar")
