@@ -47,6 +47,8 @@ import {
   listingHadPaidOrder,
 } from "@/features/listings/lib/seller-listing-hub";
 import { listingWizardNextPath } from "@/features/listings/lib/listing-wizard-intent";
+import { recordAlsoListedSellerWarningAck } from "@/lib/availability-hold/service";
+import { buildPriceDropBoostUpdate } from "@/lib/listings/boost";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { prisma } from "@/lib/db";
 import { createClient } from "@/lib/supabase/server";
@@ -67,6 +69,26 @@ const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
  */
 function checkboxValue(formData: FormData, name: string) {
   return formData.get(name) === "on" || formData.get(name) === "true";
+}
+
+/**
+ * parseAlsoListedElsewhere
+ *
+ * Validates multi-platform disclosure + mandatory modal acknowledgement (F3).
+ */
+function parseAlsoListedElsewhere(
+  formData: FormData,
+): { ok: true; value: boolean } | { ok: false; error: string } {
+  const alsoListed = formData.get("alsoListedElsewhere") === "true";
+  const acknowledged = formData.get("alsoListedAcknowledged") === "true";
+  if (alsoListed && !acknowledged) {
+    return {
+      ok: false,
+      error:
+        "Debes leer y aceptar el aviso sobre publicación en otras plataformas.",
+    };
+  }
+  return { ok: true, value: alsoListed };
 }
 
 /**
@@ -157,6 +179,11 @@ export async function createListingAction(
     };
   }
 
+  const alsoListed = parseAlsoListedElsewhere(formData);
+  if (!alsoListed.ok) {
+    return { ok: false, error: alsoListed.error };
+  }
+
   const [model, color, storage] = await Promise.all([
     prisma.iphoneModel.findUnique({ where: { id: parsed.data.iphoneModelId } }),
     prisma.iphoneColor.findUnique({ where: { id: parsed.data.iphoneColorId } }),
@@ -224,6 +251,7 @@ export async function createListingAction(
       hasBox: Boolean(parsed.data.hasBox),
       hasCharger: Boolean(parsed.data.hasCharger),
       hasReceipt: Boolean(parsed.data.hasReceipt),
+      alsoListedElsewhere: alsoListed.value,
       status: "DRAFT",
       possessionChallenge: {
         create: {
@@ -233,6 +261,13 @@ export async function createListingAction(
       },
     },
   });
+
+  if (alsoListed.value) {
+    await recordAlsoListedSellerWarningAck({
+      listingId: listing.id,
+      sellerId: seller.current.profile.id,
+    });
+  }
 
   revalidatePath("/vender");
   redirect(
@@ -287,6 +322,11 @@ export async function updateListingDetailsAction(
       error: "Revisa los datos del dispositivo.",
       fieldErrors: fieldErrorsFromZod(parsed.error),
     };
+  }
+
+  const alsoListed = parseAlsoListedElsewhere(formData);
+  if (!alsoListed.ok) {
+    return { ok: false, error: alsoListed.error };
   }
 
   const [model, color, storage] = await Promise.all([
@@ -348,8 +388,16 @@ export async function updateListingDetailsAction(
       hasBox: Boolean(parsed.data.hasBox),
       hasCharger: Boolean(parsed.data.hasCharger),
       hasReceipt: Boolean(parsed.data.hasReceipt),
+      alsoListedElsewhere: alsoListed.value,
     },
   });
+
+  if (alsoListed.value) {
+    await recordAlsoListedSellerWarningAck({
+      listingId: listing.id,
+      sellerId: seller.current.profile.id,
+    });
+  }
 
   revalidatePath(`/vender/${listing.id}`);
   revalidatePath("/vender");
@@ -991,4 +1039,69 @@ export async function relistListingAction(listingId: string) {
  */
 export async function loadCatalogAction() {
   return getCatalog();
+}
+
+/**
+ * updatePublishedListingPriceAction
+ *
+ * Lets sellers lower price on published unsold listings; may trigger silent boost (F2).
+ */
+export async function updatePublishedListingPriceAction(
+  listingId: string,
+  formData: FormData,
+): Promise<ListingActionState> {
+  const seller = await requireVerifiedSeller();
+  if (!seller.ok) {
+    return { ok: false, error: seller.error };
+  }
+
+  const listing = await getOwnedListing(listingId, seller.current.profile.id);
+  if (!listing || listing.status !== "PUBLISHED") {
+    return {
+      ok: false,
+      error: "Solo puedes ajustar el precio de anuncios publicados.",
+    };
+  }
+
+  const rawPrice = formData.get("price");
+  const newPrice = Number(rawPrice);
+  if (
+    !Number.isInteger(newPrice) ||
+    newPrice < 100_000 ||
+    newPrice > 20_000_000
+  ) {
+    return { ok: false, error: "Precio inválido." };
+  }
+
+  const boostUpdate = buildPriceDropBoostUpdate({
+    currentPrice: listing.price,
+    newPrice,
+    priceAtPublish: listing.priceAtPublish,
+    boostUntil: listing.boostUntil,
+  });
+
+  const fees = computeFees(newPrice);
+  await prisma.listing.update({
+    where: { id: listing.id },
+    data: {
+      price: newPrice,
+      platformFee: fees.platformFee,
+      finalPrice: fees.finalPrice,
+      ...(boostUpdate?.priceAtPublish
+        ? {
+            priceAtPublish: boostUpdate.priceAtPublish,
+            boostUntil: boostUpdate.boostUntil,
+          }
+        : {}),
+    },
+  });
+
+  revalidatePath(`/vender/${listing.id}`);
+  revalidatePath("/vender");
+  if (listing.slug) {
+    revalidatePath(publicListingPath(listing.slug));
+  }
+  revalidatePath("/", "layout");
+
+  return { ok: true, message: "Precio actualizado." };
 }

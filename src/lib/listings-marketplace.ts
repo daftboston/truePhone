@@ -163,12 +163,33 @@ function buildPublishedWhere(
  * @calledBy Home page featured section
  */
 export async function listFeaturedListings(limit = 8) {
-  return prisma.listing.findMany({
-    where: publishedListingWhere,
+  const now = new Date();
+  const boosted = await prisma.listing.findMany({
+    where: {
+      ...publishedListingWhere,
+      boostUntil: { gt: now },
+    },
     include: listingCardInclude,
-    orderBy: orderByClause("newest"),
+    orderBy: [{ boostUntil: "desc" }, { approvedAt: "desc" }],
     take: limit,
   });
+
+  if (boosted.length >= limit) {
+    return boosted.slice(0, limit);
+  }
+
+  const boostedIds = boosted.map((row) => row.id);
+  const rest = await prisma.listing.findMany({
+    where: {
+      ...publishedListingWhere,
+      id: boostedIds.length > 0 ? { notIn: boostedIds } : undefined,
+    },
+    include: listingCardInclude,
+    orderBy: orderByClause("newest"),
+    take: limit - boosted.length,
+  });
+
+  return [...boosted, ...rest];
 }
 
 /**

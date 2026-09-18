@@ -18,10 +18,10 @@ export const LEGAL_CONTACT_MAILTO = `mailto:${LEGAL_CONTACT_EMAIL}`;
 export const LEGAL_JURISDICTION = "Colombia";
 
 /** ISO date for last-updated stamps (YYYY-MM-DD). */
-export const LEGAL_LAST_UPDATED_ISO = "2026-09-17";
+export const LEGAL_LAST_UPDATED_ISO = "2026-09-18";
 
 /** Spanish last-updated label shown on legal pages. */
-export const LEGAL_LAST_UPDATED_LABEL = "17 de septiembre de 2026";
+export const LEGAL_LAST_UPDATED_LABEL = "18 de septiembre de 2026";
 
 /** Registered operator name (persona natural). */
 export const LEGAL_RAZON_SOCIAL = "Daniel Santoyo Panche";

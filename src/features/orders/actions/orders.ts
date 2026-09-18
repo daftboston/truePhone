@@ -17,13 +17,16 @@ import {
 } from "@/features/orders/schemas/order";
 import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { requestAvailabilityHold } from "@/lib/availability-hold/service";
 import {
   cancelOrder,
   chooseRefundAfterSellerAbandon,
   createOrderAndReserveListing,
 } from "@/lib/orders";
+import { notifySellerAvailabilityHoldRequest } from "@/lib/notifications/availability-hold";
 import { safeNotify } from "@/lib/notifications/marketplace";
 import { notifyBuyerRefundCompleted } from "@/lib/notifications/order-support";
+import { publicListingPath } from "@/lib/listings-marketplace";
 
 /**
  * revalidateOrderPaths
@@ -116,6 +119,37 @@ export async function createOrderAction(
       error: "Anuncio inválido.",
       fieldErrors: fieldErrorsFromZod(parsed.error),
     };
+  }
+
+  const listing = await prisma.listing.findFirst({
+    where: { id: parsed.data.listingId, deletedAt: null },
+    select: { alsoListedElsewhere: true, slug: true },
+  });
+  if (!listing) {
+    return { ok: false, error: "Anuncio no encontrado." };
+  }
+
+  if (listing.alsoListedElsewhere) {
+    const holdResult = await requestAvailabilityHold({
+      listingId: parsed.data.listingId,
+      buyerId: current.profile.id,
+    });
+    if (!holdResult.ok) {
+      return { ok: false, error: holdResult.error };
+    }
+    const siteOrigin = await getRequestOrigin();
+    await safeNotify(
+      notifySellerAvailabilityHoldRequest({
+        holdId: holdResult.holdId,
+        siteOrigin,
+      }),
+    );
+    if (listing.slug) {
+      revalidatePath(publicListingPath(listing.slug));
+    }
+    revalidatePath("/compras");
+    revalidatePath("/notificaciones");
+    redirect(`/compras/disponibilidad/${holdResult.holdId}`);
   }
 
   const result = await createOrderAndReserveListing({

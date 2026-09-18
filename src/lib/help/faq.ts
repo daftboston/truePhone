@@ -72,6 +72,17 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
         answer:
           "Soporte revisa primero la solicitud del vendedor. Si la acepta, te avisamos en TruePhone y en el pedido eliges: reembolso, o una compra de reemplazo con 8% de protección una sola vez. El reembolso sigue disponible mientras no uses esa compensación. El anuncio queda archivado y no vuelve al mercado.",
       },
+      {
+        question: "¿Qué significa «También en otros sitios»?",
+        answer:
+          "El vendedor indicó que el iPhone también puede estar publicado fuera de TruePhone. Antes de cobrarte, le pedimos que confirme que sigue disponible. Verás «Esperando confirmación del vendedor» con un plazo; solo después podrás pagar en TruePhone.",
+        links: [{ href: LEGAL_PATHS.terms, label: "Términos" }],
+      },
+      {
+        question: "¿Qué pasa si el vendedor no confirma a tiempo?",
+        answer:
+          "Si no responde dentro del plazo, la solicitud vence y no se te cobra. El anuncio puede seguir publicado; puedes intentar de nuevo más tarde o explorar otros equipos. Esto no es retracto: el cobro nunca se inició.",
+      },
     ],
   },
   {
@@ -129,6 +140,18 @@ export const FAQ_CLUSTERS: FaqCluster[] = [
         question: "¿Qué pasa con mi anuncio si cancelo una venta ya pagada?",
         answer:
           "Abre «Contactar soporte» en la venta y envía una solicitud con el motivo. No cancela de inmediato: el equipo de TruePhone puede responder, pedir información o decidir. Si lo acepta, el pedido se cancela y el anuncio queda archivado. El incidente permanece privado para nuestro equipo; no aparece como contador público ni permite una reseña del pedido cancelado.",
+      },
+      {
+        question:
+          "¿Qué pasa si también publico el iPhone en Facebook o Mercado Libre?",
+        answer:
+          "Puedes indicarlo al crear el anuncio. Se mostrará un aviso al comprador y, antes del pago, deberás confirmar que el iPhone sigue disponible. Si lo vendes en otro sitio, pausa o archiva el anuncio en TruePhone de inmediato.",
+        links: [{ href: LEGAL_PATHS.terms, label: "Términos" }],
+      },
+      {
+        question: "¿Debo confirmar disponibilidad antes de cada compra?",
+        answer:
+          "Solo en anuncios marcados como publicados también fuera de TruePhone. Te avisamos por correo y en la app cuando un comprador inicia el proceso; tienes un plazo limitado para responder sí o no.",
       },
     ],
   },

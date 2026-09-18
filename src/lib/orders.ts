@@ -20,6 +20,8 @@ import {
   resolveFeeKindForBuyer,
   sellerPaidSelfCancelBlocker,
 } from "@/lib/financial-core";
+import { ACTIVE_UNLOCK_BLOCK_MESSAGE } from "@/lib/availability-hold/copy";
+import { expireAvailabilityHoldsInTx } from "@/lib/availability-hold/service";
 import { prisma } from "@/lib/db";
 import { formatOrderMoney } from "@/lib/format-money";
 import {
@@ -285,8 +287,10 @@ type CreateOrderResult =
 export async function createOrderAndReserveListing(input: {
   listingId: string;
   buyerId: string;
+  /** Required when listing.alsoListedElsewhere is true (F3). */
+  availabilityHoldId?: string;
 }): Promise<CreateOrderResult> {
-  const { listingId, buyerId } = input;
+  const { listingId, buyerId, availabilityHoldId } = input;
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -308,12 +312,69 @@ export async function createOrderAndReserveListing(input: {
         );
       }
 
+      const now = new Date();
+      if (listing.alsoListedElsewhere) {
+        if (!availabilityHoldId) {
+          throw new OrderError(
+            "Debes esperar la confirmación del vendedor antes de comprar.",
+          );
+        }
+        await expireAvailabilityHoldsInTx(
+          tx,
+          { listingId, buyerId, holdId: availabilityHoldId },
+          "lazy_buy",
+          now,
+        );
+        const hold = await tx.availabilityHold.findFirst({
+          where: {
+            id: availabilityHoldId,
+            listingId,
+            buyerId,
+            status: "CONFIRMED",
+            orderId: null,
+          },
+        });
+        if (!hold) {
+          throw new OrderError(
+            "La confirmación de disponibilidad no es válida o ya expiró.",
+          );
+        }
+        if (hold.unlockExpiresAt && now > hold.unlockExpiresAt) {
+          throw new OrderError(
+            "El plazo para comprar después de la confirmación venció.",
+          );
+        }
+      }
+
       const existingActive = await tx.order.findFirst({
         where: { listingId, status: { in: ACTIVE_ORDER_STATUSES } },
         select: { id: true },
       });
       if (existingActive) {
         throw new OrderError("Este anuncio ya está reservado.");
+      }
+
+      const activeUnlock = await tx.availabilityHold.findFirst({
+        where: {
+          listingId,
+          status: "CONFIRMED",
+          unlockExpiresAt: { gt: now },
+          orderId: null,
+        },
+        select: { buyerId: true },
+      });
+      if (activeUnlock && activeUnlock.buyerId !== buyerId) {
+        throw new OrderError(ACTIVE_UNLOCK_BLOCK_MESSAGE);
+      }
+
+      const pendingHold = await tx.availabilityHold.findFirst({
+        where: { listingId, status: "PENDING" },
+        select: { buyerId: true },
+      });
+      if (pendingHold && pendingHold.buyerId !== buyerId) {
+        throw new OrderError(
+          "Otro comprador está esperando confirmación del vendedor.",
+        );
       }
 
       const { kind, entitlementId } = await resolveFeeKindForBuyer(buyerId, tx);

@@ -42,7 +42,8 @@ main  ← production
 ## Current focus
 
 1. Phase **23** leftovers — live production env + sandbox QA (FAQ, legal pages, branded emails, and fail-closed prod guards are in code)
-2. Phase **24** only when manual Wompi dispersion becomes the bottleneck
+2. **Features 1–3** (draft PR) — [ops sales ledger](./features/ops-sales-ledger.md), [seller check-ins](./features/seller-listing-checkins.md), [multi-platform availability hold](./features/multi-platform-availability-hold.md)
+3. Phase **24** only when manual Wompi dispersion becomes the bottleneck
 
 ### Planned (documented in plan.md v1.3 — not current sprint)
 

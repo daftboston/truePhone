@@ -184,6 +184,35 @@ enum NotificationType {
   FULFILLMENT_ESCALATED
   LISTING_QUESTION_NEW
   LISTING_QUESTION_ANSWERED
+  /// Seller must confirm iPhone still available before buyer checkout (F3).
+  AVAILABILITY_HOLD_REQUEST
+  AVAILABILITY_HOLD_CONFIRMED
+  AVAILABILITY_HOLD_DENIED
+  AVAILABILITY_HOLD_EXPIRED
+  /// Multi-platform listing reminder on publish (F3).
+  ALSO_LISTED_REMINDER
+  /// Day 7 / 14 seller check-ins for unsold listings (F2).
+  LISTING_CHECKIN_DAY7
+  LISTING_CHECKIN_DAY14
+}
+
+/// Multi-platform buy-path hold before Wompi checkout (F3).
+enum AvailabilityHoldStatus {
+  PENDING
+  CONFIRMED
+  DENIED
+  EXPIRED
+}
+
+/// Append-only audit kinds for availability holds (F3).
+enum AvailabilityHoldEventKind {
+  WARNING_ACK
+  CREATED
+  CONFIRMED
+  DENIED
+  EXPIRED
+  LATE_CONFIRM
+  PAYMENT_ATTEMPT
 }
 
 /// Seller-created workflow category for paid-order assistance.
@@ -285,6 +314,7 @@ model Profile {
   legalAcceptances          LegalAcceptance[]
   deliveryAddressChangesRequested OrderDeliveryAddressChange[] @relation("DeliveryAddressChangeRequester")
   deliveryAddressChangesResponded OrderDeliveryAddressChange[] @relation("DeliveryAddressChangeResponder")
+  availabilityHoldsAsBuyer        AvailabilityHold[]         @relation("AvailabilityHoldBuyer")
 
   @@map("profiles")
 }
@@ -473,6 +503,14 @@ model Listing {
   rejectionReason String?
   reviewedAt      DateTime?
   approvedAt      DateTime?
+  /// First publish timestamp (F2); legacy rows backfilled from approvedAt.
+  publishedAt       DateTime?
+  /// Price baseline at publish for silent boost drops (F2).
+  priceAtPublish    Int?
+  /// Silent Destacados boost window — never disclosed to seller (F2).
+  boostUntil        DateTime?
+  /// Seller disclosed listing on other platforms (F3).
+  alsoListedElsewhere Boolean @default(false)
 
   searchVector Unsupported("tsvector")?
   /// Denormalized unique-visitor-day count from ListingViewEvent (Phase 15).
@@ -490,11 +528,60 @@ model Listing {
   viewEvents          ListingViewEvent[]
   possessionChallenge DevicePossessionChallenge?
   orders              Order[]
+  availabilityHolds   AvailabilityHold[]
 
   @@index([status])
   @@index([sellerId])
   @@index([views])
+  @@index([publishedAt])
+  @@index([boostUntil])
   @@map("listings")
+}
+
+/// Pre-checkout seller availability confirmation for multi-platform listings (F3).
+model AvailabilityHold {
+  id        String                 @id @default(cuid())
+  listingId String                 @map("listing_id")
+  listing   Listing                @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  buyerId   String                 @map("buyer_id")
+  buyer     Profile                @relation("AvailabilityHoldBuyer", fields: [buyerId], references: [id], onDelete: Restrict)
+  status    AvailabilityHoldStatus @default(PENDING)
+
+  /// PENDING window end (2h from creation).
+  expiresAt       DateTime  @map("expires_at")
+  /// Checkout unlock end after CONFIRMED (~30m).
+  unlockExpiresAt DateTime? @map("unlock_expires_at")
+  confirmedAt     DateTime? @map("confirmed_at")
+  deniedAt        DateTime? @map("denied_at")
+  expiredAt       DateTime? @map("expired_at")
+
+  orderId String? @unique @map("order_id")
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  events AvailabilityHoldEvent[]
+
+  @@index([listingId, status])
+  @@index([buyerId, status])
+  @@index([expiresAt])
+  @@map("availability_holds")
+}
+
+/// Append-only audit trail for availability holds (F3).
+model AvailabilityHoldEvent {
+  id               String                    @id @default(cuid())
+  holdId           String                    @map("hold_id")
+  hold             AvailabilityHold          @relation(fields: [holdId], references: [id], onDelete: Cascade)
+  kind             AvailabilityHoldEventKind
+  actorId          String?                   @map("actor_id")
+  paymentAttemptId String?                   @map("payment_attempt_id")
+  metadata         Json?
+  createdAt        DateTime                  @default(now()) @map("created_at")
+
+  @@index([holdId, createdAt])
+  @@map("availability_hold_events")
 }
 
 /// Durable listing view for ops analytics (Phase 15). One row per visitor per listing per UTC day.
@@ -763,11 +850,13 @@ model Order {
   notifications        Notification[]
   supportCases         OrderSupportCase[]
   pqrCases             PqrCase[]
+  availabilityHold     AvailabilityHold?
 
   @@index([buyerId, createdAt])
   @@index([sellerId, createdAt])
   @@index([listingId])
   @@index([status])
+  @@index([status, updatedAt])
   @@index([buyerConfirmDeadlineAt])
   @@map("orders")
 }
