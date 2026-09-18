@@ -600,7 +600,7 @@ export async function expireStaleAvailabilityHolds(limit = 50) {
 /**
  * runAvailabilityHoldExpiryBackstop
  *
- * Daily backstop: expire stale holds and notify buyers (folded into settlement-reminders cron).
+ * Hourly backstop: expire stale holds and notify buyers (runs every `/api/cron/tick`).
  */
 export async function runAvailabilityHoldExpiryBackstop(input: {
   limit?: number;

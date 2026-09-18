@@ -836,7 +836,7 @@ Run on staging / Wompi sandbox before first real traffic:
 2. Buyer pays with Wompi sandbox → seller chooses Carrier or Premium → tracking or inspection → buyer «Ya recibí» → confirm or wait for 24h cron
 3. Ops marks payout in `/revision/pagos` after Financial Core authorizes
 4. Seller-cancel via support → staff accept → buyer chooses 8% replacement or refund
-5. Cron dry-run: `GET /api/cron/buyer-confirm-expiry` and `GET /api/cron/settlement-reminders` with `CRON_SECRET`
+5. Cron dry-run: `GET /api/cron/tick` (hourly dispatcher) or per-job `GET /api/cron/buyer-confirm-expiry` / `GET /api/cron/settlement-reminders` with `CRON_SECRET`
 6. Confirm a marketplace email arrives branded (not raw text) when `RESEND_API_KEY` is set
 
 ---

@@ -2,12 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/cron/buyer-confirm-expiry",
-      "schedule": "0 16 * * *"
-    },
-    {
-      "path": "/api/cron/settlement-reminders",
-      "schedule": "30 16 * * *"
+      "path": "/api/cron/tick",
+      "schedule": "0 * * * *"
     }
   ]
 }

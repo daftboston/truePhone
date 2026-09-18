@@ -61,21 +61,23 @@ Sellers may list the same iPhone on Facebook, Mercado Libre, or elsewhere. Buyer
 | Order create gate    | `src/lib/orders.ts` → `createOrderAndReserveListing`               |
 | Wizard UI            | `src/features/listings/components/also-listed-elsewhere-field.tsx` |
 | Waiting UI           | `src/app/(account)/compras/disponibilidad/[holdId]/page.tsx`       |
-| Expiry backstop      | `src/app/api/cron/settlement-reminders/route.ts` (daily batch)     |
+| Expiry backstop      | `src/app/api/cron/tick` (hourly) + lazy paths on read/buy/checkout |
 | Notifications        | `src/lib/notifications/availability-hold.ts`                       |
 
 ## Cron & Vercel Hobby
 
 **Primary expiry is lazy** on read (`getHoldByIdForParticipant`, `getBuyerHoldForListing`), confirm/deny, buy (`requestAvailabilityHold`, `createOrderAndReserveListing`), and checkout (`startCheckoutForOrder`). When `expiresAt` or `unlockExpiresAt` has passed, the hold transitions to **EXPIRED** before gates run — the 2h buyer countdown matches server state without waiting for cron.
 
-**Vercel Hobby** allows at most **two cron entries**, each **once per day** (no hourly/minutely). `vercel.json` keeps the existing pair:
+**Vercel Hobby** allows at most **two cron entries** in `vercel.json`. This PR uses **one** hourly dispatcher:
 
-| Schedule      | Route                            | Also runs                                                               |
-| ------------- | -------------------------------- | ----------------------------------------------------------------------- |
-| `0 16 * * *`  | `/api/cron/buyer-confirm-expiry` | Financial Core 24h auto-release                                         |
-| `30 16 * * *` | `/api/cron/settlement-reminders` | Settlement reminders + **hold expiry backstop** + seller check-ins (F2) |
+| Schedule       | Route            | Behavior                                                      |
+| -------------- | ---------------- | ------------------------------------------------------------- |
+| `0 * * * *`    | `/api/cron/tick` | **Every hour:** availability-hold expiry backstop             |
+| (Bogotá 14:00) | same tick        | Seller listing check-ins (F2)                                 |
+| (Bogotá 16:00) | same tick        | Financial Core buyer-confirm 24h auto-release                 |
+| (Bogotá 17:00) | same tick        | Settlement reminders (nearest hourly slot after 16:30 target) |
 
-The daily hold backstop expires any stale holds missed by lazy paths and sends buyer notifications. **Vercel Pro** would allow additional or hourly cron routes if ops wants a tighter sweep later.
+Dispatcher: `src/lib/cron/tick.ts`. Manual dry-runs remain on `/api/cron/buyer-confirm-expiry` and `/api/cron/settlement-reminders` with `CRON_SECRET`.
 
 ## Tests
 
