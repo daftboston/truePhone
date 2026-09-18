@@ -1,13 +1,11 @@
 /**
  * @file tick.ts
- * @description Hourly cron dispatcher: always expires holds; Bogotá-time slots for other jobs.
+ * @description Daily cron dispatcher (Hobby: once per day). Runs hold expiry backstop
+ *   plus seller check-ins, buyer-confirm, and settlement reminders in one batch.
+ *   Lazy expiry on user paths remains authoritative for the 2h hold window.
  */
 
-import {
-  CRON_BOGOTA_SLOTS,
-  getBogotaClock,
-  isBogotaHourSlot,
-} from "@/lib/cron/bogota-clock";
+import { getBogotaClock } from "@/lib/cron/bogota-clock";
 import {
   runAvailabilityHoldExpiryJob,
   runBuyerConfirmExpiryJob,
@@ -28,22 +26,20 @@ export type CronTickRunPlan = {
 
 export type CronTickResult = CronTickRunPlan & {
   ok: true;
-  availabilityHoldExpiry?: Awaited<
+  availabilityHoldExpiry: Awaited<
     ReturnType<typeof runAvailabilityHoldExpiryJob>
   >;
-  sellerListingCheckins?: Awaited<
+  sellerListingCheckins: Awaited<
     ReturnType<typeof runSellerListingCheckinsJob>
   >;
-  buyerConfirmExpiry?: Awaited<ReturnType<typeof runBuyerConfirmExpiryJob>>;
-  settlementReminders?: Awaited<ReturnType<typeof runSettlementRemindersJob>>;
+  buyerConfirmExpiry: Awaited<ReturnType<typeof runBuyerConfirmExpiryJob>>;
+  settlementReminders: Awaited<ReturnType<typeof runSettlementRemindersJob>>;
 };
 
 /**
  * planCronTickRuns
  *
- * Pure schedule plan for the hourly tick (no side effects).
- *
- * @param now - Reference instant (injectable for tests).
+ * Pure plan for the daily tick — every job runs on each invocation.
  */
 export function planCronTickRuns(now: Date): CronTickRunPlan {
   const { hour: bogotaHour, minute: bogotaMinute } = getBogotaClock(now);
@@ -53,18 +49,9 @@ export function planCronTickRuns(now: Date): CronTickRunPlan {
     bogotaMinute,
     ran: {
       availabilityHoldExpiry: true,
-      sellerListingCheckins: isBogotaHourSlot(
-        now,
-        CRON_BOGOTA_SLOTS.sellerListingCheckins,
-      ),
-      buyerConfirmExpiry: isBogotaHourSlot(
-        now,
-        CRON_BOGOTA_SLOTS.buyerConfirmExpiry,
-      ),
-      settlementReminders: isBogotaHourSlot(
-        now,
-        CRON_BOGOTA_SLOTS.settlementReminders,
-      ),
+      sellerListingCheckins: true,
+      buyerConfirmExpiry: true,
+      settlementReminders: true,
     },
   };
 }
@@ -72,36 +59,30 @@ export function planCronTickRuns(now: Date): CronTickRunPlan {
 /**
  * runCronTick
  *
- * Hourly Vercel cron entry point. Always runs availability-hold expiry; other jobs
- * fire at Bogotá-local slots (14:00 check-ins, 16:00 buyer confirm, 17:00 settlement
- * — nearest hourly tick after the 16:30 settlement target).
- *
- * @param now - Reference instant (injectable for tests).
+ * Daily Vercel cron entry point. Always runs all jobs (backstop sweep).
+ * Hold gates use lazy expiry on read/confirm/buy/checkout as the source of truth.
  */
 export async function runCronTick(now = new Date()): Promise<CronTickResult> {
-  const { bogotaHour, bogotaMinute, ran } = planCronTickRuns(now);
+  const plan = planCronTickRuns(now);
 
-  const availabilityHoldExpiry = await runAvailabilityHoldExpiryJob();
-
-  const result: CronTickResult = {
-    ok: true,
-    bogotaHour,
-    bogotaMinute,
-    ran,
+  const [
     availabilityHoldExpiry,
+    sellerListingCheckins,
+    buyerConfirmExpiry,
+    settlementReminders,
+  ] = await Promise.all([
+    runAvailabilityHoldExpiryJob(),
+    runSellerListingCheckinsJob(),
+    runBuyerConfirmExpiryJob(),
+    runSettlementRemindersJob(),
+  ]);
+
+  return {
+    ok: true,
+    ...plan,
+    availabilityHoldExpiry,
+    sellerListingCheckins,
+    buyerConfirmExpiry,
+    settlementReminders,
   };
-
-  if (ran.sellerListingCheckins) {
-    result.sellerListingCheckins = await runSellerListingCheckinsJob();
-  }
-
-  if (ran.buyerConfirmExpiry) {
-    result.buyerConfirmExpiry = await runBuyerConfirmExpiryJob();
-  }
-
-  if (ran.settlementReminders) {
-    result.settlementReminders = await runSettlementRemindersJob();
-  }
-
-  return result;
 }

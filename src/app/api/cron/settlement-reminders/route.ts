@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  * GET /api/cron/settlement-reminders
  *
  * Manual dry-run for settlement reminders. Vercel Cron invokes `/api/cron/tick`
- * instead (Bogotá 17:00 slot — nearest hourly tick after 16:30 target).
+ * (daily batch) instead.
  */
 export async function GET(request: Request) {
   if (!authorizeCronRequest(request)) {

@@ -15,7 +15,7 @@
 
 - One notice per listing per milestone (`dedupeKey`: `listing-checkin-day7:{id}`, `listing-checkin-day14:{id}`).
 - Respect `NotificationPreference`.
-- Daily send window **14:00 America/Bogotá** via hourly `/api/cron/tick` (19:00 UTC).
+- Daily send via `/api/cron/tick` (`0 14 * * *` UTC; full daily batch with other jobs).
 - Skip if not sellable at send time (`PUBLISHED` only; not `RESERVED`/`SOLD`/`ARCHIVED`/deleted).
 - **No catch-up spam** if a day was missed — only send when `publishedAt` date matches exact milestone window for that cron run.
 - Views: existing `Listing.views`; empty copy «aún sin vistas».
@@ -43,9 +43,9 @@ Optional seller-help one-liner (generic): visibility may adjust by quality/price
 
 ## Engineering
 
-| Area          | Location                                                             |
-| ------------- | -------------------------------------------------------------------- |
-| Cron          | `src/app/api/cron/tick` (14:00 Bogotá slot; Hobby single cron entry) |
-| Processor     | `src/lib/notifications/seller-listing-checkins.ts`                   |
-| Boost helper  | `src/lib/listings/boost.ts`                                          |
-| Featured sort | `src/lib/listings-marketplace.ts` → `listFeaturedListings`           |
+| Area          | Location                                                              |
+| ------------- | --------------------------------------------------------------------- |
+| Cron          | `src/app/api/cron/tick` (`0 14 * * *`; Hobby single daily cron entry) |
+| Processor     | `src/lib/notifications/seller-listing-checkins.ts`                    |
+| Boost helper  | `src/lib/listings/boost.ts`                                           |
+| Featured sort | `src/lib/listings-marketplace.ts` → `listFeaturedListings`            |

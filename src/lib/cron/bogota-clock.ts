@@ -1,16 +1,9 @@
 /**
  * @file bogota-clock.ts
- * @description America/Bogota local clock helpers for cron scheduling.
+ * @description America/Bogota local clock helpers for cron logging.
  */
 
 export const BOGOTA_TIME_ZONE = "America/Bogota";
-
-/** Bogotá-local hour/minute slots used by the hourly cron tick. */
-export const CRON_BOGOTA_SLOTS = {
-  sellerListingCheckins: 14,
-  buyerConfirmExpiry: 16,
-  settlementReminders: 17,
-} as const;
 
 /**
  * getBogotaClock
@@ -31,17 +24,4 @@ export function getBogotaClock(now: Date): { hour: number; minute: number } {
   const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
 
   return { hour, minute };
-}
-
-/**
- * isBogotaHourSlot
- *
- * True when Bogotá local time is the given hour at minute 0 (hourly tick fires at :00).
- *
- * @param now - Reference instant.
- * @param hour - Target hour in Bogotá (0–23).
- */
-export function isBogotaHourSlot(now: Date, hour: number): boolean {
-  const clock = getBogotaClock(now);
-  return clock.hour === hour && clock.minute === 0;
 }

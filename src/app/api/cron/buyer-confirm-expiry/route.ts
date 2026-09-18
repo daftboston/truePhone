@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
  * GET /api/cron/buyer-confirm-expiry
  *
  * Manual dry-run for the 24h buyer-confirm auto-release job. Vercel Cron
- * invokes `/api/cron/tick` instead (Bogotá 16:00 slot).
+ * invokes `/api/cron/tick` (daily batch) instead.
  */
 export async function GET(request: Request) {
   if (!authorizeCronRequest(request)) {

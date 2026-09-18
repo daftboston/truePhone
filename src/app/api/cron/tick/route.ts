@@ -1,7 +1,7 @@
 /**
  * @file route.ts
- * @description Hourly Vercel cron dispatcher (`0 * * * *`). Runs availability-hold expiry
- *   every tick; Bogotá-time slots for check-ins, buyer confirm, and settlement reminders.
+ * @description Daily Vercel cron dispatcher (`0 14 * * *`). Runs hold expiry backstop
+ *   plus seller check-ins, buyer-confirm, and settlement reminders in one batch.
  * @dependencies next/server, @/lib/cron
  */
 
@@ -16,7 +16,8 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/cron/tick
  *
- * Single Vercel cron entry (Hobby ≤2). Manual ops may call with CRON_SECRET Bearer.
+ * Single daily Vercel cron entry (Hobby ≤2, once per day). Manual ops may call
+ * with CRON_SECRET Bearer.
  */
 export async function GET(request: Request) {
   if (!authorizeCronRequest(request)) {

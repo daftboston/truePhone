@@ -60,7 +60,7 @@ export async function runSettlementRemindersJob(limit = 50) {
 /**
  * runAvailabilityHoldExpiryJob
  *
- * Expires stale availability holds and notifies buyers (hourly backstop).
+ * Expires stale availability holds and notifies buyers (daily backstop sweep).
  */
 export async function runAvailabilityHoldExpiryJob(limit = 50) {
   const siteOrigin = cronSiteOrigin();

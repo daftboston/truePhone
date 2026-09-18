@@ -53,31 +53,30 @@ Sellers may list the same iPhone on Facebook, Mercado Libre, or elsewhere. Buyer
 
 ## Engineering
 
-| Area                 | Location                                                           |
-| -------------------- | ------------------------------------------------------------------ |
-| Hold service         | `src/lib/availability-hold/service.ts`                             |
-| Buyer/seller actions | `src/features/availability-hold/actions/`                          |
-| Wompi gate           | `src/lib/payments.ts` → `startCheckoutForOrder`                    |
-| Order create gate    | `src/lib/orders.ts` → `createOrderAndReserveListing`               |
-| Wizard UI            | `src/features/listings/components/also-listed-elsewhere-field.tsx` |
-| Waiting UI           | `src/app/(account)/compras/disponibilidad/[holdId]/page.tsx`       |
-| Expiry backstop      | `src/app/api/cron/tick` (hourly) + lazy paths on read/buy/checkout |
-| Notifications        | `src/lib/notifications/availability-hold.ts`                       |
+| Area                 | Location                                                                |
+| -------------------- | ----------------------------------------------------------------------- |
+| Hold service         | `src/lib/availability-hold/service.ts`                                  |
+| Buyer/seller actions | `src/features/availability-hold/actions/`                               |
+| Wompi gate           | `src/lib/payments.ts` → `startCheckoutForOrder`                         |
+| Order create gate    | `src/lib/orders.ts` → `createOrderAndReserveListing`                    |
+| Wizard UI            | `src/features/listings/components/also-listed-elsewhere-field.tsx`      |
+| Waiting UI           | `src/app/(account)/compras/disponibilidad/[holdId]/page.tsx`            |
+| Expiry backstop      | `src/app/api/cron/tick` (daily batch) + lazy paths on read/buy/checkout |
+| Notifications        | `src/lib/notifications/availability-hold.ts`                            |
 
 ## Cron & Vercel Hobby
 
 **Primary expiry is lazy** on read (`getHoldByIdForParticipant`, `getBuyerHoldForListing`), confirm/deny, buy (`requestAvailabilityHold`, `createOrderAndReserveListing`), and checkout (`startCheckoutForOrder`). When `expiresAt` or `unlockExpiresAt` has passed, the hold transitions to **EXPIRED** before gates run — the 2h buyer countdown matches server state without waiting for cron.
 
-**Vercel Hobby** allows at most **two cron entries** in `vercel.json`. This PR uses **one** hourly dispatcher:
+**Vercel Hobby** allows at most **two cron entries**, each **once per day** (sub-daily schedules such as `0 * * * *` fail deploy). This PR uses **one** daily dispatcher:
 
-| Schedule       | Route            | Behavior                                                      |
-| -------------- | ---------------- | ------------------------------------------------------------- |
-| `0 * * * *`    | `/api/cron/tick` | **Every hour:** availability-hold expiry backstop             |
-| (Bogotá 14:00) | same tick        | Seller listing check-ins (F2)                                 |
-| (Bogotá 16:00) | same tick        | Financial Core buyer-confirm 24h auto-release                 |
-| (Bogotá 17:00) | same tick        | Settlement reminders (nearest hourly slot after 16:30 target) |
+| Schedule     | Route            | Behavior (daily batch)                                                                           |
+| ------------ | ---------------- | ------------------------------------------------------------------------------------------------ |
+| `0 14 * * *` | `/api/cron/tick` | Hold expiry backstop + seller check-ins (F2) + buyer-confirm auto-release + settlement reminders |
 
-Dispatcher: `src/lib/cron/tick.ts`. Manual dry-runs remain on `/api/cron/buyer-confirm-expiry` and `/api/cron/settlement-reminders` with `CRON_SECRET`.
+**Lazy expiry remains primary** for the 2h hold window; the daily tick is a backstop sweep only.
+
+Dispatcher: `src/lib/cron/tick.ts`. Manual dry-runs: `/api/cron/tick`, `/api/cron/buyer-confirm-expiry`, `/api/cron/settlement-reminders` with `CRON_SECRET`.
 
 ## Tests
 
