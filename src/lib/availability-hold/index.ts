@@ -4,6 +4,14 @@
  */
 
 export {
+  BUYER_HOLD_DENIED_BODY,
+  BUYER_HOLD_EXPIRED_BODY,
+  BUYER_HOLD_PENDING_INTRO,
+  BUYER_HOLD_PENDING_PLAZO_LABEL,
+  SELLER_ALSO_LISTED_PAUSE_REMINDER,
+} from "./copy";
+
+export {
   ACTIVE_UNLOCK_BLOCK_MESSAGE,
   assertCheckoutAllowedForFlaggedListing,
   AvailabilityHoldError,

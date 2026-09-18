@@ -12,6 +12,7 @@ import { SellerHoldResponse } from "@/features/availability-hold/components/sell
 import {
   getHoldByIdForParticipant,
   holdStatusLabel,
+  SELLER_ALSO_LISTED_PAUSE_REMINDER,
 } from "@/lib/availability-hold";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,11 @@ export default async function SellerAvailabilityHoldPage({
           Confirmar disponibilidad
         </h1>
       </div>
+      {hold.listing.alsoListedElsewhere ? (
+        <p className="border-border bg-muted/40 text-muted-foreground rounded-lg border px-3 py-2 text-sm">
+          {SELLER_ALSO_LISTED_PAUSE_REMINDER}
+        </p>
+      ) : null}
       {hold.status === "PENDING" ? (
         <SellerHoldResponse
           holdId={hold.id}

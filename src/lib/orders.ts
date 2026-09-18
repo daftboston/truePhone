@@ -20,7 +20,10 @@ import {
   resolveFeeKindForBuyer,
   sellerPaidSelfCancelBlocker,
 } from "@/lib/financial-core";
-import { expireAvailabilityHoldsInTx } from "@/lib/availability-hold";
+import {
+  ACTIVE_UNLOCK_BLOCK_MESSAGE,
+  expireAvailabilityHoldsInTx,
+} from "@/lib/availability-hold";
 import { prisma } from "@/lib/db";
 import { formatOrderMoney } from "@/lib/format-money";
 import {
@@ -351,6 +354,19 @@ export async function createOrderAndReserveListing(input: {
       });
       if (existingActive) {
         throw new OrderError("Este anuncio ya está reservado.");
+      }
+
+      const activeUnlock = await tx.availabilityHold.findFirst({
+        where: {
+          listingId,
+          status: "CONFIRMED",
+          unlockExpiresAt: { gt: now },
+          orderId: null,
+        },
+        select: { buyerId: true },
+      });
+      if (activeUnlock && activeUnlock.buyerId !== buyerId) {
+        throw new OrderError(ACTIVE_UNLOCK_BLOCK_MESSAGE);
       }
 
       const pendingHold = await tx.availabilityHold.findFirst({

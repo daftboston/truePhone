@@ -245,6 +245,11 @@ export async function recordAlsoListedSellerWarningAck(input: {
  * Returns the active PENDING hold for a listing, if any.
  */
 export async function getPendingHoldForListing(listingId: string) {
+  await lazyExpireAvailabilityHolds({
+    listingId,
+    reason: "lazy_read",
+  });
+
   return prisma.availabilityHold.findFirst({
     where: { listingId, status: "PENDING" },
     include: {
@@ -600,7 +605,7 @@ export async function expireStaleAvailabilityHolds(limit = 50) {
 /**
  * runAvailabilityHoldExpiryBackstop
  *
- * Hourly backstop: expire stale holds and notify buyers (runs every `/api/cron/tick`).
+ * Daily backstop: expire stale holds and notify buyers (runs on `/api/cron/tick`).
  */
 export async function runAvailabilityHoldExpiryBackstop(input: {
   limit?: number;
@@ -643,6 +648,12 @@ export async function assertCheckoutAllowedForFlaggedListing(input: {
   });
 
   if (!listing?.alsoListedElsewhere) return;
+
+  await lazyExpireAvailabilityHolds({
+    listingId: input.listingId,
+    buyerId: input.buyerId,
+    reason: "lazy_checkout",
+  });
 
   const hold = await prisma.availabilityHold.findFirst({
     where: {
@@ -762,7 +773,40 @@ export async function getHoldByIdForParticipant(
 ) {
   await lazyExpireAvailabilityHolds({ holdId, reason: "lazy_read" });
 
-  const hold = await prisma.availabilityHold.findUnique({
+  let hold = await prisma.availabilityHold.findUnique({
+    where: { id: holdId },
+    include: {
+      listing: {
+        include: {
+          iphoneModel: true,
+          iphoneStorage: true,
+          iphoneColor: true,
+          images: {
+            where: { imageType: "gallery" },
+            orderBy: { displayOrder: "asc" },
+            take: 1,
+          },
+        },
+      },
+      buyer: {
+        select: { id: true, fullName: true, username: true },
+      },
+    },
+  });
+
+  if (!hold) return null;
+  if (hold.buyerId !== profileId && hold.listing.sellerId !== profileId) {
+    return null;
+  }
+
+  await lazyExpireAvailabilityHolds({
+    listingId: hold.listingId,
+    buyerId: hold.buyerId,
+    holdId: hold.id,
+    reason: "lazy_read",
+  });
+
+  hold = await prisma.availabilityHold.findUnique({
     where: { id: holdId },
     include: {
       listing: {

@@ -10,6 +10,12 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { createOrderFromHoldAction } from "@/features/availability-hold/actions/availability-hold";
+import {
+  BUYER_HOLD_DENIED_BODY,
+  BUYER_HOLD_EXPIRED_BODY,
+  BUYER_HOLD_PENDING_INTRO,
+  BUYER_HOLD_PENDING_PLAZO_LABEL,
+} from "@/lib/availability-hold";
 import type { AvailabilityHoldStatus } from "@prisma/client";
 
 type BuyerHoldWaitingProps = {
@@ -82,7 +88,7 @@ export function BuyerHoldWaiting({
           Este iPhone ya no está disponible
         </h1>
         <p className="text-muted-foreground text-sm">
-          El vendedor indicó que «{listingTitle}» ya no está disponible.
+          {BUYER_HOLD_DENIED_BODY}
         </p>
         <Button asChild>
           <Link href="/buscar">Explorar anuncios</Link>
@@ -98,10 +104,12 @@ export function BuyerHoldWaiting({
           Sin respuesta del vendedor
         </h1>
         <p className="text-muted-foreground text-sm">
-          El vendedor no confirmó a tiempo. Puedes intentar de nuevo desde el
-          anuncio.
+          {BUYER_HOLD_EXPIRED_BODY}
         </p>
         <Button asChild variant="outline">
+          <Link href="/buscar">Seguir buscando</Link>
+        </Button>
+        <Button asChild variant="ghost" size="sm">
           <Link href={`/anuncios/${listingSlug}`}>Volver al anuncio</Link>
         </Button>
       </div>
@@ -144,14 +152,15 @@ export function BuyerHoldWaiting({
         Esperando confirmación del vendedor
       </h1>
       <p className="text-muted-foreground text-sm">
-        Le avisamos al vendedor de «{listingTitle}». Antes de cobrarte,
-        confirmamos que el iPhone sigue disponible.
+        {BUYER_HOLD_PENDING_INTRO}
       </p>
-      <p className="text-foreground font-mono text-2xl font-semibold tabular-nums">
-        {formatCountdown(remaining)}
-      </p>
-      <p className="text-muted-foreground text-xs">
-        Si el vendedor no responde a tiempo, podrás intentar de nuevo más tarde.
+      <p className="text-muted-foreground text-sm">
+        <span className="text-foreground font-medium">
+          {BUYER_HOLD_PENDING_PLAZO_LABEL}
+        </span>{" "}
+        <span className="text-foreground font-mono text-lg font-semibold tabular-nums">
+          {formatCountdown(remaining)}
+        </span>
       </p>
       <Button asChild variant="outline">
         <Link href={`/anuncios/${listingSlug}`}>Volver al anuncio</Link>
