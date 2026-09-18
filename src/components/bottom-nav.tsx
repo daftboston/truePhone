@@ -48,11 +48,10 @@ export function BottomNav({ className }: BottomNavProps) {
         {items.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/?ref=inicio"
-              ? pathname === "/" || pathname === "/?ref=inicio"
+              ? pathname === "/"
               : href === "/explorar"
                 ? pathname.startsWith("/explorar") ||
-                  pathname.startsWith("/buscar") ||
-                  pathname === "/anuncios"
+                  pathname.startsWith("/buscar")
                 : pathname.startsWith(href);
 
           return (
