@@ -61,7 +61,7 @@ export type PublishedListingDetail = Prisma.ListingGetPayload<{
 export type ListPublishedOptions = {
   take?: number;
   skip?: number;
-  /** Default: newest published first (`approvedAt` then `createdAt`). */
+  /** Default: newest published first (`publishedAt`, then `approvedAt`, then `id`). */
   orderBy?: "newest" | "price_asc" | "price_desc";
   q?: string;
   modelId?: string;
@@ -73,6 +73,30 @@ export type ListPublishedOptions = {
   maxPrice?: number;
   /** Restrict to one seller's shop (public profile). */
   sellerId?: string;
+};
+
+/** Opaque cursor for keyset pagination on (publishedAt, id). */
+export type PublishedListingCursor = {
+  publishedAt: string;
+  id: string;
+};
+
+export type ListPublishedCursorOptions = Omit<
+  ListPublishedOptions,
+  "skip" | "orderBy"
+> & {
+  take?: number;
+  /** Fetch rows strictly older than this cursor (DESC feed). */
+  cursor?: PublishedListingCursor | null;
+  /** Fetch the previous page (rows strictly newer than this cursor). */
+  before?: PublishedListingCursor | null;
+};
+
+export type PublishedListingCursorPage = {
+  listings: PublishedListingCard[];
+  nextCursor: PublishedListingCursor | null;
+  prevCursor: PublishedListingCursor | null;
+  hasMore: boolean;
 };
 
 /**
@@ -88,13 +112,156 @@ function orderByClause(
 ): Prisma.ListingOrderByWithRelationInput[] {
   switch (orderBy) {
     case "price_asc":
-      return [{ price: "asc" }, { approvedAt: "desc" }];
+      return [{ price: "asc" }, { publishedAt: "desc" }, { id: "desc" }];
     case "price_desc":
-      return [{ price: "desc" }, { approvedAt: "desc" }];
+      return [{ price: "desc" }, { publishedAt: "desc" }, { id: "desc" }];
     case "newest":
     default:
-      return [{ approvedAt: "desc" }, { createdAt: "desc" }];
+      return [{ publishedAt: "desc" }, { approvedAt: "desc" }, { id: "desc" }];
   }
+}
+
+/**
+ * effectivePublishedAt
+ *
+ * Resolves the sort timestamp used for cursor pagination.
+ *
+ * @param listing - Row with publish timestamps.
+ * @returns ISO string for cursor encoding.
+ */
+function effectivePublishedAt(listing: {
+  publishedAt: Date | null;
+  approvedAt: Date | null;
+}) {
+  return (
+    listing.publishedAt ??
+    listing.approvedAt ??
+    new Date(0)
+  ).toISOString();
+}
+
+/**
+ * listingCursorFromRow
+ *
+ * Builds a cursor token from a listing card row.
+ *
+ * @param listing - Listing row with id and publish timestamps.
+ * @returns Cursor for keyset pagination.
+ */
+export function listingCursorFromRow(listing: {
+  id: string;
+  publishedAt: Date | null;
+  approvedAt: Date | null;
+}): PublishedListingCursor {
+  return {
+    publishedAt: effectivePublishedAt(listing),
+    id: listing.id,
+  };
+}
+
+/**
+ * encodePublishedListingCursor
+ *
+ * Serializes a cursor for URL query params.
+ *
+ * @param cursor - Parsed cursor object.
+ * @returns Base64url-encoded cursor string.
+ */
+export function encodePublishedListingCursor(cursor: PublishedListingCursor) {
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+/**
+ * decodePublishedListingCursor
+ *
+ * Parses a cursor query param back into a cursor object.
+ *
+ * @param value - Raw cursor query param.
+ * @returns Parsed cursor or null when invalid.
+ */
+export function decodePublishedListingCursor(
+  value: string | undefined,
+): PublishedListingCursor | null {
+  if (!value?.trim()) return null;
+  try {
+    const parsed = JSON.parse(
+      Buffer.from(value, "base64url").toString("utf8"),
+    ) as PublishedListingCursor;
+    if (
+      typeof parsed.publishedAt === "string" &&
+      typeof parsed.id === "string" &&
+      parsed.id.length > 0
+    ) {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * cursorBeforeWhere
+ *
+ * Builds a Prisma filter for rows strictly older than a DESC cursor.
+ *
+ * @param cursor - End cursor from the previous page.
+ * @returns Prisma where fragment.
+ */
+function cursorBeforeWhere(
+  cursor: PublishedListingCursor,
+): Prisma.ListingWhereInput {
+  const publishedAt = new Date(cursor.publishedAt);
+  return {
+    OR: [
+      { publishedAt: { lt: publishedAt } },
+      {
+        publishedAt,
+        id: { lt: cursor.id },
+      },
+      {
+        publishedAt: null,
+        approvedAt: { lt: publishedAt },
+      },
+      {
+        publishedAt: null,
+        approvedAt: publishedAt,
+        id: { lt: cursor.id },
+      },
+    ],
+  };
+}
+
+/**
+ * cursorAfterWhere
+ *
+ * Builds a Prisma filter for rows strictly newer than a DESC cursor.
+ *
+ * @param cursor - Start cursor from the current page.
+ * @returns Prisma where fragment.
+ */
+function cursorAfterWhere(
+  cursor: PublishedListingCursor,
+): Prisma.ListingWhereInput {
+  const publishedAt = new Date(cursor.publishedAt);
+  return {
+    OR: [
+      { publishedAt: { gt: publishedAt } },
+      {
+        publishedAt,
+        id: { gt: cursor.id },
+      },
+      {
+        publishedAt: null,
+        approvedAt: { gt: publishedAt },
+      },
+      {
+        publishedAt: null,
+        approvedAt: publishedAt,
+        id: { gt: cursor.id },
+      },
+    ],
+  };
 }
 
 /**
@@ -215,6 +382,80 @@ export async function listPublishedListings(
     take,
     skip,
   });
+}
+
+/**
+ * listPublishedListingsByCursor
+ *
+ * Keyset-paginates published listings newest-first on (publishedAt, id).
+ * Does not apply boost/Destacados ordering.
+ *
+ * @param options - Filters plus optional cursor/before tokens.
+ * @returns One page of cards and next/prev cursors.
+ * @calledBy `/anuncios` feed
+ */
+export async function listPublishedListingsByCursor(
+  options: ListPublishedCursorOptions = {},
+): Promise<PublishedListingCursorPage> {
+  const take = options.take ?? 12;
+  const filterAnd: Prisma.ListingWhereInput[] = [];
+  const baseWhere = buildPublishedWhere(options);
+  if (baseWhere.AND) {
+    const clauses = Array.isArray(baseWhere.AND)
+      ? baseWhere.AND
+      : [baseWhere.AND];
+    filterAnd.push(...clauses);
+  }
+
+  const orderByNewest: Prisma.ListingOrderByWithRelationInput[] = [
+    { publishedAt: "desc" },
+    { approvedAt: "desc" },
+    { id: "desc" },
+  ];
+
+  if (options.before) {
+    filterAnd.push(cursorAfterWhere(options.before));
+    const rows = await prisma.listing.findMany({
+      where: { ...publishedListingWhere, AND: filterAnd },
+      include: listingCardInclude,
+      orderBy: [{ publishedAt: "asc" }, { approvedAt: "asc" }, { id: "asc" }],
+      take: take + 1,
+    });
+    const hasPrevPage = rows.length > take;
+    const slice = hasPrevPage ? rows.slice(0, take) : rows;
+    const listings = [...slice].reverse();
+    const first = listings[0] ?? null;
+    const last = listings[listings.length - 1] ?? null;
+
+    return {
+      listings,
+      nextCursor: last ? listingCursorFromRow(last) : null,
+      prevCursor: hasPrevPage && first ? listingCursorFromRow(first) : null,
+      hasMore: Boolean(last),
+    };
+  }
+
+  if (options.cursor) {
+    filterAnd.push(cursorBeforeWhere(options.cursor));
+  }
+
+  const rows = await prisma.listing.findMany({
+    where: { ...publishedListingWhere, AND: filterAnd },
+    include: listingCardInclude,
+    orderBy: orderByNewest,
+    take: take + 1,
+  });
+  const hasMore = rows.length > take;
+  const listings = hasMore ? rows.slice(0, take) : rows;
+  const first = listings[0] ?? null;
+  const last = listings[listings.length - 1] ?? null;
+
+  return {
+    listings,
+    nextCursor: hasMore && last ? listingCursorFromRow(last) : null,
+    prevCursor: options.cursor && first ? listingCursorFromRow(first) : null,
+    hasMore,
+  };
 }
 
 /**

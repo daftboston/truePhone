@@ -7,6 +7,7 @@
 
 import Link from "next/link";
 
+import { AppHeaderBrandLink, AppHeaderNav } from "@/components/app-header-nav";
 import { ModelSearch } from "@/features/listings/components/model-search";
 import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -74,12 +75,7 @@ export function AppHeader({
     >
       {/* Mobile */}
       <div className="flex h-14 items-center gap-3 px-4 md:hidden">
-        <Link
-          href="/"
-          className="text-foreground shrink-0 text-base font-semibold tracking-tight"
-        >
-          TruePhone
-        </Link>
+        <AppHeaderBrandLink className="text-base" />
         <div className="min-w-0 flex-1">
           <ModelSearch
             models={catalogModels}
@@ -121,21 +117,9 @@ export function AppHeader({
           SHELL_WIDTH_CLASS,
         )}
       >
-        <Link
-          href="/"
-          className="text-foreground shrink-0 text-lg font-semibold tracking-tight"
-        >
-          TruePhone
-        </Link>
+        <AppHeaderBrandLink className="text-lg" />
 
-        <nav className="flex items-center gap-6" aria-label="Principal">
-          <Link
-            href="/explorar"
-            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-          >
-            Explorar
-          </Link>
-        </nav>
+        <AppHeaderNav />
 
         <div className="mx-auto w-full max-w-md">
           <ModelSearch models={catalogModels} placeholder="Buscar iPhone…" />

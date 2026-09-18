@@ -15,7 +15,9 @@ import { ListingCard } from "@/components/listing-card";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { RecentlyViewedSection } from "@/features/listings/components/recently-viewed-section";
+import { HomeLandingPreference } from "@/features/listings/components/landing-preference-sync";
 import { conditionLabels } from "@/features/listings/schemas/listing";
+import { getCurrentProfile } from "@/lib/auth/session";
 import {
   listFeaturedListings,
   primaryGalleryUrl,
@@ -31,6 +33,10 @@ export const metadata: Metadata = {
     "Compra y vende iPhones usados en Colombia. Cada anuncio es revisado manualmente antes de publicarse.",
 };
 
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
 /**
  * HomePage
  *
@@ -38,11 +44,22 @@ export const metadata: Metadata = {
  *
  * @returns Home shell with hero, trust strip, and featured grid or empty state.
  */
-export default async function HomePage() {
-  const featured = await listFeaturedListings(4);
+export default async function HomePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const explicitHome = params.ref === "inicio";
+  const [featured, session] = await Promise.all([
+    listFeaturedListings(4),
+    getCurrentProfile(),
+  ]);
+  const signedInPreference = session?.profile.landingPreference ?? null;
 
   return (
     <>
+      <HomeLandingPreference
+        signedInPreference={signedInPreference}
+        isAuthenticated={Boolean(session)}
+        explicitHome={explicitHome}
+      />
       <AppShell className="pb-0" mainClassName="gap-8 md:gap-10">
         <HomeHero />
 

@@ -61,7 +61,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
             TruePhone · {LEGAL_JURISDICTION}
           </p>
           {operatorIdentityLine ? (
-            <p className="text-foreground text-xs md:text-sm">
+            <p className="text-muted-foreground/70 text-[10px] leading-relaxed md:text-[11px]">
               {operatorIdentityLine}
             </p>
           ) : null}

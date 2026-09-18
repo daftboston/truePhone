@@ -11,10 +11,15 @@ import {
   BROWSE_PRICE_BANDS,
   browseSortOptions,
   buildBrowseHref,
+  type BrowseBasePath,
   type BrowseQuery,
 } from "@/features/listings/schemas/browse";
 import { conditionLabels } from "@/features/listings/schemas/listing";
-import { formatStorageLabel } from "@/lib/iphone-catalog";
+import {
+  formatStorageLabel,
+  getModelSeriesKey,
+  groupModelsBySeries,
+} from "@/lib/iphone-catalog";
 import { cn } from "@/lib/utils";
 
 type BrowseFiltersProps = {
@@ -22,6 +27,14 @@ type BrowseFiltersProps = {
   models: IphoneModel[];
   storages: IphoneStorage[];
   className?: string;
+  basePath?: BrowseBasePath;
+  /** When true, sort is fixed to newest and the Ordenar group is hidden. */
+  lockNewestSort?: boolean;
+  /**
+   * When true, show Serie chips first and only list models after a series
+   * is chosen — avoids dumping the full catalog into the sidebar.
+   */
+  groupBySeries?: boolean;
 };
 
 /**
@@ -105,6 +118,18 @@ function shortModelName(name: string) {
 }
 
 /**
+ * shortSeriesLabel
+ *
+ * Shortens series titles for compact filter chips (drops a leading «Serie»).
+ *
+ * @param label - Full series label from getModelSeriesKey.
+ * @returns Chip label, e.g. "iPhone 17".
+ */
+function shortSeriesLabel(label: string) {
+  return label.replace(/^Serie\s+/i, "");
+}
+
+/**
  * BrowseFilters
  *
  * Renders the Browse Filters UI for listings.
@@ -118,52 +143,140 @@ export function BrowseFilters({
   models,
   storages,
   className,
+  basePath = "/buscar",
+  lockNewestSort = false,
+  groupBySeries = false,
 }: BrowseFiltersProps) {
   const conditions = Object.keys(conditionLabels) as Condition[];
+  const href = (patch: Partial<BrowseQuery>) =>
+    buildBrowseHref(
+      {
+        ...query,
+        ...patch,
+        ...(lockNewestSort ? { sort: "newest" as const } : {}),
+        ...(basePath === "/anuncios"
+          ? { cursor: "", before: "", page: 1 }
+          : {}),
+      },
+      {},
+      basePath,
+    );
+
+  const seriesList = groupBySeries ? groupModelsBySeries(models) : [];
+  const selectedModel = query.modelId
+    ? models.find((model) => model.id === query.modelId)
+    : null;
+  const activeSeriesKey =
+    query.seriesKey ||
+    (selectedModel ? getModelSeriesKey(selectedModel).key : "");
+  const seriesModels = activeSeriesKey
+    ? (seriesList.find((series) => series.key === activeSeriesKey)?.models ??
+      models.filter(
+        (model) => getModelSeriesKey(model).key === activeSeriesKey,
+      ))
+    : [];
 
   return (
     <aside className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-foreground text-xs font-semibold">Filtros</h2>
-        <Link
-          href="/explorar"
-          className="text-muted-foreground hover:text-foreground text-[11px] underline-offset-2 hover:underline"
-        >
-          Cambiar modelo
-        </Link>
+        {!groupBySeries ? (
+          <Link
+            href="/explorar"
+            className="text-muted-foreground hover:text-foreground text-[11px] underline-offset-2 hover:underline"
+          >
+            Cambiar modelo
+          </Link>
+        ) : null}
       </div>
 
-      <FilterGroup title="Ordenar" row>
-        {browseSortOptions.map((option) => (
-          <FilterLink
-            key={option.id}
-            compact
-            href={buildBrowseHref(query, { sort: option.id, page: 1 })}
-            label={option.label}
-            selected={query.sort === option.id}
-          />
-        ))}
-      </FilterGroup>
+      {!lockNewestSort ? (
+        <FilterGroup title="Ordenar" row>
+          {browseSortOptions.map((option) => (
+            <FilterLink
+              key={option.id}
+              compact
+              href={href({ sort: option.id, page: 1 })}
+              label={option.label}
+              selected={query.sort === option.id}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
 
-      <FilterGroup title="Modelo">
-        {models.map((model) => (
+      {groupBySeries ? (
+        <FilterGroup title="Serie" row>
           <FilterLink
-            key={model.id}
-            href={buildBrowseHref(query, {
-              modelId: model.id,
-              seriesKey: "",
-              page: 1,
-            })}
-            label={shortModelName(model.name)}
-            selected={query.modelId === model.id}
+            compact
+            href={href({ seriesKey: "", modelId: "", page: 1 })}
+            label="Todas"
+            selected={!activeSeriesKey}
           />
-        ))}
-      </FilterGroup>
+          {seriesList.map((series) => (
+            <FilterLink
+              key={series.key}
+              compact
+              href={href({
+                seriesKey: series.key,
+                modelId: "",
+                page: 1,
+              })}
+              label={shortSeriesLabel(series.label)}
+              selected={activeSeriesKey === series.key}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
+
+      {groupBySeries ? (
+        activeSeriesKey ? (
+          <FilterGroup title="Modelo" row>
+            <FilterLink
+              compact
+              href={href({
+                modelId: "",
+                seriesKey: activeSeriesKey,
+                page: 1,
+              })}
+              label="Todos"
+              selected={!query.modelId}
+            />
+            {seriesModels.map((model) => (
+              <FilterLink
+                key={model.id}
+                compact
+                href={href({
+                  modelId: model.id,
+                  seriesKey: activeSeriesKey,
+                  page: 1,
+                })}
+                label={shortModelName(model.name)}
+                selected={query.modelId === model.id}
+              />
+            ))}
+          </FilterGroup>
+        ) : null
+      ) : (
+        <FilterGroup title="Modelo">
+          {models.map((model) => (
+            <FilterLink
+              key={model.id}
+              href={href({
+                modelId: model.id,
+                seriesKey: "",
+                page: 1,
+              })}
+              label={shortModelName(model.name)}
+              selected={query.modelId === model.id}
+            />
+          ))}
+        </FilterGroup>
+      )}
 
       <FilterGroup title="Almacenamiento" row>
         <FilterLink
           compact
-          href={buildBrowseHref(query, { storageId: "", page: 1 })}
+          href={href({ storageId: "", page: 1 })}
           label="Todos"
           selected={!query.storageId}
         />
@@ -171,7 +284,7 @@ export function BrowseFilters({
           <FilterLink
             key={storage.id}
             compact
-            href={buildBrowseHref(query, {
+            href={href({
               storageId: storage.id,
               page: 1,
             })}
@@ -184,7 +297,7 @@ export function BrowseFilters({
       <FilterGroup title="Estado" row>
         <FilterLink
           compact
-          href={buildBrowseHref(query, { condition: "", page: 1 })}
+          href={href({ condition: "", page: 1 })}
           label="Todos"
           selected={!query.condition}
         />
@@ -192,7 +305,7 @@ export function BrowseFilters({
           <FilterLink
             key={key}
             compact
-            href={buildBrowseHref(query, { condition: key, page: 1 })}
+            href={href({ condition: key, page: 1 })}
             label={conditionLabels[key]}
             selected={query.condition === key}
           />
@@ -202,7 +315,7 @@ export function BrowseFilters({
       <FilterGroup title="Precio" row>
         <FilterLink
           compact
-          href={buildBrowseHref(query, { price: "", page: 1 })}
+          href={href({ price: "", page: 1 })}
           label="Todos"
           selected={!query.price}
         />
@@ -210,7 +323,7 @@ export function BrowseFilters({
           <FilterLink
             key={band.id}
             compact
-            href={buildBrowseHref(query, { price: band.id, page: 1 })}
+            href={href({ price: band.id, page: 1 })}
             label={band.label}
             selected={query.price === band.id}
           />
