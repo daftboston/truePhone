@@ -17,7 +17,7 @@ import {
 } from "@/features/orders/schemas/order";
 import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
-import { requestAvailabilityHold } from "@/lib/availability-hold";
+import { requestAvailabilityHold } from "@/lib/availability-hold/service";
 import {
   cancelOrder,
   chooseRefundAfterSellerAbandon,

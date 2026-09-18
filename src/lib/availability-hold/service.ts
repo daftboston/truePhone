@@ -6,6 +6,7 @@
 
 import type { AvailabilityHoldStatus, Prisma } from "@prisma/client";
 
+import { ACTIVE_UNLOCK_BLOCK_MESSAGE } from "@/lib/availability-hold/copy";
 import {
   AVAILABILITY_HOLD_PENDING_MS,
   AVAILABILITY_HOLD_UNLOCK_MS,
@@ -19,9 +20,7 @@ export class AvailabilityHoldError extends Error {
   }
 }
 
-/** Shown when another buyer holds an open post-confirm checkout window. */
-export const ACTIVE_UNLOCK_BLOCK_MESSAGE =
-  "Otro comprador está completando la compra tras la confirmación del vendedor. Intenta más tarde.";
+export { ACTIVE_UNLOCK_BLOCK_MESSAGE };
 
 /**
  * appendHoldEvent

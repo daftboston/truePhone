@@ -3,7 +3,7 @@
  * @description Thin cron job wrappers around existing processors (Financial Core, notifications, holds).
  */
 
-import { runAvailabilityHoldExpiryBackstop } from "@/lib/availability-hold";
+import { runAvailabilityHoldExpiryBackstop } from "@/lib/availability-hold/service";
 import { processExpiredBuyerConfirmations } from "@/lib/financial-core";
 import { processSettlementReminders } from "@/lib/notifications";
 import { processSellerListingCheckins } from "@/lib/notifications/seller-listing-checkins";

@@ -20,3 +20,7 @@ export const BUYER_HOLD_EXPIRED_BODY =
 /** Seller pause reminder on hold response page (Lawyer #4). */
 export const SELLER_ALSO_LISTED_PAUSE_REMINDER =
   "Si vendes este iPhone en otra plataforma, retira o pausa tu anuncio en TruePhone de inmediato para evitar que se venda dos veces. Gracias.";
+
+/** Shown when another buyer holds an open post-confirm checkout window. */
+export const ACTIVE_UNLOCK_BLOCK_MESSAGE =
+  "Otro comprador está completando la compra tras la confirmación del vendedor. Intenta más tarde.";

@@ -9,7 +9,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { BuyerHoldWaiting } from "@/features/availability-hold/components/buyer-hold-waiting";
-import { getHoldByIdForParticipant } from "@/lib/availability-hold";
+import { getHoldByIdForParticipant } from "@/lib/availability-hold/service";
 import { getCurrentProfile } from "@/lib/auth/session";
 
 export const metadata: Metadata = {

@@ -20,10 +20,8 @@ import {
   resolveFeeKindForBuyer,
   sellerPaidSelfCancelBlocker,
 } from "@/lib/financial-core";
-import {
-  ACTIVE_UNLOCK_BLOCK_MESSAGE,
-  expireAvailabilityHoldsInTx,
-} from "@/lib/availability-hold";
+import { ACTIVE_UNLOCK_BLOCK_MESSAGE } from "@/lib/availability-hold/copy";
+import { expireAvailabilityHoldsInTx } from "@/lib/availability-hold/service";
 import { prisma } from "@/lib/db";
 import { formatOrderMoney } from "@/lib/format-money";
 import {

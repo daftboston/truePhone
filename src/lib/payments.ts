@@ -15,7 +15,7 @@ import {
   recordChargebackReceived,
   recordPaymentHold,
 } from "@/lib/financial-core";
-import { lazyExpireAvailabilityHolds } from "@/lib/availability-hold";
+import { lazyExpireAvailabilityHolds } from "@/lib/availability-hold/service";
 import { prisma } from "@/lib/db";
 import { isDeliveryAddressComplete } from "@/lib/orders/delivery-address";
 import { freezeDeliveryAddressOnPayment } from "@/lib/orders/delivery-address-service";

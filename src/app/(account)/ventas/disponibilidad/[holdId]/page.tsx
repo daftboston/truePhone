@@ -9,11 +9,11 @@ import { notFound, redirect } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { SellerHoldResponse } from "@/features/availability-hold/components/seller-hold-response";
+import { SELLER_ALSO_LISTED_PAUSE_REMINDER } from "@/lib/availability-hold/copy";
 import {
   getHoldByIdForParticipant,
   holdStatusLabel,
-  SELLER_ALSO_LISTED_PAUSE_REMINDER,
-} from "@/lib/availability-hold";
+} from "@/lib/availability-hold/service";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
 

@@ -47,7 +47,7 @@ import {
   listingHadPaidOrder,
 } from "@/features/listings/lib/seller-listing-hub";
 import { listingWizardNextPath } from "@/features/listings/lib/listing-wizard-intent";
-import { recordAlsoListedSellerWarningAck } from "@/lib/availability-hold";
+import { recordAlsoListedSellerWarningAck } from "@/lib/availability-hold/service";
 import { buildPriceDropBoostUpdate } from "@/lib/listings/boost";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { prisma } from "@/lib/db";

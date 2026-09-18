@@ -49,7 +49,7 @@ import {
   publicListingPath,
 } from "@/lib/listings-marketplace";
 import { listingViewRequestMeta, recordListingView } from "@/lib/listing-views";
-import { getBuyerHoldForListing } from "@/lib/availability-hold";
+import { getBuyerHoldForListing } from "@/lib/availability-hold/service";
 import { getActiveOrderForBuyerOnListing } from "@/lib/orders";
 
 type PageProps = {

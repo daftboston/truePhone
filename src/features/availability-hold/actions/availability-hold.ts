@@ -13,7 +13,7 @@ import {
   denyAvailabilityHold,
   linkHoldToOrder,
   requestAvailabilityHold,
-} from "@/lib/availability-hold";
+} from "@/lib/availability-hold/service";
 import { getRequestOrigin, getCurrentProfile } from "@/lib/auth/session";
 import {
   notifyBuyerAvailabilityHoldConfirmed,

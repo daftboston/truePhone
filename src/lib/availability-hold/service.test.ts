@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { ACTIVE_UNLOCK_BLOCK_MESSAGE } from "@/lib/availability-hold";
+import { ACTIVE_UNLOCK_BLOCK_MESSAGE } from "@/lib/availability-hold/copy";
 import {
   qualifiesForPriceDropBoost,
   BOOST_MIN_DROP_COP,
