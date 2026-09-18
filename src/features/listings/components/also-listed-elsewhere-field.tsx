@@ -15,7 +15,7 @@ const MODAL_BODY = `Si marcas que este iPhone también está en otras plataforma
 
 1. En el anuncio de TruePhone se mostrará un aviso visible para el comprador, para protegerlo de compras sobre un equipo que podría venderse en otro lado.
 2. Antes de cobrar al comprador, TruePhone te pedirá confirmar que el iPhone sigue disponible.
-3. Si no confirmas a tiempo o indicas que ya no está disponible, no se cobrará al comprador y el anuncio podrá pausarse o archivarse.
+3. Si indicas que ya no está disponible, no se cobrará al comprador y el anuncio podrá pausarse o archivarse. Si no confirmas a tiempo, no se cobrará al comprador y el anuncio puede seguir publicado.
 
 Si vendes el equipo en otra plataforma, baja o pausa este anuncio en TruePhone lo antes posible para evitar una doble venta. Gracias por ayudar a proteger a compradores y vendedores.`;
 
