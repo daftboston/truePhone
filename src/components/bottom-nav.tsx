@@ -14,7 +14,7 @@ import { Home, Search, PlusCircle, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { href: "/", label: "Inicio", icon: Home },
+  { href: "/?ref=inicio", label: "Inicio", icon: Home },
   { href: "/explorar", label: "Explorar", icon: Search },
   { href: "/vender", label: "Vender", icon: PlusCircle },
   { href: "/perfil", label: "Perfil", icon: UserRound },
@@ -47,11 +47,12 @@ export function BottomNav({ className }: BottomNavProps) {
       <ul className="mx-auto grid max-w-lg grid-cols-4">
         {items.map(({ href, label, icon: Icon }) => {
           const active =
-            href === "/"
-              ? pathname === "/"
+            href === "/?ref=inicio"
+              ? pathname === "/" || pathname === "/?ref=inicio"
               : href === "/explorar"
                 ? pathname.startsWith("/explorar") ||
-                  pathname.startsWith("/buscar")
+                  pathname.startsWith("/buscar") ||
+                  pathname === "/anuncios"
                 : pathname.startsWith(href);
 
           return (

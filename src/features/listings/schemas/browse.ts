@@ -10,6 +10,13 @@ import { z } from "zod";
 /** BROWSE_PAGE_SIZE — validates input for related BROWSE_PAGE_SIZE flows. */
 export const BROWSE_PAGE_SIZE = 12;
 
+/** ANUNCIOS_PAGE_SIZE — cursor page size for the all-listings feed. */
+export const ANUNCIOS_PAGE_SIZE = 12;
+
+/** browseBasePathSchema — validates browse route base paths. */
+export const browseBasePathSchema = z.enum(["/buscar", "/anuncios"]);
+export type BrowseBasePath = z.infer<typeof browseBasePathSchema>;
+
 /** browseSortSchema — validates input for related browseSort flows. */
 export const browseSortSchema = z.enum(["newest", "price_asc", "price_desc"]);
 export type BrowseSort = z.infer<typeof browseSortSchema>;
@@ -65,6 +72,10 @@ export type BrowseQuery = {
   page: number;
   /** Active seller-cancellation entitlement source order. */
   compensationId: string;
+  /** Keyset cursor for `/anuncios` forward pagination. */
+  cursor: string;
+  /** Keyset cursor for `/anuncios` backward pagination. */
+  before: string;
 };
 
 /**
@@ -99,6 +110,8 @@ export function parseBrowseSearchParams(
     sort: sortParsed.success ? sortParsed.data : "newest",
     page: Number.isFinite(pageNum) && pageNum > 0 ? pageNum : 1,
     compensationId: raw("compensacion").trim(),
+    cursor: raw("cursor").trim(),
+    before: raw("before").trim(),
   };
 }
 
@@ -114,6 +127,7 @@ export function parseBrowseSearchParams(
 export function buildBrowseHref(
   query: BrowseQuery,
   patch: Partial<BrowseQuery> = {},
+  basePath: BrowseBasePath = "/buscar",
 ) {
   const next: BrowseQuery = { ...query, ...patch };
   const params = new URLSearchParams();
@@ -124,14 +138,35 @@ export function buildBrowseHref(
   if (next.storageId) params.set("storage", next.storageId);
   if (next.condition) params.set("condition", next.condition);
   if (next.price) params.set("price", next.price);
-  if (next.sort && next.sort !== "newest") params.set("sort", next.sort);
-  if (next.page > 1) params.set("page", String(next.page));
+  if (basePath === "/buscar") {
+    if (next.sort && next.sort !== "newest") params.set("sort", next.sort);
+    if (next.page > 1) params.set("page", String(next.page));
+  } else {
+    if (next.cursor) params.set("cursor", next.cursor);
+    if (next.before) params.set("before", next.before);
+  }
   if (next.compensationId) {
     params.set("compensacion", next.compensationId);
   }
 
   const qs = params.toString();
-  return qs ? `/buscar?${qs}` : "/buscar";
+  return qs ? `${basePath}?${qs}` : basePath;
+}
+
+/**
+ * buildAnunciosHref
+ *
+ * Builds `/anuncios` URLs with filter and cursor params.
+ *
+ * @param query - Current browse query state.
+ * @param patch - Partial overrides.
+ * @returns `/anuncios` href.
+ */
+export function buildAnunciosHref(
+  query: BrowseQuery,
+  patch: Partial<BrowseQuery> = {},
+) {
+  return buildBrowseHref(query, patch, "/anuncios");
 }
 
 /** Browse requires a model, series, or free-text query. */

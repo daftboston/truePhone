@@ -11,6 +11,7 @@ import {
   BROWSE_PRICE_BANDS,
   browseSortOptions,
   buildBrowseHref,
+  type BrowseBasePath,
   type BrowseQuery,
 } from "@/features/listings/schemas/browse";
 import { conditionLabels } from "@/features/listings/schemas/listing";
@@ -22,6 +23,9 @@ type BrowseFiltersProps = {
   models: IphoneModel[];
   storages: IphoneStorage[];
   className?: string;
+  basePath?: BrowseBasePath;
+  /** When true, sort is fixed to newest and the Ordenar group is hidden. */
+  lockNewestSort?: boolean;
 };
 
 /**
@@ -118,8 +122,23 @@ export function BrowseFilters({
   models,
   storages,
   className,
+  basePath = "/buscar",
+  lockNewestSort = false,
 }: BrowseFiltersProps) {
   const conditions = Object.keys(conditionLabels) as Condition[];
+  const href = (patch: Partial<BrowseQuery>) =>
+    buildBrowseHref(
+      {
+        ...query,
+        ...patch,
+        ...(lockNewestSort ? { sort: "newest" as const } : {}),
+        ...(basePath === "/anuncios"
+          ? { cursor: "", before: "", page: 1 }
+          : {}),
+      },
+      {},
+      basePath,
+    );
 
   return (
     <aside className={cn("space-y-3", className)}>
@@ -133,23 +152,25 @@ export function BrowseFilters({
         </Link>
       </div>
 
-      <FilterGroup title="Ordenar" row>
-        {browseSortOptions.map((option) => (
-          <FilterLink
-            key={option.id}
-            compact
-            href={buildBrowseHref(query, { sort: option.id, page: 1 })}
-            label={option.label}
-            selected={query.sort === option.id}
-          />
-        ))}
-      </FilterGroup>
+      {!lockNewestSort ? (
+        <FilterGroup title="Ordenar" row>
+          {browseSortOptions.map((option) => (
+            <FilterLink
+              key={option.id}
+              compact
+              href={href({ sort: option.id, page: 1 })}
+              label={option.label}
+              selected={query.sort === option.id}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
 
       <FilterGroup title="Modelo">
         {models.map((model) => (
           <FilterLink
             key={model.id}
-            href={buildBrowseHref(query, {
+            href={href({
               modelId: model.id,
               seriesKey: "",
               page: 1,
@@ -163,7 +184,7 @@ export function BrowseFilters({
       <FilterGroup title="Almacenamiento" row>
         <FilterLink
           compact
-          href={buildBrowseHref(query, { storageId: "", page: 1 })}
+          href={href({ storageId: "", page: 1 })}
           label="Todos"
           selected={!query.storageId}
         />
@@ -171,7 +192,7 @@ export function BrowseFilters({
           <FilterLink
             key={storage.id}
             compact
-            href={buildBrowseHref(query, {
+            href={href({
               storageId: storage.id,
               page: 1,
             })}
@@ -184,7 +205,7 @@ export function BrowseFilters({
       <FilterGroup title="Estado" row>
         <FilterLink
           compact
-          href={buildBrowseHref(query, { condition: "", page: 1 })}
+          href={href({ condition: "", page: 1 })}
           label="Todos"
           selected={!query.condition}
         />
@@ -192,7 +213,7 @@ export function BrowseFilters({
           <FilterLink
             key={key}
             compact
-            href={buildBrowseHref(query, { condition: key, page: 1 })}
+            href={href({ condition: key, page: 1 })}
             label={conditionLabels[key]}
             selected={query.condition === key}
           />
@@ -202,7 +223,7 @@ export function BrowseFilters({
       <FilterGroup title="Precio" row>
         <FilterLink
           compact
-          href={buildBrowseHref(query, { price: "", page: 1 })}
+          href={href({ price: "", page: 1 })}
           label="Todos"
           selected={!query.price}
         />
@@ -210,7 +231,7 @@ export function BrowseFilters({
           <FilterLink
             key={band.id}
             compact
-            href={buildBrowseHref(query, { price: band.id, page: 1 })}
+            href={href({ price: band.id, page: 1 })}
             label={band.label}
             selected={query.price === band.id}
           />

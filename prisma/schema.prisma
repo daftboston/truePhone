@@ -258,6 +258,12 @@ enum PqrCaseStatus {
   CLOSED
 }
 
+/// Preferred public landing route after the marketing home first paint.
+enum LandingPreference {
+  HOME
+  ANUNCIOS
+}
+
 // Models
 model Profile {
   id                 String    @id @default(cuid())
@@ -277,6 +283,7 @@ model Profile {
   trustedSellerSince DateTime?
   verifikStatus      String    @default("not_submitted")
   verifikVerifiedAt  DateTime?
+  landingPreference  LandingPreference @default(HOME) @map("landing_preference")
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
@@ -535,6 +542,7 @@ model Listing {
   @@index([views])
   @@index([publishedAt])
   @@index([boostUntil])
+  @@index([status, publishedAt, id])
   @@map("listings")
 }
 

@@ -33,6 +33,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${siteUrl}/anuncios`,
+      changeFrequency: "hourly",
+      priority: 0.95,
+    },
+    {
       url: `${siteUrl}/guias`,
       changeFrequency: "weekly",
       priority: 0.8,

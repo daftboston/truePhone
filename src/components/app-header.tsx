@@ -75,7 +75,7 @@ export function AppHeader({
       {/* Mobile */}
       <div className="flex h-14 items-center gap-3 px-4 md:hidden">
         <Link
-          href="/"
+          href="/anuncios"
           className="text-foreground shrink-0 text-base font-semibold tracking-tight"
         >
           TruePhone
@@ -122,13 +122,19 @@ export function AppHeader({
         )}
       >
         <Link
-          href="/"
+          href="/anuncios"
           className="text-foreground shrink-0 text-lg font-semibold tracking-tight"
         >
           TruePhone
         </Link>
 
         <nav className="flex items-center gap-6" aria-label="Principal">
+          <Link
+            href="/?ref=inicio"
+            className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+          >
+            Inicio
+          </Link>
           <Link
             href="/explorar"
             className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
