@@ -6,6 +6,11 @@
 
 import type { AvailabilityHoldStatus, Prisma } from "@prisma/client";
 
+import {
+  evaluateAvailabilityHoldCheckoutGate,
+  HOLD_MISSING_CHECKOUT_ERROR,
+  HOLD_UNLOCK_EXPIRED_CHECKOUT_ERROR,
+} from "@/lib/availability-hold/checkout-gate";
 import { ACTIVE_UNLOCK_BLOCK_MESSAGE } from "@/lib/availability-hold/copy";
 import {
   AVAILABILITY_HOLD_PENDING_MS,
@@ -631,6 +636,37 @@ export async function runAvailabilityHoldExpiryBackstop(input: {
 }
 
 /**
+ * findConfirmedHoldForCheckout
+ *
+ * Lazy-expires stale holds, then loads the CONFIRMED hold linked to the order.
+ */
+async function findConfirmedHoldForCheckout(input: {
+  listingId: string;
+  buyerId: string;
+  orderId: string;
+}) {
+  await lazyExpireAvailabilityHolds({
+    listingId: input.listingId,
+    buyerId: input.buyerId,
+    reason: "lazy_checkout",
+  });
+
+  return prisma.availabilityHold.findFirst({
+    where: {
+      listingId: input.listingId,
+      buyerId: input.buyerId,
+      orderId: input.orderId,
+      status: "CONFIRMED",
+    },
+    select: {
+      id: true,
+      status: true,
+      unlockExpiresAt: true,
+    },
+  });
+}
+
+/**
  * assertCheckoutAllowedForFlaggedListing
  *
  * Hard gate before Wompi: flagged listings require CONFIRMED hold linked to order.
@@ -648,43 +684,62 @@ export async function assertCheckoutAllowedForFlaggedListing(input: {
 
   if (!listing?.alsoListedElsewhere) return;
 
-  await lazyExpireAvailabilityHolds({
-    listingId: input.listingId,
-    buyerId: input.buyerId,
-    reason: "lazy_checkout",
+  const hold = await findConfirmedHoldForCheckout(input);
+  const gate = evaluateAvailabilityHoldCheckoutGate({
+    alsoListedElsewhere: true,
+    hold,
+    now: new Date(),
   });
 
-  const hold = await prisma.availabilityHold.findFirst({
-    where: {
-      listingId: input.listingId,
-      buyerId: input.buyerId,
-      orderId: input.orderId,
-      status: "CONFIRMED",
-    },
-  });
-
-  if (!hold) {
-    throw new Error(
-      "Debes esperar la confirmación del vendedor antes de pagar.",
-    );
-  }
-
-  const now = new Date();
-  if (hold.unlockExpiresAt && now > hold.unlockExpiresAt) {
-    throw new Error(
-      "El plazo para pagar después de la confirmación venció. Solicita de nuevo.",
-    );
+  if (!gate.allowed) {
+    throw new AvailabilityHoldError(gate.error);
   }
 
   await prisma.availabilityHoldEvent.create({
     data: {
-      holdId: hold.id,
+      holdId: hold!.id,
       kind: "PAYMENT_ATTEMPT",
       actorId: input.buyerId,
       paymentAttemptId: input.paymentId ?? null,
     },
   });
 }
+
+/**
+ * evaluateAvailabilityHoldForPaymentSuccess
+ *
+ * Re-check hold at Wompi APPROVED before order becomes PAID (stale checkout URL).
+ */
+export async function evaluateAvailabilityHoldForPaymentSuccess(input: {
+  listingId: string;
+  buyerId: string;
+  orderId: string;
+  alsoListedElsewhere: boolean;
+}) {
+  if (!input.alsoListedElsewhere) {
+    return { action: "proceed" as const };
+  }
+
+  const hold = await findConfirmedHoldForCheckout(input);
+  const now = new Date();
+  const gate = evaluateAvailabilityHoldCheckoutGate({
+    alsoListedElsewhere: true,
+    hold,
+    now,
+  });
+
+  if (!gate.allowed) {
+    return {
+      action: "refund_mistaken_capture" as const,
+      reason: gate.error,
+      holdId: hold?.id ?? null,
+    };
+  }
+
+  return { action: "proceed" as const, holdId: hold!.id };
+}
+
+export { HOLD_MISSING_CHECKOUT_ERROR, HOLD_UNLOCK_EXPIRED_CHECKOUT_ERROR };
 
 /**
  * linkHoldToOrder

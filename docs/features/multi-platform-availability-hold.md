@@ -33,10 +33,11 @@ Sellers may list the same iPhone on Facebook, Mercado Libre, or elsewhere. Buyer
 8. Timeout vs confirm race → one winner; other no-ops (transactional updates).
 9. Second buyer → blocked while another hold is **PENDING**, or while a **CONFIRMED** unlock window is open for a different buyer (no second Wompi).
 10. Non-flagged listings: unchanged direct checkout.
-11. **Hard server gate:** no Wompi session / Payment Link until hold **CONFIRMED** and linked order belongs to hold buyer.
-12. Mistaken charge → full refund, no Wompi fee on buyer (existing refund policy).
-13. Compra Garantizada / retracto only after `PaymentApproved`.
-14. Recidivism sanctions (2–3 timeouts/no) — **out of v1**.
+11. **Hard server gate:** no Wompi session / Payment Link until hold **CONFIRMED** and linked order belongs to hold buyer (`assertCheckoutAllowedForFlaggedListing` before `provider.createCheckout`, including when reusing a stale checkout URL).
+12. **Webhook re-check:** on Wompi `APPROVED`, `markPaymentSucceeded` re-validates the hold; if missing or `unlockExpiresAt` passed, order stays **AWAITING_PAYMENT**, payment is fully refunded (mistaken capture), and a `PAYMENT_ATTEMPT` audit row is appended when a hold row exists.
+13. Mistaken charge → full refund, no Wompi fee on buyer (existing refund policy).
+14. Compra Garantizada / retracto only after `PaymentApproved`.
+15. Recidivism sanctions (2–3 timeouts/no) — **out of v1**.
 
 ## Schema
 
@@ -57,7 +58,7 @@ Sellers may list the same iPhone on Facebook, Mercado Libre, or elsewhere. Buyer
 | -------------------- | ----------------------------------------------------------------------- |
 | Hold service         | `src/lib/availability-hold/service.ts`                                  |
 | Buyer/seller actions | `src/features/availability-hold/actions/`                               |
-| Wompi gate           | `src/lib/payments.ts` → `startCheckoutForOrder`                         |
+| Wompi gate           | `src/lib/payments.ts` → `startCheckoutForOrder`, `markPaymentSucceeded` |
 | Order create gate    | `src/lib/orders.ts` → `createOrderAndReserveListing`                    |
 | Wizard UI            | `src/features/listings/components/also-listed-elsewhere-field.tsx`      |
 | Waiting UI           | `src/app/(account)/compras/disponibilidad/[holdId]/page.tsx`            |
@@ -80,5 +81,5 @@ Dispatcher: `src/lib/cron/tick.ts`. Manual dry-runs: `/api/cron/tick`, `/api/cro
 
 ## Tests
 
-- Hold state machine + Wompi gate unit tests in `src/lib/availability-hold/`.
-- Role / gate tests ensure no checkout URL without **CONFIRMED** hold on flagged listings.
+- Hold state machine + Wompi gate unit tests in `src/lib/availability-hold/checkout-gate.test.ts`.
+- Checkout gate blocks without **CONFIRMED** unlock, when unlock expired, and payment-success path refunds mistaken capture instead of leaving order **PAID**.
