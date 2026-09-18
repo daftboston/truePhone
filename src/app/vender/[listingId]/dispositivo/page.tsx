@@ -83,6 +83,7 @@ export default async function EditDevicePage({ params }: PageProps) {
             hasBox: listing.hasBox,
             hasCharger: listing.hasCharger,
             hasReceipt: listing.hasReceipt,
+            alsoListedElsewhere: listing.alsoListedElsewhere,
           }}
         />
       </ListingWizardShell>

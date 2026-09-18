@@ -363,6 +363,12 @@ export default async function ReviewHubPage() {
             <BarChart3 className="size-4" aria-hidden />
             Ver analítica
           </Link>
+          <Link
+            href="/revision/ventas"
+            className="text-primary inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Ver libro de ventas
+          </Link>
         </div>
       </section>
 

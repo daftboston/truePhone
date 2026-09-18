@@ -816,6 +816,18 @@ Result: Launch-ready platform.
 
 Status: **Legal pages landed** (`/privacidad`, `/terminos`, `/cookies`; footer, signup, KYC, and FAQ wired). **Branded notification emails landed** (Resend HTML wrapper). Production refuse-closed: no MOCK payments / noop email when `VERCEL_ENV=production`. Remaining: live env values + sandbox QA (see Launch QA below).
 
+### Features 1–3 (post–23 growth / ops)
+
+Documented in `docs/features/` (implementation in draft PR):
+
+| Feature                                                   | Route / surface                                                      | Doc                                                                                   |
+| --------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **F3** Multi-platform availability hold                   | Sell wizard, public badge, buy path, Wompi gate                      | [multi-platform-availability-hold.md](./features/multi-platform-availability-hold.md) |
+| **F1** Ops sales ledger                                   | `/revision/ventas` (REVIEWER + ADMIN; bank fields ADMIN-only at API) | [ops-sales-ledger.md](./features/ops-sales-ledger.md)                                 |
+| **F2** Seller listing check-ins + silent Destacados boost | Cron + notifications; `boostUntil` on home rail only                 | [seller-listing-checkins.md](./features/seller-listing-checkins.md)                   |
+
+Priority: **F3** (legal-critical) → **F1** → **F2**.
+
 ### Launch QA checklist
 
 Run on staging / Wompi sandbox before first real traffic:

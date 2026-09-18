@@ -25,6 +25,8 @@ type ListingPurchaseActionsProps = {
   isOwnListing: boolean;
   isAuthenticated: boolean;
   pendingOrderId: string | null;
+  /** Active availability hold for flagged listings (F3). */
+  pendingHoldId?: string | null;
   favorited: boolean;
   totalPrice: number;
   compact?: boolean;
@@ -51,6 +53,7 @@ export function ListingPurchaseActions({
   isOwnListing,
   isAuthenticated,
   pendingOrderId,
+  pendingHoldId = null,
   favorited,
   totalPrice,
   compact = false,
@@ -83,6 +86,12 @@ export function ListingPurchaseActions({
                         Ver mi pedido
                       </Link>
                     </Button>
+                  ) : pendingHoldId ? (
+                    <Button fullWidth asChild>
+                      <Link href={`/compras/disponibilidad/${pendingHoldId}`}>
+                        Ver solicitud
+                      </Link>
+                    </Button>
                   ) : (
                     <CreateOrderButton
                       listingId={listingId}
@@ -97,6 +106,12 @@ export function ListingPurchaseActions({
           ) : pendingOrderId ? (
             <Button fullWidth asChild>
               <Link href={`/compras/${pendingOrderId}`}>Ver mi pedido</Link>
+            </Button>
+          ) : pendingHoldId ? (
+            <Button fullWidth asChild>
+              <Link href={`/compras/disponibilidad/${pendingHoldId}`}>
+                Ver solicitud de disponibilidad
+              </Link>
             </Button>
           ) : (
             <>

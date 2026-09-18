@@ -238,6 +238,32 @@ export async function startCheckoutForOrder(input: {
       );
     }
 
+    const listing = await prisma.listing.findUnique({
+      where: { id: order.listingId },
+      select: { alsoListedElsewhere: true },
+    });
+    if (listing?.alsoListedElsewhere) {
+      const hold = await prisma.availabilityHold.findFirst({
+        where: {
+          listingId: order.listingId,
+          buyerId,
+          orderId,
+          status: "CONFIRMED",
+        },
+      });
+      if (!hold) {
+        throw new PaymentError(
+          "Debes esperar la confirmación del vendedor antes de pagar.",
+        );
+      }
+      const now = new Date();
+      if (hold.unlockExpiresAt && now > hold.unlockExpiresAt) {
+        throw new PaymentError(
+          "El plazo para pagar después de la confirmación venció. Solicita de nuevo.",
+        );
+      }
+    }
+
     const existing = await prisma.payment.findFirst({
       where: {
         orderId,

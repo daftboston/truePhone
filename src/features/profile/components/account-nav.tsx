@@ -185,6 +185,11 @@ function buildGroups(
         label: "Analítica",
         icon: BarChart3,
       },
+      {
+        href: "/revision/ventas",
+        label: "Ventas",
+        icon: ShoppingBag,
+      },
     ];
 
     if (isAdmin) {

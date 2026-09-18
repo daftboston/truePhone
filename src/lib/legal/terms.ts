@@ -62,6 +62,17 @@ export const TERMS_DOCUMENT: LegalDocument = {
       ],
     },
     {
+      id: "multi-plataforma",
+      title:
+        "Publicación en otras plataformas y confirmación de disponibilidad",
+      paragraphs: [
+        "Si el vendedor indica que el iPhone también está publicado fuera de TruePhone (por ejemplo en redes sociales, Mercado Libre u otra tienda), en el anuncio de TruePhone se mostrará un aviso visible («También en otros sitios») para que el comprador lo sepa antes de iniciar la compra.",
+        "En esos anuncios, antes de cobrar al comprador TruePhone solicita al vendedor que confirme que el iPhone sigue disponible. El comprador verá un estado de espera con plazo limitado; solo después de la confirmación podrá pagar con Wompi en TruePhone.",
+        "Si el vendedor no confirma a tiempo, indica que ya no está disponible, o vende el equipo en otro canal, debe retirar o pausar el anuncio en TruePhone lo antes posible para evitar una doble venta. Si indica que no está disponible o no responde a tiempo, no se cobrará al comprador en TruePhone y el anuncio podrá archivarse.",
+        "El vendedor es responsable de mantener sincronizada la disponibilidad real del equipo con sus anuncios, dentro y fuera de TruePhone. TruePhone no garantiza que un equipo publicado en varios sitios siga disponible hasta recibir la confirmación del vendedor en el flujo descrito.",
+      ],
+    },
+    {
       id: "precios",
       title: "Precio y protección",
       paragraphs: [

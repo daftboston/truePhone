@@ -49,6 +49,7 @@ import {
   publicListingPath,
 } from "@/lib/listings-marketplace";
 import { listingViewRequestMeta, recordListingView } from "@/lib/listing-views";
+import { getBuyerHoldForListing } from "@/lib/availability-hold";
 import { getActiveOrderForBuyerOnListing } from "@/lib/orders";
 
 type PageProps = {
@@ -153,6 +154,10 @@ export default async function PublicListingPage({
     current && current.profile.id !== listing.sellerId
       ? await getActiveOrderForBuyerOnListing(listing.id, current.profile.id)
       : null;
+  const buyerHold =
+    current && current.profile.id !== listing.sellerId && !pendingOrder
+      ? await getBuyerHoldForListing(listing.id, current.profile.id)
+      : null;
   const compensation =
     current && requestedCompensation
       ? await findActiveFeeEntitlementForSource(
@@ -244,6 +249,9 @@ export default async function PublicListingPage({
                   {conditionLabels[listing.condition]}
                 </Badge>
                 <TrustBadge label="Revisado" />
+                {listing.alsoListedElsewhere ? (
+                  <Badge variant="outline">También en otros sitios</Badge>
+                ) : null}
                 {listing.batteryHealth != null ? (
                   <Badge variant="outline">
                     Batería {listing.batteryHealth}%
@@ -253,6 +261,13 @@ export default async function PublicListingPage({
               <p className="text-muted-foreground text-sm">
                 Un revisor de TruePhone lo aprobó antes de publicarse.
               </p>
+              {listing.alsoListedElsewhere ? (
+                <p className="text-muted-foreground text-sm">
+                  El vendedor indicó que este iPhone también puede estar
+                  publicado fuera de TruePhone. Antes de cobrar, confirmamos con
+                  el vendedor que sigue disponible.
+                </p>
+              ) : null}
             </div>
             <p className="text-muted-foreground text-sm">
               {listing.iphoneModel.name} ·{" "}
@@ -303,6 +318,11 @@ export default async function PublicListingPage({
             isOwnListing={isOwnListing}
             isAuthenticated={Boolean(user)}
             pendingOrderId={pendingOrder?.id ?? null}
+            pendingHoldId={
+              buyerHold && ["PENDING", "CONFIRMED"].includes(buyerHold.status)
+                ? buyerHold.id
+                : null
+            }
             favorited={favorited}
             totalPrice={buyerTotal}
           />
@@ -431,6 +451,11 @@ export default async function PublicListingPage({
           isOwnListing={isOwnListing}
           isAuthenticated={Boolean(user)}
           pendingOrderId={pendingOrder?.id ?? null}
+          pendingHoldId={
+            buyerHold && ["PENDING", "CONFIRMED"].includes(buyerHold.status)
+              ? buyerHold.id
+              : null
+          }
           favorited={favorited}
           totalPrice={buyerTotal}
         />

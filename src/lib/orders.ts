@@ -285,8 +285,10 @@ type CreateOrderResult =
 export async function createOrderAndReserveListing(input: {
   listingId: string;
   buyerId: string;
+  /** Required when listing.alsoListedElsewhere is true (F3). */
+  availabilityHoldId?: string;
 }): Promise<CreateOrderResult> {
-  const { listingId, buyerId } = input;
+  const { listingId, buyerId, availabilityHoldId } = input;
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -308,12 +310,50 @@ export async function createOrderAndReserveListing(input: {
         );
       }
 
+      if (listing.alsoListedElsewhere) {
+        if (!availabilityHoldId) {
+          throw new OrderError(
+            "Debes esperar la confirmación del vendedor antes de comprar.",
+          );
+        }
+        const hold = await tx.availabilityHold.findFirst({
+          where: {
+            id: availabilityHoldId,
+            listingId,
+            buyerId,
+            status: "CONFIRMED",
+            orderId: null,
+          },
+        });
+        if (!hold) {
+          throw new OrderError(
+            "La confirmación de disponibilidad no es válida o ya expiró.",
+          );
+        }
+        const now = new Date();
+        if (hold.unlockExpiresAt && now > hold.unlockExpiresAt) {
+          throw new OrderError(
+            "El plazo para comprar después de la confirmación venció.",
+          );
+        }
+      }
+
       const existingActive = await tx.order.findFirst({
         where: { listingId, status: { in: ACTIVE_ORDER_STATUSES } },
         select: { id: true },
       });
       if (existingActive) {
         throw new OrderError("Este anuncio ya está reservado.");
+      }
+
+      const pendingHold = await tx.availabilityHold.findFirst({
+        where: { listingId, status: "PENDING" },
+        select: { buyerId: true },
+      });
+      if (pendingHold && pendingHold.buyerId !== buyerId) {
+        throw new OrderError(
+          "Otro comprador está esperando confirmación del vendedor.",
+        );
       }
 
       const { kind, entitlementId } = await resolveFeeKindForBuyer(buyerId, tx);

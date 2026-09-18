@@ -18,6 +18,7 @@ import type { ListingActionState } from "@/features/listings/types";
 import { fieldErrorsFromZod } from "@/features/listings/types";
 import { getCurrentProfile, getRequestOrigin } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
+import { notifySellerAlsoListedReminder } from "@/lib/notifications/availability-hold";
 import {
   notifyListingReviewed,
   safeNotify,
@@ -204,6 +205,8 @@ export async function approveListingAction(
     listing.status === "PUBLISHED" || listing.status === "APPROVED";
 
   // Publish listing; promote BUYER → SELLER only (preserves REVIEWER/ADMIN).
+  const publishedAt = listing.publishedAt ?? listing.approvedAt ?? now;
+
   await prisma.$transaction([
     prisma.listing.update({
       where: { id: listing.id },
@@ -214,6 +217,8 @@ export async function approveListingAction(
         rejectionReason: null,
         reviewedAt: now,
         approvedAt: listing.approvedAt ?? now,
+        publishedAt,
+        priceAtPublish: listing.priceAtPublish ?? listing.price,
       },
     }),
     prisma.profile.updateMany({
@@ -225,13 +230,19 @@ export async function approveListingAction(
   revalidateListingReview(listing.id);
   revalidatePath("/notificaciones");
   revalidatePath("/", "layout");
+  const siteOrigin = await getRequestOrigin();
   await safeNotify(
     notifyListingReviewed({
       listingId: listing.id,
       approved: true,
-      siteOrigin: await getRequestOrigin(),
+      siteOrigin,
     }),
   );
+  if (listing.alsoListedElsewhere) {
+    await safeNotify(
+      notifySellerAlsoListedReminder({ listingId: listing.id, siteOrigin }),
+    );
+  }
   return {
     ok: true,
     message: wasAlreadyApproved

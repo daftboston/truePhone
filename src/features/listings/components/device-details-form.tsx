@@ -31,6 +31,7 @@ import {
   sellerPriceGuideKey,
   type SellerPriceGuideEntry,
 } from "@/features/recommended-prices/types";
+import { AlsoListedElsewhereField } from "@/features/listings/components/also-listed-elsewhere-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +58,7 @@ type DeviceFormProps = {
     hasBox: boolean;
     hasCharger: boolean;
     hasReceipt: boolean;
+    alsoListedElsewhere?: boolean;
   };
 };
 
@@ -408,6 +410,10 @@ export function DeviceDetailsForm({
             placeholder="Cuéntales a los compradores el estado real del equipo."
           />
         </div>
+
+        <AlsoListedElsewhereField
+          defaultValue={defaults?.alsoListedElsewhere ?? false}
+        />
       </div>
 
       {state?.ok === false ? (

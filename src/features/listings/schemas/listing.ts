@@ -50,6 +50,8 @@ export const createListingSchema = z.object({
   hasBox: z.coerce.boolean().optional(),
   hasCharger: z.coerce.boolean().optional(),
   hasReceipt: z.coerce.boolean().optional(),
+  alsoListedElsewhere: z.coerce.boolean().optional(),
+  alsoListedAcknowledged: z.coerce.boolean().optional(),
 });
 
 /** updateListingDetailsSchema — validates input for related updateListingDetails flows. */
