@@ -17,7 +17,7 @@ import {
 } from "@/lib/financial-core";
 import {
   assertCheckoutAllowedForFlaggedListing,
-  evaluateAvailabilityHoldForPaymentSuccess,
+  AvailabilityHoldError,
 } from "@/lib/availability-hold/service";
 import { prisma } from "@/lib/db";
 import { notificationSiteOrigin } from "@/lib/notifications/marketplace";
@@ -376,59 +376,43 @@ export async function markPaymentSucceeded(input: {
   paymentId: string;
   providerPaymentId?: string | null;
   amountPesos?: number | null;
-}): Promise<{ ok: true } | { ok: false; error: string }> {
+}): Promise<
+  { ok: true } | { ok: false; error: string; holdBlocked?: boolean }
+> {
   const { paymentId, providerPaymentId, amountPesos } = input;
 
   try {
-    const paymentPreview = await prisma.payment.findFirst({
+    const existing = await prisma.payment.findUnique({
       where: { id: paymentId },
-      include: {
-        order: {
-          include: {
-            listing: { select: { alsoListedElsewhere: true } },
-          },
-        },
+      select: {
+        status: true,
+        failureCode: true,
+        failureMessage: true,
       },
     });
-    if (!paymentPreview) {
-      throw new PaymentError("Pago no encontrado.");
-    }
-    if (paymentPreview.status === "SUCCEEDED") {
-      return { ok: true };
-    }
     if (
-      paymentPreview.status === "REFUNDED" ||
-      paymentPreview.status === "CANCELLED"
+      existing?.status === "REFUNDED" &&
+      existing.failureCode === "AVAILABILITY_HOLD_BLOCKED"
     ) {
-      throw new PaymentError("Este pago ya no se puede confirmar.");
-    }
-    if (amountPesos != null && amountPesos !== paymentPreview.amount) {
-      throw new PaymentError("El monto pagado no coincide con el pedido.");
-    }
-
-    const holdGate = await evaluateAvailabilityHoldForPaymentSuccess({
-      listingId: paymentPreview.order.listingId,
-      buyerId: paymentPreview.buyerId,
-      orderId: paymentPreview.orderId,
-      alsoListedElsewhere:
-        paymentPreview.order.listing.alsoListedElsewhere ?? false,
-    });
-    if (holdGate.action === "refund_mistaken_capture") {
-      return await refundMistakenCaptureForUnavailableHold({
-        paymentId: paymentPreview.id,
-        buyerId: paymentPreview.buyerId,
-        orderId: paymentPreview.orderId,
-        amountPesos: paymentPreview.amount,
-        providerPaymentId,
-        reason: holdGate.reason,
-        holdId: holdGate.holdId,
-      });
+      return {
+        ok: false,
+        error:
+          existing.failureMessage ??
+          "El pago fue reembolsado porque la disponibilidad ya no era válida.",
+        holdBlocked: true,
+      };
     }
 
     await prisma.$transaction(async (tx) => {
       const payment = await tx.payment.findFirst({
         where: { id: paymentId },
-        include: { order: true },
+        include: {
+          order: {
+            include: {
+              listing: { select: { alsoListedElsewhere: true } },
+            },
+          },
+        },
       });
       if (!payment) {
         throw new PaymentError("Pago no encontrado.");
@@ -442,6 +426,16 @@ export async function markPaymentSucceeded(input: {
       if (amountPesos != null && amountPesos !== payment.amount) {
         throw new PaymentError("El monto pagado no coincide con el pedido.");
       }
+
+      await assertCheckoutAllowedForFlaggedListing({
+        listingId: payment.order.listingId,
+        buyerId: payment.buyerId,
+        orderId: payment.orderId,
+        paymentId: payment.id,
+        tx,
+        recordPaymentAttempt: false,
+        lazyExpireReason: "lazy_payment_success",
+      });
 
       const now = new Date();
       await tx.payment.update({
@@ -492,6 +486,28 @@ export async function markPaymentSucceeded(input: {
 
     return { ok: true };
   } catch (error) {
+    if (error instanceof AvailabilityHoldError) {
+      const payment = await prisma.payment.findUnique({
+        where: { id: paymentId },
+        select: {
+          id: true,
+          buyerId: true,
+          orderId: true,
+          amount: true,
+          provider: true,
+          providerPaymentId: true,
+        },
+      });
+      if (!payment) {
+        return { ok: false, error: error.message, holdBlocked: true };
+      }
+      return await refundMistakenCaptureForUnavailableHold({
+        payment,
+        providerPaymentId,
+        reason: error.message,
+        holdId: error.holdId,
+      });
+    }
     if (error instanceof PaymentError) {
       return { ok: false, error: error.message };
     }
@@ -772,8 +788,17 @@ export async function handleWompiWebhook(input: {
         providerPaymentId: tx.id,
         amountPesos,
       });
-      if (!result.ok) {
+      if (!result.ok && !result.holdBlocked) {
         throw new Error(result.error);
+      }
+      if (!result.ok && result.holdBlocked) {
+        console.warn(
+          "[payments] Wompi APPROVED after availability hold expiry — refunded, order not PAID",
+          {
+            paymentId: payment.id,
+            error: result.error,
+          },
+        );
       }
     } else if (
       tx.status === "DECLINED" ||
@@ -837,22 +862,67 @@ export async function handleWompiWebhook(input: {
  * Wompi captured after unlock expiry — full refund, order stays AWAITING_PAYMENT.
  */
 async function refundMistakenCaptureForUnavailableHold(input: {
-  paymentId: string;
-  buyerId: string;
-  orderId: string;
-  amountPesos: number;
+  payment: {
+    id: string;
+    buyerId: string;
+    orderId: string;
+    amount: number;
+    provider: PaymentProvider;
+    providerPaymentId: string | null;
+  };
   providerPaymentId?: string | null;
   reason: string;
   holdId?: string | null;
-}): Promise<{ ok: true }> {
+}): Promise<{ ok: false; error: string; holdBlocked: true }> {
   const now = new Date();
+  const providerPaymentId =
+    input.providerPaymentId ?? input.payment.providerPaymentId;
+
+  const { provider } = resolvePaymentProvider(notificationSiteOrigin());
+  if (providerPaymentId) {
+    const refund = await provider.refund({
+      providerPaymentId,
+      amountPesos: input.payment.amount,
+      reason: `Disponibilidad no válida: ${input.reason}`,
+    });
+    if (!refund.ok) {
+      if (input.payment.provider === "WOMPI") {
+        await prisma.payment.update({
+          where: { id: input.payment.id },
+          data: {
+            status: "REFUNDED",
+            refundedAt: now,
+            refundAmount: input.payment.amount,
+            providerPaymentId,
+            failureCode: "AVAILABILITY_HOLD_BLOCKED",
+            failureMessage: `Reembolso manual requerido: ${refund.error}`,
+          },
+        });
+      } else {
+        console.error(
+          "[payments] Full refund failed after availability hold block",
+          {
+            paymentId: input.payment.id,
+            orderId: input.payment.orderId,
+            error: refund.error,
+          },
+        );
+        return {
+          ok: false,
+          error: refund.error,
+          holdBlocked: true,
+        };
+      }
+    }
+  }
 
   await prisma.payment.update({
-    where: { id: input.paymentId },
+    where: { id: input.payment.id },
     data: {
-      status: "SUCCEEDED",
-      paidAt: now,
-      providerPaymentId: input.providerPaymentId ?? undefined,
+      status: "REFUNDED",
+      refundedAt: now,
+      refundAmount: input.payment.amount,
+      providerPaymentId,
       failureCode: "AVAILABILITY_HOLD_BLOCKED",
       failureMessage: input.reason,
     },
@@ -863,51 +933,25 @@ async function refundMistakenCaptureForUnavailableHold(input: {
       data: {
         holdId: input.holdId,
         kind: "PAYMENT_ATTEMPT",
-        actorId: input.buyerId,
-        paymentAttemptId: input.paymentId,
+        actorId: input.payment.buyerId,
+        paymentAttemptId: input.payment.id,
         metadata: { blocked: true, reason: input.reason },
       },
     });
   }
 
-  console.warn(
-    "[payments] Mistaken capture refunded — availability hold invalid",
-    {
-      paymentId: input.paymentId,
-      orderId: input.orderId,
-      reason: input.reason,
-    },
-  );
-
-  const refundResult = await refundPaymentForOrder({
-    orderId: input.orderId,
-    siteOrigin: notificationSiteOrigin(),
-    reason: `Disponibilidad no válida: ${input.reason}`,
-    amountPesos: input.amountPesos,
-  });
-  if (!refundResult.ok) {
-    console.error(
-      "[payments] Full refund failed after availability hold block",
-      {
-        paymentId: input.paymentId,
-        orderId: input.orderId,
-        error: refundResult.error,
-      },
-    );
-  }
-
   const order = await prisma.order.findUnique({
-    where: { id: input.orderId },
+    where: { id: input.payment.orderId },
     select: { status: true },
   });
   if (order?.status === "PAID") {
     console.error(
       "[payments] Order was PAID after availability hold block — unexpected",
-      { orderId: input.orderId },
+      { orderId: input.payment.orderId },
     );
   }
 
-  return { ok: true };
+  return { ok: false, error: input.reason, holdBlocked: true };
 }
 
 /**

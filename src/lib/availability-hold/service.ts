@@ -19,9 +19,12 @@ import {
 import { prisma } from "@/lib/db";
 
 export class AvailabilityHoldError extends Error {
-  constructor(message: string) {
+  readonly holdId: string | null;
+
+  constructor(message: string, holdId: string | null = null) {
     super(message);
     this.name = "AvailabilityHoldError";
+    this.holdId = holdId;
   }
 }
 
@@ -636,22 +639,47 @@ export async function runAvailabilityHoldExpiryBackstop(input: {
 }
 
 /**
- * findConfirmedHoldForCheckout
+ * assertCheckoutAllowedForFlaggedListing
  *
- * Lazy-expires stale holds, then loads the CONFIRMED hold linked to the order.
+ * Hard gate before Wompi and on payment success: flagged listings require CONFIRMED
+ * hold linked to order with a valid unlock window.
  */
-async function findConfirmedHoldForCheckout(input: {
+export async function assertCheckoutAllowedForFlaggedListing(input: {
   listingId: string;
   buyerId: string;
   orderId: string;
-}) {
-  await lazyExpireAvailabilityHolds({
-    listingId: input.listingId,
-    buyerId: input.buyerId,
-    reason: "lazy_checkout",
+  paymentId?: string;
+  tx?: Prisma.TransactionClient;
+  recordPaymentAttempt?: boolean;
+  lazyExpireReason?: string;
+}): Promise<void> {
+  const db = input.tx ?? prisma;
+  const now = new Date();
+  const lazyReason = input.lazyExpireReason ?? "lazy_checkout";
+
+  const listing = await db.listing.findUnique({
+    where: { id: input.listingId },
+    select: { alsoListedElsewhere: true },
   });
 
-  return prisma.availabilityHold.findFirst({
+  if (!listing?.alsoListedElsewhere) return;
+
+  if (input.tx) {
+    await expireAvailabilityHoldsInTx(
+      input.tx,
+      { listingId: input.listingId, buyerId: input.buyerId },
+      lazyReason,
+      now,
+    );
+  } else {
+    await lazyExpireAvailabilityHolds({
+      listingId: input.listingId,
+      buyerId: input.buyerId,
+      reason: lazyReason,
+    });
+  }
+
+  const hold = await db.availabilityHold.findFirst({
     where: {
       listingId: input.listingId,
       buyerId: input.buyerId,
@@ -664,64 +692,7 @@ async function findConfirmedHoldForCheckout(input: {
       unlockExpiresAt: true,
     },
   });
-}
 
-/**
- * assertCheckoutAllowedForFlaggedListing
- *
- * Hard gate before Wompi: flagged listings require CONFIRMED hold linked to order.
- */
-export async function assertCheckoutAllowedForFlaggedListing(input: {
-  listingId: string;
-  buyerId: string;
-  orderId: string;
-  paymentId?: string;
-}): Promise<void> {
-  const listing = await prisma.listing.findUnique({
-    where: { id: input.listingId },
-    select: { alsoListedElsewhere: true },
-  });
-
-  if (!listing?.alsoListedElsewhere) return;
-
-  const hold = await findConfirmedHoldForCheckout(input);
-  const gate = evaluateAvailabilityHoldCheckoutGate({
-    alsoListedElsewhere: true,
-    hold,
-    now: new Date(),
-  });
-
-  if (!gate.allowed) {
-    throw new AvailabilityHoldError(gate.error);
-  }
-
-  await prisma.availabilityHoldEvent.create({
-    data: {
-      holdId: hold!.id,
-      kind: "PAYMENT_ATTEMPT",
-      actorId: input.buyerId,
-      paymentAttemptId: input.paymentId ?? null,
-    },
-  });
-}
-
-/**
- * evaluateAvailabilityHoldForPaymentSuccess
- *
- * Re-check hold at Wompi APPROVED before order becomes PAID (stale checkout URL).
- */
-export async function evaluateAvailabilityHoldForPaymentSuccess(input: {
-  listingId: string;
-  buyerId: string;
-  orderId: string;
-  alsoListedElsewhere: boolean;
-}) {
-  if (!input.alsoListedElsewhere) {
-    return { action: "proceed" as const };
-  }
-
-  const hold = await findConfirmedHoldForCheckout(input);
-  const now = new Date();
   const gate = evaluateAvailabilityHoldCheckoutGate({
     alsoListedElsewhere: true,
     hold,
@@ -729,14 +700,19 @@ export async function evaluateAvailabilityHoldForPaymentSuccess(input: {
   });
 
   if (!gate.allowed) {
-    return {
-      action: "refund_mistaken_capture" as const,
-      reason: gate.error,
-      holdId: hold?.id ?? null,
-    };
+    throw new AvailabilityHoldError(gate.error, hold?.id ?? null);
   }
 
-  return { action: "proceed" as const, holdId: hold!.id };
+  if (input.recordPaymentAttempt === false || !hold) return;
+
+  await db.availabilityHoldEvent.create({
+    data: {
+      holdId: hold.id,
+      kind: "PAYMENT_ATTEMPT",
+      actorId: input.buyerId,
+      paymentAttemptId: input.paymentId ?? null,
+    },
+  });
 }
 
 export { HOLD_MISSING_CHECKOUT_ERROR, HOLD_UNLOCK_EXPIRED_CHECKOUT_ERROR };
