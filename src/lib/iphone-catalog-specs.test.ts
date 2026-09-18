@@ -2,6 +2,9 @@
  * @file iphone-catalog-specs.test.ts
  * @description Ensures every active catalog model has published hardware specs.
  * @dependencies node:test, node:assert/strict, iphone-catalog-data, iphone-catalog-specs
+ * @changelog 2026-09-15 — Canonical names, mAh caption, sibling unique-feature alignment.
+ * @changelog 2026-09-15 — Unique features follow a shared capability matrix.
+ * @changelog 2026-09-17 — Camera and chip copy match unique-feature hardware.
  */
 
 import assert from "node:assert/strict";
@@ -13,6 +16,7 @@ import {
 } from "@/lib/iphone-catalog-data";
 import {
   CATALOG_SPECS_SLUGS,
+  alignUniqueFeatures,
   getCatalogModelSpecs,
   getRequiredCatalogModelSpecs,
 } from "@/lib/iphone-catalog-specs";
@@ -57,17 +61,15 @@ describe("iphone catalog specs", () => {
     assert.equal(specs.batteryMah, 2227);
     assert.equal(specs.displayMarketingName, "Pantalla Super Retina XDR");
     assert.equal(specs.chipBadge, "A14");
-    assert.match(specs.batteryPrimaryLabel, /15 horas/);
+    assert.equal(specs.batteryPrimaryLabel, "2.227 mAh");
+    assert.equal(specs.batterySecondaryLabel, "Capacidad de la batería");
     assert.equal(specs.cameraModuleVariant, "dual");
   });
 
   it("lists titanium, Camera Control, and Action Button on iPhone 16 Pro models", () => {
     for (const slug of ["iphone-16-pro", "iphone-16-pro-max"]) {
       const features = getRequiredCatalogModelSpecs(slug).uniqueFeatures;
-      assert.ok(
-        features.some((feature) => /titanio/i.test(feature)),
-        slug,
-      );
+      assert.ok(features.includes("Titanio"), slug);
       assert.ok(features.includes("Control de Cámara"), slug);
       assert.ok(features.includes("Botón de Acción"), slug);
     }
@@ -91,8 +93,335 @@ describe("iphone catalog specs", () => {
       const count = getRequiredCatalogModelSpecs(model.slug).uniqueFeatures
         .length;
       assert.ok(
-        count >= 3 && count <= 5,
+        count >= 2 && count <= 14,
         `${model.slug} has ${count} unique feature bullets`,
+      );
+    }
+  });
+
+  it("shows battery capacity as mAh without video-playback copy", () => {
+    for (const model of IPHONE_CATALOG_MODELS) {
+      const specs = getRequiredCatalogModelSpecs(model.slug);
+      assert.match(specs.batteryPrimaryLabel, /^\d{1,3}(?:\.\d{3})* mAh$/);
+      assert.doesNotMatch(specs.batteryPrimaryLabel, /hasta/i);
+      assert.equal(specs.batterySecondaryLabel, "Capacidad de la batería");
+    }
+  });
+
+  it("aligns 17 Pro and 17 Pro Max on the same notable features", () => {
+    const pro = getRequiredCatalogModelSpecs("iphone-17-pro").uniqueFeatures;
+    const proMax =
+      getRequiredCatalogModelSpecs("iphone-17-pro-max").uniqueFeatures;
+    assert.deepEqual(pro, proMax);
+    assert.ok(pro.includes("ProMotion hasta 120 Hz"));
+    assert.ok(pro.includes("Zoom óptico 8×"));
+    assert.ok(
+      !pro.some((feature) => /autonomía|Pantalla Pro Max/i.test(feature)),
+    );
+  });
+
+  it("does not repeat display size or battery in unique features", () => {
+    for (const model of IPHONE_CATALOG_MODELS) {
+      const features = getRequiredCatalogModelSpecs(model.slug).uniqueFeatures;
+      for (const feature of features) {
+        assert.doesNotMatch(
+          feature,
+          /autonomía|Pantalla Pro Max|Pantalla grande de|Pantalla Super Retina XDR de|Formato compacto de/i,
+          `${model.slug}: ${feature}`,
+        );
+      }
+    }
+  });
+
+  it("keeps Always-On off iPhone 13 Pro models", () => {
+    for (const slug of ["iphone-13-pro", "iphone-13-pro-max"]) {
+      assert.equal(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "Always-On display",
+        ),
+        false,
+        slug,
+      );
+    }
+  });
+
+  it("lists ProMotion on every model that ships with a ProMotion display", () => {
+    const promotionSlugs = [
+      "iphone-13-pro",
+      "iphone-13-pro-max",
+      "iphone-14-pro",
+      "iphone-14-pro-max",
+      "iphone-15-pro",
+      "iphone-15-pro-max",
+      "iphone-16-pro",
+      "iphone-16-pro-max",
+      "iphone-17",
+      "iphone-air",
+      "iphone-17-pro",
+      "iphone-17-pro-max",
+    ];
+    for (const slug of promotionSlugs) {
+      assert.ok(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "ProMotion hasta 120 Hz",
+        ),
+        slug,
+      );
+    }
+
+    for (const slug of [
+      "iphone-13",
+      "iphone-15",
+      "iphone-15-plus",
+      "iphone-16",
+      "iphone-16-plus",
+      "iphone-16e",
+      "iphone-17e",
+    ]) {
+      assert.equal(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "ProMotion hasta 120 Hz",
+        ),
+        false,
+        slug,
+      );
+    }
+  });
+
+  it("lists 15 Pro hardware that 16 Pro also has, and Camera Control only on 16 Pro", () => {
+    const fifteenPro =
+      getRequiredCatalogModelSpecs("iphone-15-pro").uniqueFeatures;
+    const sixteenPro =
+      getRequiredCatalogModelSpecs("iphone-16-pro").uniqueFeatures;
+
+    for (const feature of [
+      "Titanio",
+      "Dynamic Island",
+      "Always-On display",
+      "ProMotion hasta 120 Hz",
+      "Botón de Acción",
+      "Fotografía macro",
+      "USB-C con Thunderbolt",
+      "MagSafe",
+      "Apple Intelligence",
+    ]) {
+      assert.ok(fifteenPro.includes(feature), `15 Pro missing ${feature}`);
+      assert.ok(sixteenPro.includes(feature), `16 Pro missing ${feature}`);
+    }
+
+    assert.ok(fifteenPro.includes("Zoom óptico 3×"));
+    assert.ok(sixteenPro.includes("Zoom óptico 5×"));
+    assert.equal(fifteenPro.includes("Control de Cámara"), false);
+    assert.ok(sixteenPro.includes("Control de Cámara"));
+    assert.equal(fifteenPro.includes("Apple Intelligence"), true);
+
+    const rows = alignUniqueFeatures(fifteenPro, sixteenPro);
+    assert.deepEqual(
+      rows.find((row) => row.left === "ProMotion hasta 120 Hz"),
+      {
+        left: "ProMotion hasta 120 Hz",
+        right: "ProMotion hasta 120 Hz",
+      },
+    );
+    assert.deepEqual(
+      rows.find((row) => row.right === "Control de Cámara"),
+      { left: "—", right: "Control de Cámara" },
+    );
+    assert.deepEqual(
+      rows.find((row) => row.left === "USB-C con Thunderbolt"),
+      {
+        left: "USB-C con Thunderbolt",
+        right: "USB-C con Thunderbolt",
+      },
+    );
+  });
+
+  it("does not list Camera Control on 16e or Apple Intelligence on iPhone 15", () => {
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-16e").uniqueFeatures.includes(
+        "Control de Cámara",
+      ),
+      false,
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-15").uniqueFeatures.includes(
+        "Apple Intelligence",
+      ),
+      false,
+    );
+    assert.ok(
+      getRequiredCatalogModelSpecs("iphone-15").uniqueFeatures.includes(
+        "Dynamic Island",
+      ),
+    );
+  });
+
+  it("gives 13 Pro the same 3× zoom as 13 Pro Max", () => {
+    for (const slug of ["iphone-13-pro", "iphone-13-pro-max"]) {
+      assert.ok(
+        getRequiredCatalogModelSpecs(slug).uniqueFeatures.includes(
+          "Zoom óptico 3×",
+        ),
+        slug,
+      );
+    }
+  });
+
+  it("keeps Fusion branding and 48 MP ultra-wide on 16+ only", () => {
+    const fourteenPro = getRequiredCatalogModelSpecs("iphone-14-pro");
+    assert.equal(fourteenPro.cameraHeadline, "Sistema de cámaras Pro de 48 MP");
+    assert.ok(
+      fourteenPro.cameraDetails.includes("Ultra gran angular de 12 MP"),
+    );
+    assert.ok(fourteenPro.cameraDetails.some((line) => line.includes("(3×)")));
+
+    const fifteenPro = getRequiredCatalogModelSpecs("iphone-15-pro");
+    assert.equal(fifteenPro.cameraHeadline, "Sistema de cámaras Pro de 48 MP");
+    assert.doesNotMatch(fifteenPro.cameraHeadline, /Fusion/);
+    assert.ok(fifteenPro.cameraDetails.includes("Ultra gran angular de 12 MP"));
+    assert.ok(fifteenPro.cameraDetails.some((line) => line.includes("(3×)")));
+
+    const fifteenProMax = getRequiredCatalogModelSpecs("iphone-15-pro-max");
+    assert.ok(
+      fifteenProMax.cameraDetails.some((line) => line.includes("(5×)")),
+    );
+
+    const sixteen = getRequiredCatalogModelSpecs("iphone-16");
+    assert.match(sixteen.cameraHeadline, /Fusion/);
+    assert.ok(sixteen.cameraDetails.includes("Ultra gran angular de 12 MP"));
+
+    const sixteenPro = getRequiredCatalogModelSpecs("iphone-16-pro");
+    assert.match(sixteenPro.cameraHeadline, /Fusion/);
+    assert.ok(
+      sixteenPro.cameraDetails.includes("Fusion ultra gran angular de 48 MP"),
+    );
+    assert.ok(sixteenPro.cameraDetails.some((line) => line.includes("(5×)")));
+
+    const seventeen = getRequiredCatalogModelSpecs("iphone-17");
+    assert.ok(
+      seventeen.cameraDetails.includes("Fusion ultra gran angular de 48 MP"),
+    );
+
+    const seventeenPro = getRequiredCatalogModelSpecs("iphone-17-pro");
+    assert.ok(seventeenPro.cameraDetails.some((line) => line.includes("(8×)")));
+    assert.ok(seventeenPro.uniqueFeatures.includes("Zoom óptico 8×"));
+  });
+
+  it("uses the correct GPU core count for binned A18 and A19 chips", () => {
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-16").chipDetail,
+      "GPU de 5 núcleos",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-16e").chipDetail,
+      "GPU de 4 núcleos",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-se-4").chipDetail,
+      "GPU de 4 núcleos",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-17").chipDetail,
+      "GPU de 5 núcleos con Neural Accelerators",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-17e").chipDetail,
+      "GPU de 4 núcleos con Neural Accelerators",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-air").chipDetail,
+      "GPU de 5 núcleos con Neural Accelerators",
+    );
+    assert.equal(
+      getRequiredCatalogModelSpecs("iphone-17-pro").chipDetail,
+      "GPU de 6 núcleos con Neural Accelerators",
+    );
+  });
+
+  it("aligns shared unique features on the same compare row", () => {
+    const rows = alignUniqueFeatures(
+      ["Chasis unibody de aluminio", "Zoom óptico 8×", "Botón de Acción"],
+      [
+        "Botón de Acción",
+        "Chasis unibody de aluminio",
+        "Pantalla Pro Max de 6,9″",
+      ],
+    );
+    const chassis = rows.find(
+      (row) => row.left === "Chasis unibody de aluminio",
+    );
+    assert.deepEqual(chassis, {
+      left: "Chasis unibody de aluminio",
+      right: "Chasis unibody de aluminio",
+    });
+    const zoom = rows.find((row) => row.left === "Zoom óptico 8×");
+    assert.deepEqual(zoom, { left: "Zoom óptico 8×", right: "—" });
+    const screen = rows.find((row) => row.right === "Pantalla Pro Max de 6,9″");
+    assert.deepEqual(screen, { left: "—", right: "Pantalla Pro Max de 6,9″" });
+  });
+
+  it("uses one canonical name when models share the same unique feature", () => {
+    const forbiddenAliases = [
+      "Diseño de titanio",
+      "Marco de titanio",
+      "Botón de Acción y USB-C",
+      "Face ID y Botón de Acción",
+      "Ceramic Shield y MagSafe",
+      "MagSafe de 15 W",
+      "Teleobjetivo con zoom óptico 2,5×",
+      "Teleobjetivo con zoom óptico 3×",
+      "Zoom óptico hasta 8×",
+      "Macro photography",
+    ];
+    const canonicalShared = [
+      "Titanio",
+      "Botón de Acción",
+      "MagSafe",
+      "Ceramic Shield",
+      "Ceramic Shield 2",
+      "USB-C",
+      "Control de Cámara",
+      "ProMotion hasta 120 Hz",
+      "Always-On display",
+      "Dynamic Island",
+      "Apple Intelligence",
+    ];
+
+    const catalogFeatures = IPHONE_CATALOG_MODELS.flatMap(
+      (model) => getRequiredCatalogModelSpecs(model.slug).uniqueFeatures,
+    );
+    const uniqueNames = [...new Set(catalogFeatures)];
+
+    for (const alias of forbiddenAliases) {
+      assert.equal(
+        uniqueNames.includes(alias),
+        false,
+        `alias still in catalog: ${alias}`,
+      );
+    }
+
+    for (const name of canonicalShared) {
+      assert.ok(
+        uniqueNames.includes(name),
+        `missing canonical feature name: ${name}`,
+      );
+    }
+
+    const allowedQualifiedNames = new Set([
+      "USB-C con Thunderbolt",
+      "Ceramic Shield 2",
+    ]);
+    for (const name of canonicalShared) {
+      const nearDuplicates = uniqueNames.filter(
+        (other) =>
+          other !== name &&
+          other.toLowerCase().includes(name.toLowerCase()) &&
+          !allowedQualifiedNames.has(other),
+      );
+      assert.deepEqual(
+        nearDuplicates,
+        [],
+        `near-duplicate of ${name}: ${nearDuplicates.join(", ")}`,
       );
     }
   });
