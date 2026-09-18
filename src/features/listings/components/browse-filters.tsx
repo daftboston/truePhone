@@ -15,7 +15,11 @@ import {
   type BrowseQuery,
 } from "@/features/listings/schemas/browse";
 import { conditionLabels } from "@/features/listings/schemas/listing";
-import { formatStorageLabel } from "@/lib/iphone-catalog";
+import {
+  formatStorageLabel,
+  getModelSeriesKey,
+  groupModelsBySeries,
+} from "@/lib/iphone-catalog";
 import { cn } from "@/lib/utils";
 
 type BrowseFiltersProps = {
@@ -26,6 +30,11 @@ type BrowseFiltersProps = {
   basePath?: BrowseBasePath;
   /** When true, sort is fixed to newest and the Ordenar group is hidden. */
   lockNewestSort?: boolean;
+  /**
+   * When true, show Serie chips first and only list models after a series
+   * is chosen — avoids dumping the full catalog into the sidebar.
+   */
+  groupBySeries?: boolean;
 };
 
 /**
@@ -109,6 +118,18 @@ function shortModelName(name: string) {
 }
 
 /**
+ * shortSeriesLabel
+ *
+ * Shortens series titles for compact filter chips (drops a leading «Serie»).
+ *
+ * @param label - Full series label from getModelSeriesKey.
+ * @returns Chip label, e.g. "iPhone 17".
+ */
+function shortSeriesLabel(label: string) {
+  return label.replace(/^Serie\s+/i, "");
+}
+
+/**
  * BrowseFilters
  *
  * Renders the Browse Filters UI for listings.
@@ -124,6 +145,7 @@ export function BrowseFilters({
   className,
   basePath = "/buscar",
   lockNewestSort = false,
+  groupBySeries = false,
 }: BrowseFiltersProps) {
   const conditions = Object.keys(conditionLabels) as Condition[];
   const href = (patch: Partial<BrowseQuery>) =>
@@ -140,16 +162,32 @@ export function BrowseFilters({
       basePath,
     );
 
+  const seriesList = groupBySeries ? groupModelsBySeries(models) : [];
+  const selectedModel = query.modelId
+    ? models.find((model) => model.id === query.modelId)
+    : null;
+  const activeSeriesKey =
+    query.seriesKey ||
+    (selectedModel ? getModelSeriesKey(selectedModel).key : "");
+  const seriesModels = activeSeriesKey
+    ? (seriesList.find((series) => series.key === activeSeriesKey)?.models ??
+      models.filter(
+        (model) => getModelSeriesKey(model).key === activeSeriesKey,
+      ))
+    : [];
+
   return (
     <aside className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-foreground text-xs font-semibold">Filtros</h2>
-        <Link
-          href="/explorar"
-          className="text-muted-foreground hover:text-foreground text-[11px] underline-offset-2 hover:underline"
-        >
-          Cambiar modelo
-        </Link>
+        {!groupBySeries ? (
+          <Link
+            href="/explorar"
+            className="text-muted-foreground hover:text-foreground text-[11px] underline-offset-2 hover:underline"
+          >
+            Cambiar modelo
+          </Link>
+        ) : null}
       </div>
 
       {!lockNewestSort ? (
@@ -166,20 +204,74 @@ export function BrowseFilters({
         </FilterGroup>
       ) : null}
 
-      <FilterGroup title="Modelo">
-        {models.map((model) => (
+      {groupBySeries ? (
+        <FilterGroup title="Serie" row>
           <FilterLink
-            key={model.id}
-            href={href({
-              modelId: model.id,
-              seriesKey: "",
-              page: 1,
-            })}
-            label={shortModelName(model.name)}
-            selected={query.modelId === model.id}
+            compact
+            href={href({ seriesKey: "", modelId: "", page: 1 })}
+            label="Todas"
+            selected={!activeSeriesKey}
           />
-        ))}
-      </FilterGroup>
+          {seriesList.map((series) => (
+            <FilterLink
+              key={series.key}
+              compact
+              href={href({
+                seriesKey: series.key,
+                modelId: "",
+                page: 1,
+              })}
+              label={shortSeriesLabel(series.label)}
+              selected={activeSeriesKey === series.key}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
+
+      {groupBySeries ? (
+        activeSeriesKey ? (
+          <FilterGroup title="Modelo" row>
+            <FilterLink
+              compact
+              href={href({
+                modelId: "",
+                seriesKey: activeSeriesKey,
+                page: 1,
+              })}
+              label="Todos"
+              selected={!query.modelId}
+            />
+            {seriesModels.map((model) => (
+              <FilterLink
+                key={model.id}
+                compact
+                href={href({
+                  modelId: model.id,
+                  seriesKey: activeSeriesKey,
+                  page: 1,
+                })}
+                label={shortModelName(model.name)}
+                selected={query.modelId === model.id}
+              />
+            ))}
+          </FilterGroup>
+        ) : null
+      ) : (
+        <FilterGroup title="Modelo">
+          {models.map((model) => (
+            <FilterLink
+              key={model.id}
+              href={href({
+                modelId: model.id,
+                seriesKey: "",
+                page: 1,
+              })}
+              label={shortModelName(model.name)}
+              selected={query.modelId === model.id}
+            />
+          ))}
+        </FilterGroup>
+      )}
 
       <FilterGroup title="Almacenamiento" row>
         <FilterLink

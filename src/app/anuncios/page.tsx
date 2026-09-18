@@ -225,10 +225,11 @@ export default async function AnunciosFeedPage({ searchParams }: PageProps) {
         <BrowseFiltersSheet key={JSON.stringify({ ...query, cursor, before })}>
           <BrowseFilters
             query={{ ...query, cursor: query.cursor, before: query.before }}
-            models={sidebarModels}
+            models={catalog.models}
             storages={sidebarStorages}
             basePath="/anuncios"
             lockNewestSort
+            groupBySeries
             className="border-border max-h-[calc(100vh-7rem)] overflow-y-auto md:sticky md:top-20 md:rounded-xl md:border md:p-3"
           />
         </BrowseFiltersSheet>
