@@ -28,10 +28,10 @@ Sellers may list the same iPhone on Facebook, Mercado Libre, or elsewhere. Buyer
 3. Seller: email + in-app to confirm still available.
 4. Seller **sí** → **CONFIRMED**; checkout unlocked for **that `buyerId` + `holdId`** only; `unlockExpiresAt` ≈ 30m; then normal `RESERVED` + `AWAITING_PAYMENT` + Wompi.
 5. Seller **no** → **DENIED**; listing **ARCHIVED**; buyer «no disponible» + CTA Explorar (not retracto).
-6. Timeout 2h → **EXPIRED**; buyer released; listing stays **PUBLISHED**.
+6. Timeout 2h → **EXPIRED** (lazy on `requestAvailabilityHold` when `expiresAt` passes; daily cron is a backup sweep); buyer released; listing stays **PUBLISHED**.
 7. Late sí after EXPIRED → reject **LATE_CONFIRM** (event only).
 8. Timeout vs confirm race → one winner; other no-ops (transactional updates).
-9. Second buyer → blocked / waiting (no second Wompi).
+9. Second buyer → blocked while another hold is **PENDING**, or while a **CONFIRMED** unlock window is open for a different buyer (no second Wompi).
 10. Non-flagged listings: unchanged direct checkout.
 11. **Hard server gate:** no Wompi session / Payment Link until hold **CONFIRMED** and linked order belongs to hold buyer.
 12. Mistaken charge → full refund, no Wompi fee on buyer (existing refund policy).
@@ -61,12 +61,21 @@ Sellers may list the same iPhone on Facebook, Mercado Libre, or elsewhere. Buyer
 | Order create gate    | `src/lib/orders.ts` → `createOrderAndReserveListing`               |
 | Wizard UI            | `src/features/listings/components/also-listed-elsewhere-field.tsx` |
 | Waiting UI           | `src/app/(account)/compras/disponibilidad/[holdId]/page.tsx`       |
-| Expiry cron          | `src/app/api/cron/availability-hold-expiry/route.ts`               |
+| Expiry backstop      | `src/app/api/cron/settlement-reminders/route.ts` (daily batch)     |
 | Notifications        | `src/lib/notifications/availability-hold.ts`                       |
 
-## Cron
+## Cron & Vercel Hobby
 
-`vercel.json`: daily hold expiry sweep (same auth pattern as settlement crons).
+**Primary expiry is lazy** on read (`getHoldByIdForParticipant`, `getBuyerHoldForListing`), confirm/deny, buy (`requestAvailabilityHold`, `createOrderAndReserveListing`), and checkout (`startCheckoutForOrder`). When `expiresAt` or `unlockExpiresAt` has passed, the hold transitions to **EXPIRED** before gates run — the 2h buyer countdown matches server state without waiting for cron.
+
+**Vercel Hobby** allows at most **two cron entries**, each **once per day** (no hourly/minutely). `vercel.json` keeps the existing pair:
+
+| Schedule      | Route                            | Also runs                                                               |
+| ------------- | -------------------------------- | ----------------------------------------------------------------------- |
+| `0 16 * * *`  | `/api/cron/buyer-confirm-expiry` | Financial Core 24h auto-release                                         |
+| `30 16 * * *` | `/api/cron/settlement-reminders` | Settlement reminders + **hold expiry backstop** + seller check-ins (F2) |
+
+The daily hold backstop expires any stale holds missed by lazy paths and sends buyer notifications. **Vercel Pro** would allow additional or hourly cron routes if ops wants a tighter sweep later.
 
 ## Tests
 

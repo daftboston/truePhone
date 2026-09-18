@@ -43,9 +43,9 @@ Optional seller-help one-liner (generic): visibility may adjust by quality/price
 
 ## Engineering
 
-| Area          | Location                                                   |
-| ------------- | ---------------------------------------------------------- |
-| Cron          | `src/app/api/cron/seller-listing-checkins/route.ts`        |
-| Processor     | `src/lib/notifications/seller-listing-checkins.ts`         |
-| Boost helper  | `src/lib/listings/boost.ts`                                |
-| Featured sort | `src/lib/listings-marketplace.ts` → `listFeaturedListings` |
+| Area          | Location                                                                       |
+| ------------- | ------------------------------------------------------------------------------ |
+| Cron          | `src/app/api/cron/settlement-reminders/route.ts` (daily batch; Hobby ≤2 crons) |
+| Processor     | `src/lib/notifications/seller-listing-checkins.ts`                             |
+| Boost helper  | `src/lib/listings/boost.ts`                                                    |
+| Featured sort | `src/lib/listings-marketplace.ts` → `listFeaturedListings`                     |

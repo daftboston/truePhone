@@ -4,17 +4,22 @@
  */
 
 export {
+  ACTIVE_UNLOCK_BLOCK_MESSAGE,
   assertCheckoutAllowedForFlaggedListing,
   AvailabilityHoldError,
   confirmAvailabilityHold,
   denyAvailabilityHold,
+  expireAvailabilityHoldsInTx,
   expireStaleAvailabilityHolds,
   getBuyerHoldForListing,
   getHoldByIdForParticipant,
   getPendingHoldForListing,
   holdStatusLabel,
+  lazyExpireAvailabilityHolds,
   linkHoldToOrder,
+  recordAlsoListedSellerWarningAck,
   requestAvailabilityHold,
+  runAvailabilityHoldExpiryBackstop,
 } from "./service";
 
 export {

@@ -19,6 +19,10 @@ export class AvailabilityHoldError extends Error {
   }
 }
 
+/** Shown when another buyer holds an open post-confirm checkout window. */
+export const ACTIVE_UNLOCK_BLOCK_MESSAGE =
+  "Otro comprador está completando la compra tras la confirmación del vendedor. Intenta más tarde.";
+
 /**
  * appendHoldEvent
  *
@@ -53,6 +57,189 @@ async function appendHoldEvent(
 }
 
 /**
+ * expireStalePendingHoldsInTx
+ *
+ * Marks overdue PENDING holds EXPIRED (lazy on request or cron sweep).
+ */
+async function expireStalePendingHoldsInTx(
+  tx: Prisma.TransactionClient,
+  filter: { listingId?: string; buyerId?: string },
+  reason: string,
+  now: Date,
+) {
+  const or: Prisma.AvailabilityHoldWhereInput[] = [];
+  if (filter.listingId) or.push({ listingId: filter.listingId });
+  if (filter.buyerId) or.push({ buyerId: filter.buyerId });
+  if (or.length === 0) return;
+
+  const stale = await tx.availabilityHold.findMany({
+    where: {
+      status: "PENDING",
+      expiresAt: { lt: now },
+      OR: or,
+    },
+    select: { id: true },
+  });
+
+  for (const row of stale) {
+    const updated = await tx.availabilityHold.updateMany({
+      where: { id: row.id, status: "PENDING" },
+      data: { status: "EXPIRED", expiredAt: now },
+    });
+    if (updated.count !== 1) continue;
+    await appendHoldEvent(tx, {
+      holdId: row.id,
+      kind: "EXPIRED",
+      metadata: { reason },
+    });
+  }
+}
+
+/**
+ * expireUnlockStaleHoldInTx
+ *
+ * Expires CONFIRMED holds whose checkout unlock window ended (no order yet).
+ */
+async function expireUnlockStaleHoldInTx(
+  tx: Prisma.TransactionClient,
+  holdId: string,
+  reason: string,
+  now: Date,
+) {
+  const updated = await tx.availabilityHold.updateMany({
+    where: {
+      id: holdId,
+      status: "CONFIRMED",
+      orderId: null,
+      unlockExpiresAt: { lt: now },
+    },
+    data: { status: "EXPIRED", expiredAt: now },
+  });
+  if (updated.count !== 1) return;
+  await appendHoldEvent(tx, {
+    holdId,
+    kind: "EXPIRED",
+    metadata: { reason, trigger: "unlock_expired" },
+  });
+}
+
+/**
+ * expireStaleUnlockHoldsInTx
+ *
+ * Batch-expires CONFIRMED holds past unlockExpiresAt for a listing and/or buyer.
+ */
+async function expireStaleUnlockHoldsInTx(
+  tx: Prisma.TransactionClient,
+  filter: { listingId?: string; buyerId?: string },
+  reason: string,
+  now: Date,
+) {
+  const and: Prisma.AvailabilityHoldWhereInput[] = [
+    { status: "CONFIRMED" },
+    { orderId: null },
+    { unlockExpiresAt: { lt: now } },
+  ];
+  if (!filter.listingId && !filter.buyerId) return;
+  if (filter.listingId) and.push({ listingId: filter.listingId });
+  if (filter.buyerId) and.push({ buyerId: filter.buyerId });
+
+  const stale = await tx.availabilityHold.findMany({
+    where: { AND: and },
+    select: { id: true },
+  });
+
+  for (const row of stale) {
+    await expireUnlockStaleHoldInTx(tx, row.id, reason, now);
+  }
+}
+
+/**
+ * expireAvailabilityHoldsInTx
+ *
+ * Authoritative lazy expiry for PENDING (expiresAt) and CONFIRMED (unlockExpiresAt).
+ */
+export async function expireAvailabilityHoldsInTx(
+  tx: Prisma.TransactionClient,
+  input: { listingId?: string; buyerId?: string; holdId?: string },
+  reason: string,
+  now: Date,
+) {
+  if (input.holdId) {
+    await expireHoldIfStaleInTx(tx, input.holdId, reason, now);
+    await expireUnlockStaleHoldInTx(tx, input.holdId, reason, now);
+  }
+  if (input.listingId || input.buyerId) {
+    await expireStalePendingHoldsInTx(
+      tx,
+      { listingId: input.listingId, buyerId: input.buyerId },
+      reason,
+      now,
+    );
+    await expireStaleUnlockHoldsInTx(
+      tx,
+      { listingId: input.listingId, buyerId: input.buyerId },
+      reason,
+      now,
+    );
+  }
+}
+
+/**
+ * lazyExpireAvailabilityHolds
+ *
+ * Runs expiry outside an existing transaction (read, confirm, buy, checkout paths).
+ */
+export async function lazyExpireAvailabilityHolds(input: {
+  listingId?: string;
+  buyerId?: string;
+  holdId?: string;
+  reason: string;
+}) {
+  const now = new Date();
+  await prisma.$transaction(async (tx) => {
+    await expireAvailabilityHoldsInTx(tx, input, input.reason, now);
+  });
+}
+
+/**
+ * recordAlsoListedSellerWarningAck
+ *
+ * Append-only seller wizard acknowledgement (F3). Uses a terminal audit hold row
+ * because AvailabilityHoldEvent requires holdId.
+ */
+export async function recordAlsoListedSellerWarningAck(input: {
+  listingId: string;
+  sellerId: string;
+}) {
+  const existing = await prisma.availabilityHoldEvent.findFirst({
+    where: {
+      kind: "WARNING_ACK",
+      hold: { listingId: input.listingId },
+    },
+    select: { id: true },
+  });
+  if (existing) return;
+
+  const now = new Date();
+  await prisma.$transaction(async (tx) => {
+    const auditHold = await tx.availabilityHold.create({
+      data: {
+        listingId: input.listingId,
+        buyerId: input.sellerId,
+        status: "EXPIRED",
+        expiresAt: now,
+        expiredAt: now,
+      },
+    });
+    await appendHoldEvent(tx, {
+      holdId: auditHold.id,
+      kind: "WARNING_ACK",
+      actorId: input.sellerId,
+    });
+  });
+}
+
+/**
  * getPendingHoldForListing
  *
  * Returns the active PENDING hold for a listing, if any.
@@ -75,6 +262,12 @@ export async function getBuyerHoldForListing(
   listingId: string,
   buyerId: string,
 ) {
+  await lazyExpireAvailabilityHolds({
+    listingId,
+    buyerId,
+    reason: "lazy_read",
+  });
+
   return prisma.availabilityHold.findFirst({
     where: {
       listingId,
@@ -139,6 +332,32 @@ export async function requestAvailabilityHold(input: {
         throw new AvailabilityHoldError("Este anuncio ya está reservado.");
       }
 
+      const now = new Date();
+      await expireAvailabilityHoldsInTx(
+        tx,
+        { listingId, buyerId },
+        "lazy_request",
+        now,
+      );
+
+      const activeUnlock = await tx.availabilityHold.findFirst({
+        where: {
+          listingId,
+          status: "CONFIRMED",
+          unlockExpiresAt: { gt: now },
+          orderId: null,
+        },
+        select: { id: true, buyerId: true },
+      });
+      if (activeUnlock) {
+        if (activeUnlock.buyerId === buyerId) {
+          return tx.availabilityHold.findUniqueOrThrow({
+            where: { id: activeUnlock.id },
+          });
+        }
+        throw new AvailabilityHoldError(ACTIVE_UNLOCK_BLOCK_MESSAGE);
+      }
+
       const existingPendingListing = await tx.availabilityHold.findFirst({
         where: { listingId, status: "PENDING" },
         select: { id: true, buyerId: true },
@@ -166,12 +385,14 @@ export async function requestAvailabilityHold(input: {
       }
 
       if (existingPendingListing?.buyerId === buyerId) {
-        return tx.availabilityHold.findUniqueOrThrow({
+        const pending = await tx.availabilityHold.findUniqueOrThrow({
           where: { id: existingPendingListing.id },
         });
+        if (pending.expiresAt > now) {
+          return pending;
+        }
       }
 
-      const now = new Date();
       const created = await tx.availabilityHold.create({
         data: {
           listingId,
@@ -212,6 +433,9 @@ export async function confirmAvailabilityHold(input: {
 
   try {
     await prisma.$transaction(async (tx) => {
+      const now = new Date();
+      await expireAvailabilityHoldsInTx(tx, { holdId }, "lazy_confirm", now);
+
       const hold = await tx.availabilityHold.findUnique({
         where: { id: holdId },
         include: {
@@ -236,17 +460,7 @@ export async function confirmAvailabilityHold(input: {
         throw new AvailabilityHoldError("Esta solicitud ya fue respondida.");
       }
 
-      const now = new Date();
       if (now > hold.expiresAt) {
-        await tx.availabilityHold.update({
-          where: { id: hold.id },
-          data: { status: "EXPIRED", expiredAt: now },
-        });
-        await appendHoldEvent(tx, {
-          holdId: hold.id,
-          kind: "EXPIRED",
-          metadata: { reason: "expired_on_confirm" },
-        });
         await appendHoldEvent(tx, {
           holdId: hold.id,
           kind: "LATE_CONFIRM",
@@ -296,6 +510,9 @@ export async function denyAvailabilityHold(input: {
 
   try {
     await prisma.$transaction(async (tx) => {
+      const now = new Date();
+      await expireAvailabilityHoldsInTx(tx, { holdId }, "lazy_deny", now);
+
       const hold = await tx.availabilityHold.findUnique({
         where: { id: holdId },
         include: {
@@ -310,7 +527,6 @@ export async function denyAvailabilityHold(input: {
         throw new AvailabilityHoldError("Esta solicitud ya fue respondida.");
       }
 
-      const now = new Date();
       await tx.availabilityHold.update({
         where: { id: hold.id, status: "PENDING" },
         data: { status: "DENIED", deniedAt: now },
@@ -339,40 +555,75 @@ export async function denyAvailabilityHold(input: {
 /**
  * expireStaleAvailabilityHolds
  *
- * Marks PENDING holds past expiresAt as EXPIRED. Called by cron.
+ * Daily backstop sweep (primary expiry is lazy on read/confirm/buy/checkout).
  */
 export async function expireStaleAvailabilityHolds(limit = 50) {
   const now = new Date();
-  const stale = await prisma.availabilityHold.findMany({
-    where: { status: "PENDING", expiresAt: { lte: now } },
-    take: limit,
-    orderBy: { expiresAt: "asc" },
-    select: { id: true },
-  });
+  const [stalePending, staleUnlock] = await Promise.all([
+    prisma.availabilityHold.findMany({
+      where: { status: "PENDING", expiresAt: { lte: now } },
+      take: limit,
+      orderBy: { expiresAt: "asc" },
+      select: { id: true },
+    }),
+    prisma.availabilityHold.findMany({
+      where: {
+        status: "CONFIRMED",
+        orderId: null,
+        unlockExpiresAt: { lte: now },
+      },
+      take: limit,
+      orderBy: { unlockExpiresAt: "asc" },
+      select: { id: true },
+    }),
+  ]);
 
+  const ids = [...stalePending, ...staleUnlock]
+    .map((row) => row.id)
+    .slice(0, limit);
   const results: { holdId: string; ok: boolean }[] = [];
 
-  for (const row of stale) {
+  for (const holdId of ids) {
     try {
       await prisma.$transaction(async (tx) => {
-        const updated = await tx.availabilityHold.updateMany({
-          where: { id: row.id, status: "PENDING" },
-          data: { status: "EXPIRED", expiredAt: now },
-        });
-        if (updated.count !== 1) return;
-        await appendHoldEvent(tx, {
-          holdId: row.id,
-          kind: "EXPIRED",
-          metadata: { reason: "cron" },
-        });
+        await expireAvailabilityHoldsInTx(tx, { holdId }, "cron_backstop", now);
       });
-      results.push({ holdId: row.id, ok: true });
+      results.push({ holdId, ok: true });
     } catch {
-      results.push({ holdId: row.id, ok: false });
+      results.push({ holdId, ok: false });
     }
   }
 
   return results;
+}
+
+/**
+ * runAvailabilityHoldExpiryBackstop
+ *
+ * Daily backstop: expire stale holds and notify buyers (folded into settlement-reminders cron).
+ */
+export async function runAvailabilityHoldExpiryBackstop(input: {
+  limit?: number;
+  siteOrigin: string;
+}) {
+  const { notifyBuyerAvailabilityHoldExpired } =
+    await import("@/lib/notifications/availability-hold");
+  const results = await expireStaleAvailabilityHolds(input.limit ?? 50);
+  let notified = 0;
+
+  for (const row of results.filter((r) => r.ok)) {
+    try {
+      await notifyBuyerAvailabilityHoldExpired({
+        holdId: row.holdId,
+        siteOrigin: input.siteOrigin,
+      });
+      notified += 1;
+    } catch {
+      // dedupe or email noop
+    }
+  }
+
+  return { results, notified };
 }
 
 /**
@@ -435,6 +686,12 @@ export async function linkHoldToOrder(input: {
   buyerId: string;
   orderId: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
+  await lazyExpireAvailabilityHolds({
+    holdId: input.holdId,
+    buyerId: input.buyerId,
+    reason: "lazy_buy",
+  });
+
   const hold = await prisma.availabilityHold.findFirst({
     where: {
       id: input.holdId,
@@ -468,6 +725,33 @@ export async function linkHoldToOrder(input: {
 }
 
 /**
+ * expireHoldIfStaleInTx
+ *
+ * Expires one PENDING hold when past expiresAt (e.g. hold detail page load).
+ */
+async function expireHoldIfStaleInTx(
+  tx: Prisma.TransactionClient,
+  holdId: string,
+  reason: string,
+  now: Date,
+) {
+  const updated = await tx.availabilityHold.updateMany({
+    where: {
+      id: holdId,
+      status: "PENDING",
+      expiresAt: { lt: now },
+    },
+    data: { status: "EXPIRED", expiredAt: now },
+  });
+  if (updated.count !== 1) return;
+  await appendHoldEvent(tx, {
+    holdId,
+    kind: "EXPIRED",
+    metadata: { reason },
+  });
+}
+
+/**
  * getHoldByIdForParticipant
  *
  * Loads a hold when the viewer is buyer or listing seller.
@@ -476,6 +760,8 @@ export async function getHoldByIdForParticipant(
   holdId: string,
   profileId: string,
 ) {
+  await lazyExpireAvailabilityHolds({ holdId, reason: "lazy_read" });
+
   const hold = await prisma.availabilityHold.findUnique({
     where: { id: holdId },
     include: {

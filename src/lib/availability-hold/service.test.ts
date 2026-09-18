@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
+import { ACTIVE_UNLOCK_BLOCK_MESSAGE } from "@/lib/availability-hold";
 import {
   qualifiesForPriceDropBoost,
   BOOST_MIN_DROP_COP,
 } from "@/lib/listings/boost";
 import { stripBankFieldsFromLedgerRow } from "@/lib/ops-sales-ledger";
 import { isMilestoneToday } from "@/lib/notifications/seller-listing-checkins";
+
+describe("ACTIVE_UNLOCK_BLOCK_MESSAGE", () => {
+  it("is Spanish copy for second buyer during unlock", () => {
+    assert.match(ACTIVE_UNLOCK_BLOCK_MESSAGE, /Otro comprador/);
+  });
+});
 
 describe("qualifiesForPriceDropBoost", () => {
   it("requires 3% or 50k COP drop", () => {

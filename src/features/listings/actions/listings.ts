@@ -47,6 +47,7 @@ import {
   listingHadPaidOrder,
 } from "@/features/listings/lib/seller-listing-hub";
 import { listingWizardNextPath } from "@/features/listings/lib/listing-wizard-intent";
+import { recordAlsoListedSellerWarningAck } from "@/lib/availability-hold";
 import { buildPriceDropBoostUpdate } from "@/lib/listings/boost";
 import { publicListingPath } from "@/lib/listings-marketplace";
 import { prisma } from "@/lib/db";
@@ -261,6 +262,13 @@ export async function createListingAction(
     },
   });
 
+  if (alsoListed.value) {
+    await recordAlsoListedSellerWarningAck({
+      listingId: listing.id,
+      sellerId: seller.current.profile.id,
+    });
+  }
+
   revalidatePath("/vender");
   redirect(
     listingWizardNextPath(
@@ -383,6 +391,13 @@ export async function updateListingDetailsAction(
       alsoListedElsewhere: alsoListed.value,
     },
   });
+
+  if (alsoListed.value) {
+    await recordAlsoListedSellerWarningAck({
+      listingId: listing.id,
+      sellerId: seller.current.profile.id,
+    });
+  }
 
   revalidatePath(`/vender/${listing.id}`);
   revalidatePath("/vender");

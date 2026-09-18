@@ -15,6 +15,7 @@ import {
   recordChargebackReceived,
   recordPaymentHold,
 } from "@/lib/financial-core";
+import { lazyExpireAvailabilityHolds } from "@/lib/availability-hold";
 import { prisma } from "@/lib/db";
 import { isDeliveryAddressComplete } from "@/lib/orders/delivery-address";
 import { freezeDeliveryAddressOnPayment } from "@/lib/orders/delivery-address-service";
@@ -243,6 +244,11 @@ export async function startCheckoutForOrder(input: {
       select: { alsoListedElsewhere: true },
     });
     if (listing?.alsoListedElsewhere) {
+      await lazyExpireAvailabilityHolds({
+        listingId: order.listingId,
+        buyerId,
+        reason: "lazy_checkout",
+      });
       const hold = await prisma.availabilityHold.findFirst({
         where: {
           listingId: order.listingId,

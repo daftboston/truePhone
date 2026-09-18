@@ -20,6 +20,7 @@ import {
   resolveFeeKindForBuyer,
   sellerPaidSelfCancelBlocker,
 } from "@/lib/financial-core";
+import { expireAvailabilityHoldsInTx } from "@/lib/availability-hold";
 import { prisma } from "@/lib/db";
 import { formatOrderMoney } from "@/lib/format-money";
 import {
@@ -310,12 +311,19 @@ export async function createOrderAndReserveListing(input: {
         );
       }
 
+      const now = new Date();
       if (listing.alsoListedElsewhere) {
         if (!availabilityHoldId) {
           throw new OrderError(
             "Debes esperar la confirmación del vendedor antes de comprar.",
           );
         }
+        await expireAvailabilityHoldsInTx(
+          tx,
+          { listingId, buyerId, holdId: availabilityHoldId },
+          "lazy_buy",
+          now,
+        );
         const hold = await tx.availabilityHold.findFirst({
           where: {
             id: availabilityHoldId,
@@ -330,7 +338,6 @@ export async function createOrderAndReserveListing(input: {
             "La confirmación de disponibilidad no es válida o ya expiró.",
           );
         }
-        const now = new Date();
         if (hold.unlockExpiresAt && now > hold.unlockExpiresAt) {
           throw new OrderError(
             "El plazo para comprar después de la confirmación venció.",
