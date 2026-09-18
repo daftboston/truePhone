@@ -28,8 +28,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const listing = await getPublishedListingBySlug(slug);
   if (!listing) return { title: "Anuncio no encontrado", robots: { index: false } };
 
+  // Field names match getPublishedListingBySlug: city lives on the seller, battery may be null
   const title = `${listing.iphoneModel.name} ${formatStorageLabel(listing.iphoneStorage.valueGb)} usado`;
-  const description = `${listing.title} en ${listing.city}. Estado ${conditionLabels[listing.condition]}, batería ${listing.batteryHealth}%. Anuncio revisado por TruePhone.`;
+  const battery =
+    listing.batteryHealth != null ? `, batería ${listing.batteryHealth}%` : "";
+  const description = `${listing.title} en ${listing.seller.city ?? "Colombia"}. Estado ${conditionLabels[listing.condition]}${battery}. Anuncio revisado por TruePhone.`;
 
   return {
     title,
@@ -110,8 +113,7 @@ CTA (one): Explorar iPhones revisados | Vender tu iPhone | Leer ayuda
 Internal links: ≥ 2 (explorar/buscar, ayuda#cluster, related guide)
 ```
 
-Guide ideas that match TruePhone authority (see keywords.md cluster 3):
-`Cómo verificar el IMEI de un iPhone usado en Colombia`, `Qué es Activation Lock y por qué importa al comprar un iPhone usado`, `Salud de batería: qué porcentaje aceptar en un iPhone usado`, `Checklist para revisar un iPhone usado en 24 horas`, `Cómo vender tu iPhone sin comisión y sin riesgos`, `iPhone usado vs reacondicionado: diferencias reales`.
+Topic backlog and two fully worked outlines: [guides.md](guides.md). Add the topic there before drafting.
 
 ## 5. JSON-LD
 
