@@ -2,6 +2,7 @@
  * @file iphone-catalog.ts
  * @description Client-safe iPhone catalog grouping, typeahead matching, storage labels, and glyph face styles.
  * @dependencies none
+ * @changelog 2026-09-18 — SE 4 uses Dynamic Island; e-series models keep the notch.
  */
 
 import type {
@@ -48,6 +49,7 @@ const PRODUCT_LINE_RANK: Record<IphoneProductLineId, number> = {
  * getIphoneFaceStyle
  *
  * Chooses the silhouette face for catalog glyphs (home button, notch, or island).
+ * SE 3 keeps Touch ID; SE 4 matches Dynamic Island. All e-series variants keep the notch.
  *
  * @param model.productLine - Independent commercial line.
  * @param model.generation - Generation within that line.
@@ -60,10 +62,12 @@ export function getIphoneFaceStyle(model: {
   generation: number;
   variantType: IphoneVariantTypeId;
 }): IphoneFaceStyle {
-  if (model.productLine === "IPHONE_SE") return "home";
+  if (model.productLine === "IPHONE_SE") {
+    return model.generation >= 4 ? "island" : "home";
+  }
   if (model.productLine === "IPHONE_AIR") return "island";
   if (model.generation <= 13) return "notch";
-  if (model.generation === 16 && model.variantType === "E") return "notch";
+  if (model.variantType === "E") return "notch";
   if (
     model.generation === 14 &&
     (model.variantType === "STANDARD" || model.variantType === "PLUS")

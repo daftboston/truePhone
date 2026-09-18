@@ -5,6 +5,7 @@
  * @changelog 2026-09-15 — Canonical unique-feature names; battery mAh caption; sibling highlights aligned.
  * @changelog 2026-09-15 — Unique features come from a shared capability matrix so compare stays factual.
  * @changelog 2026-09-17 — Camera and chip copy match the same generation hardware as unique features.
+ * @changelog 2026-09-18 — Unique-feature pass: 17e notch/TrueDepth, 16/17 macro, MagSafe only when the chassis has it.
  */
 
 import { IPHONE_CATALOG_MODELS } from "@/lib/iphone-catalog-data";
@@ -59,7 +60,6 @@ const CENTER_STAGE_FRONT_SLUGS = new Set([
   "iphone-air",
   "iphone-17-pro",
   "iphone-17-pro-max",
-  "iphone-17e",
 ]);
 
 const STAINLESS_STEEL_SLUGS = new Set([
@@ -107,7 +107,6 @@ const DYNAMIC_ISLAND_SLUGS = new Set([
   "iphone-air",
   "iphone-17-pro",
   "iphone-17-pro-max",
-  "iphone-17e",
 ]);
 
 const ALWAYS_ON_SLUGS = new Set([
@@ -157,8 +156,11 @@ const MACRO_PHOTO_SLUGS = new Set([
   "iphone-14-pro-max",
   "iphone-15-pro",
   "iphone-15-pro-max",
+  "iphone-16",
+  "iphone-16-plus",
   "iphone-16-pro",
   "iphone-16-pro-max",
+  "iphone-17",
   "iphone-17-pro",
   "iphone-17-pro-max",
 ]);
@@ -199,6 +201,8 @@ const APPLE_INTELLIGENCE_SLUGS = new Set([
   "iphone-17-pro-max",
   "iphone-17e",
 ]);
+
+const NO_MAGSAFE_SLUGS = new Set(["iphone-se-3", "iphone-16e"]);
 
 const CRASH_DETECTION_SLUGS = new Set([
   "iphone-14",
@@ -618,7 +622,10 @@ function buildUniqueFeatures(slug: string): string[] {
   } else if (USB_C_SLUGS.has(slug)) {
     features.push("USB-C");
   }
-  features.push("MagSafe");
+  // SE 3 and 16e charge on Qi pads but have no MagSafe magnet array
+  if (!NO_MAGSAFE_SLUGS.has(slug)) {
+    features.push("MagSafe");
+  }
   if (APPLE_INTELLIGENCE_SLUGS.has(slug)) {
     features.push("Apple Intelligence");
   }
