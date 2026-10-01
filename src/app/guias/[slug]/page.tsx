@@ -1,7 +1,7 @@
 /**
  * @file page.tsx
  * @description Public guide detail at /guias/[slug].
- * @dependencies AppShell, SiteFooter, GuideMarkdown, @/lib/guias/load-guides
+ * @dependencies AppShell, SiteFooter, GuideMarkdown, extractGuideFaqs, getSiteUrl
  */
 
 import type { Metadata } from "next";
@@ -11,9 +11,11 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { SiteFooter } from "@/components/site-footer";
 import { GuideMarkdown } from "@/features/guias/components/guide-markdown";
+import { extractGuideFaqs } from "@/lib/guias/extract-guide-faqs";
 import { formatGuideDate } from "@/lib/guias/format-guide-date";
 import { getGuideBySlug, getPublishedGuides } from "@/lib/guias/load-guides";
 import { LEGAL_PATHS } from "@/lib/legal";
+import { getSiteUrl } from "@/lib/site-url";
 
 type GuiaDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -31,7 +33,7 @@ export function generateStaticParams() {
 /**
  * generateMetadata
  *
- * Uses guide front matter for SEO title and description.
+ * Uses guide front matter for title, description, canonical URL, and Open Graph.
  */
 export async function generateMetadata({
   params,
@@ -40,20 +42,45 @@ export async function generateMetadata({
   const guide = getGuideBySlug(slug);
 
   if (!guide) {
-    return {};
+    return { title: "Guía no encontrada", robots: { index: false } };
   }
 
+  const canonical = `${getSiteUrl()}/guias/${guide.slug}`;
+  const title = guide.metaTitle || guide.title;
+
   return {
-    title: guide.metaTitle || guide.title,
+    title,
     description: guide.metaDescription,
-    ...(guide.coverImage
-      ? {
-          openGraph: {
-            images: [{ url: guide.coverImage, alt: guide.heading }],
-          },
-        }
-      : {}),
+    alternates: { canonical },
+    openGraph: {
+      title: `${title} · TruePhone`,
+      description: guide.metaDescription,
+      type: "article",
+      url: canonical,
+      ...(guide.coverImage
+        ? { images: [{ url: guide.coverImage, alt: guide.heading }] }
+        : {}),
+    },
   };
+}
+
+/**
+ * JsonLd
+ *
+ * Serializes a schema.org object into an application/ld+json script tag.
+ *
+ * @param props.data - Plain object following schema.org vocabulary.
+ * @returns Script element for crawlers.
+ */
+function JsonLd({ data }: { data: object }) {
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</g, "\\u003c"),
+      }}
+    />
+  );
 }
 
 /**
@@ -75,9 +102,74 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
   const otherGuides = getPublishedGuides().filter(
     (entry) => entry.slug !== guide.slug,
   );
+  const siteUrl = getSiteUrl();
+  const canonical = `${siteUrl}/guias/${guide.slug}`;
+  const faqs = extractGuideFaqs(guide.content);
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Article",
+        headline: guide.heading,
+        description: guide.metaDescription,
+        inLanguage: "es-CO",
+        datePublished: guide.publishedAt,
+        dateModified: guide.updatedAt,
+        author: { "@type": "Organization", name: "TruePhone" },
+        publisher: {
+          "@type": "Organization",
+          name: "TruePhone",
+          url: siteUrl,
+        },
+        mainEntityOfPage: canonical,
+        ...(guide.coverImage
+          ? { image: [`${siteUrl}${guide.coverImage}`] }
+          : {}),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Inicio",
+            item: `${siteUrl}/`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Guías",
+            item: `${siteUrl}/guias`,
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
+            name: guide.heading,
+          },
+        ],
+      },
+      ...(faqs.length > 0
+        ? [
+            {
+              "@type": "FAQPage",
+              mainEntity: faqs.map((item) => ({
+                "@type": "Question",
+                name: item.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: item.answer,
+                },
+              })),
+            },
+          ]
+        : []),
+    ],
+  };
 
   return (
     <>
+      <JsonLd data={jsonLd} />
       <AppShell mainClassName="gap-10 md:gap-12">
         <header className="mx-auto max-w-2xl space-y-3 text-center">
           <p className="text-muted-foreground text-xs">
@@ -108,7 +200,7 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
               href="/explorar"
               className="text-trust font-medium underline-offset-4 hover:underline"
             >
-              Explora anuncios verificados
+              Explora anuncios revisados
             </Link>
             .
           </p>
@@ -123,10 +215,10 @@ export default async function GuiaDetailPage({ params }: GuiaDetailPageProps) {
               Todas las guías
             </Link>
             <Link
-              href={LEGAL_PATHS.help}
+              href={`${LEGAL_PATHS.help}#seguridad`}
               className="text-trust text-sm font-medium underline-offset-4 hover:underline"
             >
-              Ayuda
+              Ayuda: seguridad
             </Link>
             <Link
               href={LEGAL_PATHS.terms}

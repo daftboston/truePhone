@@ -1,24 +1,24 @@
 ---
-title: "Estafas iPhone Marketplace: señales en WhatsApp"
-description: "Detecta estafas al comprar iPhone usado en Marketplace y WhatsApp en Colombia: precios irreales, anticipos, tracking falso, verificar IMEI y Activation Lock."
+title: "Cómo detectar estafas al comprar iPhone usado"
+description: "Reconoce precios irreales, anticipos y envíos falsos. Verifica IMEI y el bloqueo de activación antes de pagar un iPhone usado en Colombia."
 h1: "Señales de estafa al comprar iPhone usado en Marketplace y WhatsApp"
 slug: estafas-iphone-marketplace-whatsapp-colombia
 publishedAt: 2026-09-16
-updatedAt: 2026-09-16
+updatedAt: 2026-09-18
 coverImage: /guias/estafas-iphone-marketplace-whatsapp-hero.png
 ---
 
-![Guía para comprar iPhone usado con seguridad en Marketplace y WhatsApp en Colombia](/guias/estafas-iphone-marketplace-whatsapp-hero.png)
+![iPhone usado sobre una mesa: guía para detectar estafas al comprar en Marketplace o WhatsApp en Colombia](/guias/estafas-iphone-marketplace-whatsapp-hero.png)
 
-Comprar un **iPhone usado** en Facebook Marketplace o por WhatsApp puede ser una buena decisión… o un dolor de cabeza. En Colombia es habitual ver anuncios atractivos, chats rápidos y presión para “cerrar ya”. La buena noticia: la mayoría de las estafas siguen patrones repetibles. Si aprendes a reconocerlos, reduces mucho el riesgo.
+Comprar un **iPhone usado** por Facebook Marketplace o WhatsApp puede salir bien si tú marcas el ritmo. En Colombia es habitual ver anuncios atractivos, chats rápidos y presión para “cerrar ya”. La mayoría de las estafas siguen los mismos patrones: precio irreal, urgencia y un pago antes de ver el equipo.
 
-Esta guía es práctica y calmada. No busca asustarte: busca darte un proceso claro antes de pagar, con énfasis en verificación de IMEI, Activation Lock y encuentros seguros. Si prefieres un camino con revisión manual previa, en [TruePhone](https://www.truephone.shop/) cada anuncio pasa por un revisor antes de publicarse.
+Esta guía te da un proceso claro **antes de pagar**: fotos actuales, encuentro en un lugar público, consultar el IMEI y comprobar que no haya bloqueo de activación (Activation Lock).
 
 ---
 
 ## Por qué Marketplace y WhatsApp concentran tantos riesgos
 
-Marketplace conecta compradores y vendedores con poca fricción. WhatsApp acelera la negociación… y también saca la conversación del entorno de la plataforma, donde es más difícil reportar o dejar rastro útil.
+Marketplace conecta compradores y vendedores con poca fricción. WhatsApp acelera la negociación… y también saca la conversación de la plataforma, donde es más difícil reportar o dejar rastro útil.
 
 Eso no significa que toda oferta sea falsa. Significa que **tú** debes imponer el ritmo: verificar antes de transferir, no al revés.
 
@@ -30,7 +30,7 @@ En la práctica, las estafas más comunes combinan tres ingredientes:
 
 ---
 
-## Señales de alerta (red flags) al comprar iPhone usado
+## Señales de alerta al comprar iPhone usado
 
 Usa esta lista como filtro rápido. Una sola señal no siempre prueba una estafa; **varias juntas** sí deberían hacerte pausar o retirarte.
 
@@ -38,13 +38,13 @@ Usa esta lista como filtro rápido. Una sola señal no siempre prueba una estafa
 
 Si un modelo reciente aparece cientos de miles de pesos más barato que anuncios similares en tu ciudad, pregunta por qué. Las verdaderas oportunidades existen, pero suelen venir con una explicación creíble (cambio de equipo, factura, detalle cosmético).
 
-**Qué pedir:** fotos nuevas del equipo (no de catálogo), número de modelo, capacidad, estado de batería y una razón concreta del precio.
+**Qué pedir:** fotos nuevas del equipo (no de catálogo), número de modelo, capacidad, salud de batería y una razón concreta del precio.
 
 ### 2. Anticipo, “reserva” o consignación antes de ver el iPhone
 
 Una de las modalidades más repetidas: te piden transferir a Nequi, Daviplata o cuenta bancaria “para apartarlo” o “para el domicilio”. Después llegan excusas, capturas falsas o silencio.
 
-**Regla simple:** no pagues nada hasta tener el iPhone en la mano, verificado y listo para configurar.
+**Regla simple:** no pagues nada hasta tener el iPhone en la mano, revisado y listo para configurar.
 
 ### 3. Presión para salir de Marketplace a WhatsApp… y cerrar en minutos
 
@@ -54,7 +54,7 @@ Mantén capturas del anuncio original (URL, precio, fotos, perfil). Si el chat s
 
 ### 4. Perfil nuevo, anuncio clonado o vendedor “fantasma”
 
-Revisa el perfil: antigüedad, amigos/interacciones razonables, historial de ventas. Desconfía si:
+Revisa el perfil: antigüedad, amigos o interacciones razonables, historial de ventas. Desconfía si:
 
 - El perfil es muy reciente y ya vende electrónica cara.
 - Las fotos parecen de catálogo o se repiten en otros anuncios.
@@ -67,9 +67,9 @@ Algunas estafas inventan un envío con número de guía inventado, captura de me
 
 ### 6. Promesas de “desbloqueo remoto”, “quitar iCloud” o “IMEI limpio por chat”
 
-Nadie serio debería venderte un iPhone prometiendo saltarse **Activation Lock** a distancia o “arreglar IMEI” después del pago. En Colombia, manipular IMEI es ilegal. Si el equipo pide la cuenta Apple del dueño anterior, no es un “detalle”: es un bloqueo que puede dejarlo inutilizable.
+Nadie serio debería venderte un iPhone prometiendo saltarse el **bloqueo de activación (Activation Lock)** a distancia o “arreglar IMEI” después del pago. En Colombia, manipular IMEI es ilegal. Si el equipo pide la cuenta Apple del dueño anterior, no es un “detalle”: es un bloqueo que puede dejarlo inutilizable.
 
-Para profundizar más adelante: guía para verificar IMEI · guía de Activation Lock (próximamente).
+Más adelante publicaremos una guía para [verificar el IMEI](/guias) y otra sobre Activation Lock. Mientras tanto, lee [cómo TruePhone revisa IMEI y Activation Lock](/ayuda#seguridad).
 
 ### 7. Evita compartir códigos SMS, OTP o datos bancarios
 
@@ -108,31 +108,29 @@ Con el iPhone en la mano:
 
 - Enciéndelo y navega por Ajustes.
 - Prueba pantalla, Face ID/Touch ID, cámaras, audio, carga y Wi‑Fi.
-- Revisa **Salud de la batería** y que la pantalla/batería figuren como originales cuando el sistema lo indique.
+- Revisa **Salud de la batería** y el [historial de piezas y servicio](https://support.apple.com/es-co/102658) cuando el sistema lo muestre.
 - Confirma capacidad y modelo (Ajustes › General › Información).
 
 ### Paso 3 — Verificar IMEI (Colombia)
 
 1. Marca `*#06#` o mira el IMEI en Ajustes › General › Información.
 2. Compara que coincida en pantalla, caja (si hay) y ajustes.
-3. Consúltalo en el portal oficial de IMEI Colombia (imeicolombia.com.co / canales MinTIC-CRC).
+3. Consúltalo en la [consulta pública de IMEI Colombia](https://www.imeicolombia.com.co/ConsultaPublicaIMEI/) (portal habilitado por los operadores en el marco de la estrategia contra el hurto celular; CRC / MinTIC lo referencian).
 
 Si aparece reportado, bloqueado o con inconsistencias, **no compres**. Si el IMEI de `*#06#` no coincide con Ajustes, aléjate: puede indicar manipulación.
-
-Más detalle en nuestra futura guía: cómo verificar IMEI en Colombia.
 
 ### Paso 4 — Activation Lock y “Buscar” (Find My)
 
 Pide al vendedor, **frente a ti**:
 
-1. Cerrar sesión de su Cuenta de Apple / Apple ID.
+1. Cerrar sesión de su Cuenta de Apple.
 2. Desactivar **Buscar** (Find My).
 3. Borrar contenido y configuración.
 4. Encender el equipo y avanzar la configuración inicial.
 
 Si tras el borrado aparece **Bloqueo de Activación** / “Locked to Owner”, no pagues. No confíes en páginas dudosas que “consultan iCloud por IMEI”: Apple no ofrece una herramienta pública confiable para eso a distancia; la prueba real es el dispositivo en mano.
 
-Guía relacionada (próximamente): Activation Lock en iPhone usado.
+Apple documenta qué hacer [antes de vender o entregar un iPhone](https://support.apple.com/es-co/109511).
 
 ### Paso 5 — Paga solo cuando todo cuadra
 
@@ -158,7 +156,7 @@ Retirarte no es “perder la oferta”: es proteger tu bolsillo. Aléjate si:
 - Te piden códigos, contraseñas o datos sensibles.
 - El chat es agresivo, insultante o te acusa de “no querer comprar” por pedir verificaciones básicas.
 
-Un vendedor legítimo entiende que un iPhone usado de alto valor merece revisión. La prisa artificial suele trabajar a favor del estafador.
+Un vendedor honesto entiende que un iPhone usado de alto valor merece revisión. La prisa artificial suele trabajar a favor de quien quiere estafar.
 
 ---
 
@@ -166,8 +164,8 @@ Un vendedor legítimo entiende que un iPhone usado de alto valor merece revisió
 
 1. **No envíes más dinero** ni “comisiones de liberación”.
 2. Guarda evidencias: anuncios, chats, números, capturas, transferencias.
-3. Reporta el anuncio/perfil en Marketplace y bloquea al contacto.
-4. Si hubo transferencia o estafa, contacta a tu banco/billetera y considera denuncia ante autoridades (p. ej. canales de denuncia virtual de Policía/Fiscalía como ADenunciar).
+3. Reporta el anuncio o perfil en Marketplace y bloquea al contacto.
+4. Si hubo transferencia o estafa, contacta a tu banco o billetera y considera denuncia ante autoridades. En Colombia puedes usar el sistema [ADenunciar de la Policía Nacional](https://www.policia.gov.co/sistema-nacional-denuncia-virtual-adenunciar).
 5. Si quedó Activation Lock o IMEI reportado, no busques “soluciones” ilegales; documenta y pide asesoría formal.
 
 El objetivo de esta guía es **prevenir** y evitar un segundo pago por pánico.
@@ -176,7 +174,7 @@ El objetivo de esta guía es **prevenir** y evitar un segundo pago por pánico.
 
 ## Checklist de compra (versión para imprimir o guardar)
 
-Úsala el día del encuentro. Complementa con nuestra futura checklist de compra de iPhone usado.
+Úsala el día del encuentro.
 
 **Antes de salir**
 
@@ -194,35 +192,31 @@ El objetivo de esta guía es **prevenir** y evitar un segundo pago por pánico.
 **Antes de pagar**
 
 - [ ] Sin anticipos previos
-- [ ] Fondos/método de pago bajo tu control
+- [ ] Fondos o método de pago bajo tu control
 - [ ] Comprobante básico de compraventa (recomendado)
 
 ---
 
-## Una alternativa más tranquila: revisión antes de publicar
+## Cómo lo aplica TruePhone
 
-Si prefieres no filtrar solo entre decenas de chats, puedes usar un marketplace **curado**, donde la confianza pesa más que el volumen de inventario.
+Si prefieres no filtrar solo entre decenas de chats, TruePhone publica anuncios de iPhone usado **después de una revisión manual**: IMEI, prueba de posesión, fotos guiadas y que el vendedor confirme que no hay Activation Lock.
 
-En **TruePhone** ([https://www.truephone.shop/](https://www.truephone.shop/)):
+El pago va por Compra Garantizada (10% de protección al comprador). TruePhone retiene el dinero hasta que marcas «Ya recibí» y confirmas, o pasan 24 horas. El vendedor no cobra comisión sobre el precio del equipo.
 
-- Cada anuncio pasa por **revisión manual** antes de publicarse.
-- Se valida el dispositivo real (IMEI y posesión) como parte del proceso.
-- Menos presión, más verificación: pensado para quien busca un **iPhone usado confiable** en Colombia.
-
-Explora [truephone.shop](https://www.truephone.shop/) con calma — y si compras por Marketplace, lleva esta guía contigo.
+[Explora anuncios revisados](/explorar). Más detalle en [Ayuda: seguridad](/ayuda#seguridad).
 
 ---
 
 ## Preguntas frecuentes
 
-**¿Es seguro comprar iPhone usado en Marketplace?** Puede serlo si verificas en persona (IMEI + Activation Lock) y no pagas anticipos. El riesgo sube cuando todo se reduce a transferencias por chat.
+**¿Es seguro comprar iPhone usado en Marketplace?** Puede serlo si verificas en persona (IMEI y bloqueo de activación) y no pagas anticipos. El riesgo sube cuando todo se reduce a transferencias por chat.
 
-**¿WhatsApp es siempre estafa?** No. La alerta es la presión para pagar sin ver el equipo, pedir códigos o saltarse verificaciones.
+**¿WhatsApp es siempre una estafa?** No. La alerta es la presión para pagar sin ver el equipo, pedir códigos o saltarse verificaciones.
 
-**¿IMEI o Activation Lock?** Ambos. El IMEI ayuda con reportes en Colombia; el Activation Lock define si podrás usar el equipo con tu cuenta.
+**¿IMEI o Activation Lock?** Ambos. El IMEI ayuda con reportes en Colombia; el bloqueo de activación define si podrás usar el equipo con tu cuenta.
 
 **¿Confío en una captura de consignación?** No. Confirma en tu app que el dinero está disponible.
 
 ---
 
-_Artículo informativo para compradores en Colombia. Verifica con fuentes oficiales (IMEI Colombia / MinTIC-CRC) y con el dispositivo en mano. TruePhone no sustituye denuncias ni asesoría legal._
+_Artículo informativo para compradores en Colombia. Verifica IMEI en la [consulta pública de IMEI Colombia](https://www.imeicolombia.com.co/ConsultaPublicaIMEI/) y el equipo en la mano. TruePhone no sustituye denuncias ni asesoría legal._
