@@ -117,7 +117,7 @@ export function AppHeader({
           SHELL_WIDTH_CLASS,
         )}
       >
-        <AppHeaderBrandLink className="text-lg" />
+        <AppHeaderBrandLink className="text-lg" iconHeight={28} />
 
         <AppHeaderNav />
 
