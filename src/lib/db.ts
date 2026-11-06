@@ -45,13 +45,15 @@ function isStaleClient(client: PrismaClient) {
     iphoneModel?: unknown;
     iphoneModelColor?: unknown;
     listingViewEvent?: unknown;
+    buybackQuote?: unknown;
   };
 
   // After `prisma generate`, HMR can keep an old singleton missing new models.
   return (
     typeof delegate.iphoneModel === "undefined" ||
     typeof delegate.iphoneModelColor === "undefined" ||
-    typeof delegate.listingViewEvent === "undefined"
+    typeof delegate.listingViewEvent === "undefined" ||
+    typeof delegate.buybackQuote === "undefined"
   );
 }
 

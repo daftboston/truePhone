@@ -512,3 +512,12 @@ No implementation is implied by this document alone beyond what Phases 10b–10d
 ### BRE-B (post-MVP)
 
 - [Guía](https://docs.wompi.co/docs/colombia/guia-integracion-breb/) · [Previsualizar](https://docs.wompi.co/docs/colombia/previsualizar-breb/) · [Crear dispersión](https://docs.wompi.co/docs/colombia/crear-dispersion-breb/) · [Eventos](https://docs.wompi.co/docs/colombia/eventos-breb/)
+
+## Vende ya direct-purchase exception (draft, disabled)
+
+The founder-approved Bogotá-only «Vende ya» flow is a separate domain in which
+TruePhone buys inventory directly. Existing marketplace Listing/Order/Wompi/settlement
+and shipping rules remain unchanged; statements that TruePhone never owns inventory
+apply to the marketplace, not this explicit exception. See
+[backend contracts, safe migrations and launch gates](VENDE_YA_BACKEND.md).
+Do not enable before FE, Payments & Trust, legal and QA integration is approved.

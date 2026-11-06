@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/tick",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/buyback-prices",
+      "schedule": "0 14 * * 1"
     }
   ]
 }

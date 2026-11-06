@@ -883,3 +883,9 @@ TruePhone is not being built to become the largest marketplace.
 It is being built to become the most trusted marketplace for buying and selling used iPhones.
 
 Every phase should move the product closer to that goal.
+
+## Vende ya backend (draft, disabled)
+
+Bogotá-only direct inventory purchases are separate from marketplace orders and settlement.
+See [backend contracts, ownership and launch gates](VENDE_YA_BACKEND.md).
+Do not enable before FE, Payments & Trust, legal and QA integration is approved.
