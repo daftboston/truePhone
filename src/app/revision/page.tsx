@@ -353,6 +353,14 @@ export default async function ReviewHubPage() {
       <section className="space-y-3" aria-label="Accesos rápidos">
         <h2 className="text-foreground text-sm font-semibold">Accesos</h2>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          {process.env.BUYBACK_ENABLED === "true" ? (
+            <Link
+              href="/revision/vende-ya"
+              className="text-primary text-sm underline"
+            >
+              Revisar Vende ya
+            </Link>
+          ) : null}
           <Button asChild>
             <Link href={primaryCta.href}>{primaryCta.label}</Link>
           </Button>

@@ -165,6 +165,7 @@ enum InspectionResult {
 
 /// In-app / email notification kinds (Phase 12).
 enum NotificationType {
+  BUYBACK_OFFER
   BUYER_RECEIVED_CONFIRM
   BUYER_CONFIRM_REMINDER
   LISTING_APPROVED
@@ -266,6 +267,10 @@ enum LandingPreference {
 
 // Models
 model Profile {
+  buybackQuotes BuybackQuote[] @relation("BuybackSeller")
+  buybackOffersReviewed BuybackOffer[] @relation("BuybackReviewer")
+  buybackImports BuybackPriceImport[]
+  buybackEvents BuybackEvent[]
   id                 String    @id @default(cuid())
   authUserId         String    @unique @map("auth_user_id")
   role               UserRole  @default(BUYER)
@@ -371,6 +376,8 @@ model IdentityVerification {
 }
 
 model IphoneModel {
+  buybackPrices BuybackPrice[]
+  buybackQuotes BuybackQuote[]
   id                String               @id @default(cuid())
   name              String               @unique
   slug              String               @unique
@@ -436,6 +443,8 @@ model IphoneModelStorage {
 }
 
 model IphoneStorage {
+  buybackPrices BuybackPrice[]
+  buybackQuotes BuybackQuote[]
   id                String               @id @default(cuid())
   valueGb           Int                  @unique
   createdAt         DateTime             @default(now())
@@ -1242,4 +1251,132 @@ model NotificationPreference {
   updatedAt         DateTime @updatedAt
 
   @@map("notification_preferences")
+}
+
+// Direct inventory purchases: never a marketplace Listing/Order/Payout.
+enum BuybackQuoteStatus {
+  DRAFT
+  RANGE_READY
+  REVIEW_REQUESTED
+  OFFER_SENT
+  OFFER_ACCEPTED
+  PURCHASED
+  CANCELLED
+}
+
+model BuybackPriceImport {
+  id           String         @id @default(cuid())
+  sourceHash   String
+  importedById String?
+  importedBy   Profile?       @relation(fields: [importedById], references: [id])
+  importedAt   DateTime       @default(now())
+  validRows    Int
+  issues       Json
+  prices       BuybackPrice[]
+  quotes       BuybackQuote[]
+
+  @@index([importedAt])
+  @@map("buyback_price_imports")
+}
+
+model BuybackPrice {
+  id               String             @id @default(cuid())
+  iphoneModelId    String
+  iphoneModel      IphoneModel        @relation(fields: [iphoneModelId], references: [id])
+  iphoneStorageId  String
+  iphoneStorage    IphoneStorage      @relation(fields: [iphoneStorageId], references: [id])
+  purchasePriceCop Int
+  sourceRow        Int
+  importId         String
+  import           BuybackPriceImport @relation(fields: [importId], references: [id])
+  active           Boolean            @default(true)
+  syncedAt         DateTime           @default(now())
+
+  @@unique([iphoneModelId, iphoneStorageId])
+  @@map("buyback_prices")
+}
+
+model BuybackQuote {
+  id                        String              @id @default(cuid())
+  sellerId                  String
+  seller                    Profile             @relation("BuybackSeller", fields: [sellerId], references: [id])
+  clientRequestId           String
+  iphoneModelId             String
+  iphoneModel               IphoneModel         @relation(fields: [iphoneModelId], references: [id])
+  iphoneStorageId           String
+  iphoneStorage             IphoneStorage       @relation(fields: [iphoneStorageId], references: [id])
+  condition                 Condition
+  batteryHealth             Int
+  description               String
+  city                      String              @default("Bogotá")
+  status                    BuybackQuoteStatus  @default(DRAFT)
+  version                   Int                 @default(1)
+  // Private immutable snapshots set on submit; never serialized to sellers.
+  purchasePriceCop          Int?
+  priceImport               BuybackPriceImport? @relation(fields: [priceImportId], references: [id])
+  priceImportId             String?
+  rangeMinCop               Int?
+  rangeMaxCop               Int?
+  submittedAt               DateTime?
+  rangeInterestedAt         DateTime?
+  reviewDueAt               DateTime?
+  ownershipConfirmedAt      DateTime            @default(now())
+  activationLockConfirmedAt DateTime            @default(now())
+  currentOfferVersion       Int                 @default(0)
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  photos                    BuybackPhoto[]
+  offers                    BuybackOffer[]
+  events                    BuybackEvent[]
+
+  @@unique([sellerId, clientRequestId])
+  @@index([sellerId, createdAt])
+  @@index([status, reviewDueAt])
+  @@map("buyback_quotes")
+}
+
+model BuybackPhoto {
+  id         String       @id @default(cuid())
+  quoteId    String
+  quote      BuybackQuote @relation(fields: [quoteId], references: [id])
+  slot       Int
+  objectPath String       @unique
+  createdAt  DateTime     @default(now())
+
+  @@unique([quoteId, slot])
+  @@map("buyback_photos")
+}
+
+model BuybackOffer {
+  id           String       @id @default(cuid())
+  quoteId      String
+  quote        BuybackQuote @relation(fields: [quoteId], references: [id])
+  version      Int
+  amountCop    Int
+  reviewerId   String
+  reviewer     Profile      @relation("BuybackReviewer", fields: [reviewerId], references: [id])
+  // Seller-visible conditions are snapshotted and explicitly accepted.
+  conditions   String
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  supersededAt DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@unique([quoteId, version])
+  @@index([expiresAt])
+  @@map("buyback_offers")
+}
+
+model BuybackEvent {
+  id        String       @id @default(cuid())
+  quoteId   String
+  quote     BuybackQuote @relation(fields: [quoteId], references: [id])
+  actorId   String
+  actor     Profile      @relation(fields: [actorId], references: [id])
+  kind      String
+  version   Int
+  createdAt DateTime     @default(now())
+
+  @@index([quoteId, createdAt])
+  @@map("buyback_events")
 }

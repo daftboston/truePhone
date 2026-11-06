@@ -470,3 +470,12 @@ Documented for later phases (see also `docs/FINANCIAL_MODEL.md`, `docs/SHIPPING.
 # Soft deletes
 
 `listings.deletedAt` marks logical deletion. Prefer soft delete for marketplace entities that need audit history.
+
+## Vende ya direct-purchase exception (draft, disabled)
+
+The founder-approved Bogotá-only «Vende ya» flow is a separate domain in which
+TruePhone buys inventory directly. Existing marketplace Listing/Order/Wompi/settlement
+and shipping rules remain unchanged; statements that TruePhone never owns inventory
+apply to the marketplace, not this explicit exception. See
+[backend contracts, safe migrations and launch gates](VENDE_YA_BACKEND.md).
+Do not enable before FE, Payments & Trust, legal and QA integration is approved.
